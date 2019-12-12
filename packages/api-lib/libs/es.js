@@ -122,7 +122,6 @@ async function prepare(index) {
               'properties': props,
               geometry: {
                 type: 'geo_shape',
-                tree: 'quadtree',
                 precision: precision
               }
             }

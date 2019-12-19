@@ -55,7 +55,9 @@ functions:
   ingest:
     description: STAC API Ingest Lambda
     handler: index.handler
+    memorySize: 512
     timeout: 30
+    reservedConcurrency: 100
     package:
       artifact: lambdas/ingest/dist/ingest.zip
     events:
@@ -69,7 +71,8 @@ resources:
       Type: AWS::SQS::Queue
       Properties:
         DelaySeconds: 1
-        VisibilityTimeout: 30
+        VisibilityTimeout: 180
+        ReceiveMessageWaitTimeSeconds: 2
         QueueName: ${self:service}-${self:provider.stage}-queue
     ElasticSearchInstance:
       Type: AWS::Elasticsearch::Domain

@@ -6,16 +6,6 @@ const logger = console
 // Create an SQS service object
 const sqs = new AWS.SQS({ apiVersion: '2012-11-05' })
 
-async function getQueueUrl() {
-  return sqs.getQueueUrl({ QueueName: process.env.queueName }, (err, data) => {
-    if (err) {
-      logger.error(`Error: ${err}`)
-      throw err
-    }
-    return data.QueueUrl
-  })
-}
-
 module.exports.handler = async function handler(event) {
   logger.debug(`Event: ${JSON.stringify(event)}`)
 

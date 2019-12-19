@@ -151,7 +151,7 @@ const parsePath = function (path) {
   searchFilters.collections = pathComponents[0] === collections
   searchFilters.collectionId =
     pathComponents[0] === collections && length >= 2 ? pathComponents[1] : false
-  searchFilters.search = pathComponents[1] === search
+  searchFilters.search = pathComponents[0] === search
   searchFilters.items = pathComponents[2] === items
   searchFilters.itemId =
     pathComponents[2] === items && length === 4 ? pathComponents[3] : false

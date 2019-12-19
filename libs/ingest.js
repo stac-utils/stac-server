@@ -171,7 +171,6 @@ async function ingest(url, backend, recursive = true, collectionsOnly = false) {
 }
 
 async function ingestItem(item, backend) {
-  console.log(`ingestItem: ${JSON.stringify(item)}`)
   const readable = new Readable({objectMode: true })
   await backend.prepare('collections')
   await backend.prepare('items')
@@ -197,4 +196,30 @@ async function ingestItem(item, backend) {
   return promise
 }
 
-module.exports = { ingest, ingestItem }
+async function ingestItems(items, backend) {
+  const readable = new Readable({objectMode: true })
+  await backend.prepare('collections')
+  await backend.prepare('items')
+  const { toEs, esStream } = await backend.stream()
+  const promise = new Promise((resolve, reject) => {
+    pump(
+      readable,
+      toEs,
+      esStream,
+      (error) => {
+        if (error) {
+          console.log(error)
+          reject(error)
+        } else {
+          console.log('Ingested item')
+          resolve(true)
+        }
+      }
+    )
+  })
+  items.forEach((item) => readable.push(item))
+  readable.push(null)
+  return promise
+}
+
+module.exports = { ingest, ingestItem, ingestItems }

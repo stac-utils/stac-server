@@ -131,7 +131,6 @@ const parsePath = function (path) {
     root: false,
     api: false,
     conformance: false,
-    stac: false,
     collections: false,
     search: false,
     collectionId: false,
@@ -140,7 +139,6 @@ const parsePath = function (path) {
   }
   const api = 'api'
   const conformance = 'conformance'
-  const stac = 'stac'
   const collections = 'collections'
   const search = 'search'
   const items = 'items'
@@ -150,7 +148,6 @@ const parsePath = function (path) {
   searchFilters.root = length === 0
   searchFilters.api = pathComponents[0] === api
   searchFilters.conformance = pathComponents[0] === conformance
-  searchFilters.stac = pathComponents[0] === stac
   searchFilters.collections = pathComponents[0] === collections
   searchFilters.collectionId =
     pathComponents[0] === collections && length >= 2 ? pathComponents[1] : false
@@ -173,12 +170,12 @@ const addCollectionLinks = function (results, endpoint) {
     // parent catalog
     links.push({
       rel: 'parent',
-      href: `${endpoint}/stac`
+      href: `${endpoint}/`
     })
     // root catalog
     links.push({
       rel: 'root',
-      href: `${endpoint}/stac`
+      href: `${endpoint}/`
     })
     // child items
     links.push({
@@ -213,7 +210,7 @@ const addItemLinks = function (results, endpoint) {
     // root catalog
     links.push({
       rel: 'root',
-      href: `${endpoint}/stac`
+      href: `${endpoint}/`
     })
     result.type = 'Feature'
     return result
@@ -273,7 +270,7 @@ const buildPageLinks = function (meta, parameters, endpoint) {
     pageLinks.push({
       rel: 'next',
       title: 'Next page of results',
-      href: `${endpoint}/stac/search?${nextQueryParameters}`
+      href: `${endpoint}/search?${nextQueryParameters}`
     })
   }
   return pageLinks
@@ -373,7 +370,7 @@ const getCatalog = async function (backend, endpoint = '') {
   catalog.links.push({
     rel: 'search',
     type: 'application/json',
-    href: `${endpoint}/stac/search`
+    href: `${endpoint}/search`
   })
   if (process.env.STAC_DOCS_URL) {
     catalog.links.push({

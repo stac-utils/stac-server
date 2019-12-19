@@ -13,6 +13,14 @@ provider:
     - Effect: "Allow"
       Resource: "arn:aws:es:#{AWS::Region}:#{AWS::AccountId}:domain/*"
       Action: "es:*"
+    - Effect: "Allow"
+      Action:
+        - sqs:GetQueueUrl
+        - sqs:SendMessage
+        - sqs:ReceiveMessage
+        - sqs:DeleteMessage
+      Resource:
+        Fn::GetAtt: [ingestQueue, Arn]
 
 package:
   individually: true
@@ -34,18 +42,20 @@ functions:
   queue:
     description: STAC API Queueing Lambda
     handler: index.handler
+    memorySize: 128
+    timeout: 15
     package:
-      artifact: lambdas/ingest/dist/queue.zip
+      artifact: lambdas/queue/dist/queue.zip
     environment:
       queueName: ${self:service}-${self:provider.stage}-queue
     events:
       - sns:
-        topicName: ${self:service}-${self:provider.stage}-queue
-        displayName: Ingest STAC Item Queue
+          topicName: ${self:service}-${self:provider.stage}-queue
+          displayName: Ingest STAC Item Queue
   ingest:
     description: STAC API Ingest Lambda
     handler: index.handler
-    timeout: 900
+    timeout: 30
     package:
       artifact: lambdas/ingest/dist/ingest.zip
     events:
@@ -59,6 +69,7 @@ resources:
       Type: AWS::SQS::Queue
       Properties:
         DelaySeconds: 1
+        VisibilityTimeout: 30
         QueueName: ${self:service}-${self:provider.stage}-queue
     ElasticSearchInstance:
       Type: AWS::Elasticsearch::Domain

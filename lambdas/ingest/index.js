@@ -8,11 +8,13 @@ module.exports.handler = async function handler(event) {
   logger.info(`Event: ${JSON.stringify(event)}`)
   try {
     if (event.Records) {
-      const records = await Promise.all(event.Records.map((record) => {
+      const items = await Promise.all(event.Records.map(async (record) => {
         const item = JSON.parse(record.body)
-        satlib.ingest.ingestItem(item, satlib.es)
+        await satlib.ingest.ingestItem(item, satlib.es)
         logger.log(`Ingested ${item.id}`)
+        return item
       }))
+      logger.info(`Items: ${items}`)
     }
   } catch (error) {
     console.log(error)

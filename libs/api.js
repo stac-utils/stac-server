@@ -319,7 +319,7 @@ const searchItems = async function (collectionId, queryParameters, backend, endp
   if (collectionId) {
     searchParameters.collections = [collectionId]
   }
-  const { results: itemsResults, 'search:metadata': itemsMeta } =
+  const { results: itemsResults, 'context': itemsMeta } =
     await backend.search(searchParameters, 'items', next, limit)
   const pageLinks = buildPageLinks(itemsMeta, searchParameters, endpoint)
   const items = addItemLinks(itemsResults, endpoint)

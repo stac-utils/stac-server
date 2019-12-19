@@ -35,7 +35,7 @@ functions:
       STAC_ID: "stac-api"
       STAC_TITLE: "STAC API"
       STAC_DESCRIPTION: "STAC API"
-      STAC_VERSION: 0.8.1
+      STAC_VERSION: 0.9.0
     events:
       - http: ANY /
       - http: ANY {proxy+}

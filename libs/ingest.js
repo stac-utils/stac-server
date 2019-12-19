@@ -172,7 +172,7 @@ async function ingest(url, backend, recursive = true, collectionsOnly = false) {
 
 async function ingestItem(item, backend) {
   console.log(`ingestItem: ${JSON.stringify(item)}`)
-  const readable = new Readable({ objectMode: true })
+  const readable = new Readable({objectMode: true })
   await backend.prepare('collections')
   await backend.prepare('items')
   const { toEs, esStream } = await backend.stream()

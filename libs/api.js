@@ -437,7 +437,6 @@ const API = async function (
       root,
       api,
       conformance,
-      stac,
       search: searchPath,
       collections,
       collectionId,
@@ -457,12 +456,8 @@ const API = async function (
     if (conformance) {
       apiResponse = await getConformance()
     }
-    // Root catalog with collection links
-    if ((stac && !searchPath) || !hasPathElement) {
-      apiResponse = await getCatalog(backend, endpoint)
-    }
     // STAC Search
-    if (stac && searchPath) {
+    if (searchPath) {
       apiResponse = await searchItems(
         null, queryParameters, backend, endpoint
       )

@@ -21,7 +21,7 @@ functions:
   api:
     handler: index.handler
     package:
-      artifact: packages/api/dist/api.zip
+      artifact: lambdas/api/dist/api.zip
     environment:
       STAC_ID: "stac-api"
       STAC_TITLE: "STAC API"
@@ -34,7 +34,7 @@ functions:
     handler: index.handler
     timeout: 900
     package:
-      artifact: packages/ingest/dist/ingest.zip
+      artifact: lambdas/ingest/dist/ingest.zip
     events:
       - sns:
         topicName: ${self:service}-${self:provider.stage}-queue

@@ -6,12 +6,8 @@
   "author": "Alireza Jazayeri, Matthew Hanson <matt.a.hanson@gmail.com>, Sean Harkins",
   "license": "MIT",
   "scripts": {
-    "bootstrap": "lerna bootstrap",
-    "clean": "lerna clean",
-    "build": "lerna run build",
-    "linkall": "lerna exec -- yarn link",
-    "test": "lerna run test",
-    "update": "lerna publish --skip-git --skip-npm",
+    "build": "cd lambdas/api; yarn run build; cd ../../lambdas/ingest; yarn run build",
+    "test": "ava",
     "eslint": "eslint packages/* --ext .js",
     "deploy": "sls deploy",
     "build-api-docs": "yarn widdershins --search false --language_tabs 'nodejs:NodeJS' 'python:Python' --summary ./packages/api-lib/api-spec.yaml -o ./docs/api.md & yarn shins --inline --logo ./docs/images/logo.png -o ./docs/index.html ./docs/api.md"
@@ -55,7 +51,6 @@
     "eslint-plugin-jsdoc": "^3.5.0",
     "eslint-plugin-jsx-a11y": "^6.0.3",
     "eslint-plugin-react": "^7.7.0",
-    "lerna": "^2.11.0",
     "serverless": "^1.53.0",
     "serverless-pseudo-parameters": "^2.5.0",
     "serverless-step-functions": "^2.11.0",

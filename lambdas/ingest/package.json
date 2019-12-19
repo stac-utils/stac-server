@@ -28,9 +28,6 @@
     "access": "public"
   },
   "homepage": "https://github.com/sat-utils/sat-api#readme",
-  "dependencies": {
-    "@sat-utils/api-lib": "^0.4.0-rc2"
-  },
   "devDependencies": {
     "ava": "^0.25.0",
     "aws-event-mocks": "^0.0.0",

@@ -29,7 +29,7 @@ module.exports = {
   plugins: [
     new CopyPlugin([
       {
-        from: '../api-lib/api.yaml',
+        from: '../../libs/api.yaml',
         to: 'api.yaml'
       }
     ]),

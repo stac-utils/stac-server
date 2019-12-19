@@ -19,6 +19,7 @@ package:
 
 functions:
   api:
+    description: STAC API Lambda
     handler: index.handler
     package:
       artifact: lambdas/api/dist/api.zip
@@ -30,30 +31,35 @@ functions:
     events:
       - http: ANY /
       - http: ANY {proxy+}
+  queue:
+    description: STAC API Queueing Lambda
+    handler: index.handler
+    package:
+      artifact: lambdas/ingest/dist/queue.zip
+    environment:
+      queueName: ${self:service}-${self:provider.stage}-queue
+    events:
+      - sns:
+        topicName: ${self:service}-${self:provider.stage}-queue
+        displayName: Ingest STAC Item Queue
   ingest:
+    description: STAC API Ingest Lambda
     handler: index.handler
     timeout: 900
     package:
       artifact: lambdas/ingest/dist/ingest.zip
     events:
-      - sns:
-        topicName: ${self:service}-${self:provider.stage}-queue
-        displayName: Ingest STAC Item
-    #  - sqs:
-    #      arn:
-    #        Fn::GetAtt: [ingestQueue, Arn]
-    #events:
-    #  - sns:
-    #      topicName: ${self:service}-${self:provider.stage}-ingest-queue
-    #      displayName: STAC Item ingest topic
+      - sqs:
+          arn:
+            Fn::GetAtt: [ingestQueue, Arn]
 
 resources:
   Resources:
-#    ingestQueue:
-#      Type: AWS::SQS::Queue
-#      Properties:
-#        DelaySeconds: 1
-#        QueueName: ${self:service}-${self:provider.stage}-ingest-queue
+    ingestQueue:
+      Type: AWS::SQS::Queue
+      Properties:
+        DelaySeconds: 1
+        QueueName: ${self:service}-${self:provider.stage}-queue
     ElasticSearchInstance:
       Type: AWS::Elasticsearch::Domain
       Properties:

@@ -1,6 +1,6 @@
 {
-  "name": "ingest",
-  "description": "ingest lambda function for stac-api",
+  "name": "queue",
+  "description": "queue lambda function for stac-api",
   "main": "index.js",
   "scripts": {
     "build": "webpack",

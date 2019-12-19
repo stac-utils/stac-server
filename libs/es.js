@@ -87,14 +87,13 @@ async function prepare(index) {
       'updated': { type: 'date' },
       'eo:cloud_cover': { type: 'float' },
       'eo:gsd': { type: 'float' },
-      'eo:constellation': { type: 'keyword' },
-      'eo:platform': { type: 'keyword' },
-      'eo:instrument': { type: 'keyword' },
-      'eo:epsg': { type: 'integer' },
-      'eo:off_nadir': { type: 'float' },
-      'eo:azimuth': { type: 'float' },
-      'eo:sun_azimuth': { type: 'float' },
-      'eo:sun_elevation': { type: 'float' }
+      'constellation': { type: 'keyword' },
+      'platform': { type: 'keyword' },
+      'instrument': { type: 'keyword' },
+      'sat:off_nadir_angle': { type: 'float' },
+      'sat:azimuth_angle': { type: 'float' },
+      'sat:sun_azimuth_angle': { type: 'float' },
+      'sat:sun_elevation_angle': { type: 'float' }
     }
   }
 
@@ -448,12 +447,21 @@ async function search(parameters, index = '*', page = 1, limit = 10) {
   const results = resultBody.hits.hits.map((r) => (r._source))
   const response = {
     results,
-    'search:metadata': {
-      next: (((page * limit) < resultBody.hits.total) ? page + 1 : null),
+    context: {
       limit,
       matched: resultBody.hits.total,
       returned: results.length
-    }
+    },
+    links: []
+  }
+  const nextlink = (((page * limit) < resultBody.hits.total) ? page + 1 : null)
+  if (nextlink) {
+    response.links.push({
+      title: 'next',
+      type: 'application/json',
+      href: nextlink
+      // TODO - add link to next page
+    })
   }
   return response
 }

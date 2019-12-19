@@ -248,7 +248,9 @@ const wrapResponseInFeatureCollection = function (
 ) {
   return {
     type: 'FeatureCollection',
-    'search:metadata': meta,
+    'stac_version': process.env.STAC_VERSION,
+    'stac_extensions': [],
+    'context': meta,
     'numberMatched': meta.matched,
     'numberReturned': meta.returned,
     features,

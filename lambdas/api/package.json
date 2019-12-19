@@ -1,21 +1,12 @@
 {
-  "name": "@sat-utils/api",
-  "version": "0.4.0-rc2",
-  "description": "The api lambda function for sat-api",
+  "name": "api",
+  "description": "The api lambda function for stac-api",
   "main": "index.js",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/sat-utils/sat-api.git"
-  },
-  "author": "Alireza Jazayeri <alireza@developmentseed.org>, Matthew Hanson <matt.a.hanson@gmail.com>",
   "license": "MIT",
   "ava": {
     "files": "tests/*.js",
     "verbose": true,
     "serial": true
-  },
-  "bugs": {
-    "url": "https://github.com/sat-utils/sat-api/issues"
   },
   "scripts": {
     "build": "webpack",
@@ -24,7 +15,6 @@
   "publishConfig": {
     "access": "public"
   },
-  "homepage": "https://github.com/sat-utils/sat-api#readme",
   "devDependencies": {
     "ava": "^0.25.0",
     "aws-event-mocks": "0.0.0",

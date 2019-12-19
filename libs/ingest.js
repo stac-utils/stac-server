@@ -171,6 +171,7 @@ async function ingest(url, backend, recursive = true, collectionsOnly = false) {
 }
 
 async function ingestItem(item, backend) {
+  console.log(`ingestItem: ${JSON.stringify(item)}`)
   const readable = new Readable({ objectMode: true })
   await backend.prepare('collections')
   await backend.prepare('items')
@@ -182,10 +183,10 @@ async function ingestItem(item, backend) {
       esStream,
       (error) => {
         if (error) {
-          logger.error(error)
+          console.log(error)
           reject(error)
         } else {
-          logger.info(`Ingested item ${item.id}`)
+          console.log(`Ingested item ${item.id}`)
           resolve(true)
         }
       }

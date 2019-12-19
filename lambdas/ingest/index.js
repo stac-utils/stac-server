@@ -10,7 +10,7 @@ module.exports.handler = async function handler(event) {
     if (event.Records) {
       const records = await Promise.all(event.Records.map((record) => {
         const item = JSON.parse(record.body)
-        satlib.ingest(item, satlib.es)
+        satlib.ingest.ingestItem(item, satlib.es)
         logger.log(`Ingested ${item.id}`)
       }))
     }

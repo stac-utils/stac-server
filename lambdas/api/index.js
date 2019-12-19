@@ -1,4 +1,4 @@
-const satlib = require('@sat-utils/api-lib')
+const satlib = require('../../libs')
 
 function determineEndpoint(event) {
   let endpoint = process.env.SATAPI_URL

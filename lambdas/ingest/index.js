@@ -1,6 +1,6 @@
 'use strict'
 
-const satlib = require('@sat-utils/api-lib')
+const satlib = require('../../libs')
 const logger = console
 
 

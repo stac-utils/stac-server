@@ -1,7 +1,9 @@
 {
-  "description": "One API to search public Satellites metadata",
-  "repository": "https://github.com/sat-utils/sat-api",
-  "author": "Alireza Jazayeri <alireza@developmentseed.org>, Matthew Hanson <matt.a.hanson@gmail.com>",
+  "displayName": "stac-api",
+  "description": "STAC API",
+  "version": "0.1.0",
+  "repository": "https://github.com/stac-utils/stac-api",
+  "author": "Alireza Jazayeri, Matthew Hanson <matt.a.hanson@gmail.com>, Sean Harkins",
   "license": "MIT",
   "scripts": {
     "bootstrap": "lerna bootstrap",
@@ -14,7 +16,39 @@
     "deploy": "sls deploy",
     "build-api-docs": "yarn widdershins --search false --language_tabs 'nodejs:NodeJS' 'python:Python' --summary ./packages/api-lib/api-spec.yaml -o ./docs/api.md & yarn shins --inline --logo ./docs/images/logo.png -o ./docs/index.html ./docs/api.md"
   },
+  "ava": {
+    "files": "tests/*.js",
+    "verbose": true,
+    "serial": true
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "bugs": {
+    "url": "https://github.com/stac-utils/stac-api/issues"
+  },
+  "dependencies": {
+    "@mapbox/extent": "^0.4.0",
+    "@turf/helpers": "^6.1.4",
+    "bottleneck": "^2.13.1",
+    "elasticsearch": "^14.2.2",
+    "geojson-validation": "^0.1.6",
+    "http-aws-es": "^4.0.0",
+    "is-url": "^1.2.4",
+    "js-yaml": "^3.13.1",
+    "memorystream": "^0.3.1",
+    "pump": "^3.0.0",
+    "request": "^2.88.0",
+    "request-promise-native": "^1.0.5",
+    "through2": "^3.0.1",
+    "winston": "^3.2.0"
+  },
   "devDependencies": {
+    "ava": "^0.16.0",
+    "aws-sdk": "^2.382.0",
+    "nock": "^8.0.0",
+    "proxyquire": "^2.1.0",
+    "sinon": "^7.1.1",
     "eslint": "^5.7.0",
     "eslint-config-airbnb": "^16.1.0",
     "eslint-plugin-import": "^2.9.0",
@@ -28,5 +62,5 @@
     "shins": "^2.3.2-3",
     "widdershins": "^3.6.6"
   },
-  "name": "sat-api"
+  "name": "stac-api"
 }

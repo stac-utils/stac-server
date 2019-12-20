@@ -72,7 +72,7 @@ resources:
       Properties:
         DelaySeconds: 1
         VisibilityTimeout: 180
-        ReceiveMessageWaitTimeSeconds: 2
+        ReceiveMessageWaitTimeSeconds: 5
         QueueName: ${self:service}-${self:provider.stage}-queue
     ElasticSearchInstance:
       Type: AWS::Elasticsearch::Domain

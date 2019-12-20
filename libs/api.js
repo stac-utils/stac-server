@@ -260,7 +260,7 @@ const buildPageLinks = function (meta, parameters, endpoint) {
 
   const dictToURI = (dict) => (
     Object.keys(dict).map(
-      (p) => `${encodeURIComponent(p)}=${encodeURIComponent(JSON.stringify(dict[p]))}`
+      (p) => `${encodeURIComponent(p)}=${encodeURIComponent(dict[p])}`
     ).join('&')
   )
   const { matched, page, limit } = meta
@@ -277,9 +277,10 @@ const buildPageLinks = function (meta, parameters, endpoint) {
 }
 
 const searchItems = async function (collectionId, queryParameters, backend, endpoint) {
+  logger.debug(`Query parameters: ${JSON.stringify(queryParameters)}`)
   const {
     limit,
-    next,
+    page,
     datetime
   } = queryParameters
   const bbox = extractBbox(queryParameters)
@@ -316,8 +317,9 @@ const searchItems = async function (collectionId, queryParameters, backend, endp
   if (collectionId) {
     searchParameters.collections = [collectionId]
   }
+  logger.debug(`Search parameters: ${JSON.stringify(searchParameters)}`)
   const { results: itemsResults, 'context': itemsMeta } =
-    await backend.search(searchParameters, 'items', next, limit)
+    await backend.search(searchParameters, 'items', page, limit)
   const pageLinks = buildPageLinks(itemsMeta, searchParameters, endpoint)
   const items = addItemLinks(itemsResults, endpoint)
   const response = wrapResponseInFeatureCollection(itemsMeta, items, pageLinks)
@@ -420,17 +422,6 @@ const API = async function (
   let apiResponse
   try {
     const pathElements = parsePath(path)
-
-    const hasPathElement =
-      Object.keys(pathElements).reduce((accumulator, key) => {
-        let containsPathElement
-        if (accumulator) {
-          containsPathElement = true
-        } else {
-          containsPathElement = pathElements[key]
-        }
-        return containsPathElement
-      }, false)
 
     const {
       root,

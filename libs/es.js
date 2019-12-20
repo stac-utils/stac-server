@@ -448,7 +448,8 @@ async function search(parameters, index = '*', page = 1, limit = 10) {
   const response = {
     results,
     context: {
-      limit,
+      page: Number(page),
+      limit: Number(limit),
       matched: resultBody.hits.total,
       returned: results.length
     },

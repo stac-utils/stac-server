@@ -1,4 +1,6 @@
 const satlib = require('../../libs')
+const logger = console
+
 
 function determineEndpoint(event) {
   let endpoint = process.env.SATAPI_URL
@@ -39,6 +41,7 @@ function buildResponse(statusCode, result) {
 }
 
 module.exports.handler = async (event) => {
+  logger.debug(`Event: ${JSON.stringify(event)}`)
   const endpoint = determineEndpoint(event)
   const query = buildRequest(event)
   const result = await satlib.api.API(event.path, query, satlib.es, endpoint)

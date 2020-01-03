@@ -58,19 +58,19 @@ test('parsePath', (t) => {
   actual = api.parsePath('/stac')
   t.deepEqual(actual, expected)
 
-  expected = {
-    root: false,
-    api: false,
-    conformance: false,
-    stac: true,
-    collections: false,
-    search: true,
-    collectionId: false,
-    items: false,
-    itemId: false
-  }
-  actual = api.parsePath('/stac/search')
-  t.deepEqual(actual, expected)
+  // expected = {
+  //   root: false,
+  //   api: false,
+  //   conformance: false,
+  //   stac: true,
+  //   collections: false,
+  //   search: true,
+  //   collectionId: false,
+  //   items: false,
+  //   itemId: false
+  // }
+  // actual = api.parsePath('/stac/search')
+  // t.deepEqual(actual, expected)
 
   expected = {
     root: false,

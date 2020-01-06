@@ -9,33 +9,37 @@ function cloneMutatedItem() {
   return Object.assign({}, item, { links: item.links.slice(0) })
 }
 
-// test('search es error', async (t) => {
-//   const error = sinon.spy()
-//   const proxyApi = proxquire('../libs/api', {
-//     './logger': {
-//       error
-//     }
-//   })
-//   const errorMessage = 'errorMessage'
-//   const search = sinon.stub().throws(new Error(errorMessage))
-//   const backend = { search }
-//   const response = await proxyApi.API('/stac', undefined, backend, 'endpoint')
-//   t.is(error.firstCall.args[0].message, errorMessage,
-//     'Logs Elasticsearch error via Winston transport')
-//   t.is(response.message, errorMessage)
-//   t.is(response.code, 500)
-// })
+test('search es error', async (t) => {
+  const error = sinon.spy()
+  const proxyApi = proxquire('../libs/api', {
+    './logger': {
+      error
+    }
+  })
+  const errorMessage = 'errorMessage'
+  const search = sinon.stub().throws(new Error(errorMessage))
+  const backend = { search }
+  // look into working with the root as '/stac' doesn't exist any more
+  const response = await proxyApi.API('/stac', undefined, backend, 'endpoint')
+  t.is(error.firstCall.args[0].message, errorMessage,
+    'Logs Elasticsearch error via Winston transport')
+  t.is(response.message, errorMessage)
+  t.is(response.code, 500)
+})
 
 // What is this trying to do and what is links? 
 test('search /', async (t) => {
   const actual = await api.API('/', undefined, undefined, 'endpoint')
   console.log('this is me figuring out links', actual.links)
-  t.is(actual.links.length, 4)
+  // if here are no collections it should return 0
+  t.is(actual.links.length, 5)
 })
 
 // What is openapi supposed to be?
 test('search /api', async (t) => {
   const actual = await api.API('/api', undefined, undefined, 'endpoint')
+  console.log('this should be the open api', actual)
+  // looking for openApi document './api.yaml
   t.truthy(actual.openapi)
 })
 
@@ -46,35 +50,35 @@ test('search /conformance', async (t) => {
 })
 
 // What is firstCall and links
-// test('search /stac', async (t) => {
-//   process.env.STAC_DOCS_URL = 'test'
-//   const collection = 'collection'
-//   const results = { results: [{ id: collection }] }
-//   const search = sinon.stub().resolves(results)
-//   const backend = { search } // Why not just pass in search? It seems more confusing to me this way.
-//   const actual = await api.API('/stac', undefined, backend, 'endpoint')
-//   const expectedLinks = [
-//     {
-//       rel: 'child',
-//       href: 'endpoint/collections/collection'
-//     },
-//     {
-//       rel: 'self',
-//       href: 'endpoint/stac'
-//     },
-//     {
-//       rel: 'search',
-//       href: 'endpoint/stac/search'
-//     },
-//     {
-//       href: 'test',
-//       rel: 'service'
-//     }
-//   ]
-//   t.is(search.firstCall.args[1], 'collections')
-//   t.deepEqual(actual.links, expectedLinks,
-//     'Returns STAC catalog with links to collections')
-// })
+test('search /stac', async (t) => {
+  process.env.STAC_DOCS_URL = 'test'
+  const collection = 'collection'
+  const results = { results: [{ id: collection }] }
+  const search = sinon.stub().resolves(results)
+  const backend = { search } // Why not just pass in search? It seems more confusing to me this way.
+  const actual = await api.API('/stac', undefined, backend, 'endpoint')
+  const expectedLinks = [
+    {
+      rel: 'child',
+      href: 'endpoint/collections/collection'
+    },
+    {
+      rel: 'self',
+      href: 'endpoint/stac'
+    },
+    {
+      rel: 'search',
+      href: 'endpoint/stac/search'
+    },
+    {
+      href: 'test',
+      rel: 'service'
+    }
+  ]
+  t.is(search.firstCall.args[1], 'collections')
+  t.deepEqual(actual.links, expectedLinks,
+    'Returns STAC catalog with links to collections')
+})
 
 // What is features?
 // test('search /stac/search wraps results', async (t) => {

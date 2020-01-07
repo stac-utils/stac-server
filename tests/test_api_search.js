@@ -104,7 +104,7 @@ test('search /search wraps results', async (t) => {
   const results = [clonedItem]
 
   const itemsResults = { 'search:metadata': meta, results }
-  const search = sinon.stub()
+  const search = sinon.stub().resolves({ results: [], meta: {} })
   search.resolves(itemsResults)
   const backend = { search }
   const actual = await api.API('/search', {}, backend, 'endpoint')

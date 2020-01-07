@@ -30,6 +30,7 @@ test('search es error', async (t) => {
 // What is this trying to do and what is links? 
 test('search /', async (t) => {
   const actual = await api.API('/', undefined, undefined, 'endpoint')
+  console.log('this is me figuring out actual', actual)
   console.log('this is me figuring out links', actual.links)
   // if here are no collections it should return 0
   t.is(actual.links.length, 0)

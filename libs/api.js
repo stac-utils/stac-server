@@ -327,7 +327,7 @@ const searchItems = async function (collectionId, queryParameters, backend, endp
     searchParameters.collections = [collectionId]
   }
   logger.debug(`Search parameters: ${JSON.stringify(searchParameters)}`)
-  const { results: itemsResults, 'context': itemsMeta } =
+  const { 'results': itemsResults, 'context': itemsMeta } =
     await backend.search(searchParameters, 'items', page, limit)
   console.log('asdfkjhasdfjasdl;kfjdlasfjl;akdsjfasdf', results)
   const pageLinks = buildPageLinks(itemsMeta, searchParameters, endpoint)

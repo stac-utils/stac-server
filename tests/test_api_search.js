@@ -30,8 +30,6 @@ test('search /', async (t) => {
   const search = sinon.stub().resolves({ results: [], meta: {} })
   const backend = { search }
   const actual = await api.API('/', undefined, backend, 'endpoint')
-  console.log('this is me figuring out actual', actual)
-  console.log('this is me figuring out links', actual.links)
   t.is(actual.links.length, 5)
 })
 
@@ -94,35 +92,35 @@ test('search /', async (t) => {
 })
 
 // What is features?
-// test('search /search wraps results', async (t) => {
-//   const limit = 10
-//   const meta = {
-//     limit,
-//     next: null,
-//     matched: 1,
-//     returned: 1
-//   }
-//   const clonedItem = cloneMutatedItem()
-//   const results = [clonedItem]
+test('search /search wraps results', async (t) => {
+  const limit = 10
+  const meta = {
+    limit,
+    next: null,
+    matched: 1,
+    returned: 1
+  }
+  const clonedItem = cloneMutatedItem()
+  const results = [clonedItem]
 
-//   const itemsResults = { 'search:metadata': meta, results }
-//   const search = sinon.stub()
-//   search.resolves(itemsResults)
-//   const backend = { search }
-//   const actual = await api.API('/search', {}, backend, 'endpoint')
-//   console.log('this is actual: ', actual)
-//   t.deepEqual(actual.features[0].links, itemLinks.links,
-//     'Adds correct relative STAC links')
+  const itemsResults = { 'search:metadata': meta, results }
+  const search = sinon.stub()
+  search.resolves(itemsResults)
+  const backend = { search }
+  const actual = await api.API('/search', {}, backend, 'endpoint')
+  console.log('this is actual: ', actual)
+  t.deepEqual(actual.features[0].links, itemLinks.links,
+    'Adds correct relative STAC links')
 
-//   const expectedMeta = {
-//     limit,
-//     next: null,
-//     matched: 1,
-//     returned: 1
-//   }
-//   t.deepEqual(actual['search:metadata'], expectedMeta, 'Adds correct response metadata fields')
-//   t.is(actual.type, 'FeatureCollection', 'Wraps response as FeatureCollection')
-// })
+  const expectedMeta = {
+    limit,
+    next: null,
+    matched: 1,
+    returned: 1
+  }
+  t.deepEqual(actual['search:metadata'], expectedMeta, 'Adds correct response metadata fields')
+  t.is(actual.type, 'FeatureCollection', 'Wraps response as FeatureCollection')
+})
 
 test('search /search query parameters', async (t) => {
   const search = sinon.stub().resolves({ results: [], meta: {} })

@@ -38,11 +38,9 @@ test('search es error', async (t) => {
 //   // t.is(actual.links.length, 5)
 // })
 
-// What is openapi supposed to be?
 test('search /api', async (t) => {
   const actual = await api.API('/api', undefined, undefined, 'endpoint')
   console.log('this should be the open api', actual)
-  // looking for openApi document './api.yaml
   t.truthy(actual.openapi)
 })
 
@@ -52,36 +50,36 @@ test('search /conformance', async (t) => {
   t.is(actual.conformsTo.length, 3)
 })
 
-// // What is firstCall and links
-// test('search /stac', async (t) => {
-//   process.env.STAC_DOCS_URL = 'test'
-//   const collection = 'collection'
-//   const results = { results: [{ id: collection }] }
-//   const search = sinon.stub().resolves(results)
-//   const backend = { search } // Why not just pass in search? It seems more confusing to me this way.
-//   const actual = await api.API('/stac', undefined, backend, 'endpoint')
-//   const expectedLinks = [
-//     {
-//       rel: 'child',
-//       href: 'endpoint/collections/collection'
-//     },
-//     {
-//       rel: 'self',
-//       href: 'endpoint/stac'
-//     },
-//     {
-//       rel: 'search',
-//       href: 'endpoint/stac/search'
-//     },
-//     {
-//       href: 'test',
-//       rel: 'service'
-//     }
-//   ]
-//   t.is(search.firstCall.args[1], 'collections')
-//   t.deepEqual(actual.links, expectedLinks,
-//     'Returns STAC catalog with links to collections')
-// })
+// What is firstCall and links
+test('search /stac', async (t) => {
+  process.env.STAC_DOCS_URL = 'test'
+  const collection = 'collection'
+  const results = { results: [{ id: collection }] }
+  const search = sinon.stub().resolves(results)
+  const backend = { search } // Why not just pass in search? It seems more confusing to me this way.
+  const actual = await api.API('/stac', undefined, backend, 'endpoint')
+  const expectedLinks = [
+    {
+      rel: 'child',
+      href: 'endpoint/collections/collection'
+    },
+    {
+      rel: 'self',
+      href: 'endpoint/stac'
+    },
+    {
+      rel: 'search',
+      href: 'endpoint/stac/search'
+    },
+    {
+      href: 'test',
+      rel: 'service'
+    }
+  ]
+  t.is(search.firstCall.args[1], 'collections')
+  t.deepEqual(actual.links, expectedLinks,
+    'Returns STAC catalog with links to collections')
+})
 
 // What is features?
 // test('search /stac/search wraps results', async (t) => {

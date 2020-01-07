@@ -26,17 +26,14 @@ test('search es error', async (t) => {
   t.is(response.code, 500)
 })
 
-// // What is backend supposed to look like? 
-// test('search /', async (t) => {
-//   const search = sinon.stub().resolves({test: 'test'})
-//   const backend = { search }
-//   const actual = await api.API('/', undefined, backend, 'endpoint')
-//   console.log('this is me figuring out actual', actual)
-//   console.log('this is me figuring out links', actual.links)
-//   // if here are no collections it should return 0
-//   t.is(actual.links.length, 0)
-//   // t.is(actual.links.length, 5)
-// })
+test('search /', async (t) => {
+  const search = sinon.stub().resolves({ results: [], meta: {} })
+  const backend = { search }
+  const actual = await api.API('/', undefined, backend, 'endpoint')
+  console.log('this is me figuring out actual', actual)
+  console.log('this is me figuring out links', actual.links)
+  t.is(actual.links.length, 5)
+})
 
 test('search /api', async (t) => {
   const actual = await api.API('/api', undefined, undefined, 'endpoint')
@@ -141,176 +138,176 @@ test('search /search query parameters', async (t) => {
     'Extracts query to use in search parameters')
 })
 
-// test('search /stac/search intersects parameter', async (t) => {
-//   const search = sinon.stub().resolves({ results: [], meta: {} })
-//   const backend = { search }
-//   const queryParams = {
-//     intersects: item.geometry,
-//     page: 1,
-//     limit: 1
-//   }
-//   api.API('/stac/search', queryParams, backend, 'endpoint')
-//   t.deepEqual(search.firstCall.args[0].intersects, item.geometry,
-//     'Uses valid GeoJSON as intersects search parameter')
+test('search /search intersects parameter', async (t) => {
+  const search = sinon.stub().resolves({ results: [], meta: {} })
+  const backend = { search }
+  const queryParams = {
+    intersects: item.geometry,
+    page: 1,
+    limit: 1
+  }
+  api.API('/search', queryParams, backend, 'endpoint')
+  t.deepEqual(search.firstCall.args[0].intersects, item.geometry,
+    'Uses valid GeoJSON as intersects search parameter')
 
-//   search.resetHistory()
-//   queryParams.intersects = JSON.stringify(item.geometry)
-//   api.API('/stac/search', queryParams, backend, 'endpoint')
-//   t.deepEqual(search.firstCall.args[0].intersects, item.geometry,
-//     'Handles stringified GeoJSON intersects parameter')
-// })
+  search.resetHistory()
+  queryParams.intersects = JSON.stringify(item.geometry)
+  api.API('/search', queryParams, backend, 'endpoint')
+  t.deepEqual(search.firstCall.args[0].intersects, item.geometry,
+    'Handles stringified GeoJSON intersects parameter')
+})
 
-// test('search /stac/search bbox parameter', async (t) => {
-//   const search = sinon.stub().resolves({ results: [], meta: {} })
-//   const backend = { search }
-//   const w = -10
-//   const s = -10
-//   const e = 10
-//   const n = 10
-//   const bbox = [w, s, e, n]
-//   const queryParams = {
-//     bbox,
-//     page: 1,
-//     limit: 1
-//   }
-//   const expected = {
-//     type: 'Polygon',
-//     coordinates: [[
-//       [s, w],
-//       [n, w],
-//       [n, e],
-//       [s, e],
-//       [s, w]
-//     ]]
-//   }
-//   await api.API('/stac/search', queryParams, backend, 'endpoint')
-//   t.deepEqual(search.firstCall.args[0].intersects, expected,
-//     'Converts a [w,s,e,n] bbox to an intersects search parameter')
-//   search.resetHistory()
-//   queryParams.bbox = `[${bbox.toString()}]`
-//   await api.API('/stac/search', queryParams, backend, 'endpoint')
-//   t.deepEqual(search.firstCall.args[0].intersects, expected,
-//     'Converts stringified [w,s,e,n] bbox to an intersects search parameter')
-// })
+test('search /search bbox parameter', async (t) => {
+  const search = sinon.stub().resolves({ results: [], meta: {} })
+  const backend = { search }
+  const w = -10
+  const s = -10
+  const e = 10
+  const n = 10
+  const bbox = [w, s, e, n]
+  const queryParams = {
+    bbox,
+    page: 1,
+    limit: 1
+  }
+  const expected = {
+    type: 'Polygon',
+    coordinates: [[
+      [s, w],
+      [n, w],
+      [n, e],
+      [s, e],
+      [s, w]
+    ]]
+  }
+  await api.API('/search', queryParams, backend, 'endpoint')
+  t.deepEqual(search.firstCall.args[0].intersects, expected,
+    'Converts a [w,s,e,n] bbox to an intersects search parameter')
+  search.resetHistory()
+  queryParams.bbox = `[${bbox.toString()}]`
+  await api.API('/search', queryParams, backend, 'endpoint')
+  t.deepEqual(search.firstCall.args[0].intersects, expected,
+    'Converts stringified [w,s,e,n] bbox to an intersects search parameter')
+})
 
-// test('search /stac/search time parameter', async (t) => {
-//   const search = sinon.stub().resolves({ results: [], meta: {} })
-//   const backend = { search }
-//   const range = '2007-03-01T13:00:00Z/2008-05-11T15:30:00Z'
-//   const queryParams = {
-//     page: 1,
-//     limit: 2,
-//     datetime: range
-//   }
-//   await api.API('/stac/search', queryParams, backend, 'endpoint')
-//   t.deepEqual(search.firstCall.args[0], { datetime: range },
-//     'Extracts time query parameter and transforms it into ' +
-//     'datetime search parameter')
-// })
+test('search /search time parameter', async (t) => {
+  const search = sinon.stub().resolves({ results: [], meta: {} })
+  const backend = { search }
+  const range = '2007-03-01T13:00:00Z/2008-05-11T15:30:00Z'
+  const queryParams = {
+    page: 1,
+    limit: 2,
+    datetime: range
+  }
+  await api.API('/search', queryParams, backend, 'endpoint')
+  t.deepEqual(search.firstCall.args[0], { datetime: range },
+    'Extracts time query parameter and transforms it into ' +
+    'datetime search parameter')
+})
 
-// test('search /collections', async (t) => {
-//   const meta = {
-//     limit: 1,
-//     page: 1,
-//     found: 1,
-//     returned: 1
-//   }
-//   const search = sinon.stub().resolves({
-//     meta,
-//     results: [{
-//       id: 1,
-//       links: []
-//     }]
-//   })
-//   const backend = { search }
-//   const actual = await api.API('/collections', {}, backend, 'endpoint')
-//   t.is(search.firstCall.args[1], 'collections')
-//   t.is(actual.collections.length, 1)
-//   t.is(actual.collections[0].links.length, 4, 'Adds STAC links to each collection')
-// })
+test('search /collections', async (t) => {
+  const meta = {
+    limit: 1,
+    page: 1,
+    found: 1,
+    returned: 1
+  }
+  const search = sinon.stub().resolves({
+    meta,
+    results: [{
+      id: 1,
+      links: []
+    }]
+  })
+  const backend = { search }
+  const actual = await api.API('/collections', {}, backend, 'endpoint')
+  t.is(search.firstCall.args[1], 'collections')
+  t.is(actual.collections.length, 1)
+  t.is(actual.collections[0].links.length, 4, 'Adds STAC links to each collection')
+})
 
-// test('search /collections/collectionId', async (t) => {
-//   const meta = {
-//     limit: 1,
-//     page: 1,
-//     found: 1,
-//     returned: 1
-//   }
-//   const search = sinon.stub().resolves({
-//     meta,
-//     results: [{
-//       id: 1,
-//       links: []
-//     }]
-//   })
-//   const backend = { search }
-//   const collectionId = 'collectionId'
-//   let actual = await api.API(
-//     `/collections/${collectionId}`, { test: 'test' }, backend, 'endpoint'
-//   )
-//   t.deepEqual(search.firstCall.args[0], { id: collectionId },
-//     'Calls search with the collectionId path element as id parameter' +
-//     ' and ignores other passed filter parameters')
-//   t.is(actual.links.length, 4, 'Returns the first found collection as object')
+test('search /collections/collectionId', async (t) => {
+  const meta = {
+    limit: 1,
+    page: 1,
+    found: 1,
+    returned: 1
+  }
+  const search = sinon.stub().resolves({
+    meta,
+    results: [{
+      id: 1,
+      links: []
+    }]
+  })
+  const backend = { search }
+  const collectionId = 'collectionId'
+  let actual = await api.API(
+    `/collections/${collectionId}`, { test: 'test' }, backend, 'endpoint'
+  )
+  t.deepEqual(search.firstCall.args[0], { id: collectionId },
+    'Calls search with the collectionId path element as id parameter' +
+    ' and ignores other passed filter parameters')
+  t.is(actual.links.length, 4, 'Returns the first found collection as object')
 
-//   search.reset()
-//   search.resolves({
-//     meta,
-//     results: []
-//   })
-//   actual = await api.API(
-//     `/collections/${collectionId}`, {}, backend, 'endpoint'
-//   )
-//   t.is(actual.message, 'Collection not found',
-//     'Sends error when not collections are found in search')
-// })
+  search.reset()
+  search.resolves({
+    meta,
+    results: []
+  })
+  actual = await api.API(
+    `/collections/${collectionId}`, {}, backend, 'endpoint'
+  )
+  t.is(actual.message, 'Collection not found',
+    'Sends error when not collections are found in search')
+})
 
-// test('search /collections/collectionId/items', async (t) => {
-//   const meta = {
-//     limit: 1,
-//     page: 1,
-//     found: 1,
-//     returned: 1
-//   }
+test('search /collections/collectionId/items', async (t) => {
+  const meta = {
+    limit: 1,
+    page: 1,
+    found: 1,
+    returned: 1
+  }
 
-//   const search = sinon.stub().resolves({
-//     meta,
-//     results: []
-//   })
-//   const backend = { search }
-//   const collectionId = 'collectionId'
-//   await api.API(
-//     `/collections/${collectionId}/items`, {}, backend, 'endpoint'
-//   )
-//   const expectedParameters = {
-//     collections: [collectionId]
-//   }
-//   t.deepEqual(search.firstCall.args[0], expectedParameters,
-//     'Calls search with the collectionId as a parameter')
-// })
+  const search = sinon.stub().resolves({
+    meta,
+    results: []
+  })
+  const backend = { search }
+  const collectionId = 'collectionId'
+  await api.API(
+    `/collections/${collectionId}/items`, {}, backend, 'endpoint'
+  )
+  const expectedParameters = {
+    collections: [collectionId]
+  }
+  t.deepEqual(search.firstCall.args[0], expectedParameters,
+    'Calls search with the collectionId as a parameter')
+})
 
-// test('search /collections/collectionId/items/itemId', async (t) => {
-//   const meta = {
-//     limit: 1,
-//     page: 1,
-//     found: 1,
-//     returned: 1
-//   }
-//   const clonedItem = cloneMutatedItem()
-//   const results = [clonedItem]
-//   const search = sinon.stub().resolves({
-//     meta,
-//     results
-//   })
-//   const backend = { search }
-//   const itemId = 'itemId'
-//   const actual = await api.API(
-//     `/collections/collectionId/items/${itemId}`, {}, backend, 'endpoint'
-//   )
-//   t.deepEqual(search.firstCall.args[0], { id: itemId },
-//     'Calls search with the itemId path element as id parameter' +
-//     ' and ignores other passed filter parameters')
+test('search /collections/collectionId/items/itemId', async (t) => {
+  const meta = {
+    limit: 1,
+    page: 1,
+    found: 1,
+    returned: 1
+  }
+  const clonedItem = cloneMutatedItem()
+  const results = [clonedItem]
+  const search = sinon.stub().resolves({
+    meta,
+    results
+  })
+  const backend = { search }
+  const itemId = 'itemId'
+  const actual = await api.API(
+    `/collections/collectionId/items/${itemId}`, {}, backend, 'endpoint'
+  )
+  t.deepEqual(search.firstCall.args[0], { id: itemId },
+    'Calls search with the itemId path element as id parameter' +
+    ' and ignores other passed filter parameters')
 
-//   t.is(actual.type, 'Feature')
-//   t.is(actual.links.length, 4, 'Adds STAC links to response object')
-// })
+  t.is(actual.type, 'Feature')
+  t.is(actual.links.length, 4, 'Adds STAC links to response object')
+})

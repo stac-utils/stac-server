@@ -19,7 +19,6 @@ test('search es error', async (t) => {
   const errorMessage = 'errorMessage'
   const search = sinon.stub().throws(new Error(errorMessage))
   const backend = { search }
-  // look into working with the root as '/stac' doesn't exist any more
   const response = await proxyApi.API('/', undefined, backend, 'endpoint')
   t.is(error.firstCall.args[0].message, errorMessage,
     'Logs Elasticsearch error via Winston transport')
@@ -27,23 +26,25 @@ test('search es error', async (t) => {
   t.is(response.code, 500)
 })
 
-// What is this trying to do and what is links? 
-test('search /', async (t) => {
-  const actual = await api.API('/', undefined, undefined, 'endpoint')
-  console.log('this is me figuring out actual', actual)
-  console.log('this is me figuring out links', actual.links)
-  // if here are no collections it should return 0
-  t.is(actual.links.length, 0)
-  // t.is(actual.links.length, 5)
-})
-
-// // What is openapi supposed to be?
-// test('search /api', async (t) => {
-//   const actual = await api.API('/api', undefined, undefined, 'endpoint')
-//   console.log('this should be the open api', actual)
-//   // looking for openApi document './api.yaml
-//   t.truthy(actual.openapi)
+// // What is backend supposed to look like? 
+// test('search /', async (t) => {
+//   const search = sinon.stub().resolves({test: 'test'})
+//   const backend = { search }
+//   const actual = await api.API('/', undefined, backend, 'endpoint')
+//   console.log('this is me figuring out actual', actual)
+//   console.log('this is me figuring out links', actual.links)
+//   // if here are no collections it should return 0
+//   t.is(actual.links.length, 0)
+//   // t.is(actual.links.length, 5)
 // })
+
+// What is openapi supposed to be?
+test('search /api', async (t) => {
+  const actual = await api.API('/api', undefined, undefined, 'endpoint')
+  console.log('this should be the open api', actual)
+  // looking for openApi document './api.yaml
+  t.truthy(actual.openapi)
+})
 
 test('search /conformance', async (t) => {
   const actual = await api.API('/conformance', undefined, undefined, 'endpoint')

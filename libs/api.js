@@ -3,6 +3,7 @@ const extent = require('@mapbox/extent')
 const yaml = require('js-yaml')
 const fs = require('fs')
 const logger = require('./logger')
+const path = require('path')
 
 // max number of collections to retrieve
 const COLLECTION_LIMIT = process.env.SATAPI_COLLECTION_LIMIT || 100
@@ -337,7 +338,7 @@ const searchItems = async function (collectionId, queryParameters, backend, endp
 
 
 const getAPI = async function () {
-  const spec = yaml.safeLoad(fs.readFileSync('./api.yaml', 'utf8'))
+  const spec = yaml.safeLoad(fs.readFileSync(path.resolve(__dirname, './api.yaml'), 'utf8'))
   return spec
 }
 
@@ -357,7 +358,6 @@ const getConformance = async function () {
 const getCatalog = async function (backend, endpoint = '') {
   const { results } = await backend.search({}, 'collections', 1, COLLECTION_LIMIT)
   const catalog = collectionsToCatalogLinks(results, endpoint)
-  let links
   catalog.links.push({
     rel: 'service-desc',
     type: 'application/vnd.oai.openapi+json;version=3.0',
@@ -389,8 +389,6 @@ const getCatalog = async function (backend, endpoint = '') {
       href: process.env.STAC_DOCS_URL
     })
   }
-  links = catalog.links
-  console.log('tlakjdslfkjasdlfjladsfjlkadsjfldsakjfldskjf')
   return catalog
 }
 

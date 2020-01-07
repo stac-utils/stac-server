@@ -40,7 +40,6 @@ test('search es error', async (t) => {
 
 test('search /api', async (t) => {
   const actual = await api.API('/api', undefined, undefined, 'endpoint')
-  console.log('this should be the open api', actual)
   t.truthy(actual.openapi)
 })
 
@@ -50,30 +49,46 @@ test('search /conformance', async (t) => {
   t.is(actual.conformsTo.length, 3)
 })
 
-// What is firstCall and links
-test('search /stac', async (t) => {
+test('search /', async (t) => {
   process.env.STAC_DOCS_URL = 'test'
   const collection = 'collection'
   const results = { results: [{ id: collection }] }
   const search = sinon.stub().resolves(results)
-  const backend = { search } // Why not just pass in search? It seems more confusing to me this way.
-  const actual = await api.API('/stac', undefined, backend, 'endpoint')
+  const backend = { search }
+  const actual = await api.API('/', undefined, backend, 'endpoint')
   const expectedLinks = [
     {
       rel: 'child',
       href: 'endpoint/collections/collection'
     },
     {
+      rel: 'service-desc',
+      type: 'application/vnd.oai.openapi+json;version=3.0',
+      href: 'endpoint/api'
+    },
+    {
+      rel: 'conformance',
+      type: 'application/json',
+      href: 'endpoint/conformance'
+    },
+    {
+      rel: 'children',
+      type: 'application/json',
+      href: 'endpoint/collections'
+    },
+    {
       rel: 'self',
-      href: 'endpoint/stac'
+      type: 'application/json',
+      href: 'endpoint/'
     },
     {
       rel: 'search',
-      href: 'endpoint/stac/search'
+      type: 'application/json',
+      href: 'endpoint/search'
     },
     {
-      href: 'test',
-      rel: 'service'
+      rel: 'docs',
+      href: 'test'
     }
   ]
   t.is(search.firstCall.args[1], 'collections')

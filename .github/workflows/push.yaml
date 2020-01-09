@@ -7,7 +7,7 @@ on:
 name: Push Event
 jobs:
   test:
-    name: github-action-tester
+    name: Run tests
     runs-on: macos-latest
     steps:
     - uses: actions/checkout@master

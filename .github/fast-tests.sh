@@ -1,2 +1,2 @@
 echo "Running test 📝"
-yarn run test
+npm run test

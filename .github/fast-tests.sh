@@ -1,2 +1,2 @@
 echo "Running test 📝"
-npm run test
+run test

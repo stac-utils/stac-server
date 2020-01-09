@@ -86,6 +86,7 @@ test('ingest logs request error and continues', async (t) => {
   })
   const { esStream, backend } = setup()
   await proxyIngest.ingest('./fixtures/stac/catalog.json', backend)
+  console.log('this is me trying to figure out what error.firstCall is:', error(errorMessage))
   t.is(error.firstCall.args[0], errorMessage,
     'Logs error via Winston transport')
   t.is(esStream.queue.length, 6, 'Skips errored request and continues')

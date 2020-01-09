@@ -2,7 +2,8 @@ const gjv = require('geojson-validation')
 const extent = require('@mapbox/extent')
 const yaml = require('js-yaml')
 const fs = require('fs')
-const logger = console //require('./logger')
+const logger = require('./logger')
+const path = require('path')
 
 // max number of collections to retrieve
 const COLLECTION_LIMIT = process.env.SATAPI_COLLECTION_LIMIT || 100
@@ -131,6 +132,7 @@ const parsePath = function (path) {
     root: false,
     api: false,
     conformance: false,
+    stac: false,
     collections: false,
     search: false,
     collectionId: false,
@@ -143,12 +145,18 @@ const parsePath = function (path) {
   const search = 'search'
   const items = 'items'
 
+  const stac = 'stac'
+
   const pathComponents = path.split('/').filter((x) => x)
   const { length } = pathComponents
   searchFilters.root = length === 0
   searchFilters.api = pathComponents[0] === api
   searchFilters.conformance = pathComponents[0] === conformance
   searchFilters.collections = pathComponents[0] === collections
+
+  searchFilters.stac = pathComponents[0] === stac
+  // searchFilters.stac = pathComponents[0] === stac.length > 3
+
   searchFilters.collectionId =
     pathComponents[0] === collections && length >= 2 ? pathComponents[1] : false
   searchFilters.search = pathComponents[0] === search
@@ -230,6 +238,7 @@ const collectionsToCatalogLinks = function (results, endpoint) {
     title: stac_title,
     description: stac_description
   }
+  console.log(results)
   catalog.links = results.map((result) => {
     const { id } = result
     return {
@@ -318,8 +327,9 @@ const searchItems = async function (collectionId, queryParameters, backend, endp
     searchParameters.collections = [collectionId]
   }
   logger.debug(`Search parameters: ${JSON.stringify(searchParameters)}`)
-  const { results: itemsResults, 'context': itemsMeta } =
+  const { 'results': itemsResults, 'context': itemsMeta } =
     await backend.search(searchParameters, 'items', page, limit)
+  console.log('asdfkjhasdfjasdl;kfjdlasfjl;akdsjfasdf', results)
   const pageLinks = buildPageLinks(itemsMeta, searchParameters, endpoint)
   const items = addItemLinks(itemsResults, endpoint)
   const response = wrapResponseInFeatureCollection(itemsMeta, items, pageLinks)
@@ -329,7 +339,7 @@ const searchItems = async function (collectionId, queryParameters, backend, endp
 
 
 const getAPI = async function () {
-  const spec = yaml.safeLoad(fs.readFileSync('./api.yaml', 'utf8'))
+  const spec = yaml.safeLoad(fs.readFileSync(path.resolve(__dirname, './api.yaml'), 'utf8'))
   return spec
 }
 
@@ -452,6 +462,8 @@ const API = async function (
         null, queryParameters, backend, endpoint
       )
     }
+    // Search
+    
     // All collections
     if (collections && !collectionId) {
       apiResponse = await getCollections(backend, endpoint)

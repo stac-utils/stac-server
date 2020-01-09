@@ -10,7 +10,7 @@ jobs:
     name: github-action-tester
     runs-on: macos-latest
     steps:
-    - uses: actions/checkout@develop
+    - uses: actions/checkout@master
     - name: test
       uses: skx/github-action-tester@master
       with:

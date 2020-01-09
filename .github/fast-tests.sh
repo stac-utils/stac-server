@@ -7,5 +7,5 @@ apt-get install sudo
 # sudo apt update
 # sudo apt install yarn
 # yarn run test
-sudo apt install npm
+Y | sudo apt install npm
 npm run test

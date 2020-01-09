@@ -1,3 +1,4 @@
+#! /bin/sh
 echo "Running test 📝"
 apt-get install sudo
 curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add -

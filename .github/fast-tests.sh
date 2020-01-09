@@ -1,2 +1,2 @@
-yarn run test
 echo "Running test 📝"
+yarn run test

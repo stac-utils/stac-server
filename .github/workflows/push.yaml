@@ -10,8 +10,8 @@ jobs:
     name: Run tests
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@master
     - name: test
-      uses: skx/github-action-tester@master
-      with:
-        script: .github/fast-tests.sh
+      run: |
+        yarn install
+        yarn run test
+      working-directory: ./stac-api

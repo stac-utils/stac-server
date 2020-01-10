@@ -10,10 +10,12 @@ jobs:
     name: Run tests
     runs-on: ubuntu-latest
     steps:
+    - uses: actions/checkout@v1
+
     - name: install node
       uses: actions/setup-node@master
       with:
-        version: 10.15
+        node-version: 10.15
 
     - name: yarn install
       run: yarn install

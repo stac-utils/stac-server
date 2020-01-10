@@ -7,4 +7,4 @@ echo "deb https://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/source
 # sudo apt update
 sudo apt install yarn -y
 yarn --version
-yarn ./ run test
+yarn ./fast-tests.sh run test

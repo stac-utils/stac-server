@@ -14,4 +14,4 @@ jobs:
       working-directory: .
       run: |
         ls
-        yarn run test
+        yarn test

@@ -12,6 +12,6 @@ jobs:
     steps:
     - name: test
       run: |
-        yarn install
-        yarn run test
+        npm install
+        npm run test
       working-directory: ./stac-api

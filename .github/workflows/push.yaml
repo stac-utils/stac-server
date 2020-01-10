@@ -8,8 +8,8 @@ name: Push Event
 jobs:
   test:
     name: Run tests
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
     steps:
     - name: test
+      working-directory: ./stac-api
       run: yarn run test
-      working-directory: ..

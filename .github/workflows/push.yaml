@@ -12,4 +12,6 @@ jobs:
     steps:
     - name: test
       working-directory: .
-      run: yarn run test
+      run: |
+        ls
+        yarn run test

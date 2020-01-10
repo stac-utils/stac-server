@@ -11,5 +11,5 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: test
-      working-directory: ./stac-api
+      working-directory: .
       run: yarn run test

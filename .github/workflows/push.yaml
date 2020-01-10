@@ -11,7 +11,4 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: test
-      run: |
-        npm install
-        npm run test
-      working-directory: ./stac-api
+      run: npm run test

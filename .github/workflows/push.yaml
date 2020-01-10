@@ -10,8 +10,14 @@ jobs:
     name: Run tests
     runs-on: ubuntu-latest
     steps:
-    - name: test
-      working-directory: .
-      run: |
-        ls
-        yarn test
+    - name: install node
+      uses: actions/setup-node@master
+      with:
+        version: 10.15
+
+    - name: yarn install
+      run: yarn install
+
+    - name: yarn test
+      run: yarn test
+

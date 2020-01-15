@@ -108,7 +108,6 @@ test('search /search wraps results', async (t) => {
   search.resolves(itemsResults)
   const backend = { search }
   const actual = await api.API('/search', {}, backend, 'endpoint')
-  console.log('this is actual: ', actual)
   t.deepEqual(actual.features[0].links, itemLinks.links,
     'Adds correct relative STAC links')
 

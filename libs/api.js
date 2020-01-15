@@ -238,7 +238,6 @@ const collectionsToCatalogLinks = function (results, endpoint) {
     title: stac_title,
     description: stac_description
   }
-  console.log(results)
   catalog.links = results.map((result) => {
     const { id } = result
     return {
@@ -329,7 +328,6 @@ const searchItems = async function (collectionId, queryParameters, backend, endp
   logger.debug(`Search parameters: ${JSON.stringify(searchParameters)}`)
   const { 'results': itemsResults, 'context': itemsMeta } =
     await backend.search(searchParameters, 'items', page, limit)
-  console.log('asdfkjhasdfjasdl;kfjdlasfjl;akdsjfasdf', results)
   const pageLinks = buildPageLinks(itemsMeta, searchParameters, endpoint)
   const items = addItemLinks(itemsResults, endpoint)
   const response = wrapResponseInFeatureCollection(itemsMeta, items, pageLinks)

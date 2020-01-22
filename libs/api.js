@@ -98,10 +98,28 @@ const extractFields = function (params) {
   const { fields } = params
   if (fields) {
     if (typeof fields === 'string') {
-      fieldRules = JSON.parse(fields)
+      // GET request - different syntax
+      const _fields = fields.split(',')
+      const include = []
+      _fields.forEach((fieldRule) => {
+        if (fieldRule[0] !== '-') {
+          include.push(fieldRule)
+        }
+      })
+      const exclude = []
+      _fields.forEach((fieldRule) => {
+        if (fieldRule[0] === '-') {
+          exclude.push(fieldRule.slice(1))
+        }
+      })
+      fieldRules = { include, exclude }
     } else {
+      // POST request - JSON
       fieldRules = fields
     }
+  } else if (params.hasOwnProperty('fields')) {
+    // fields was provided as an empty object
+    fieldRules = {}
   }
   return fieldRules
 }

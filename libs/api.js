@@ -77,8 +77,16 @@ const extractSortby = function (params) {
   const { sortby } = params
   if (sortby) {
     if (typeof sortby === 'string') {
-      sortbyRules = JSON.parse(sortby)
+      // GET request - different syntax
+      sortbyRules = sortby.split(',').map((sortByRule) => {
+        const [field, direction] = sortByRule.split('|')
+        return {
+          field,
+          direction
+        }
+      })
     } else {
+      // POST request
       sortbyRules = sortby.slice()
     }
   }

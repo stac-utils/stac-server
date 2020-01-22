@@ -355,14 +355,13 @@ function buildIdsQuery(ids) {
 }
 
 function buildSort(parameters) {
-  const { sort } = parameters
+  const { sortby } = parameters
   let sorting
-  if (sort && sort.length > 0) {
-    sorting = sort.map((sortRule) => {
-      const { field, direction } = sortRule
-      const propertyKey = `properties.${field}`
+  if (sortby && sortby.length > 0) {
+    sorting = sortby.map((sortbyRule) => {
+      const { field, direction } = sortbyRule
       return {
-        [propertyKey]: {
+        [field]: {
           order: direction
         }
       }

@@ -72,17 +72,17 @@ const extractStacQuery = function (params) {
   return stacQuery
 }
 
-const extractSort = function (params) {
-  let sortRules
-  const { sort } = params
-  if (sort) {
-    if (typeof sort === 'string') {
-      sortRules = JSON.parse(sort)
+const extractSortby = function (params) {
+  let sortbyRules
+  const { sortby } = params
+  if (sortby) {
+    if (typeof sortby === 'string') {
+      sortbyRules = JSON.parse(sortby)
     } else {
-      sortRules = sort.slice()
+      sortbyRules = sortby.slice()
     }
   }
-  return sortRules
+  return sortbyRules
 }
 
 const extractFields = function (params) {
@@ -288,7 +288,7 @@ const searchItems = async function (collectionId, queryParameters, backend, endp
   if (bbox && hasIntersects) {
     throw new Error('Expected bbox OR intersects, not both')
   }
-  const sort = extractSort(queryParameters)
+  const sortby = extractSortby(queryParameters)
   // Prefer intersects
   const intersects = hasIntersects || bbox
   const query = extractStacQuery(queryParameters)
@@ -300,7 +300,7 @@ const searchItems = async function (collectionId, queryParameters, backend, endp
     datetime,
     intersects,
     query,
-    sort,
+    sortby,
     fields,
     ids,
     collections

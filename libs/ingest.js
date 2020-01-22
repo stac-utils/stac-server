@@ -7,7 +7,7 @@ const isUrl = require('is-url')
 const MemoryStream = require('memorystream')
 const { Readable } = require('readable-stream')
 const pump = require('pump')
-const logger = require('./logger')
+const logger = console //require('./logger')
 
 const limiter = new Bottleneck({
   maxConcurrent: 500

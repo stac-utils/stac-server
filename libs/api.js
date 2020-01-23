@@ -73,17 +73,25 @@ const extractStacQuery = function (params) {
   return stacQuery
 }
 
-const extractSort = function (params) {
-  let sortRules
-  const { sort } = params
-  if (sort) {
-    if (typeof sort === 'string') {
-      sortRules = JSON.parse(sort)
+const extractSortby = function (params) {
+  let sortbyRules
+  const { sortby } = params
+  if (sortby) {
+    if (typeof sortby === 'string') {
+      // GET request - different syntax
+      sortbyRules = sortby.split(',').map((sortByRule) => {
+        const [field, direction] = sortByRule.split('|')
+        return {
+          field,
+          direction
+        }
+      })
     } else {
-      sortRules = sort.slice()
+      // POST request
+      sortbyRules = sortby.slice()
     }
   }
-  return sortRules
+  return sortbyRules
 }
 
 const extractFields = function (params) {
@@ -91,10 +99,28 @@ const extractFields = function (params) {
   const { fields } = params
   if (fields) {
     if (typeof fields === 'string') {
-      fieldRules = JSON.parse(fields)
+      // GET request - different syntax
+      const _fields = fields.split(',')
+      const include = []
+      _fields.forEach((fieldRule) => {
+        if (fieldRule[0] !== '-') {
+          include.push(fieldRule)
+        }
+      })
+      const exclude = []
+      _fields.forEach((fieldRule) => {
+        if (fieldRule[0] === '-') {
+          exclude.push(fieldRule.slice(1))
+        }
+      })
+      fieldRules = { include, exclude }
     } else {
+      // POST request - JSON
       fieldRules = fields
     }
+  } else if (params.hasOwnProperty('fields')) {
+    // fields was provided as an empty object
+    fieldRules = {}
   }
   return fieldRules
 }
@@ -272,13 +298,23 @@ const buildPageLinks = function (meta, parameters, endpoint) {
     ).join('&')
   )
   const { matched, page, limit } = meta
+  let newParams
   if ((page * limit) < matched) {
-    const newParams = Object.assign({}, parameters, { page: page + 1, limit })
+    newParams = Object.assign({}, parameters, { page: page + 1, limit })
     const nextQueryParameters = dictToURI(newParams)
     pageLinks.push({
       rel: 'next',
       title: 'Next page of results',
-      href: `${endpoint}/search?${nextQueryParameters}`
+      href: `${endpoint}?${nextQueryParameters}`
+    })
+  }
+  if (page > 1) {
+    newParams = Object.assign({}, parameters, { page: page - 1, limit })
+    const prevQueryParameters = dictToURI(newParams)
+    pageLinks.push({
+      rel: 'prev',
+      title: 'Previous page of results',
+      href: `${endpoint}?${prevQueryParameters}`
     })
   }
   return pageLinks
@@ -296,7 +332,7 @@ const searchItems = async function (collectionId, queryParameters, backend, endp
   if (bbox && hasIntersects) {
     throw new Error('Expected bbox OR intersects, not both')
   }
-  const sort = extractSort(queryParameters)
+  const sortby = extractSortby(queryParameters)
   // Prefer intersects
   const intersects = hasIntersects || bbox
   const query = extractStacQuery(queryParameters)
@@ -308,7 +344,7 @@ const searchItems = async function (collectionId, queryParameters, backend, endp
     datetime,
     intersects,
     query,
-    sort,
+    sortby,
     fields,
     ids,
     collections
@@ -322,13 +358,15 @@ const searchItems = async function (collectionId, queryParameters, backend, endp
       [key]: parameters[key]
     }), {})
 
+  let new_endpoint = `${endpoint}/search`
   if (collectionId) {
     searchParameters.collections = [collectionId]
+    new_endpoint = `${endpoint}/collections/${collectionId}/items`
   }
   logger.debug(`Search parameters: ${JSON.stringify(searchParameters)}`)
   const { 'results': itemsResults, 'context': itemsMeta } =
     await backend.search(searchParameters, 'items', page, limit)
-  const pageLinks = buildPageLinks(itemsMeta, searchParameters, endpoint)
+  const pageLinks = buildPageLinks(itemsMeta, searchParameters, new_endpoint)
   const items = addItemLinks(itemsResults, endpoint)
   const response = wrapResponseInFeatureCollection(itemsMeta, items, pageLinks)
 

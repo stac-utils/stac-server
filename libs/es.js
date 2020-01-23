@@ -394,7 +394,7 @@ function buildSort(parameters) {
       const { field, direction } = sortRule
       const propertyKey = `properties.${field}`
       return {
-        [propertyKey]: {
+        [field]: {
           order: direction
         }
       }
@@ -408,27 +408,26 @@ function buildSort(parameters) {
   return sorting
 }
 
-/*
+
 function buildFieldsFilter(parameters) {
   const { fields } = parameters
-  let _sourceInclude = [
-    'id',
-    'type',
-    'geometry',
-    'bbox',
-    'links',
-    'assets',
-    'collection',
-    'properties.datetime'
-  ]
+  let _sourceInclude = []
+  if (parameters.hasOwnProperty('fields')) {
+    // if fields parameters supplied at all, start with this initial set, otherwise return all
+    _sourceInclude = [
+      'id',
+      'type',
+      'geometry',
+      'bbox',
+      'links',
+      'assets',
+      'collection',
+      'properties.datetime'
+    ]
+  }
   let _sourceExclude = []
   if (fields) {
     const { include, exclude } = fields
-    // Remove exclude fields from the default include list and add them to the source exclude list
-    if (exclude && exclude.length > 0) {
-      _sourceInclude = _sourceInclude.filter((field) => !exclude.includes(field))
-      _sourceExclude = exclude
-    }
     // Add include fields to the source include list if they're not already in it
     if (include && include.length > 0) {
       include.forEach((field) => {
@@ -437,10 +436,15 @@ function buildFieldsFilter(parameters) {
         }
       })
     }
+    // Remove exclude fields from the default include list and add them to the source exclude list
+    if (exclude && exclude.length > 0) {
+      _sourceInclude = _sourceInclude.filter((field) => !exclude.includes(field))
+      _sourceExclude = exclude
+    }
   }
   return { _sourceInclude, _sourceExclude }
 }
-*/
+
 
 async function search(parameters, index = '*', page = 1, limit = 10) {
   let body
@@ -455,7 +459,6 @@ async function search(parameters, index = '*', page = 1, limit = 10) {
   }
   const sort = buildSort(parameters)
   body.sort = sort
-  logger.info(`Elasticsearch query: ${JSON.stringify(body)}`)
 
   const searchParams = {
     index,
@@ -464,7 +467,7 @@ async function search(parameters, index = '*', page = 1, limit = 10) {
     from: (page - 1) * limit
   }
 
-  /* disable fields filter for now
+  // disable fields filter for now
   const { _sourceInclude, _sourceExclude } = buildFieldsFilter(parameters)
   if (_sourceExclude.length > 0) {
     searchParams._sourceExclude = _sourceExclude
@@ -472,7 +475,8 @@ async function search(parameters, index = '*', page = 1, limit = 10) {
   if (_sourceInclude.length > 0) {
     searchParams._sourceInclude = _sourceInclude
   }
-  */
+
+  logger.info(`Elasticsearch query: ${JSON.stringify(searchParams)}`)
 
   const client = await esClient()
   const resultBody = await client.search(searchParams)

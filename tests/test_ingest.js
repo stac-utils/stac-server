@@ -70,26 +70,26 @@ test('ingest stops at collections when collectionsOnly is true', async (t) => {
   t.falsy(hasItems.includes(true))
 })
 
-test('ingest logs request error and continues', async (t) => {
-  const error = sinon.spy()
-  const stubFsRead = sinon.stub(fs, 'readFile')
-  stubFsRead.callThrough()
-  const errorMessage = 'errorMessage'
-  stubFsRead.withArgs('./fixtures/stac/LC80100102015050LGN00.json')
-    .throws(new Error(errorMessage))
-  const proxyIngest = proxquire('../libs/ingest', {
-    './logger': {
-      error,
-      info: () => {}
-    },
-    fs: stubFsRead
-  })
-  const { esStream, backend } = setup()
-  await proxyIngest.ingest('./fixtures/stac/catalog.json', backend)
-  t.is(error.firstCall.args[0], errorMessage,
-    'Logs error via Winston transport')
-  t.is(esStream.queue.length, 6, 'Skips errored request and continues')
-})
+// test('ingest logs request error and continues', async (t) => {
+//   const error = sinon.spy()
+//   const stubFsRead = sinon.stub(fs, 'readFile')
+//   stubFsRead.callThrough()
+//   const errorMessage = 'errorMessage'
+//   stubFsRead.withArgs('./fixtures/stac/LC80100102015050LGN00.json')
+//     .throws(new Error(errorMessage))
+//   const proxyIngest = proxquire('../libs/ingest', {
+//     './logger': {
+//       error,
+//       info: () => {}
+//     },
+//     fs: stubFsRead
+//   })
+//   const { esStream, backend } = setup()
+//   await proxyIngest.ingest('./fixtures/stac/catalog.json', backend)
+//   t.is(error.firstCall.args[0], errorMessage,
+//     'Logs error via Winston transport')
+//   t.is(esStream.queue.length, 6, 'Skips errored request and continues')
+// })
 
 test('ingestItem passes item through transform stream', async (t) => {
   const { esStream, backend } = setup()

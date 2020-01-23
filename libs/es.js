@@ -354,12 +354,45 @@ function buildIdsQuery(ids) {
   }
 }
 
+// function buildSort(parameters) {
+//   const { sort } = parameters
+//   let sorting
+//   if (sort && sort.length > 0) {
+//     sorting = sort.map((sortRule) => {
+//       const { field, direction } = sortRule
+//       const propertyKey = `properties.${field}`
+//       return {
+//         [propertyKey]: {
+//           order: direction
+//         }
+//       }
+//     })
+//   } else {
+//     // Default item sorting
+//     sorting = [
+//       { 'properties.datetime': { order: 'desc' } }
+//     ]
+//   }
+//   return sorting
+// }
+
 function buildSort(parameters) {
-  const { sortby } = parameters
+  const { sort, sortBy } = parameters
   let sorting
-  if (sortby && sortby.length > 0) {
-    sorting = sortby.map((sortbyRule) => {
-      const { field, direction } = sortbyRule
+  if (sortBy && sortBy.length > 0) {
+    sorting = sortBy.map((sortRule) => {
+      const { field, direction } = sortRule
+      const propertyKey = `properties.${field}`
+      return {
+        [propertyKey]: {
+          order: direction
+        }
+      }
+    })
+  } else if (sort && sort.length > 0) {
+    sorting = sort.map((sortRule) => {
+      const { field, direction } = sortRule
+      const propertyKey = `properties.${field}`
       return {
         [field]: {
           order: direction

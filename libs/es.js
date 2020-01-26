@@ -76,61 +76,102 @@ async function esClient() {
   return _esClient
 }
 
-// Create STAC mappings
-async function prepare(index) {
-  // TODO - different mappings for collection and item
+async function get_collection_mapping() {
+  const payload = {
+    index,
+    body: {
+      mappings: {
+        doc: {
+          /*'_all': {
+              enabled: true
+          },*/
+          dynamic_templates: [{
+            strings: {
+              mapping: { type: 'keyword' },
+              match_mapping_type: 'string'
+            }
+          }],
+          properties: {
+            title: { type: "text" },
+            description: { type: "text" },
+            extent: {
+              type: 'object',
+              properties: {
+                spatial: {
+                  type: 'object',
+                  properties: {
+
+                  }
+                },
+                temporal: {
+                  type: 'object',
+                  properties: {
+
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  return payload
+}
+
+async function get_item_mapping() {
   const props = {
     'type': 'object',
     properties: {
       'datetime': { type: 'date' },
+      'title': { type: 'text' },
+      'start_datetime': { type: 'date '},
+      'end_datetime': { type: 'date '},
       'created': { type: 'date' },
       'updated': { type: 'date' },
       'eo:cloud_cover': { type: 'float' },
       'eo:gsd': { type: 'float' },
-      'constellation': { type: 'keyword' },
-      'platform': { type: 'keyword' },
-      'instrument': { type: 'keyword' },
       'sat:off_nadir_angle': { type: 'float' },
       'sat:azimuth_angle': { type: 'float' },
       'sat:sun_azimuth_angle': { type: 'float' },
       'sat:sun_elevation_angle': { type: 'float' }
     }
   }
-
-  const dynamicTemplates = [{
-    strings: {
-      mapping: {
-        type: 'keyword'
-      },
-      match_mapping_type: 'string'
-    }
-  }]
-  const client = await esClient()
-  const indexExists = await client.indices.exists({ index })
-  if (!indexExists) {
-    const precision = process.env.SATAPI_ES_PRECISION || '5mi'
-    const payload = {
-      index,
-      body: {
-        mappings: {
-          doc: {
-            /*'_all': {
-                enabled: true
-            },*/
-            dynamic_templates: dynamicTemplates,
-            properties: {
-              'id': { type: 'keyword' },
-              'collection': { type: 'keyword' },
-              'properties': props,
-              geometry: {
-                type: 'geo_shape',
-                tree: 'quadtree',
-                precision: precision
-              }
+  const payload = {
+    index,
+    body: {
+      mappings: {
+        doc: {
+          /*'_all': {
+              enabled: true
+          },*/
+          dynamic_templates: [{
+            strings: {
+              mapping: { type: 'keyword' },
+              match_mapping_type: 'string'
             }
+          }],
+          properties: {
+            properties: props,
+            geometry: { type: 'geo_shape' }
           }
         }
       }
+    }
+  }
+  return payload
+}
+
+// Create STAC mappings
+async function prepare(index) {
+  const client = await esClient()
+  const indexExists = await client.indices.exists({ index })
+  if (!indexExists) {
+    let payload
+    if (index === 'collections') {
+      payload = get_item_mapping()
+    } else {
+      payload = get_item_mapping()
     }
     try {
       await client.indices.create(payload)

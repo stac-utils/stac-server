@@ -36,6 +36,7 @@ functions:
       STAC_TITLE: "STAC API"
       STAC_DESCRIPTION: "STAC API"
       STAC_VERSION: 0.9.0
+      STAC_DOCS_URL: https://stac-utils.github.io/stac-api/
     events:
       - http: ANY /
       - http: ANY {proxy+}

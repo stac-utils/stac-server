@@ -289,27 +289,6 @@ function buildIdsQuery(ids) {
   }
 }
 
-// function buildSort(parameters) {
-//   const { sort } = parameters
-//   let sorting
-//   if (sort && sort.length > 0) {
-//     sorting = sort.map((sortRule) => {
-//       const { field, direction } = sortRule
-//       const propertyKey = `properties.${field}`
-//       return {
-//         [propertyKey]: {
-//           order: direction
-//         }
-//       }
-//     })
-//   } else {
-//     // Default item sorting
-//     sorting = [
-//       { 'properties.datetime': { order: 'desc' } }
-//     ]
-//   }
-//   return sorting
-// }
 
 function buildSort(parameters) {
   const { sort, sortBy } = parameters

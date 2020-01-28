@@ -1,6 +1,7 @@
 # stac-api 
 
 ![](https://github.com/stac-utils/stac-api/workflows/Run%20test/badge.svg)
+![](https://github.com/stac-utils/stac-api/workflows/Push%20Event/badge.svg)
 
 Stac-api is a STAC compliant Rest API for searching and serving metadata for geospatial data (including but not limited to satellite imagery).
 

@@ -76,85 +76,78 @@ async function esClient() {
   return _esClient
 }
 
-async function get_collection_mapping() {
-  const payload = {
-    index,
-    body: {
-      mappings: {
-        doc: {
-          /*'_all': {
-              enabled: true
-          },*/
-          dynamic_templates: [{
-            strings: {
-              mapping: { type: 'keyword' },
-              match_mapping_type: 'string'
-            }
-          }],
-          properties: {
-            title: { type: "text" },
-            description: { type: "text" },
-            extent: {
-              type: 'object',
-              properties: {
-                spatial: {
-                  type: 'object',
-                  properties: {
-
-                  }
-                },
-                temporal: {
-                  type: 'object',
-                  properties: {
-
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-  return payload
-}
-
-async function get_item_mapping() {
+async function get_mappings(index) {
   const props = {
     'type': 'object',
     properties: {
       'datetime': { type: 'date' },
-      'title': { type: 'text' },
-      'start_datetime': { type: 'date '},
-      'end_datetime': { type: 'date '},
+      'start_datetime': { type: 'date' },
+      'end_datetime': { type: 'date' },
       'created': { type: 'date' },
       'updated': { type: 'date' },
       'eo:cloud_cover': { type: 'float' },
-      'eo:gsd': { type: 'float' },
-      'sat:off_nadir_angle': { type: 'float' },
-      'sat:azimuth_angle': { type: 'float' },
-      'sat:sun_azimuth_angle': { type: 'float' },
-      'sat:sun_elevation_angle': { type: 'float' }
+      'eo:gsd': { type: 'float' }
     }
   }
+
+  let mappings
+  if (index === 'collections') {
+    // collections
+    mappings = {
+      properties: props,
+      extent: {
+        type: 'object',
+        properties: {
+          spatial: { type: 'long' },
+          temporal: { type: 'date' }
+        }
+      }
+    }
+  } else {
+    // items
+    mappings = {
+      geometry: { type: 'geo_shape' },
+      properties: props
+    }
+  }
+
   const payload = {
-    index,
+    index: index,
     body: {
       mappings: {
         doc: {
-          /*'_all': {
-              enabled: true
-          },*/
-          dynamic_templates: [{
-            strings: {
-              mapping: { type: 'keyword' },
-              match_mapping_type: 'string'
+          dynamic_templates: [
+            {
+              descriptions: {
+                match_mapping_type: 'string',
+                match: 'description',
+                mapping: { type: 'text' }
+              }
+            },
+            {
+              titles: {
+                match_mapping_type: 'string',
+                match: 'title',
+                mapping: { type: 'text' }
+              }
+            },
+            {
+              no_index_href: {
+                match: 'href',
+                mapping: {
+                  type: 'text',
+                  index: false
+                }
+              }
+            },
+            {
+              strings: {
+                match_mapping_type: 'string',
+                mapping: { type: 'keyword' }
+              }
             }
-          }],
-          properties: {
-            properties: props,
-            geometry: { type: 'geo_shape' }
-          }
+          ],
+          properties: mappings
         }
       }
     }
@@ -167,12 +160,8 @@ async function prepare(index) {
   const client = await esClient()
   const indexExists = await client.indices.exists({ index })
   if (!indexExists) {
-    let payload
-    if (index === 'collections') {
-      payload = get_item_mapping()
-    } else {
-      payload = get_item_mapping()
-    }
+    const payload = await get_mappings(index)
+    console.log(`Preparing index with payload: ${JSON.stringify(payload)}`)
     try {
       await client.indices.create(payload)
       logger.info(`Created index: ${JSON.stringify(payload)}`)

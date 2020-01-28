@@ -26,16 +26,12 @@
   },
   "dependencies": {
     "@mapbox/extent": "^0.4.0",
-    "bottleneck": "^2.13.1",
     "elasticsearch": "^16.6.0",
     "geojson-validation": "^0.1.6",
     "http-aws-es": "^4.0.0",
-    "is-url": "^1.2.4",
     "js-yaml": "^3.13.1",
     "memorystream": "^0.3.1",
     "pump": "^3.0.0",
-    "request": "^2.88.0",
-    "request-promise-native": "^1.0.5",
     "serverless-plugin-elasticsearch-index": "git+https://github.com/matthewhanson/serverless-plugin-elasticsearch-index.git#v1.0.0",
     "through2": "^3.0.1",
     "winston": "^3.2.0"

@@ -26,7 +26,6 @@
   },
   "dependencies": {
     "@mapbox/extent": "^0.4.0",
-    "@turf/helpers": "^6.1.4",
     "bottleneck": "^2.13.1",
     "elasticsearch": "^16.6.0",
     "geojson-validation": "^0.1.6",

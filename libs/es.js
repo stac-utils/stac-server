@@ -317,9 +317,8 @@ function buildSort(parameters) {
   if (sortBy && sortBy.length > 0) {
     sorting = sortBy.map((sortRule) => {
       const { field, direction } = sortRule
-      const propertyKey = `properties.${field}`
       return {
-        [propertyKey]: {
+        [field]: {
           order: direction
         }
       }
@@ -327,7 +326,6 @@ function buildSort(parameters) {
   } else if (sort && sort.length > 0) {
     sorting = sort.map((sortRule) => {
       const { field, direction } = sortRule
-      const propertyKey = `properties.${field}`
       return {
         [field]: {
           order: direction

@@ -1,6 +1,6 @@
 # stac-api 
 
-[![CircleCI](https://circleci.com/gh/stac-utils/stac-api.svg?style=svg)](https://circleci.com/gh/stac-utils/stac-api)
+![](https://github.com/stac-utils/stac-api/workflows/Run%20test/badge.svg)
 
 Stac-api is a STAC compliant Rest API for searching and serving metadata for geospatial data (including but not limited to satellite imagery).
 

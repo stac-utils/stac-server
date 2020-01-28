@@ -76,101 +76,6 @@ async function esClient() {
   return _esClient
 }
 
-async function get_mappings(index) {
-  const props = {
-    'type': 'object',
-    properties: {
-      'datetime': { type: 'date' },
-      'start_datetime': { type: 'date' },
-      'end_datetime': { type: 'date' },
-      'created': { type: 'date' },
-      'updated': { type: 'date' },
-      'eo:cloud_cover': { type: 'float' },
-      'eo:gsd': { type: 'float' }
-    }
-  }
-
-  let mappings
-  if (index === 'collections') {
-    // collections
-    mappings = {
-      properties: props,
-      extent: {
-        type: 'object',
-        properties: {
-          spatial: { type: 'long' },
-          temporal: { type: 'date' }
-        }
-      }
-    }
-  } else {
-    // items
-    mappings = {
-      geometry: { type: 'geo_shape' },
-      properties: props
-    }
-  }
-
-  const payload = {
-    index: index,
-    body: {
-      mappings: {
-        doc: {
-          dynamic_templates: [
-            {
-              descriptions: {
-                match_mapping_type: 'string',
-                match: 'description',
-                mapping: { type: 'text' }
-              }
-            },
-            {
-              titles: {
-                match_mapping_type: 'string',
-                match: 'title',
-                mapping: { type: 'text' }
-              }
-            },
-            {
-              no_index_href: {
-                match: 'href',
-                mapping: {
-                  type: 'text',
-                  index: false
-                }
-              }
-            },
-            {
-              strings: {
-                match_mapping_type: 'string',
-                mapping: { type: 'keyword' }
-              }
-            }
-          ],
-          properties: mappings
-        }
-      }
-    }
-  }
-  return payload
-}
-
-// Create STAC mappings
-async function prepare(index) {
-  const client = await esClient()
-  const indexExists = await client.indices.exists({ index })
-  if (!indexExists) {
-    const payload = await get_mappings(index)
-    console.log(`Preparing index with payload: ${JSON.stringify(payload)}`)
-    try {
-      await client.indices.create(payload)
-      logger.info(`Created index: ${JSON.stringify(payload)}`)
-    } catch (error) {
-      const debugMessage = `Error creating index, already created: ${error}`
-      logger.debug(debugMessage)
-    }
-  }
-}
 
 // Given an input stream and a transform, write records to an elasticsearch instance
 async function _stream() {
@@ -533,6 +438,5 @@ async function search(parameters, index = '*', page = 1, limit = 10) {
   return response
 }
 
-module.exports.prepare = prepare
 module.exports.stream = _stream
 module.exports.search = search

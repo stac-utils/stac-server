@@ -146,8 +146,6 @@ async function ingest(url, backend, recursive = true, collectionsOnly = false) {
     objectMode: true
   })
 
-  await backend.prepare('collections')
-  await backend.prepare('items')
   const { toEs, esStream } = await backend.stream()
   logger.info(`Job Started for ${url}`)
   const promise = new Promise((resolve, reject) => {
@@ -172,8 +170,6 @@ async function ingest(url, backend, recursive = true, collectionsOnly = false) {
 
 async function ingestItem(item, backend) {
   const readable = new Readable({objectMode: true })
-  await backend.prepare('collections')
-  await backend.prepare('items')
   const { toEs, esStream } = await backend.stream()
   const promise = new Promise((resolve, reject) => {
     pump(
@@ -197,9 +193,7 @@ async function ingestItem(item, backend) {
 }
 
 async function ingestItems(items, backend) {
-  const readable = new Readable({objectMode: true })
-  await backend.prepare('collections')
-  await backend.prepare('items')
+  const readable = new Readable({ objectMode: true })
   const { toEs, esStream } = await backend.stream()
   const promise = new Promise((resolve, reject) => {
     pump(

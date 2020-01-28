@@ -22,6 +22,18 @@ provider:
       Resource:
         Fn::GetAtt: [ingestQueue, Arn]
 
+custom:
+  slsEsIndices:
+    - index: collections
+      mapping: ${file(./fixtures/collections.js)}
+      version: '6.5'
+      endpointName: ${self:service}-${self:provider.stage}-es-endpoint
+    - index: items
+      mapping: ${file(./fixtures/items.js)}
+      version: '6.5'
+      endpointName: ${self:service}-${self:provider.stage}-es-endpoint
+        
+
 package:
   individually: true
 
@@ -88,6 +100,14 @@ resources:
           DedicatedMasterEnabled: false
           ZoneAwarenessEnabled: false
         ElasticsearchVersion: 6.8
+  Outputs:
+    ESEndpoint:
+      Value:
+        Fn::GetAtt: [ ElasticSearchInstance, DomainEndpoint ]
+      Export:
+        Name: ${self:service}-${self:provider.stage}-es-endpoint
+
 
 plugins:
   - serverless-pseudo-parameters
+  - serverless-plugin-elasticsearch-index

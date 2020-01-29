@@ -2,7 +2,7 @@ const gjv = require('geojson-validation')
 const extent = require('@mapbox/extent')
 const yaml = require('js-yaml')
 const fs = require('fs')
-const logger = require('./logger')
+const logger = console
 const path = require('path')
 
 // max number of collections to retrieve
@@ -254,10 +254,10 @@ const addItemLinks = function (results, endpoint) {
 
 
 const collectionsToCatalogLinks = function (results, endpoint) {
-  const stac_version = process.env.STAC_VERSION
-  const stac_id = process.env.STAC_ID
-  const stac_title = process.env.STAC_TITLE
-  const stac_description = process.env.STAC_DESCRIPTION
+  const stac_version = process.env.STAC_VERSION || '0.9.0'
+  const stac_id = process.env.STAC_ID || 'stac-api'
+  const stac_title = process.env.STAC_TITLE || 'STAC API'
+  const stac_description = process.env.STAC_DESCRIPTION || 'A STAC API'
   const catalog = {
     stac_version,
     id: stac_id,
@@ -420,7 +420,8 @@ const getCatalog = async function (backend, endpoint = '') {
     type: 'application/json',
     href: `${endpoint}/search`
   })
-  if (process.env.STAC_DOCS_URL) {
+  const docsUrl = process.env.STAC_DOCS_URL || 'https://stac-utils.github.io/stac-api'
+  if (docsUrl) {
     catalog.links.push({
       rel: 'docs',
       href: process.env.STAC_DOCS_URL

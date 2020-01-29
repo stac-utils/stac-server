@@ -32,14 +32,14 @@ There are some environment variables used in the code. Some do not have defaults
 
 | Name | Description | Default Value |
 | ---- | ----------- | ------------- |
-| STAC_ID | ID of this catalog | - |
-| STAC_TITLE | Title of this catalog | - |
-| STAC_DESCRIPTION | Description of this catalog | - |
-| STAC_DOCS_URL | URL to documentation | - |
-| SATAPI_URL | The root endpoint of this API to use for links | Inferred from request |
+| STAC_VERSION | STAC Version of this STAC API | 0.9.0 |
+| STAC_ID | ID of this catalog | stac-api |
+| STAC_TITLE | Title of this catalog | STAC API |
+| STAC_DESCRIPTION | Description of this catalog | A STAC API |
+| STAC_DOCS_URL | URL to documentation | [https://stac-utils.github.io/stac-api](https://stac-utils.github.io/stac-api) |
+| STAC_API_URL | The root endpoint of this API to use for links | Inferred from request |
 | ES_BATCH_SIZE | Number of records to ingest in single batch | 500 |
-| SATAPI_ES_PRECISION | Precision to use for geometry queries, see [ES documentation](https://www.elastic.co/guide/en/elasticsearch/reference/current/geo-shape.html) | '5mi' |
-| LOG_LEVEL | Level for logging | 'info' |
+| LOG_LEVEL | Level for logging (CRITICAL, ERROR, WARNING, INFO, DEBUG) | INFO |
 
 
 ## Development

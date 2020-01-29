@@ -51,4 +51,4 @@ async function ingestItems(items, backend) {
   return promise
 }
 
-module.exports = { ingest, ingestItem, ingestItems }
+module.exports = { ingestItem, ingestItems }

@@ -37,6 +37,7 @@ async function connect() {
 
     esConfig = {
       hosts: [process.env.ES_HOST],
+      apiVersion: '6.8',
       connectionClass: httpAwsEs,
       awsConfig: new AWS.Config({ region: process.env.AWS_REGION || 'us-east-1' }),
       httpOptions: {},

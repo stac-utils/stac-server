@@ -1,0 +1,25 @@
+on:
+  push:
+    branches:
+      - master
+      - develop
+      - 'feature/**'
+name: Push Event
+jobs:
+  test:
+    name: Run tests
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v1
+
+    - name: install node
+      uses: actions/setup-node@master
+      with:
+        node-version: 10.15
+
+    - name: yarn install
+      run: yarn install
+
+    - name: yarn test
+      run: yarn test
+

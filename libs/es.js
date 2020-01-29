@@ -76,62 +76,92 @@ async function esClient() {
   return _esClient
 }
 
-// Create STAC mappings
-async function prepare(index) {
-  // TODO - different mappings for collection and item
+async function get_mappings(index) {
   const props = {
     'type': 'object',
     properties: {
       'datetime': { type: 'date' },
+      'start_datetime': { type: 'date' },
+      'end_datetime': { type: 'date' },
       'created': { type: 'date' },
       'updated': { type: 'date' },
       'eo:cloud_cover': { type: 'float' },
-      'eo:gsd': { type: 'float' },
-      'constellation': { type: 'keyword' },
-      'platform': { type: 'keyword' },
-      'instrument': { type: 'keyword' },
-      'sat:off_nadir_angle': { type: 'float' },
-      'sat:azimuth_angle': { type: 'float' },
-      'sat:sun_azimuth_angle': { type: 'float' },
-      'sat:sun_elevation_angle': { type: 'float' }
+      'eo:gsd': { type: 'float' }
     }
   }
 
-  const dynamicTemplates = [{
-    strings: {
-      mapping: {
-        type: 'keyword'
-      },
-      match_mapping_type: 'string'
-    }
-  }]
-  const client = await esClient()
-  const indexExists = await client.indices.exists({ index })
-  if (!indexExists) {
-    const precision = process.env.SATAPI_ES_PRECISION || '5mi'
-    const payload = {
-      index,
-      body: {
-        mappings: {
-          doc: {
-            /*'_all': {
-                enabled: true
-            },*/
-            dynamic_templates: dynamicTemplates,
-            properties: {
-              'id': { type: 'keyword' },
-              'collection': { type: 'keyword' },
-              'properties': props,
-              geometry: {
-                type: 'geo_shape',
-                tree: 'quadtree',
-                precision: precision
-              }
-            }
-          }
+  let mappings
+  if (index === 'collections') {
+    // collections
+    mappings = {
+      properties: props,
+      extent: {
+        type: 'object',
+        properties: {
+          spatial: { type: 'long' },
+          temporal: { type: 'date' }
         }
       }
     }
+  } else {
+    // items
+    mappings = {
+      geometry: { type: 'geo_shape' },
+      properties: props
+    }
+  }
+
+  const payload = {
+    index: index,
+    body: {
+      mappings: {
+        doc: {
+          dynamic_templates: [
+            {
+              descriptions: {
+                match_mapping_type: 'string',
+                match: 'description',
+                mapping: { type: 'text' }
+              }
+            },
+            {
+              titles: {
+                match_mapping_type: 'string',
+                match: 'title',
+                mapping: { type: 'text' }
+              }
+            },
+            {
+              no_index_href: {
+                match: 'href',
+                mapping: {
+                  type: 'text',
+                  index: false
+                }
+              }
+            },
+            {
+              strings: {
+                match_mapping_type: 'string',
+                mapping: { type: 'keyword' }
+              }
+            }
+          ],
+          properties: mappings
+        }
+      }
+    }
+  }
+  return payload
+}
+
+// Create STAC mappings
+async function prepare(index) {
+  const client = await esClient()
+  const indexExists = await client.indices.exists({ index })
+  if (!indexExists) {
+    const payload = await get_mappings(index)
+    console.log(`Preparing index with payload: ${JSON.stringify(payload)}`)
     try {
       await client.indices.create(payload)
       logger.info(`Created index: ${JSON.stringify(payload)}`)
@@ -354,15 +384,47 @@ function buildIdsQuery(ids) {
   }
 }
 
+// function buildSort(parameters) {
+//   const { sort } = parameters
+//   let sorting
+//   if (sort && sort.length > 0) {
+//     sorting = sort.map((sortRule) => {
+//       const { field, direction } = sortRule
+//       const propertyKey = `properties.${field}`
+//       return {
+//         [propertyKey]: {
+//           order: direction
+//         }
+//       }
+//     })
+//   } else {
+//     // Default item sorting
+//     sorting = [
+//       { 'properties.datetime': { order: 'desc' } }
+//     ]
+//   }
+//   return sorting
+// }
+
 function buildSort(parameters) {
-  const { sort } = parameters
+  const { sort, sortBy } = parameters
   let sorting
-  if (sort && sort.length > 0) {
-    sorting = sort.map((sortRule) => {
+  if (sortBy && sortBy.length > 0) {
+    sorting = sortBy.map((sortRule) => {
       const { field, direction } = sortRule
       const propertyKey = `properties.${field}`
       return {
         [propertyKey]: {
+          order: direction
+        }
+      }
+    })
+  } else if (sort && sort.length > 0) {
+    sorting = sort.map((sortRule) => {
+      const { field, direction } = sortRule
+      const propertyKey = `properties.${field}`
+      return {
+        [field]: {
           order: direction
         }
       }
@@ -376,27 +438,26 @@ function buildSort(parameters) {
   return sorting
 }
 
-/*
+
 function buildFieldsFilter(parameters) {
   const { fields } = parameters
-  let _sourceInclude = [
-    'id',
-    'type',
-    'geometry',
-    'bbox',
-    'links',
-    'assets',
-    'collection',
-    'properties.datetime'
-  ]
+  let _sourceInclude = []
+  if (parameters.hasOwnProperty('fields')) {
+    // if fields parameters supplied at all, start with this initial set, otherwise return all
+    _sourceInclude = [
+      'id',
+      'type',
+      'geometry',
+      'bbox',
+      'links',
+      'assets',
+      'collection',
+      'properties.datetime'
+    ]
+  }
   let _sourceExclude = []
   if (fields) {
     const { include, exclude } = fields
-    // Remove exclude fields from the default include list and add them to the source exclude list
-    if (exclude && exclude.length > 0) {
-      _sourceInclude = _sourceInclude.filter((field) => !exclude.includes(field))
-      _sourceExclude = exclude
-    }
     // Add include fields to the source include list if they're not already in it
     if (include && include.length > 0) {
       include.forEach((field) => {
@@ -405,10 +466,15 @@ function buildFieldsFilter(parameters) {
         }
       })
     }
+    // Remove exclude fields from the default include list and add them to the source exclude list
+    if (exclude && exclude.length > 0) {
+      _sourceInclude = _sourceInclude.filter((field) => !exclude.includes(field))
+      _sourceExclude = exclude
+    }
   }
   return { _sourceInclude, _sourceExclude }
 }
-*/
+
 
 async function search(parameters, index = '*', page = 1, limit = 10) {
   let body
@@ -423,7 +489,6 @@ async function search(parameters, index = '*', page = 1, limit = 10) {
   }
   const sort = buildSort(parameters)
   body.sort = sort
-  logger.info(`Elasticsearch query: ${JSON.stringify(body)}`)
 
   const searchParams = {
     index,
@@ -432,7 +497,7 @@ async function search(parameters, index = '*', page = 1, limit = 10) {
     from: (page - 1) * limit
   }
 
-  /* disable fields filter for now
+  // disable fields filter for now
   const { _sourceInclude, _sourceExclude } = buildFieldsFilter(parameters)
   if (_sourceExclude.length > 0) {
     searchParams._sourceExclude = _sourceExclude
@@ -440,7 +505,8 @@ async function search(parameters, index = '*', page = 1, limit = 10) {
   if (_sourceInclude.length > 0) {
     searchParams._sourceInclude = _sourceInclude
   }
-  */
+
+  logger.info(`Elasticsearch query: ${JSON.stringify(searchParams)}`)
 
   const client = await esClient()
   const resultBody = await client.search(searchParams)

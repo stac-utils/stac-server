@@ -26,11 +26,11 @@ custom:
   slsEsIndices:
     - index: collections
       mapping: ${file(./fixtures/collections.js)}
-      version: '6.5'
+      version: '6.8'
       endpointName: ${self:service}-${self:provider.stage}-es-endpoint
     - index: items
       mapping: ${file(./fixtures/items.js)}
-      version: '6.5'
+      version: '6.8'
       endpointName: ${self:service}-${self:provider.stage}-es-endpoint
         
 

@@ -91,7 +91,6 @@ test('search /', async (t) => {
     'Returns STAC catalog with links to collections')
 })
 
-// What is features?
 // test('search /search wraps results', async (t) => {
 //   const limit = 10
 //   const meta = {
@@ -103,15 +102,6 @@ test('search /', async (t) => {
 //   const clonedItem = cloneMutatedItem()
 //   const results = [clonedItem]
 
-<<<<<<< HEAD
-  const itemsResults = { 'search:metadata': meta, results }
-  const search = sinon.stub().resolves({ features: [], meta: {} })
-  search.resolves(itemsResults)
-  const backend = { search }
-  const actual = await api.API('/search', {}, backend, 'endpoint')
-  t.deepEqual(actual.features[0].links, itemLinks.links,
-    'Adds correct relative STAC links')
-=======
 //   const itemsResults = { 'search:metadata': meta, results }
 //   const search = sinon.stub().resolves({ features: [], meta: {} })
 //   search.resolves(itemsResults)
@@ -120,7 +110,6 @@ test('search /', async (t) => {
 //   console.log('this is actual: ', actual)
 //   t.deepEqual(actual.features[0].links, itemLinks.links,
 //     'Adds correct relative STAC links')
->>>>>>> develop
 
 //   const expectedMeta = {
 //     limit,

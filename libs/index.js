@@ -5,6 +5,5 @@
 module.exports = {
   api: require('./api.js'),
   es: require('./es.js'),
-  ingest: require('./ingest.js'),
-  logger: require('./logger.js')
+  ingest: require('./ingest.js')
 }

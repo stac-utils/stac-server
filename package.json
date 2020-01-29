@@ -32,9 +32,8 @@
     "js-yaml": "^3.13.1",
     "memorystream": "^0.3.1",
     "pump": "^3.0.0",
-    "serverless-plugin-elasticsearch-index": "git+https://github.com/matthewhanson/serverless-plugin-elasticsearch-index.git#v1.0.0",
-    "through2": "^3.0.1",
-    "winston": "^3.2.0"
+    "serverless-plugin-elasticsearch-index": "git+https://github.com/matthewhanson/serverless-plugin-elasticsearch-index.git#v1.0.0-b1",
+    "through2": "^3.0.1"
   },
   "devDependencies": {
     "ava": "^0.16.0",

@@ -3,7 +3,7 @@ service: stac-api
 provider:
   name: aws
   runtime: nodejs12.x
-  stage: ${opt:stage, 'omega'}
+  stage: ${opt:stage, 'dev'}
   region: ${opt:region, 'us-west-2'}
   environment:
     LOG_LEVEL: DEBUG
@@ -89,6 +89,7 @@ resources:
         QueueName: ${self:service}-${self:provider.stage}-queue
     ElasticSearchInstance:
       Type: AWS::Elasticsearch::Domain
+      DomainName: ${self:service}-${self:provider.stage}-es 
       Properties:
         EBSOptions:
           EBSEnabled: true

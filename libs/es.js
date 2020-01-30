@@ -107,7 +107,7 @@ async function _stream() {
       }
       // remove any hierarchy links in a non-mutating way
       const hlinks = ['self', 'root', 'parent', 'child', 'collection', 'item']
-      const links = data.links.filter((link) => hlinks.includes(link))
+      const links = data.links.filter((link) => hlinks.includes(link.rel))
       let esDataObject = Object.assign({}, data, { links })
       if (index === 'items') {
         const collectionId = data.collection

@@ -3,7 +3,6 @@ const sinon = require('sinon')
 const proxquire = require('proxyquire')
 const api = require('../libs/api')
 const item = require('./fixtures/item.json')
-const itemLinks = require('./fixtures/itemLinks.json')
 
 function cloneMutatedItem() {
   return Object.assign({}, item, { links: item.links.slice(0) })
@@ -12,7 +11,7 @@ function cloneMutatedItem() {
 test('search es error', async (t) => {
   const error = sinon.spy()
   const proxyApi = proxquire('../libs/api', {
-    './logger': {
+    console: {
       error
     }
   })
@@ -30,7 +29,7 @@ test('search /', async (t) => {
   const search = sinon.stub().resolves({ results: [], meta: {} })
   const backend = { search }
   const actual = await api.API('/', undefined, backend, 'endpoint')
-  t.is(actual.links.length, 5)
+  t.is(actual.links.length, 6)
 })
 
 test('search /api', async (t) => {

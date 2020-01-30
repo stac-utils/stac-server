@@ -79,6 +79,7 @@ functions:
             Fn::GetAtt: [ingestQueue, Arn]
 
 resources:
+  Description: STAC API
   Resources:
     ingestQueue:
       Type: AWS::SQS::Queue
@@ -89,8 +90,8 @@ resources:
         QueueName: ${self:service}-${self:provider.stage}-queue
     ElasticSearchInstance:
       Type: AWS::Elasticsearch::Domain
-      DomainName: ${self:service}-${self:provider.stage}-es 
       Properties:
+        DomainName: ${self:service}-${self:provider.stage}-es 
         EBSOptions:
           EBSEnabled: true
           VolumeType: gp2

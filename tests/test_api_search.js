@@ -91,7 +91,6 @@ test('search /', async (t) => {
     'Returns STAC catalog with links to collections')
 })
 
-// What is features?
 // test('search /search wraps results', async (t) => {
 //   const limit = 10
 //   const meta = {

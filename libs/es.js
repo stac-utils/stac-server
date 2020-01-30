@@ -78,6 +78,25 @@ async function esClient() {
 }
 
 
+// Create STAC mappings
+async function create_indices() {
+  const client = await esClient()
+  const collections_mapping = require('../fixtures/collections.js')
+  const items_mapping = require('../fixtures/items.js')
+  const indexExists = await client.indices.exists({ 'collections' })
+  if (!indexExists) {
+    try {
+      await client.indices.create(collections_mapping)
+      await client.indices.create(items_mapping)
+      logger.info("Created indices")
+    } catch (error) {
+      const debugMessage = `Error creating index, already created: ${error}`
+      logger.debug(debugMessage)
+    }
+  }
+}
+
+
 // Given an input stream and a transform, write records to an elasticsearch instance
 async function _stream() {
   let esStreams
@@ -416,5 +435,8 @@ async function search(parameters, index = '*', page = 1, limit = 10) {
   return response
 }
 
-module.exports.stream = _stream
-module.exports.search = search
+module.exports =  {
+  stream: _stream,
+  search,
+  create_indices
+}

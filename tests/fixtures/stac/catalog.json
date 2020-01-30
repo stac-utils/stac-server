@@ -1,0 +1,27 @@
+{
+    "description": "Landsat imagery",
+    "id": "landsat",
+    "links": [
+        {
+            "href": "catalog.json",
+            "rel": "self"
+        },
+        {
+            "href": "catalog.json",
+            "rel": "root"
+        },
+        {
+            "href": "collection.json",
+            "rel": "child"
+        },
+        {
+            "href": "collection2.json",
+            "rel": "child"
+        }
+    ],
+    "stac_extensions": [
+        "eo",
+        "landsat"
+    ],
+    "stac_version": "0.8.0"
+}

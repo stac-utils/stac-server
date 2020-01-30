@@ -1,22 +1,30 @@
-# sat-api 
+# stac-api 
 
-[![CircleCI](https://circleci.com/gh/sat-utils/sat-api.svg?style=svg)](https://circleci.com/gh/sat-utils/sat-api)
+![](https://github.com/stac-utils/stac-api/workflows/Push%20Event/badge.svg)
 
-Sat-api is a STAC compliant web API for searching and serving metadata for geospatial data (including but not limited to satellite imagery).
+Stac-api is a STAC compliant Rest API for searching and serving metadata for geospatial data (including but not limited to satellite imagery).
 
-Development Seed runs an instance of sat-api for the Landsat-8 and Sentinel-2 imagery that is [hosted on AWS](https://aws.amazon.com/earth/). You can access this at https://sat-api.developmentseed.org using the [API documentation](http://sat-utils.github.io/sat-api/) for reference and examples.
-
-The STAC version supported by a given version of sat-api is shown in the table below. Additional information can be found in the [CHANGELOG](CHANGELOG.md)
+The STAC version supported by a given version of stac-api is shown in the table below. Additional information can be found in the [CHANGELOG](CHANGELOG.md)
 
 | sat-api | STAC  |
 | -------- | ----  |
-| 0.1.0    | 0.5.x |
-| 0.2.x    | 0.6.x |
-| 0.3.x    | 0.7.x |
+| 0.1.0    | 0.9.x |
 
-## Usage
+## Deployed STAC APIs
 
-This repository contains just the Node libraries for running the API. The [sat-api-deployment](https://github.com/sat-utils/sat-api-deployment) repository is for deploying sat-api to AWS.
+The following APIs are deployed APIs using stac-api.
+
+## Deployment
+
+This repository contains Node libraries for running the API, along with a [serverless](https://serverless.com/) configuration file for deployment to AWS.
+
+To deploy:
+
+```
+$ yarn
+$ yarn build
+$ yarn run deploy
+```
 
 ### Environment variables
 
@@ -24,29 +32,24 @@ There are some environment variables used in the code. Some do not have defaults
 
 | Name | Description | Default Value |
 | ---- | ----------- | ------------- |
-| STAC_ID | ID of this catalog | - |
-| STAC_TITLE | Title of this catalog | - |
-| STAC_DESCRIPTION | Description of this catalog | - |
-| STAC_DOCS_URL | URL to documentation | - |
-| SATAPI_URL | The root endpoint of this API to use for links | Inferred from request |
+| STAC_VERSION | STAC Version of this STAC API | 0.9.0 |
+| STAC_ID | ID of this catalog | stac-api |
+| STAC_TITLE | Title of this catalog | STAC API |
+| STAC_DESCRIPTION | Description of this catalog | A STAC API |
+| STAC_DOCS_URL | URL to documentation | [https://stac-utils.github.io/stac-api](https://stac-utils.github.io/stac-api) |
+| STAC_API_URL | The root endpoint of this API to use for links | Inferred from request |
 | ES_BATCH_SIZE | Number of records to ingest in single batch | 500 |
-| SATAPI_ES_PRECISION | Precision to use for geometry queries, see [ES documentation](https://www.elastic.co/guide/en/elasticsearch/reference/current/geo-shape.html) | '5mi' |
-| LOG_LEVEL | Level for logging | 'info' |
+| LOG_LEVEL | Level for logging (CRITICAL, ERROR, WARNING, INFO, DEBUG) | INFO |
 
 
 ## Development
 
-Sat-api includes a number of NPM packages (in the packages/ directory) that are used to create and populate an instance of sat-api. See the [sat-utils org on NPM](https://www.npmjs.com/org/sat-utils) for the full list of packages. [Lerna](https://github.com/lerna/lerna) is used for for managing these packages.
-
-The latest version released is on the [master branch](https://github.com/sat-utils/sat-api/tree/master), and the latest development version is on the [develop](https://github.com/sat-utils/sat-api/tree/develop) branch.
+The latest released version is on the [master branch](https://github.com/sat-utils/sat-api/tree/master), and the latest development version is on the [develop](https://github.com/sat-utils/sat-api/tree/develop) branch.
 
 ### Building local version
 
     # Install dependencies in package.json
     $ yarn
-
-    # Run lerna boostrap to link together packages and install those package dependencies
-    $ yarn bootstrap
 
     # Run the build command in each of the packages (runs webpack)
     $ yarn build
@@ -62,20 +65,34 @@ The latest version released is on the [master branch](https://github.com/sat-uti
     # To build API docs from the api spec
     $ yarn build-api-docs
 
-### Creating a release
-
-To create a new version for npm:
-
-- create a new branch from master
-- `$ yarn update`
-- Follow the prompt and select the correct the version, then commit the changes.
-- Update [CHANGELOG.md](CHANGELOG.md).
-- Tag your branch with the same version number
-- Make a PR
-- When the PR is merged to master, the npm packages are automatically deployed to npm
-- In GitHub create a release with the version (prefixed with 'v') and paste in the CHANGELOG section. This will create a GitHub release and a tag.
-
-
 ## About
 
-[sat-api](https://github.com/sat-utils/sat-api) was created by [Development Seed](<http://developmentseed.org>) and is part of a collection of tools called [sat-utils](https://github.com/sat-utils).
+[stac-api](https://github.com/stac-utils/stac-api) was forked from [stac-api](https://github.com/sat-utils/sat-api). The stac-api is for STAC versions 0.9.0+, while sat-api exists for versions of STAC prior to 0.9.0.
+
+### Unit Tests
+```
+$ yarn
+$ yarn test
+```
+
+### Integration Tests
+Navigate to the integration directory
+```
+$ cd ./tests/integration
+```
+Use the environment variable `DOCKER_NAME` to set your Docker host name.
+Normally `localhost`.
+```
+$ export DOCKER_NAME=localhost
+```
+The AWS-SDK library also requires fake key fields to create a connection so set.
+```
+$ export AWS_ACCESS_KEY_ID=none
+```
+```
+$ export AWS_SECRET_ACCESS_KEY=none
+```
+To run the tests
+```
+$ ./runIntegration.sh
+```

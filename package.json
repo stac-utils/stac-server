@@ -1,27 +1,57 @@
 {
-  "description": "One API to search public Satellites metadata",
-  "repository": "https://github.com/sat-utils/sat-api",
-  "author": "Alireza Jazayeri <alireza@developmentseed.org>, Matthew Hanson <matt.a.hanson@gmail.com>",
+  "displayName": "stac-api",
+  "description": "STAC API",
+  "version": "0.1.0-b1",
+  "repository": "https://github.com/stac-utils/stac-api",
+  "author": "Alireza Jazayeri, Matthew Hanson <matt.a.hanson@gmail.com>, Sean Harkins",
   "license": "MIT",
   "scripts": {
-    "bootstrap": "lerna bootstrap",
-    "clean": "lerna clean",
-    "build": "lerna run build",
-    "linkall": "lerna exec -- yarn link",
-    "test": "lerna run test",
-    "update": "lerna publish --skip-git --skip-npm",
+    "postinstall": "cd lambdas/api; yarn; cd ../../lambdas/ingest; yarn; cd ../../lambdas/queue; yarn",
+    "build": "cd lambdas/api; yarn run build; cd ../../lambdas/ingest; yarn run build; cd ../../lambdas/queue; yarn run build",
+    "test": "ava",
     "eslint": "eslint packages/* --ext .js",
+    "deploy": "sls deploy",
     "build-api-docs": "yarn widdershins --search false --language_tabs 'nodejs:NodeJS' 'python:Python' --summary ./packages/api-lib/api-spec.yaml -o ./docs/api.md & yarn shins --inline --logo ./docs/images/logo.png -o ./docs/index.html ./docs/api.md"
   },
+  "ava": {
+    "files": "tests/*.js",
+    "verbose": true,
+    "serial": true
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "bugs": {
+    "url": "https://github.com/stac-utils/stac-api/issues"
+  },
+  "dependencies": {
+    "@mapbox/extent": "^0.4.0",
+    "elasticsearch": "^16.6",
+    "geojson-validation": "^0.2.1",
+    "http-aws-es": "^6.0",
+    "js-yaml": "^3.13.1",
+    "memorystream": "^0.3.1",
+    "pump": "^3.0.0",
+    "serverless-plugin-elasticsearch-index": "git+https://github.com/matthewhanson/serverless-plugin-elasticsearch-index.git#v1.0.0-b2",
+    "through2": "^3.0.1"
+  },
   "devDependencies": {
+    "ava": "^0.16.0",
+    "aws-sdk": "^2.382.0",
     "eslint": "^5.7.0",
     "eslint-config-airbnb": "^16.1.0",
     "eslint-plugin-import": "^2.9.0",
     "eslint-plugin-jsdoc": "^3.5.0",
     "eslint-plugin-jsx-a11y": "^6.0.3",
     "eslint-plugin-react": "^7.7.0",
-    "lerna": "^2.11.0",
+    "nock": "^8.0.0",
+    "proxyquire": "^2.1.0",
+    "serverless": "^1.53.0",
+    "serverless-pseudo-parameters": "^2.5.0",
+    "serverless-step-functions": "^2.11.0",
     "shins": "^2.3.2-3",
+    "sinon": "^7.1.1",
     "widdershins": "^3.6.6"
-  }
+  },
+  "name": "stac-api"
 }

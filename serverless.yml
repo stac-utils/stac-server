@@ -1,0 +1,115 @@
+service: stac-api
+
+provider:
+  name: aws
+  runtime: nodejs12.x
+  stage: ${opt:stage, 'dev'}
+  region: ${opt:region, 'us-west-2'}
+  environment:
+    LOG_LEVEL: DEBUG
+    ES_HOST:
+      Fn::GetAtt: [ElasticSearchInstance, DomainEndpoint]
+  iamRoleStatements:
+    - Effect: "Allow"
+      Resource: "arn:aws:es:#{AWS::Region}:#{AWS::AccountId}:domain/*"
+      Action: "es:*"
+    - Effect: "Allow"
+      Action:
+        - sqs:GetQueueUrl
+        - sqs:SendMessage
+        - sqs:ReceiveMessage
+        - sqs:DeleteMessage
+      Resource:
+        Fn::GetAtt: [ingestQueue, Arn]
+
+custom:
+  slsEsIndices:
+    - index: collections
+      mapping: ${file(./fixtures/collections.js)}
+      version: '6.8'
+      endpointName: ${self:service}-${self:provider.stage}-es-endpoint
+    - index: items
+      mapping: ${file(./fixtures/items.js)}
+      version: '6.8'
+      endpointName: ${self:service}-${self:provider.stage}-es-endpoint
+        
+
+package:
+  individually: true
+
+functions:
+  api:
+    description: STAC API Lambda
+    handler: index.handler
+    package:
+      artifact: lambdas/api/dist/api.zip
+    environment:
+      STAC_ID: "stac-api"
+      STAC_TITLE: "STAC API"
+      STAC_DESCRIPTION: "STAC API"
+      STAC_VERSION: 0.9.0
+      STAC_DOCS_URL: https://stac-utils.github.io/stac-api/
+    events:
+      - http: ANY /
+      - http: ANY {proxy+}
+  queue:
+    description: STAC API Queueing Lambda
+    handler: index.handler
+    memorySize: 128
+    timeout: 15
+    package:
+      artifact: lambdas/queue/dist/queue.zip
+    environment:
+      queueName: ${self:service}-${self:provider.stage}-queue
+    events:
+      - sns:
+          topicName: ${self:service}-${self:provider.stage}-queue
+          displayName: Ingest STAC Item Queue
+  ingest:
+    description: STAC API Ingest Lambda
+    handler: index.handler
+    memorySize: 512
+    timeout: 30
+    reservedConcurrency: 100
+    package:
+      artifact: lambdas/ingest/dist/ingest.zip
+    events:
+      - sqs:
+          arn:
+            Fn::GetAtt: [ingestQueue, Arn]
+
+resources:
+  Description: STAC API
+  Resources:
+    ingestQueue:
+      Type: AWS::SQS::Queue
+      Properties:
+        DelaySeconds: 1
+        VisibilityTimeout: 180
+        ReceiveMessageWaitTimeSeconds: 5
+        QueueName: ${self:service}-${self:provider.stage}-queue
+    ElasticSearchInstance:
+      Type: AWS::Elasticsearch::Domain
+      Properties:
+        DomainName: ${self:service}-${self:provider.stage}-es 
+        EBSOptions:
+          EBSEnabled: true
+          VolumeType: gp2
+          VolumeSize: 35
+        ElasticsearchClusterConfig:
+          InstanceType: t2.small.elasticsearch
+          InstanceCount: 3
+          DedicatedMasterEnabled: false
+          ZoneAwarenessEnabled: false
+        ElasticsearchVersion: 6.8
+  Outputs:
+    ESEndpoint:
+      Value:
+        Fn::GetAtt: [ ElasticSearchInstance, DomainEndpoint ]
+      Export:
+        Name: ${self:service}-${self:provider.stage}-es-endpoint
+
+
+plugins:
+  - serverless-pseudo-parameters
+  - serverless-plugin-elasticsearch-index

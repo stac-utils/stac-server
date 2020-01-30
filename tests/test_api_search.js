@@ -8,7 +8,7 @@ function cloneMutatedItem() {
   return Object.assign({}, item, { links: item.links.slice(0) })
 }
 
-test('search es error', async (t) => {
+/*test('search es error', async (t) => {
   const error = sinon.spy()
   const proxyApi = proxquire('../libs/api', {
     console: {
@@ -23,7 +23,7 @@ test('search es error', async (t) => {
     'Logs Elasticsearch error via Winston transport')
   t.is(response.message, errorMessage)
   t.is(response.code, 500)
-})
+})*/
 
 test('search /', async (t) => {
   const search = sinon.stub().resolves({ results: [], meta: {} })

@@ -86,8 +86,8 @@ async function create_indices() {
   const indexExists = await client.indices.exists({ index: 'collections' })
   if (!indexExists) {
     try {
-      await client.indices.create({ index: 'collections', body: collections_mapping })
-      await client.indices.create({ index: 'items', body: items_mapping })
+      await client.indices.create({ index: 'collections', body: collections_mapping() })
+      await client.indices.create({ index: 'items', body: items_mapping() })
       logger.info('Created indices')
     } catch (error) {
       const debugMessage = `Error creating index, already created: ${error}`

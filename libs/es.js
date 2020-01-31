@@ -83,7 +83,7 @@ async function esClient() {
 // Create STAC mappings
 async function create_indices() {
   const client = await esClient()
-  const indexExists = await client.indices.exists('collections')
+  const indexExists = await client.indices.exists({ index: 'collections' })
   if (!indexExists) {
     try {
       await client.indices.create({ index: 'collections', body: collections_mapping })

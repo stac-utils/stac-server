@@ -6,7 +6,7 @@ const logger = console
 
 module.exports.handler = async function handler(event) {
   logger.debug(`Event: ${JSON.stringify(event)}`)
-  if (event.prepare) {
+  if (event.create_indices) {
     satlib.es.create_indices()
   }
   try {

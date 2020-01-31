@@ -6,8 +6,8 @@ const elasticsearch = require('elasticsearch')
 const through2 = require('through2')
 const ElasticsearchWritableStream = require('./ElasticSearchWriteableStream')
 const logger = console //require('./logger')
-const collections_mapping = require('../fixtures/collections.js')
-const items_mapping = require('../fixtures/items.js')
+const collections_mapping = require('../fixtures/collections.js')()
+const items_mapping = require('../fixtures/items.js')()
 
 let _esClient
 /*
@@ -86,8 +86,10 @@ async function create_indices() {
   const indexExists = await client.indices.exists({ index: 'collections' })
   if (!indexExists) {
     try {
-      await client.indices.create({ index: 'collections', body: collections_mapping() })
-      await client.indices.create({ index: 'items', body: items_mapping() })
+      await client.indices.create({ index: 'collections', body: collections_mapping })
+      await client.indices.create({ index: 'items', body: items_mapping })
+      logger.debug(`Collections mapping: ${JSON.stringify(collections_mapping)}`)
+      logger.debug(`Items mapping: ${JSON.stringify(items_mapping)}`)
       logger.info('Created indices')
     } catch (error) {
       const debugMessage = `Error creating index, already created: ${error}`

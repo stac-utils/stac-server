@@ -6,6 +6,8 @@ const elasticsearch = require('elasticsearch')
 const through2 = require('through2')
 const ElasticsearchWritableStream = require('./ElasticSearchWriteableStream')
 const logger = console //require('./logger')
+const collections_mapping = require('../fixtures/collections.js')
+const items_mapping = require('../fixtures/items.js')
 
 let _esClient
 /*
@@ -81,14 +83,12 @@ async function esClient() {
 // Create STAC mappings
 async function create_indices() {
   const client = await esClient()
-  const collections_mapping = require('../fixtures/collections.js')
-  const items_mapping = require('../fixtures/items.js')
-  const indexExists = await client.indices.exists({ 'collections' })
+  const indexExists = await client.indices.exists('collections')
   if (!indexExists) {
     try {
       await client.indices.create(collections_mapping)
       await client.indices.create(items_mapping)
-      logger.info("Created indices")
+      logger.info('Created indices')
     } catch (error) {
       const debugMessage = `Error creating index, already created: ${error}`
       logger.debug(debugMessage)

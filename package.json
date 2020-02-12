@@ -6,12 +6,12 @@
   "author": "Alireza Jazayeri, Matthew Hanson <matt.a.hanson@gmail.com>, Sean Harkins",
   "license": "MIT",
   "scripts": {
-    "postinstall": "cd lambdas/api; yarn; cd ../../lambdas/ingest; yarn; cd ../../lambdas/queue; yarn",
-    "build": "cd lambdas/api; yarn run build; cd ../../lambdas/ingest; yarn run build; cd ../../lambdas/queue; yarn run build",
+    "postinstall": "cd lambdas/api; npm install; cd ../../lambdas/ingest; npm install; cd ../../lambdas/queue; npm install",
+    "build": "cd lambdas/api; npm run build; cd ../../lambdas/ingest; npm run build; cd ../../lambdas/queue; npm run build",
     "test": "ava",
     "eslint": "eslint packages/* --ext .js",
     "deploy": "sls deploy",
-    "build-api-docs": "yarn widdershins --search false --language_tabs 'nodejs:NodeJS' 'python:Python' --summary ./packages/api-lib/api-spec.yaml -o ./docs/api.md & yarn shins --inline --logo ./docs/images/logo.png -o ./docs/index.html ./docs/api.md"
+    "build-api-docs": "npm run widdershins --search false --language_tabs 'nodejs:NodeJS' 'python:Python' --summary ./packages/api-lib/api-spec.yaml -o ./docs/api.md & npm run shins --inline --logo ./docs/images/logo.png -o ./docs/index.html ./docs/api.md"
   },
   "ava": {
     "files": "tests/*.js",
@@ -32,7 +32,7 @@
     "js-yaml": "^3.13.1",
     "memorystream": "^0.3.1",
     "pump": "^3.0.0",
-    "serverless-plugin-elasticsearch-index": "git+https://github.com/matthewhanson/serverless-plugin-elasticsearch-index.git#v1.0.0-b2",
+    "serverless-plugin-elasticsearch-index": "git+https://github.com/matthewhanson/serverless-plugin-elasticsearch-index.git#1.0.0-b2",
     "through2": "^3.0.1"
   },
   "devDependencies": {

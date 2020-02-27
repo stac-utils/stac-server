@@ -1,7 +1,7 @@
 {
   "displayName": "stac-api",
   "description": "STAC API",
-  "version": "0.1.0-rc1",
+  "version": "0.1.0-rc2",
   "repository": "https://github.com/stac-utils/stac-api",
   "author": "Alireza Jazayeri, Matthew Hanson <matt.a.hanson@gmail.com>, Sean Harkins",
   "license": "MIT",

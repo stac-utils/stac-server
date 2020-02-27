@@ -79,11 +79,14 @@ const extractSortby = function (params) {
   if (sortby) {
     if (typeof sortby === 'string') {
       // GET request - different syntax
-      sortbyRules = sortby.split(',').map((sortByRule) => {
-        const [field, direction] = sortByRule.split('|')
-        return {
-          field,
-          direction
+      sortbyRules = []
+      sortby.forEach((sortbyRule) => {
+        if (sortbyRule[0] === '-') {
+          sortbyRules.push({ 'field': sortbyRule.slice(1), 'direction': 'desc' })
+        } else if (sortbyRule[0] === '+') {
+          sortbyRules.push({ 'field': sortbyRule.slice(1), 'direction': 'asc' })
+        } else {
+          sortbyRules.push({ 'field': sortbyRule, 'direction': 'asc' })
         }
       })
     } else {

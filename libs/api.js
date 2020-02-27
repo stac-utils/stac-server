@@ -80,7 +80,8 @@ const extractSortby = function (params) {
     if (typeof sortby === 'string') {
       // GET request - different syntax
       sortbyRules = []
-      sortby.forEach((sortbyRule) => {
+      const sortbys = sortby.split(',')
+      sortbys.forEach((sortbyRule) => {
         if (sortbyRule[0] === '-') {
           sortbyRules.push({ 'field': sortbyRule.slice(1), 'direction': 'desc' })
         } else if (sortbyRule[0] === '+') {

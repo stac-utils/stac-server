@@ -32,7 +32,6 @@ custom:
       mapping: ${file(./fixtures/items.js)}
       version: '6.8'
       endpointName: ${self:service}-${self:provider.stage}-es-endpoint
-        
 
 package:
   individually: true
@@ -73,14 +72,14 @@ functions:
     reservedConcurrency: 100
     package:
       artifact: lambdas/ingest/dist/ingest.zip
-    events:
-      - sqs:
-          arn:
-            Fn::GetAtt: [ingestQueue, Arn]
 
 resources:
   Description: STAC API
   Resources:
+    ingestTopic:
+      Type: 'AWS::SNS::Topic'
+      Properties:
+        TopicName: ${self:service}-${self:provider.stage}-ingest
     deadLetterQueue:
       Type: AWS::SQS::Queue
       Properties:
@@ -95,6 +94,13 @@ resources:
         RedrivePolicy:
           deadLetterTargetArn: Fn::GetAtt: [deadLetterQueue, Arn]
           maxReceiveCount: 2
+    PurpleTopicSubscription:
+      Type: AWS::SNS::Subscription
+      Properties:
+        Endpoint: !GetAtt ingestQueue.Arn
+        Protocol: sqs
+        Region: #{AWS::Region}
+        TopicArn: !Ref ingestTopic
     ElasticSearchInstance:
       Type: AWS::Elasticsearch::Domain
       Properties:
@@ -115,7 +121,6 @@ resources:
         Fn::GetAtt: [ ElasticSearchInstance, DomainEndpoint ]
       Export:
         Name: ${self:service}-${self:provider.stage}-es-endpoint
-
 
 plugins:
   - serverless-pseudo-parameters

@@ -14,13 +14,15 @@ module.exports.handler = async function handler(event) {
       logger.info(`Ingesting ${event.Records.length} items`)
       const items = await Promise.all(event.Records.map(async (record) => {
         const item = JSON.parse(record.body)
-        await satlib.ingest.ingestItems([item], satlib.es)
+        logger.debug(`Item: ${JSON.stringify(item)}`)
         return item
       }))
-      logger.debug(`Items: ${JSON.stringify(items)}`)
+      await satlib.ingest.ingestItems([item], satlib.es)
+      logger.debug(`${items.length} Items: ${JSON.stringify(items)}`)
     }
   } catch (error) {
     console.log(error)
+    throw(error)
   }
 }
 

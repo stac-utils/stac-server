@@ -6,8 +6,8 @@
   "author": "Alireza Jazayeri, Matthew Hanson <matt.a.hanson@gmail.com>, Sean Harkins",
   "license": "MIT",
   "scripts": {
-    "postinstall": "cd lambdas/api; npm install; cd ../../lambdas/ingest; npm install; cd ../../lambdas/queue; npm install",
-    "build": "cd lambdas/api; npm run build; cd ../../lambdas/ingest; npm run build; cd ../../lambdas/queue; npm run build",
+    "postinstall": "cd lambdas/api; npm install; cd ../../lambdas/ingest; npm install;",
+    "build": "cd lambdas/api; npm run build; cd ../../lambdas/ingest; npm run build;",
     "test": "ava",
     "eslint": "eslint packages/* --ext .js",
     "deploy": "sls deploy",

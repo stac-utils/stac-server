@@ -81,6 +81,10 @@ functions:
 resources:
   Description: STAC API
   Resources:
+    deadLetterQueue:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: ${self:service}-${self:provider.stage}-dead-letter-queue
     ingestQueue:
       Type: AWS::SQS::Queue
       Properties:
@@ -88,6 +92,9 @@ resources:
         VisibilityTimeout: 180
         ReceiveMessageWaitTimeSeconds: 5
         QueueName: ${self:service}-${self:provider.stage}-queue
+        RedrivePolicy:
+          deadLetterTargetArn: Fn::GetAtt: [deadLetterQueue, Arn]
+          maxReceiveCount: 2
     ElasticSearchInstance:
       Type: AWS::Elasticsearch::Domain
       Properties:

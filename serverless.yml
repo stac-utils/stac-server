@@ -51,19 +51,6 @@ functions:
     events:
       - http: ANY /
       - http: ANY {proxy+}
-  queue:
-    description: STAC API Queueing Lambda
-    handler: index.handler
-    memorySize: 128
-    timeout: 15
-    package:
-      artifact: lambdas/queue/dist/queue.zip
-    environment:
-      queueName: ${self:service}-${self:provider.stage}-queue
-    events:
-      - sns:
-          topicName: ${self:service}-${self:provider.stage}-queue
-          displayName: Ingest STAC Item Queue
 
 resources:
   Description: STAC API
@@ -84,7 +71,7 @@ resources:
         ReceiveMessageWaitTimeSeconds: 5
         QueueName: ${self:service}-${self:provider.stage}-queue
         RedrivePolicy:
-          deadLetterTargetArn: Fn::GetAtt: [deadLetterQueue, Arn]
+          deadLetterTargetArn: !Ref deadLetterQueue
           maxReceiveCount: 2
     PurpleTopicSubscription:
       Type: AWS::SNS::Subscription

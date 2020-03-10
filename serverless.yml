@@ -71,7 +71,7 @@ functions:
     package:
       artifact: lambdas/queue/dist/subscribe-to-sns.zip
     environment:
-      queueName: ${self:service}-${self:provider.stage}-subscribe-to-sns
+      queueName: ${self:service}-${self:provider.stage}-queue
 
 resources:
   Description: STAC API

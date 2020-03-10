@@ -6,8 +6,8 @@
   "author": "Alireza Jazayeri, Matthew Hanson <matt.a.hanson@gmail.com>, Sean Harkins",
   "license": "MIT",
   "scripts": {
-    "postinstall": "cd lambdas/api; yarn; cd ../../lambdas/ingest; yarn; cd ../../lambdas/queue; yarn",
-    "build": "cd lambdas/api; yarn run build; cd ../../lambdas/ingest; yarn run build; cd ../../lambdas/queue; yarn run build",
+    "postinstall": "cd lambdas/api; yarn; cd ../../lambdas/ingest; yarn; cd ../../lambdas/subscribe-to-sns; yarn",
+    "build": "cd lambdas/api; yarn run build; cd ../../lambdas/ingest; yarn run build; cd ../../lambdas/subscribe-to-sns; yarn run build",
     "test": "ava",
     "eslint": "eslint packages/* --ext .js",
     "deploy": "sls deploy",

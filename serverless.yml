@@ -69,7 +69,7 @@ functions:
     memorySize: 128
     timeout: 15
     package:
-      artifact: lambdas/queue/dist/subscribe-to-sns.zip
+      artifact: lambdas/subscribe-to-sns/dist/subscribe-to-sns.zip
     environment:
       queueName: ${self:service}-${self:provider.stage}-queue
 

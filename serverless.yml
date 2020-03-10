@@ -63,6 +63,15 @@ functions:
       - sqs:
           arn:
             Fn::GetAtt: [ingestQueue, Arn]
+  subscribeToSns:
+    description: STAC API SNS Subscription Lambda
+    handler: index.handler
+    memorySize: 128
+    timeout: 15
+    package:
+      artifact: lambdas/queue/dist/subscribe-to-sns.zip
+    environment:
+      queueName: ${self:service}-${self:provider.stage}-subscribe-to-sns
 
 resources:
   Description: STAC API

@@ -51,6 +51,18 @@ functions:
     events:
       - http: ANY /
       - http: ANY {proxy+}
+  ingest:
+    description: STAC API Ingest Lambda
+    handler: index.handler
+    memorySize: 512
+    timeout: 30
+    reservedConcurrency: 100
+    package:
+      artifact: lambdas/ingest/dist/ingest.zip
+    events:
+      - sqs:
+          arn:
+            Fn::GetAtt: [ingestQueue, Arn]
 
 resources:
   Description: STAC API
@@ -71,19 +83,35 @@ resources:
         ReceiveMessageWaitTimeSeconds: 5
         QueueName: ${self:service}-${self:provider.stage}-queue
         RedrivePolicy:
-          deadLetterTargetArn: !Ref deadLetterQueue
+          deadLetterTargetArn: !GetAtt deadLetterQueue.Arn
           maxReceiveCount: 2
-    PurpleTopicSubscription:
+    ingestQueuePolicy:
+      Type: AWS::SQS::QueuePolicy
+      Properties:
+        Queues:
+          - !Ref ingestQueue
+        PolicyDocument:
+          Statement:
+            - Sid: allow-sqs-sendmessage
+              Effect: Allow
+              Principal:
+                AWS: "*"
+              Action: SQS:SendMessage
+              Resource: !GetAtt ingestQueue.Arn
+              Condition:
+                ArnEquals:
+                  aws:SourceArn: !Ref ingestTopic
+    ingestSubscription:
       Type: AWS::SNS::Subscription
       Properties:
         Endpoint: !GetAtt ingestQueue.Arn
         Protocol: sqs
-        Region: #{AWS::Region}
+        Region: "#{AWS::Region}"
         TopicArn: !Ref ingestTopic
     ElasticSearchInstance:
       Type: AWS::Elasticsearch::Domain
       Properties:
-        DomainName: ${self:service}-${self:provider.stage}-es 
+        DomainName: ${self:service}-${self:provider.stage}-es
         EBSOptions:
           EBSEnabled: true
           VolumeType: gp2

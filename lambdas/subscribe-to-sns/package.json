@@ -1,5 +1,5 @@
 {
-  "name": "queue",
+  "name": "subscribe-to-sns",
   "description": "queue lambda function for stac-api",
   "main": "index.js",
   "scripts": {

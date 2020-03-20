@@ -62,6 +62,16 @@ This will create a CloudFormation stack in the `us-west-2` region called `stac-a
 $ npm run deploy -- --stage mystage --region eu-central-1
 ```
 
+Once deployed there is one final step - creating the indices and mappings in Elasticsearch. Invoke the Lambda function (either through the AWS Console or the AWS CLI) with a payload of:
+
+```
+{
+    "create_indices": true
+}
+```
+
+Stac-api is now ready to ingest data!
+
 ## Ingesting Data
 
 STAC Collections and Items are ingested by the `ingest` Lambda function, however this Lambda is not invoked directly by a user, it consumes records from the `stac-api-<stage>-queue` SQS. To add STAC Items or Collections to the queue, publish them to the SNS Topic `stac-api-<stage>-ingest`.

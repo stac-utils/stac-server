@@ -28,17 +28,6 @@ provider:
       Resource:
         Fn::GetAtt: [ingestQueue, Arn]
 
-custom:
-  slsEsIndices:
-    - index: collections
-      mapping: ${file(./fixtures/collections.js)}
-      version: '6.8'
-      endpointName: ${self:service}-${self:provider.stage}-es-endpoint
-    - index: items
-      mapping: ${file(./fixtures/items.js)}
-      version: '6.8'
-      endpointName: ${self:service}-${self:provider.stage}-es-endpoint
-
 package:
   individually: true
 
@@ -152,4 +141,3 @@ resources:
 
 plugins:
   - serverless-pseudo-parameters
-  - serverless-plugin-elasticsearch-index

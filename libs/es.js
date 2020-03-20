@@ -83,16 +83,27 @@ async function esClient() {
 // Create STAC mappings
 async function create_indices() {
   const client = await esClient()
-  const indexExists = await client.indices.exists({ index: 'collections' })
+  // Collection index
+  let indexExists = await client.indices.exists({ index: 'collections' })
   if (!indexExists) {
     try {
       await client.indices.create({ index: 'collections', body: collections_mapping })
-      await client.indices.create({ index: 'items', body: items_mapping })
       logger.debug(`Collections mapping: ${JSON.stringify(collections_mapping)}`)
-      logger.debug(`Items mapping: ${JSON.stringify(items_mapping)}`)
-      logger.info('Created indices')
+      logger.info('Created collections index')
     } catch (error) {
-      const debugMessage = `Error creating index, already created: ${error}`
+      const debugMessage = `Error creating collection index, already created: ${error}`
+      logger.debug(debugMessage)
+    }
+  }
+  // Item index
+  indexExists = await client.indices.exists({ index: 'items' })
+  if (!indexExists) {
+    try {
+      await client.indices.create({ index: 'items', body: items_mapping })
+      logger.debug(`Items mapping: ${JSON.stringify(items_mapping)}`)
+      logger.info('Created items index')
+    } catch (error) {
+      const debugMessage = `Error creating items index, already created: ${error}`
       logger.debug(debugMessage)
     }
   }

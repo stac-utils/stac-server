@@ -4,7 +4,9 @@
   "main": "index.js",
   "license": "MIT",
   "ava": {
-    "files": "tests/*.js",
+    "files": [
+      "tests/*.js"
+    ],
     "verbose": true,
     "serial": true
   },

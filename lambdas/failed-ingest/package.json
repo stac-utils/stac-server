@@ -15,7 +15,7 @@
     "access": "public"
   },
   "devDependencies": {
-    "ava": "^0.25.0",
+    "ava": "^3.5.0",
     "aws-event-mocks": "^0.0.0",
     "aws-sdk": "^2.382.0",
     "proxyquire": "^2.1.0",

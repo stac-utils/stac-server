@@ -157,7 +157,7 @@ const extractCollectionIds = function (params) {
 }
 
 
-const parsePath = function (path) {
+const parsePath = function (inpath) {
   const searchFilters = {
     root: false,
     api: false,
@@ -177,7 +177,7 @@ const parsePath = function (path) {
 
   const stac = 'stac'
 
-  const pathComponents = path.split('/').filter((x) => x)
+  const pathComponents = inpath.split('/').filter((x) => x)
   const { length } = pathComponents
   searchFilters.root = length === 0
   searchFilters.api = pathComponents[0] === api

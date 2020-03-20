@@ -518,6 +518,7 @@ const API = async function (
       apiResponse = await searchItems(collectionId, queryParameters,
         backend, endpoint)
     }
+    // Specific Item
     if (collections && collectionId && items && itemId) {
       apiResponse = await getItem(itemId, backend, endpoint)
     }

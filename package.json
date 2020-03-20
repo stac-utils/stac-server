@@ -48,7 +48,6 @@
     "proxyquire": "^2.1.0",
     "serverless": "^1.53.0",
     "serverless-pseudo-parameters": "^2.5.0",
-    "serverless-step-functions": "^2.11.0",
     "shins": "^2.3.2-3",
     "sinon": "^7.1.1",
     "widdershins": "^3.6.6"

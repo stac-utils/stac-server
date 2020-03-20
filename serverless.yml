@@ -63,6 +63,18 @@ functions:
       - sqs:
           arn:
             Fn::GetAtt: [ingestQueue, Arn]
+  failed-ingest:
+    description: STAC API Ingest Lambda
+    handler: index.handler
+    memorySize: 128
+    timeout: 30
+    reservedConcurrency: 100
+    package:
+      artifact: lambdas/failed-ingest/dist/failed-ingest.zip
+    events:
+      - sqs:
+          arn:
+            Fn::GetAtt: [deadLetterQueue, Arn]
   subscribeToSns:
     description: STAC API SNS Subscription Lambda
     handler: index.handler

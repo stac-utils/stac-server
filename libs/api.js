@@ -167,13 +167,15 @@ const parsePath = function (inpath) {
     search: false,
     collectionId: false,
     items: false,
-    itemId: false
+    itemId: false,
+    edit: false
   }
   const api = 'api'
   const conformance = 'conformance'
   const collections = 'collections'
   const search = 'search'
   const items = 'items'
+  const edit = 'edit'
 
   const stac = 'stac'
 
@@ -192,7 +194,8 @@ const parsePath = function (inpath) {
   searchFilters.search = pathComponents[0] === search
   searchFilters.items = pathComponents[2] === items
   searchFilters.itemId =
-    pathComponents[2] === items && length === 4 ? pathComponents[3] : false
+    pathComponents[2] === items && length >= 4 ? pathComponents[3] : false
+  searchFilters.edit = pathComponents[4] === edit
   return searchFilters
 }
 
@@ -456,6 +459,16 @@ const getCollection = async function (collectionId, backend, endpoint = '') {
 }
 
 
+const editItem = async function (itemId, queryParameters, backend, endpoint = '') {
+  const { response } = await backend.editItem(itemId, queryParameters)
+  //const [it] = addItemLinks(results, endpoint)
+  if (response) {
+    return response
+  }
+  return { code: 404, message: `Error editing item ${itemId}` }
+}
+
+
 const getItem = async function (itemId, backend, endpoint = '') {
   const itemQuery = { id: itemId }
   const { results } = await backend.search(itemQuery, 'items')
@@ -482,7 +495,8 @@ const API = async function (
       collections,
       collectionId,
       items,
-      itemId
+      itemId,
+      edit
     } = pathElements
 
     // API Root
@@ -515,12 +529,14 @@ const API = async function (
     }
     // Items in a collection
     if (collections && collectionId && items && !itemId) {
-      apiResponse = await searchItems(collectionId, queryParameters,
-        backend, endpoint)
+      apiResponse = await searchItems(collectionId, queryParameters, backend, endpoint)
     }
     // Specific Item
-    if (collections && collectionId && items && itemId) {
+    if (collections && collectionId && items && itemId && !edit) {
       apiResponse = await getItem(itemId, backend, endpoint)
+    } else if (collections && collectionId && items && itemId && edit) {
+      // Edit Specific Item
+      apiResponse = await editItem(itemId, queryParameters, backend, endpoint)
     }
   } catch (error) {
     logger.error(error)

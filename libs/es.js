@@ -385,6 +385,19 @@ function buildFieldsFilter(parameters) {
 }
 
 
+async function editItem(itemId, updateFields) {
+  const client = await esClient()
+  const response = await client.update({
+    index: ITEMS_INDEX,
+    id: itemId,
+    body: {
+      doc: updateFields
+    }
+  })
+  return response
+}
+
+
 async function search(parameters, index = '*', page = 1, limit = 10) {
   let body
   if (parameters.ids) {
@@ -445,5 +458,6 @@ async function search(parameters, index = '*', page = 1, limit = 10) {
 module.exports =  {
   stream: _stream,
   search,
+  editItem,
   create_indices
 }

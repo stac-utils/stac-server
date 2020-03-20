@@ -468,11 +468,11 @@ const getItem = async function (itemId, backend, endpoint = '') {
 
 
 const API = async function (
-  path = '', queryParameters = {}, backend, endpoint = ''
+  inpath = '', queryParameters = {}, backend, endpoint = ''
 ) {
   let apiResponse
   try {
-    const pathElements = parsePath(path)
+    const pathElements = parsePath(inpath)
 
     const {
       root,

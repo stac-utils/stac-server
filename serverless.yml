@@ -136,9 +136,9 @@ resources:
         EBSOptions:
           EBSEnabled: true
           VolumeType: gp2
-          VolumeSize: 35
+          VolumeSize: 100
         ElasticsearchClusterConfig:
-          InstanceType: t2.small.elasticsearch
+          InstanceType: r5.large.elasticsearch
           InstanceCount: 3
           DedicatedMasterEnabled: false
           ZoneAwarenessEnabled: false

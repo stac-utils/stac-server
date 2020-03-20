@@ -9,6 +9,9 @@ const logger = console //require('./logger')
 const collections_mapping = require('../fixtures/collections.js')()
 const items_mapping = require('../fixtures/items.js')()
 
+const COLLECTIONS_INDEX = process.env.COLLECTIONS_INDEX || 'collections'
+const ITEMS_INDEX = process.env.ITEMS_INDEX || 'items'
+
 let _esClient
 /*
 This module is used for connecting to an Elasticsearch instance, writing records,
@@ -84,10 +87,10 @@ async function esClient() {
 async function create_indices() {
   const client = await esClient()
   // Collection index
-  let indexExists = await client.indices.exists({ index: 'collections' })
+  let indexExists = await client.indices.exists({ index: COLLECTIONS_INDEX })
   if (!indexExists) {
     try {
-      await client.indices.create({ index: 'collections', body: collections_mapping })
+      await client.indices.create({ index: COLLECTIONS_INDEX, body: collections_mapping })
       logger.debug(`Collections mapping: ${JSON.stringify(collections_mapping)}`)
       logger.info('Created collections index')
     } catch (error) {
@@ -96,10 +99,10 @@ async function create_indices() {
     }
   }
   // Item index
-  indexExists = await client.indices.exists({ index: 'items' })
+  indexExists = await client.indices.exists({ index: ITEMS_INDEX })
   if (!indexExists) {
     try {
-      await client.indices.create({ index: 'items', body: items_mapping })
+      await client.indices.create({ index: ITEMS_INDEX, body: items_mapping })
       logger.debug(`Items mapping: ${JSON.stringify(items_mapping)}`)
       logger.info('Created items index')
     } catch (error) {
@@ -116,11 +119,11 @@ async function _stream() {
   try {
     let collections = []
     const client = await esClient()
-    const indexExists = await client.indices.exists({ index: 'collections' })
+    const indexExists = await client.indices.exists({ index: COLLECTIONS_INDEX })
     if (indexExists) {
       const body = { query: { match_all: {} } }
       const searchParams = {
-        index: 'collections',
+        index: COLLECTIONS_INDEX,
         body
       }
       const resultBody = await client.search(searchParams)
@@ -130,9 +133,9 @@ async function _stream() {
     const toEs = through2.obj({ objectMode: true }, (data, encoding, next) => {
       let index = ''
       if (data && data.hasOwnProperty('extent')) {
-        index = 'collections'
+        index = COLLECTIONS_INDEX
       } else if (data && data.hasOwnProperty('geometry')) {
-        index = 'items'
+        index = ITEMS_INDEX
       } else {
         next()
         return
@@ -141,7 +144,7 @@ async function _stream() {
       const hlinks = ['self', 'root', 'parent', 'child', 'collection', 'item']
       const links = data.links.filter((link) => !hlinks.includes(link.rel))
       let esDataObject = Object.assign({}, data, { links })
-      if (index === 'items') {
+      if (index === ITEMS_INDEX) {
         const collectionId = data.collection
         const itemCollection =
           collections.find((collection) => (collectionId === collection.id))

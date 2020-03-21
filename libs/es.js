@@ -175,7 +175,7 @@ async function _stream() {
     })
     const esStream = new ElasticsearchWritableStream({ client: client }, {
       objectMode: true,
-      highWaterMark: process.env.ES_BATCH_SIZE || 500
+      highWaterMark: Number(process.env.ES_BATCH_SIZE) || 500
     })
     esStreams = { toEs, esStream }
   } catch (error) {
@@ -390,6 +390,8 @@ async function editItem(itemId, updateFields) {
   const response = await client.update({
     index: ITEMS_INDEX,
     id: itemId,
+    type: 'doc',
+    _source: true,
     body: {
       doc: updateFields
     }

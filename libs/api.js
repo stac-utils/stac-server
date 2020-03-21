@@ -459,16 +459,6 @@ const getCollection = async function (collectionId, backend, endpoint = '') {
 }
 
 
-const editItem = async function (itemId, queryParameters, backend, endpoint = '') {
-  const { response } = await backend.editItem(itemId, queryParameters)
-  //const [it] = addItemLinks(results, endpoint)
-  if (response) {
-    return response
-  }
-  return { code: 404, message: `Error editing item ${itemId}` }
-}
-
-
 const getItem = async function (itemId, backend, endpoint = '') {
   const itemQuery = { id: itemId }
   const { results } = await backend.search(itemQuery, 'items')
@@ -477,6 +467,16 @@ const getItem = async function (itemId, backend, endpoint = '') {
     return it
   }
   return { code: 404, message: 'Item not found' }
+}
+
+
+const editItem = async function (itemId, queryParameters, backend, endpoint = '') {
+  const response = await backend.editItem(itemId, queryParameters)
+  logger.debug(`Edit Item: ${response}`)
+  if (response) {
+    return addItemLinks([response.get._source], endpoint)[0]
+  }
+  return { code: 404, message: `Error editing item ${itemId}` }
 }
 
 

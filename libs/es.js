@@ -6,6 +6,11 @@ const elasticsearch = require('elasticsearch')
 const through2 = require('through2')
 const ElasticsearchWritableStream = require('./ElasticSearchWriteableStream')
 const logger = console //require('./logger')
+const collections_mapping = require('../fixtures/collections.js')()
+const items_mapping = require('../fixtures/items.js')()
+
+const COLLECTIONS_INDEX = process.env.COLLECTIONS_INDEX || 'collections'
+const ITEMS_INDEX = process.env.ITEMS_INDEX || 'items'
 
 let _esClient
 /*
@@ -78,17 +83,47 @@ async function esClient() {
 }
 
 
+// Create STAC mappings
+async function create_indices() {
+  const client = await esClient()
+  // Collection index
+  let indexExists = await client.indices.exists({ index: COLLECTIONS_INDEX })
+  if (!indexExists) {
+    try {
+      await client.indices.create({ index: COLLECTIONS_INDEX, body: collections_mapping })
+      logger.debug(`Collections mapping: ${JSON.stringify(collections_mapping)}`)
+      logger.info('Created collections index')
+    } catch (error) {
+      const debugMessage = `Error creating collection index, already created: ${error}`
+      logger.debug(debugMessage)
+    }
+  }
+  // Item index
+  indexExists = await client.indices.exists({ index: ITEMS_INDEX })
+  if (!indexExists) {
+    try {
+      await client.indices.create({ index: ITEMS_INDEX, body: items_mapping })
+      logger.debug(`Items mapping: ${JSON.stringify(items_mapping)}`)
+      logger.info('Created items index')
+    } catch (error) {
+      const debugMessage = `Error creating items index, already created: ${error}`
+      logger.debug(debugMessage)
+    }
+  }
+}
+
+
 // Given an input stream and a transform, write records to an elasticsearch instance
 async function _stream() {
   let esStreams
   try {
     let collections = []
     const client = await esClient()
-    const indexExists = await client.indices.exists({ index: 'collections' })
+    const indexExists = await client.indices.exists({ index: COLLECTIONS_INDEX })
     if (indexExists) {
       const body = { query: { match_all: {} } }
       const searchParams = {
-        index: 'collections',
+        index: COLLECTIONS_INDEX,
         body
       }
       const resultBody = await client.search(searchParams)
@@ -98,18 +133,18 @@ async function _stream() {
     const toEs = through2.obj({ objectMode: true }, (data, encoding, next) => {
       let index = ''
       if (data && data.hasOwnProperty('extent')) {
-        index = 'collections'
+        index = COLLECTIONS_INDEX
       } else if (data && data.hasOwnProperty('geometry')) {
-        index = 'items'
+        index = ITEMS_INDEX
       } else {
         next()
         return
       }
       // remove any hierarchy links in a non-mutating way
       const hlinks = ['self', 'root', 'parent', 'child', 'collection', 'item']
-      const links = data.links.filter((link) => hlinks.includes(link))
+      const links = data.links.filter((link) => !hlinks.includes(link.rel))
       let esDataObject = Object.assign({}, data, { links })
-      if (index === 'items') {
+      if (index === ITEMS_INDEX) {
         const collectionId = data.collection
         const itemCollection =
           collections.find((collection) => (collectionId === collection.id))
@@ -140,7 +175,7 @@ async function _stream() {
     })
     const esStream = new ElasticsearchWritableStream({ client: client }, {
       objectMode: true,
-      highWaterMark: process.env.ES_BATCH_SIZE || 500
+      highWaterMark: Number(process.env.ES_BATCH_SIZE) || 500
     })
     esStreams = { toEs, esStream }
   } catch (error) {
@@ -292,19 +327,10 @@ function buildIdsQuery(ids) {
 
 
 function buildSort(parameters) {
-  const { sort, sortBy } = parameters
+  const { sortby } = parameters
   let sorting
-  if (sortBy && sortBy.length > 0) {
-    sorting = sortBy.map((sortRule) => {
-      const { field, direction } = sortRule
-      return {
-        [field]: {
-          order: direction
-        }
-      }
-    })
-  } else if (sort && sort.length > 0) {
-    sorting = sort.map((sortRule) => {
+  if (sortby && sortby.length > 0) {
+    sorting = sortby.map((sortRule) => {
       const { field, direction } = sortRule
       return {
         [field]: {
@@ -356,6 +382,21 @@ function buildFieldsFilter(parameters) {
     }
   }
   return { _sourceInclude, _sourceExclude }
+}
+
+
+async function editItem(itemId, updateFields) {
+  const client = await esClient()
+  const response = await client.update({
+    index: ITEMS_INDEX,
+    id: itemId,
+    type: 'doc',
+    _source: true,
+    body: {
+      doc: updateFields
+    }
+  })
+  return response
 }
 
 
@@ -416,5 +457,9 @@ async function search(parameters, index = '*', page = 1, limit = 10) {
   return response
 }
 
-module.exports.stream = _stream
-module.exports.search = search
+module.exports =  {
+  stream: _stream,
+  search,
+  editItem,
+  create_indices
+}

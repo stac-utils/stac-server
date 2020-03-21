@@ -25,7 +25,7 @@ function cloneMutatedItem() {
   t.is(response.code, 500)
 })*/
 
-test('search /', async (t) => {
+test('root /', async (t) => {
   const search = sinon.stub().resolves({ results: [], meta: {} })
   const backend = { search }
   const actual = await api.API('/', undefined, backend, 'endpoint')

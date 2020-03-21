@@ -6,9 +6,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
-## [0.0.1] - 2019-12-19
+## [0.1.0] - 2020-03-20
 
-Initial release, forked from [sat-api](https://github.com/sat-utils/sat-api/tree/develop)
+Initial release, forked from [sat-api](https://github.com/sat-utils/sat-api/tree/develop).
+
+Compliant with STAC 0.9.0
 
 [Unreleased]: https://github.com/stac-utils/stac-api/compare/master...develop
-[0.0.1]: https://github.com/stac-utils/stac-api/tree/0.0.1
+[0.1.0]: https://github.com/stac-utils/stac-api/tree/0.1.0

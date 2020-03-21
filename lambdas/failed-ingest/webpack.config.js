@@ -24,7 +24,7 @@ module.exports = {
   target: 'node',
   plugins: [
     new ZipPlugin({
-      filename: 'queue.zip'
+      filename: 'failed-ingest.zip'
     })
   ]
 }

@@ -40,7 +40,7 @@ async function ingestItems(items, backend) {
           console.log(error)
           reject(error)
         } else {
-          console.log('Ingested item')
+          console.debug('Ingested item')
           resolve(true)
         }
       }

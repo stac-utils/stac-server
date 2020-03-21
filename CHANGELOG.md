@@ -13,4 +13,4 @@ Initial release, forked from [sat-api](https://github.com/sat-utils/sat-api/tree
 Compliant with STAC 0.9.0
 
 [Unreleased]: https://github.com/stac-utils/stac-api/compare/master...develop
-[0.0.1]: https://github.com/stac-utils/stac-api/tree/0.0.1
+[0.1.0]: https://github.com/stac-utils/stac-api/tree/0.1.0

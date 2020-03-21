@@ -534,10 +534,10 @@ const API = async function (
     // Specific Item
     if (collections && collectionId && items && itemId && !edit) {
       apiResponse = await getItem(itemId, backend, endpoint)
-    } else if (collections && collectionId && items && itemId && edit) {
+    } /* else if (collections && collectionId && items && itemId && edit) {
       // Edit Specific Item
       apiResponse = await editItem(itemId, queryParameters, backend, endpoint)
-    }
+    } */
   } catch (error) {
     logger.error(error)
     apiResponse = { code: 500, message: error.message }

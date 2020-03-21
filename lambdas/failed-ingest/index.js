@@ -8,7 +8,10 @@ module.exports.handler = async function handler(event) {
   if (event.Records) {
     let msg
     event.Records.forEach((record) => {
-      msg = JSON.parse(JSON.parse(record.body).Message)
+      msg = JSON.parse(record.body)
+      if (msg.hasOwnProperty('Message')) {
+        msg = JSON.parse(msg.Message)
+      }
       logger.info(JSON.stringify(msg))
     })
   }

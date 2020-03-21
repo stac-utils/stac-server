@@ -14,7 +14,9 @@
     "build-api-docs": "npm run widdershins --search false --language_tabs 'nodejs:NodeJS' 'python:Python' --summary ./packages/api-lib/api-spec.yaml -o ./docs/api.md & npm run shins --inline --logo ./docs/images/logo.png -o ./docs/index.html ./docs/api.md"
   },
   "ava": {
-    "files": ["tests/*.js"],
+    "files": [
+      "tests/*.js"
+    ],
     "verbose": true,
     "serial": true
   },

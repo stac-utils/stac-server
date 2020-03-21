@@ -79,11 +79,15 @@ const extractSortby = function (params) {
   if (sortby) {
     if (typeof sortby === 'string') {
       // GET request - different syntax
-      sortbyRules = sortby.split(',').map((sortByRule) => {
-        const [field, direction] = sortByRule.split('|')
-        return {
-          field,
-          direction
+      sortbyRules = []
+      const sortbys = sortby.split(',')
+      sortbys.forEach((sortbyRule) => {
+        if (sortbyRule[0] === '-') {
+          sortbyRules.push({ 'field': sortbyRule.slice(1), 'direction': 'desc' })
+        } else if (sortbyRule[0] === '+') {
+          sortbyRules.push({ 'field': sortbyRule.slice(1), 'direction': 'asc' })
+        } else {
+          sortbyRules.push({ 'field': sortbyRule, 'direction': 'asc' })
         }
       })
     } else {
@@ -153,7 +157,7 @@ const extractCollectionIds = function (params) {
 }
 
 
-const parsePath = function (path) {
+const parsePath = function (inpath) {
   const searchFilters = {
     root: false,
     api: false,
@@ -163,17 +167,19 @@ const parsePath = function (path) {
     search: false,
     collectionId: false,
     items: false,
-    itemId: false
+    itemId: false,
+    edit: false
   }
   const api = 'api'
   const conformance = 'conformance'
   const collections = 'collections'
   const search = 'search'
   const items = 'items'
+  const edit = 'edit'
 
   const stac = 'stac'
 
-  const pathComponents = path.split('/').filter((x) => x)
+  const pathComponents = inpath.split('/').filter((x) => x)
   const { length } = pathComponents
   searchFilters.root = length === 0
   searchFilters.api = pathComponents[0] === api
@@ -188,7 +194,8 @@ const parsePath = function (path) {
   searchFilters.search = pathComponents[0] === search
   searchFilters.items = pathComponents[2] === items
   searchFilters.itemId =
-    pathComponents[2] === items && length === 4 ? pathComponents[3] : false
+    pathComponents[2] === items && length >= 4 ? pathComponents[3] : false
+  searchFilters.edit = pathComponents[4] === edit
   return searchFilters
 }
 
@@ -463,12 +470,22 @@ const getItem = async function (itemId, backend, endpoint = '') {
 }
 
 
+const editItem = async function (itemId, queryParameters, backend, endpoint = '') {
+  const response = await backend.editItem(itemId, queryParameters)
+  logger.debug(`Edit Item: ${response}`)
+  if (response) {
+    return addItemLinks([response.get._source], endpoint)[0]
+  }
+  return { code: 404, message: `Error editing item ${itemId}` }
+}
+
+
 const API = async function (
-  path = '', queryParameters = {}, backend, endpoint = ''
+  inpath = '', queryParameters = {}, backend, endpoint = ''
 ) {
   let apiResponse
   try {
-    const pathElements = parsePath(path)
+    const pathElements = parsePath(inpath)
 
     const {
       root,
@@ -478,7 +495,8 @@ const API = async function (
       collections,
       collectionId,
       items,
-      itemId
+      itemId,
+      edit
     } = pathElements
 
     // API Root
@@ -511,12 +529,15 @@ const API = async function (
     }
     // Items in a collection
     if (collections && collectionId && items && !itemId) {
-      apiResponse = await searchItems(collectionId, queryParameters,
-        backend, endpoint)
+      apiResponse = await searchItems(collectionId, queryParameters, backend, endpoint)
     }
-    if (collections && collectionId && items && itemId) {
+    // Specific Item
+    if (collections && collectionId && items && itemId && !edit) {
       apiResponse = await getItem(itemId, backend, endpoint)
-    }
+    } /* else if (collections && collectionId && items && itemId && edit) {
+      // Edit Specific Item
+      apiResponse = await editItem(itemId, queryParameters, backend, endpoint)
+    } */
   } catch (error) {
     logger.error(error)
     apiResponse = { code: 500, message: error.message }

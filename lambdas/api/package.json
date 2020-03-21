@@ -4,7 +4,9 @@
   "main": "index.js",
   "license": "MIT",
   "ava": {
-    "files": "tests/*.js",
+    "files": [
+      "tests/*.js"
+    ],
     "verbose": true,
     "serial": true
   },
@@ -16,11 +18,11 @@
     "access": "public"
   },
   "devDependencies": {
-    "ava": "^0.25.0",
+    "ava": "^3.5.0",
     "aws-event-mocks": "0.0.0",
     "proxyquire": "^2.1.0",
     "sinon": "^7.1.1",
-    "webpack": "~4.41",
+    "webpack": "~4.42",
     "webpack-cli": "~3.3",
     "zip-webpack-plugin": "^3.0.0",
     "copy-webpack-plugin": "^5.1.1"

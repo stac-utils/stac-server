@@ -3,7 +3,7 @@ const sinon = require('sinon')
 const proxyquire = require('proxyquire')
 const api = require('../libs/api')
 
-test('extractIntersects', (t) => {
+test('extractIntersectsNull', (t) => {
   const params = {}
   const intersectsGeometry = api.extractIntersects(params)
   t.falsy(intersectsGeometry,
@@ -20,7 +20,7 @@ test('extractIntersects', (t) => {
   }, null, 'Throws exception when GeoJSON is invalid')
 })
 
-test('extractIntersects', (t) => {
+test('extractIntersects FeatureCollection', (t) => {
   const valid = sinon.stub().returns(true)
   const proxyApi = proxyquire('../libs/api', {
     'geojson-validation': { valid }

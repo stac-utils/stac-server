@@ -1,6 +1,6 @@
 {
-  "name": "ingest",
-  "description": "ingest lambda function for stac-api",
+  "name": "failed-ingest",
+  "description": "Failed ingest lambda function for stac-api",
   "main": "index.js",
   "scripts": {
     "build": "webpack",
@@ -18,9 +18,6 @@
   },
   "devDependencies": {
     "ava": "^3.5.0",
-    "aws-event-mocks": "0.0.0",
-    "proxyquire": "^2.1.0",
-    "sinon": "^7.1.1",
     "webpack": "~4.42",
     "webpack-cli": "~3.3",
     "zip-webpack-plugin": "^3.0.0"

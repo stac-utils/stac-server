@@ -15,11 +15,11 @@ jobs:
     - name: install node
       uses: actions/setup-node@master
       with:
-        node-version: 10.15
+        node-version: 12.14
 
-    - name: yarn install
-      run: yarn install
+    - name: npm install
+      run: npm install
 
-    - name: yarn test
-      run: yarn test
+    - name: npm run test
+      run: npm run test
 

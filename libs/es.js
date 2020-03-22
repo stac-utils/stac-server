@@ -387,6 +387,7 @@ function buildFieldsFilter(parameters) {
 
 async function editItem(itemId, updateFields) {
   const client = await esClient()
+  updateFields.properties.updated = new Date().toISOString()
   const response = await client.update({
     index: ITEMS_INDEX,
     id: itemId,

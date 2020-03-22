@@ -26,6 +26,10 @@ module.exports = {
     usedExports: true
   },
   target: 'node',
+  node: {
+    __dirname: false,
+    __filename: false
+  },
   plugins: [
     new CopyPlugin([
       {

@@ -350,10 +350,10 @@ function buildSort(parameters) {
 
 function buildFieldsFilter(parameters) {
   const { fields } = parameters
-  let _sourceInclude = []
+  let _sourceIncludes = []
   if (parameters.hasOwnProperty('fields')) {
     // if fields parameters supplied at all, start with this initial set, otherwise return all
-    _sourceInclude = [
+    _sourceIncludes = [
       'id',
       'type',
       'geometry',
@@ -364,24 +364,24 @@ function buildFieldsFilter(parameters) {
       'properties.datetime'
     ]
   }
-  let _sourceExclude = []
+  let _sourceExcludes = []
   if (fields) {
     const { include, exclude } = fields
     // Add include fields to the source include list if they're not already in it
     if (include && include.length > 0) {
       include.forEach((field) => {
-        if (_sourceInclude.indexOf(field) < 0) {
-          _sourceInclude.push(field)
+        if (_sourceIncludes.indexOf(field) < 0) {
+          _sourceIncludes.push(field)
         }
       })
     }
     // Remove exclude fields from the default include list and add them to the source exclude list
     if (exclude && exclude.length > 0) {
-      _sourceInclude = _sourceInclude.filter((field) => !exclude.includes(field))
-      _sourceExclude = exclude
+      _sourceIncludes = _sourceIncludes.filter((field) => !exclude.includes(field))
+      _sourceExcludes = exclude
     }
   }
-  return { _sourceInclude, _sourceExclude }
+  return { _sourceIncludes, _sourceExcludes }
 }
 
 
@@ -423,12 +423,12 @@ async function search(parameters, index = '*', page = 1, limit = 10) {
   }
 
   // disable fields filter for now
-  const { _sourceInclude, _sourceExclude } = buildFieldsFilter(parameters)
-  if (_sourceExclude.length > 0) {
-    searchParams._sourceExclude = _sourceExclude
+  const { _sourceIncludes, _sourceExcludes } = buildFieldsFilter(parameters)
+  if (_sourceExcludes.length > 0) {
+    searchParams._sourceExcludes = _sourceExcludes
   }
-  if (_sourceInclude.length > 0) {
-    searchParams._sourceInclude = _sourceInclude
+  if (_sourceIncludes.length > 0) {
+    searchParams._sourceIncludes = _sourceIncludes
   }
 
   logger.info(`Elasticsearch query: ${JSON.stringify(searchParams)}`)

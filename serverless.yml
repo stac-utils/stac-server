@@ -15,7 +15,6 @@ provider:
     STAC_DOCS_URL: https://stac-utils.github.io/stac-api/
     ES_HOST:
       Fn::GetAtt: [ElasticSearchInstance, DomainEndpoint]
-    ENABLE_TRANSACTIONS_EXTENSION: true
     ENABLE_TRANSACTIONS_EXTENSION: false
   iamRoleStatements:
     - Effect: "Allow"

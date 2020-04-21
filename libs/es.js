@@ -384,10 +384,30 @@ function buildFieldsFilter(parameters) {
   return { _sourceIncludes, _sourceExcludes }
 }
 
-
-async function editItem(itemId, updateFields) {
+/*
+ * Part of the Transaction extension https://github.com/radiantearth/stac-api-spec/tree/master/extensions/transaction
+ *
+ * This conforms to a PATCH request and updates an existing item by ID
+ * using a partial item description, compliant with RFC 7386.
+ *
+ * PUT should be implemented separately and is TODO.
+ */
+async function editPartialItem(itemId, updateFields) {
   const client = await esClient()
-  updateFields.properties.updated = new Date().toISOString()
+  
+  // Handle inserting required default properties to `updateFields`
+  const requiredProperties = {
+    updated: new Date().toISOString()
+  }
+
+  if (updateFields.properties) {
+    // If there are properties incoming, merge and overwrite
+    // our required ones.
+    Object.assign(updateFields.properties, requiredProperties)
+  } else {
+    updateFields.properties = requiredProperties
+  }
+
   const response = await client.update({
     index: ITEMS_INDEX,
     id: itemId,
@@ -458,9 +478,9 @@ async function search(parameters, index = '*', page = 1, limit = 10) {
   return response
 }
 
-module.exports =  {
+module.exports = {
   stream: _stream,
   search,
-  editItem,
+  editPartialItem,
   create_indices
 }

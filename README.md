@@ -47,6 +47,7 @@ There are some settings that should be reviewed and updated as needeed in the [s
 | ES_BATCH_SIZE | Number of records to ingest in single batch | 500 |
 | LOG_LEVEL | Level for logging (CRITICAL, ERROR, WARNING, INFO, DEBUG) | INFO |
 | STAC_API_URL | The root endpoint of this API | Inferred from request |
+| ENABLE_TRANSACTIONS_EXTENSION | Boolean specifying if the [Transaction Extension](https://github.com/radiantearth/stac-api-spec/tree/master/extensions/transaction) should be activated | false |
 
 After reviewing the settings, build and deploy the project.
 

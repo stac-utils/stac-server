@@ -4,6 +4,7 @@ const yaml = require('js-yaml')
 const fs = require('fs')
 const logger = console
 const path = require('path')
+const httpMethods = require('../utils/http-methods')
 
 // max number of collections to retrieve
 const COLLECTION_LIMIT = process.env.SATAPI_COLLECTION_LIMIT || 100
@@ -470,8 +471,8 @@ const getItem = async function (itemId, backend, endpoint = '') {
 }
 
 
-const editItem = async function (itemId, queryParameters, backend, endpoint = '') {
-  const response = await backend.editItem(itemId, queryParameters)
+const editPartialItem = async function (itemId, queryParameters, backend, endpoint = '') {
+  const response = await backend.editPartialItem(itemId, queryParameters)
   logger.debug(`Edit Item: ${response}`)
   if (response) {
     return addItemLinks([response.get._source], endpoint)[0]
@@ -481,7 +482,7 @@ const editItem = async function (itemId, queryParameters, backend, endpoint = ''
 
 
 const API = async function (
-  inpath = '', queryParameters = {}, backend, endpoint = ''
+  inpath = '', queryParameters = {}, backend, endpoint = '', httpMethod = 'GET'
 ) {
   let apiResponse
   try {
@@ -495,8 +496,7 @@ const API = async function (
       collections,
       collectionId,
       items,
-      itemId,
-      edit
+      itemId
     } = pathElements
 
     // API Root
@@ -518,7 +518,7 @@ const API = async function (
       )
     }
     // Search
-    
+
     // All collections
     if (collections && !collectionId) {
       apiResponse = await getCollections(backend, endpoint)
@@ -531,13 +531,21 @@ const API = async function (
     if (collections && collectionId && items && !itemId) {
       apiResponse = await searchItems(collectionId, queryParameters, backend, endpoint)
     }
-    // Specific Item
-    if (collections && collectionId && items && itemId && !edit) {
-      apiResponse = await getItem(itemId, backend, endpoint)
-    } /* else if (collections && collectionId && items && itemId && edit) {
-      // Edit Specific Item
-      apiResponse = await editItem(itemId, queryParameters, backend, endpoint)
-    } */
+
+    // Specific item
+    const pathIsToSpecificItem = (collections && collectionId && items && itemId)
+
+    if (pathIsToSpecificItem) {
+      if (httpMethod === httpMethods.GET) {
+        apiResponse = await getItem(itemId, backend, endpoint)
+      } else if (httpMethod === httpMethods.PATCH && process.env.ENABLE_TRANSACTIONS_EXTENSION) {
+        // Right now this is the only Transaction extension we support.
+        // https://github.com/radiantearth/stac-api-spec/tree/master/extensions/transaction
+        // When we do more, let's make a more scalable check and not look
+        // for ENABLE_TRANSACTIONS_EXTENSION each time
+        apiResponse = await editPartialItem(itemId, queryParameters, backend, endpoint)
+      }
+    }
   } catch (error) {
     logger.error(error)
     apiResponse = { code: 500, message: error.message }

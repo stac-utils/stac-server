@@ -460,8 +460,8 @@ const getCollection = async function (collectionId, backend, endpoint = '') {
 }
 
 
-const getItem = async function (itemId, backend, endpoint = '') {
-  const itemQuery = { id: itemId }
+const getItem = async function (collectionId, itemId, backend, endpoint = '') {
+  const itemQuery = { id: itemId, collection: collectionId }
   const { results } = await backend.search(itemQuery, 'items')
   const [it] = addItemLinks(results, endpoint)
   if (it) {

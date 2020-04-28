@@ -427,8 +427,8 @@ async function search(parameters, index = '*', page = 1, limit = 10) {
     const { ids } = parameters
     body = buildIdsQuery(ids)
   } else if (parameters.id) {
-    const { id } = parameters
-    body = buildIdQuery(id)
+    const { collection, id } = parameters
+    body = buildIdQuery(collection, id)
   } else {
     body = buildQuery(parameters)
   }

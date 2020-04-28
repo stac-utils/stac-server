@@ -1,10 +1,10 @@
-# stac-api 
+# stac-server 
 
 ![](https://github.com/stac-utils/stac-api/workflows/Push%20Event/badge.svg)
 
-Stac-api is a STAC compliant Rest API for searching and serving metadata for geospatial data (including but not limited to satellite imagery). The STAC version supported by a given version of stac-api is shown in the table below. Additional information can be found in the [CHANGELOG](CHANGELOG.md)
+Stac-server is a STAC compliant Rest API for searching and serving metadata for geospatial data (including but not limited to satellite imagery). The STAC version supported by a given version of stac-api is shown in the table below. Additional information can be found in the [CHANGELOG](CHANGELOG.md)
 
-| stac-api Version | STAC Version  |
+| stac-server Version | STAC Version  |
 | -------- | ----  |
 | 0.1.0    | 0.9.x |
 
@@ -89,7 +89,7 @@ Errors that occur during ingest will end up in the dead letter processing queue,
 
 ## Development
 
-The latest released version is on the [master branch](https://github.com/sat-utils/sat-api/tree/master), and the latest development version is on the [develop](https://github.com/sat-utils/sat-api/tree/develop) branch.
+The latest released version is on the [master branch](https://github.com/stac-utils/stac-server/tree/master), and the latest development version is on the [develop](https://github.com/stac-utils/stac-server/tree/develop) branch.
 
 ```
 # Install dependencies in package.json
@@ -107,4 +107,4 @@ $ npm run build-api-docs
 
 ## About
 
-[stac-api](https://github.com/stac-utils/stac-api) was forked from [stac-api](https://github.com/sat-utils/sat-api). The stac-api is for STAC versions 0.9.0+, while sat-api exists for versions of STAC prior to 0.9.0.
+[stac-server](https://github.com/stac-utils/stac-api) was forked from [sat-api](https://github.com/sat-utils/sat-api). Stac-server is for STAC versions 0.9.0+, while sat-api exists for versions of STAC prior to 0.9.0.

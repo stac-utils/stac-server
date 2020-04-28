@@ -1,5 +1,5 @@
 ---
-title: The SAT-API
+title: stac-server
 language_tabs:
   - nodejs: NodeJS
   - python: Python
@@ -11,22 +11,19 @@ headingLevel: 2
 
 ---
 
-<h1 id="the-sat-api">The SAT-API v0.2.0</h1>
+<h1 id="stac-server">stac-server</h1>
 
 > Scroll down for code samples, example requests and responses. Select a language for code samples from the tabs above or the mobile navigation menu.
 
-Sat-api is a STAC compliant web API for searching and serving metadata for geospatial data (including but not limited to satellite imagery). Development Seed runs an instance of sat-api for the Landsat-8 and Sentinel-2 imagery that is hosted on AWS.
+Stac-server is a STAC compliant web API for searching and serving metadata for geospatial data (including but not limited to satellite imagery).
 
 Base URLs:
 
-* <a href="https://sat-api.developmentseed.org/">https://sat-api.developmentseed.org/</a>
+* <a href="https://earth-search.aws.element84.com/">https://earth-search.aws.element84.com/</a>
 
-* <a href="https://sat-api-dev.developmentseed.org/">https://sat-api-dev.developmentseed.org/</a>
+License: <a href="https://github.com/stac-utils/stac-server/blob/master/LICENSE">MIT License</a>
 
-Email: <a href="mailto:info@developmentseed.org">Development Seed</a> Web: <a href="https://developmentseed.org/contacts/">Development Seed</a> 
-License: <a href="https://github.com/sat-utils/sat-api/blob/master/LICENSE">MIT License</a>
-
-<h1 id="the-sat-api-stac">STAC</h1>
+<h1 id="stac">STAC</h1>
 
 Extension to WFS3 Core to support STAC metadata model and search API
 
@@ -42,7 +39,7 @@ const headers = {
 
 };
 
-fetch('https://sat-api.developmentseed.org/stac',
+fetch('https://earth-search.aws.element84.com',
 {
   method: 'GET',
 
@@ -62,7 +59,7 @@ headers = {
   'Accept': 'application/json'
 }
 
-r = requests.get('https://sat-api.developmentseed.org/stac', params={
+r = requests.get('https://earth-search.aws.element84.com', params={
 
 }, headers = headers)
 
@@ -70,7 +67,7 @@ print r.json()
 
 ```
 
-`GET /stac`
+`GET /`
 
 Returns the root STAC Catalog or STAC Collection that is the entry point for users to browse with STAC Browser or for search engines to crawl. This can either return a single STAC Collection or more commonly a STAC catalog that usually lists sub-catalogs of STAC Collections, i.e. a simple catalog that lists all collections available through the API.
 
@@ -119,7 +116,7 @@ const headers = {
 
 };
 
-fetch('https://sat-api.developmentseed.org/stac/search',
+fetch('https://earth-search.aws.element84.com/search',
 {
   method: 'GET',
 
@@ -139,7 +136,7 @@ headers = {
   'Accept': 'application/geo+json'
 }
 
-r = requests.get('https://sat-api.developmentseed.org/stac/search', params={
+r = requests.get('https://earth-search.aws.element84.com/search', params={
 
 }, headers = headers)
 
@@ -147,7 +144,7 @@ print r.json()
 
 ```
 
-`GET /stac/search`
+`GET /search`
 
 Retrieve Items matching filters. Intended as a shorthand API for simple queries.
 
@@ -256,7 +253,7 @@ requested items shall not be counted.
       "links": [
         {
           "rel": "self",
-          "href": "http://https://sat-api.developmentseed.org/collections/landsat-8-l1/items/LC80100102015050LGN00.json"
+          "href": "http://https://earth-search.aws.element84.com/collections/landsat-8-l1/items/LC80100102015050LGN00.json"
         }
       ],
       "assets": {
@@ -276,7 +273,7 @@ requested items shall not be counted.
   "links": [
     {
       "rel": "next",
-      "href": "http://sat-api.developmentseed.org/collections/landsat-8-l1/items/gasd312fsaeg"
+      "href": "http://earth-search.aws.element84.com/collections/landsat-8-l1/items/gasd312fsaeg"
     }
   ]
 }
@@ -328,7 +325,7 @@ const headers = {
 
 };
 
-fetch('https://sat-api.developmentseed.org/stac/search',
+fetch('https://earth-search.aws.element84.com/search',
 {
   method: 'POST',
   body: inputBody,
@@ -349,7 +346,7 @@ headers = {
   'Accept': 'application/geo+json'
 }
 
-r = requests.post('https://sat-api.developmentseed.org/stac/search', params={
+r = requests.post('https://earth-search.aws.element84.com/search', params={
 
 }, headers = headers)
 
@@ -443,7 +440,7 @@ retrieve items matching filters. Intended as the standard, full-featured query A
       "links": [
         {
           "rel": "self",
-          "href": "http://https://sat-api.developmentseed.org/collections/landsat-8-l1/items/LC80100102015050LGN00.json"
+          "href": "http://https://earth-search.aws.element84.com/collections/landsat-8-l1/items/LC80100102015050LGN00.json"
         }
       ],
       "assets": {
@@ -463,7 +460,7 @@ retrieve items matching filters. Intended as the standard, full-featured query A
   "links": [
     {
       "rel": "next",
-      "href": "http://sat-api.developmentseed.org/collections/landsat-8-l1/items/gasd312fsaeg"
+      "href": "http://earth-search.aws.element84.com/collections/landsat-8-l1/items/gasd312fsaeg"
     }
   ]
 }
@@ -480,7 +477,7 @@ retrieve items matching filters. Intended as the standard, full-featured query A
 This operation does not require authentication
 </aside>
 
-<h1 id="the-sat-api-capabilities">Capabilities</h1>
+<h1 id="capabilities">Capabilities</h1>
 
 ## landing page of this API
 
@@ -496,7 +493,7 @@ const headers = {
 
 };
 
-fetch('https://sat-api.developmentseed.org/',
+fetch('https://earth-search.aws.element84.com/',
 {
   method: 'GET',
 
@@ -516,7 +513,7 @@ headers = {
   'Accept': 'application/json'
 }
 
-r = requests.get('https://sat-api.developmentseed.org/', params={
+r = requests.get('https://earth-search.aws.element84.com/', params={
 
 }, headers = headers)
 
@@ -536,19 +533,19 @@ The landing page provides links to the API definition, the Conformance statement
 {
   "links": [
     {
-      "href": "http://sat-api.developmentseed.org",
+      "href": "http://earth-search.aws.element84.com",
       "rel": "self",
       "type": "application/json",
       "title": "this document"
     },
     {
-      "href": "http://sat-api.developmentseed.org/api",
+      "href": "http://earth-search.aws.element84.com/api",
       "rel": "service",
       "type": "application/json",
       "title": "this document"
     },
     {
-      "href": "http://sat-api.developmentseed.org/collections",
+      "href": "http://earth-search.aws.element84.com/collections",
       "rel": "data",
       "type": "application/json",
       "title": "Metadata about the feature collections"
@@ -581,7 +578,7 @@ const headers = {
 
 };
 
-fetch('https://sat-api.developmentseed.org/collections',
+fetch('https://earth-search.aws.element84.com/collections',
 {
   method: 'GET',
 
@@ -601,7 +598,7 @@ headers = {
   'Accept': 'application/json'
 }
 
-r = requests.get('https://sat-api.developmentseed.org/collections', params={
+r = requests.get('https://earth-search.aws.element84.com/collections', params={
 
 }, headers = headers)
 
@@ -1050,7 +1047,7 @@ If a feature has multiple temporal properties, it is the decision of the server 
       "links": [
         {
           "rel": "self",
-          "href": "http://https://sat-api.developmentseed.org/collections/landsat-8-l1/items/LC80100102015050LGN00.json"
+          "href": "http://https://earth-search.aws.element84.com/collections/landsat-8-l1/items/LC80100102015050LGN00.json"
         }
       ],
       "assets": {
@@ -1070,7 +1067,7 @@ If a feature has multiple temporal properties, it is the decision of the server 
   "links": [
     {
       "rel": "next",
-      "href": "http://sat-api.developmentseed.org/collections/landsat-8-l1/items/gasd312fsaeg"
+      "href": "http://earth-search.aws.element84.com/collections/landsat-8-l1/items/gasd312fsaeg"
     }
   ]
 }
@@ -1138,7 +1135,7 @@ If a feature has multiple temporal properties, it is the decision of the server 
   "links": [
     {
       "rel": "self",
-      "href": "http://https://sat-api.developmentseed.org/collections/landsat-8-l1/items/LC80100102015050LGN00.json"
+      "href": "http://https://earth-search.aws.element84.com/collections/landsat-8-l1/items/LC80100102015050LGN00.json"
     }
   ],
   "assets": {
@@ -1268,7 +1265,7 @@ If a feature has multiple temporal properties, it is the decision of the server 
 [
   {
     "rel": "next",
-    "href": "http://sat-api.developmentseed.org/collections/landsat-8-l1/items/gasd312fsaeg"
+    "href": "http://earth-search.aws.element84.com/collections/landsat-8-l1/items/gasd312fsaeg"
   }
 ]
 
@@ -1290,19 +1287,19 @@ If a feature has multiple temporal properties, it is the decision of the server 
 {
   "links": [
     {
-      "href": "http://sat-api.developmentseed.org",
+      "href": "http://earth-search.aws.element84.com",
       "rel": "self",
       "type": "application/json",
       "title": "this document"
     },
     {
-      "href": "http://sat-api.developmentseed.org/api",
+      "href": "http://earth-search.aws.element84.com/api",
       "rel": "service",
       "type": "application/json",
       "title": "this document"
     },
     {
-      "href": "http://sat-api.developmentseed.org/collections",
+      "href": "http://earth-search.aws.element84.com/collections",
       "rel": "data",
       "type": "application/json",
       "title": "Metadata about the feature collections"

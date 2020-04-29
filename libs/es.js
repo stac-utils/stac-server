@@ -65,30 +65,17 @@ async function esClient() {
 }
 
 
-// Create STAC mappings
-async function create_indices() {
+async function create_index(index) {
   const client = await esClient()
-  // Collection index
-  let indexExists = await client.indices.exists({ index: COLLECTIONS_INDEX })
-  if (!indexExists) {
+  const exists = await client.indices.exits({ index })
+  const mapping = (index === 'collections' ? collections_mapping : items_mapping)
+  if (!exists) {
     try {
-      await client.indices.create({ index: COLLECTIONS_INDEX, body: collections_mapping })
-      logger.debug(`Collections mapping: ${JSON.stringify(collections_mapping)}`)
-      logger.info('Created collections index')
+      await client.indices.create({ index: COLLECTIONS_INDEX, body: mapping })
+      logger.info(`Created index ${index}`)
+      logger.debug(`Mapping: ${JSON.stringify(mapping)}`)
     } catch (error) {
-      const debugMessage = `Error creating collection index, already created: ${error}`
-      logger.debug(debugMessage)
-    }
-  }
-  // Item index
-  indexExists = await client.indices.exists({ index: ITEMS_INDEX })
-  if (!indexExists) {
-    try {
-      await client.indices.create({ index: ITEMS_INDEX, body: items_mapping })
-      logger.debug(`Items mapping: ${JSON.stringify(items_mapping)}`)
-      logger.info('Created items index')
-    } catch (error) {
-      const debugMessage = `Error creating items index, already created: ${error}`
+      const debugMessage = `Error creating index ${index}, already created: ${error}`
       logger.debug(debugMessage)
     }
   }
@@ -466,5 +453,5 @@ module.exports = {
   stream: _stream,
   search,
   editPartialItem,
-  create_indices
+  create_index
 }

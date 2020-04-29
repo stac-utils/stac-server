@@ -1,136 +1,17 @@
 'use strict'
 
-const AWS = require('aws-sdk')
-const { createAWSConnection, awsCredsifyAll } = require('@acuris/aws-es-connection')
-const elasticsearch = require('@elastic/elasticsearch')
-const through2 = require('through2')
-const ElasticsearchWritableStream = require('./ElasticSearchWriteableStream')
+const esClient = require('./esClient.js')
 const logger = console //require('./logger')
-const collections_mapping = require('../fixtures/collections.js')()
-const items_mapping = require('../fixtures/items.js')()
 
 const COLLECTIONS_INDEX = process.env.COLLECTIONS_INDEX || 'collections'
 const ITEMS_INDEX = process.env.ITEMS_INDEX || 'items'
 
-let _esClient
 /*
 This module is used for connecting to an Elasticsearch instance, writing records,
 searching records, and managing the indexes. It looks for the ES_HOST environment
 variable which is the URL to the elasticsearch host
 */
 
-// Connect to an Elasticsearch instance
-async function connect() {
-  let esConfig
-  let client
-
-  // use local client
-  if (!process.env.ES_HOST) {
-    esConfig = {
-      node: 'localhost:9200'
-    }
-    client = new elasticsearch.Client(esConfig)
-  } else {
-    //const awsCredentials = await awsGetCredentials()
-    const AWSConnector = createAWSConnection(AWS.config.credentials)
-    client = awsCredsifyAll(
-      new elasticsearch.Client({
-        node: `https://${process.env.ES_HOST}`,
-        Connection: AWSConnector
-      })
-    )
-  }
-
-  const health = await client.cat.health()
-  logger.debug(`Health: ${JSON.stringify(health)}`)
-
-  return client
-}
-
-// get existing ES client or create a new one
-async function esClient() {
-  if (!_esClient) {
-    try {
-      _esClient = await connect()
-    } catch (error) {
-      logger.error(error)
-    }
-    if (_esClient) {
-      logger.debug('Connected to Elasticsearch')
-    }
-  } else {
-    logger.debug('Using existing Elasticsearch connection')
-  }
-  return _esClient
-}
-
-
-async function create_index(index) {
-  const client = await esClient()
-  const exists = await client.indices.exits({ index })
-  const mapping = (index === 'collections' ? collections_mapping : items_mapping)
-  if (!exists) {
-    try {
-      await client.indices.create({ index: COLLECTIONS_INDEX, body: mapping })
-      logger.info(`Created index ${index}`)
-      logger.debug(`Mapping: ${JSON.stringify(mapping)}`)
-    } catch (error) {
-      const debugMessage = `Error creating index ${index}, already created: ${error}`
-      logger.debug(debugMessage)
-    }
-  }
-}
-
-
-// Given an input stream and a transform, write records to an elasticsearch instance
-async function _stream() {
-  let esStreams
-  try {
-    const client = await esClient()
-
-    const toEs = through2.obj({ objectMode: true }, (data, encoding, next) => {
-      let index = ''
-      if (data && data.hasOwnProperty('extent')) {
-        index = COLLECTIONS_INDEX
-      } else if (data && data.hasOwnProperty('geometry')) {
-        index = ITEMS_INDEX
-        if (!client.indices.exists(index)) {
-          throw new Error(`Collection ${index} does not exist, add before ingesting items`)
-        }
-      } else {
-        next()
-        return
-      }
-
-      // remove any hierarchy links in a non-mutating way
-      const hlinks = ['self', 'root', 'parent', 'child', 'collection', 'item']
-      const links = data.links.filter((link) => !hlinks.includes(link.rel))
-      const esDataObject = Object.assign({}, data, { links })
-
-      // create ES record
-      const record = {
-        index,
-        type: 'doc',
-        id: esDataObject.id,
-        action: 'update',
-        _retry_on_conflict: 3,
-        body: {
-          doc: esDataObject,
-          doc_as_upsert: true
-        }
-      }
-      next(null, record)
-    })
-    const esStream = new ElasticsearchWritableStream({ client: client }, {
-      objectMode: true,
-      highWaterMark: Number(process.env.ES_BATCH_SIZE) || 500
-    })
-    esStreams = { toEs, esStream }
-  } catch (error) {
-    logger.error(error)
-  }
-  return esStreams
-}
 
 function buildRangeQuery(property, operators, operatorsObject) {
   const gt = 'gt'
@@ -341,7 +222,7 @@ function buildFieldsFilter(parameters) {
  * PUT should be implemented separately and is TODO.
  */
 async function editPartialItem(itemId, updateFields) {
-  const client = await esClient()
+  const client = await esClient.client()
   
   // Handle inserting required default properties to `updateFields`
   const requiredProperties = {
@@ -369,7 +250,38 @@ async function editPartialItem(itemId, updateFields) {
 }
 
 
-async function search(parameters, index = '*', page = 1, limit = 10) {
+async function esQuery(parameters) {
+  logger.info(`Elasticsearch query: ${JSON.stringify(parameters)}`)
+  const client = await esClient.client()
+  const response = await client.search(parameters)
+  logger.info(`Response: ${JSON.stringify(response)}`)
+  return response
+}
+
+
+// get single collection
+async function getCollection(collectionId) {
+  const response = await esQuery({
+    index: COLLECTIONS_INDEX,
+    body: buildIdQuery(collectionId)
+  })
+  const result = response.body.hits.hits[0]._source
+  return result
+}
+
+// get all collections
+async function getCollections(page = 1, limit = 100) {
+  const response = await esQuery({
+    index: COLLECTIONS_INDEX,
+    size: limit,
+    from: (page - 1) * limit
+  })
+  const results = response.body.hits.hits.map((r) => (r._source))
+  return results
+}
+
+
+async function search(parameters, page = 1, limit = 10) {
   let body
   if (parameters.ids) {
     const { ids } = parameters
@@ -382,6 +294,14 @@ async function search(parameters, index = '*', page = 1, limit = 10) {
   }
   const sort = buildSort(parameters)
   body.sort = sort
+
+  let index
+  // determine the right indices
+  if (parameters.hasOwnProperty('collections')) {
+    index = parameters.collections
+  } else {
+    index = '*,-*kibana*,-collections'
+  }
 
   const searchParams = {
     index,
@@ -399,11 +319,7 @@ async function search(parameters, index = '*', page = 1, limit = 10) {
     searchParams._sourceIncludes = _sourceIncludes
   }
 
-  logger.info(`Elasticsearch query: ${JSON.stringify(searchParams)}`)
-
-  const client = await esClient()
-  const esResponse = await client.search(searchParams)
-  logger.debug(`Result: ${JSON.stringify(esResponse)}`)
+  const esResponse = await esQuery(searchParams)
 
   const results = esResponse.body.hits.hits.map((r) => (r._source))
   const response = {
@@ -429,8 +345,8 @@ async function search(parameters, index = '*', page = 1, limit = 10) {
 }
 
 module.exports = {
-  stream: _stream,
+  getCollection,
+  getCollections,
   search,
-  editPartialItem,
-  create_index
+  editPartialItem
 }

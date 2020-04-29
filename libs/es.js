@@ -86,18 +86,7 @@ async function create_index(index) {
 async function _stream() {
   let esStreams
   try {
-    let collections = []
     const client = await esClient()
-    const indexExists = await client.indices.exists({ index: COLLECTIONS_INDEX })
-    if (indexExists) {
-      const body = { query: { match_all: {} } }
-      const searchParams = {
-        index: COLLECTIONS_INDEX,
-        body
-      }
-      const result = await client.search(searchParams)
-      collections = result.body.hits.hits.map((r) => (r._source))
-    }
 
     const toEs = through2.obj({ objectMode: true }, (data, encoding, next) => {
       let index = ''
@@ -105,28 +94,18 @@ async function _stream() {
         index = COLLECTIONS_INDEX
       } else if (data && data.hasOwnProperty('geometry')) {
         index = ITEMS_INDEX
+        if (!client.indices.exists(index)) {
+          throw new Error(`Collection ${index} does not exist, add before ingesting items`)
+        }
       } else {
         next()
         return
       }
+
       // remove any hierarchy links in a non-mutating way
       const hlinks = ['self', 'root', 'parent', 'child', 'collection', 'item']
       const links = data.links.filter((link) => !hlinks.includes(link.rel))
-      let esDataObject = Object.assign({}, data, { links })
-      if (index === ITEMS_INDEX) {
-        const collectionId = data.collection
-        const itemCollection =
-          collections.find((collection) => (collectionId === collection.id))
-        if (itemCollection) {
-          const flatProperties =
-            Object.assign({}, itemCollection.properties, data.properties)
-          flatProperties.created = new Date().toISOString()
-          flatProperties.updated = new Date().toISOString()
-          esDataObject = Object.assign({}, esDataObject, { properties: flatProperties })
-        } else {
-          logger.error(`${data.id} has no collection`)
-        }
-      }
+      const esDataObject = Object.assign({}, data, { links })
 
       // create ES record
       const record = {

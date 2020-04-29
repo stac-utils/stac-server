@@ -1,8 +1,8 @@
 'use strict'
 
 const AWS = require('aws-sdk')
-const httpAwsEs = require('http-aws-es')
-const elasticsearch = require('elasticsearch')
+const { createAWSConnection, awsCredsifyAll } = require('@acuris/aws-es-connection')
+const elasticsearch = require('@elastic/elasticsearch')
 const through2 = require('through2')
 const ElasticsearchWritableStream = require('./ElasticSearchWriteableStream')
 const logger = console //require('./logger')
@@ -22,46 +22,28 @@ variable which is the URL to the elasticsearch host
 // Connect to an Elasticsearch instance
 async function connect() {
   let esConfig
+  let client
 
   // use local client
   if (!process.env.ES_HOST) {
     esConfig = {
-      host: 'localhost:9200'
+      node: 'localhost:9200'
     }
+    client = new elasticsearch.Client(esConfig)
   } else {
-    await new Promise((resolve, reject) => AWS.config.getCredentials((err) => {
-      if (err) return reject(err)
-      return resolve()
-    }))
-
-    AWS.config.update({
-      credentials: new AWS.Credentials(process.env.AWS_ACCESS_KEY_ID,
-        process.env.AWS_SECRET_ACCESS_KEY),
-      region: process.env.AWS_REGION || 'us-east-1'
-    })
-
-    esConfig = {
-      hosts: [process.env.ES_HOST],
-      apiVersion: '6.8',
-      connectionClass: httpAwsEs,
-      awsConfig: new AWS.Config({ region: process.env.AWS_REGION || 'us-east-1' }),
-      httpOptions: {},
-      // Note that this doesn't abort the query.
-      requestTimeout: 120000 // milliseconds
-    }
+    //const awsCredentials = await awsGetCredentials()
+    const AWSConnector = createAWSConnection(AWS.config.credentials)
+    client = awsCredsifyAll(
+      new elasticsearch.Client({
+        node: `https://${process.env.ES_HOST}`,
+        Connection: AWSConnector
+      })
+    )
   }
 
-  logger.debug(`Elasticsearch config: ${JSON.stringify(esConfig)}`)
-  const client = new elasticsearch.Client(esConfig)
+  const health = await client.cat.health()
+  logger.debug(`Health: ${JSON.stringify(health)}`)
 
-  await new Promise((resolve, reject) => client.ping({ requestTimeout: 1000 },
-    (err) => {
-      if (err) {
-        reject(`Unable to connect to elasticsearch: ${err}`)
-      } else {
-        resolve()
-      }
-    }))
   return client
 }
 
@@ -126,8 +108,8 @@ async function _stream() {
         index: COLLECTIONS_INDEX,
         body
       }
-      const resultBody = await client.search(searchParams)
-      collections = resultBody.hits.hits.map((r) => (r._source))
+      const result = await client.search(searchParams)
+      collections = result.body.hits.hits.map((r) => (r._source))
     }
 
     const toEs = through2.obj({ objectMode: true }, (data, encoding, next) => {
@@ -427,8 +409,8 @@ async function search(parameters, index = '*', page = 1, limit = 10) {
     const { ids } = parameters
     body = buildIdsQuery(ids)
   } else if (parameters.id) {
-    const { collection, id } = parameters
-    body = buildIdQuery(collection, id)
+    const { id } = parameters
+    body = buildIdQuery(id)
   } else {
     body = buildQuery(parameters)
   }
@@ -454,19 +436,21 @@ async function search(parameters, index = '*', page = 1, limit = 10) {
   logger.info(`Elasticsearch query: ${JSON.stringify(searchParams)}`)
 
   const client = await esClient()
-  const resultBody = await client.search(searchParams)
-  const results = resultBody.hits.hits.map((r) => (r._source))
+  const esResponse = await client.search(searchParams)
+  logger.debug(`Result: ${JSON.stringify(esResponse)}`)
+
+  const results = esResponse.body.hits.hits.map((r) => (r._source))
   const response = {
     results,
     context: {
       page: Number(page),
       limit: Number(limit),
-      matched: resultBody.hits.total,
+      matched: esResponse.body.hits.total,
       returned: results.length
     },
     links: []
   }
-  const nextlink = (((page * limit) < resultBody.hits.total) ? page + 1 : null)
+  const nextlink = (((page * limit) < esResponse.body.hits.total) ? page + 1 : null)
   if (nextlink) {
     response.links.push({
       title: 'next',

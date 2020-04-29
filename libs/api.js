@@ -373,7 +373,7 @@ const searchItems = async function (collectionId, queryParameters, backend, endp
   }
   logger.debug(`Search parameters: ${JSON.stringify(searchParameters)}`)
   const { 'results': itemsResults, 'context': itemsMeta } =
-    await backend.search(searchParameters, 'items', page, limit)
+    await backend.search(searchParameters, page, limit)
   const pageLinks = buildPageLinks(itemsMeta, searchParameters, new_endpoint)
   const items = addItemLinks(itemsResults, endpoint)
   const response = wrapResponseInFeatureCollection(itemsMeta, items, pageLinks)
@@ -401,8 +401,8 @@ const getConformance = async function () {
 
 
 const getCatalog = async function (backend, endpoint = '') {
-  const { results } = await backend.search({}, 'collections', 1, COLLECTION_LIMIT)
-  const catalog = collectionsToCatalogLinks(results, endpoint)
+  const collections = await backend.getCollections(1, COLLECTION_LIMIT)
+  const catalog = collectionsToCatalogLinks(collections, endpoint)
   catalog.links.push({
     rel: 'service-desc',
     type: 'application/vnd.oai.openapi+json;version=3.0',
@@ -440,19 +440,15 @@ const getCatalog = async function (backend, endpoint = '') {
 
 
 const getCollections = async function (backend, endpoint = '') {
-  const { results, 'search:metadata': meta } =
-  await backend.search({}, 'collections', 1, COLLECTION_LIMIT)
+  const results = await backend.getCollections(1, COLLECTION_LIMIT)
   const linkedCollections = addCollectionLinks(results, endpoint)
-  return { 'search:metadata': meta, collections: linkedCollections }
+  return linkedCollections
 }
 
 
 const getCollection = async function (collectionId, backend, endpoint = '') {
-  const collectionQuery = { id: collectionId }
-  const { results } = await backend.search(
-    collectionQuery, 'collections', 1, 1
-  )
-  const col = addCollectionLinks(results, endpoint)
+  const result = await backend.getCollection(collectionId)
+  const col = addCollectionLinks([result], endpoint)
   if (col.length > 0) {
     return col[0]
   }
@@ -460,9 +456,9 @@ const getCollection = async function (collectionId, backend, endpoint = '') {
 }
 
 
-const getItem = async function (itemId, backend, endpoint = '') {
-  const itemQuery = { id: itemId }
-  const { results } = await backend.search(itemQuery, 'items')
+const getItem = async function (collectionId, itemId, backend, endpoint = '') {
+  const itemQuery = { collections: [collectionId], id: itemId }
+  const { results } = await backend.search(itemQuery)
   const [it] = addItemLinks(results, endpoint)
   if (it) {
     return it
@@ -537,7 +533,7 @@ const API = async function (
 
     if (pathIsToSpecificItem) {
       if (httpMethod === httpMethods.GET) {
-        apiResponse = await getItem(itemId, backend, endpoint)
+        apiResponse = await getItem(collectionId, itemId, backend, endpoint)
       } else if (httpMethod === httpMethods.PATCH && process.env.ENABLE_TRANSACTIONS_EXTENSION) {
         // Right now this is the only Transaction extension we support.
         // https://github.com/radiantearth/stac-api-spec/tree/master/extensions/transaction

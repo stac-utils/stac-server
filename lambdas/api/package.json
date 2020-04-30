@@ -1,6 +1,6 @@
 {
   "name": "api",
-  "description": "The api lambda function for stac-api",
+  "description": "The api lambda function for stac-server",
   "main": "index.js",
   "license": "MIT",
   "ava": {

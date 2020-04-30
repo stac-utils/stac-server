@@ -1,8 +1,8 @@
 {
-  "displayName": "stac-api",
-  "description": "STAC API",
+  "displayName": "stac-server",
+  "description": "A STAC API running on stac-server",
   "version": "0.1.0",
-  "repository": "https://github.com/stac-utils/stac-api",
+  "repository": "https://github.com/stac-utils/stac-server",
   "author": "Alireza Jazayeri, Matthew Hanson <matt.a.hanson@gmail.com>, Sean Harkins",
   "license": "MIT",
   "scripts": {
@@ -24,7 +24,7 @@
     "access": "public"
   },
   "bugs": {
-    "url": "https://github.com/stac-utils/stac-api/issues"
+    "url": "https://github.com/stac-utils/stac-server/issues"
   },
   "dependencies": {
     "@acuris/aws-es-connection": "^1.1.0",
@@ -53,5 +53,5 @@
     "sinon": "^7.1.1",
     "widdershins": "^3.6.6"
   },
-  "name": "stac-api"
+  "name": "stac-server"
 }

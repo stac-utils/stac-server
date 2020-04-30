@@ -1,6 +1,6 @@
 {
   "name": "subscribe-to-sns",
-  "description": "queue lambda function for stac-api",
+  "description": "queue lambda function for stac-server",
   "main": "index.js",
   "scripts": {
     "build": "webpack",

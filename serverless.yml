@@ -35,7 +35,7 @@ package:
 
 functions:
   api:
-    description: STAC API Lambda
+    description: stac-server API Lambda
     handler: index.handler
     package:
       artifact: lambdas/api/dist/api.zip
@@ -43,7 +43,7 @@ functions:
       - http: ANY /
       - http: ANY {proxy+}
   ingest:
-    description: STAC API Ingest Lambda
+    description: stac-server Ingest Lambda
     handler: index.handler
     memorySize: 512
     timeout: 15
@@ -55,7 +55,7 @@ functions:
           arn:
             Fn::GetAtt: [ingestQueue, Arn]
   failed-ingest:
-    description: STAC API Ingest Lambda
+    description: stac-server Failed Ingest Lambda
     handler: index.handler
     memorySize: 128
     timeout: 30
@@ -67,7 +67,7 @@ functions:
           arn:
             Fn::GetAtt: [deadLetterQueue, Arn]
   subscribeToSns:
-    description: STAC API SNS Subscription Lambda
+    description: stac-server SNS Subscription Lambda
     handler: index.handler
     memorySize: 128
     timeout: 15
@@ -77,7 +77,7 @@ functions:
       queueName: ${self:service}-${self:provider.stage}-queue
 
 resources:
-  Description: STAC API
+  Description: A STAC API running on stac-server
   Resources:
     ingestTopic:
       Type: 'AWS::SNS::Topic'

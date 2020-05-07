@@ -17,7 +17,7 @@ provider:
     ES_HOST:
       Fn::GetAtt: [ElasticSearchInstance, DomainEndpoint]
     ENABLE_TRANSACTIONS_EXTENSION: false
-    PUBLISHED_TOPIC: !GetAtt publishedTopic.Arn
+    PUBLISHED_TOPIC: arn:aws:sns:#{AWS::Region}:#{AWS::AccountId}:${self:service}-${self:provider.stage}-published
   iamRoleStatements:
     - Effect: "Allow"
       Resource: "arn:aws:es:#{AWS::Region}:#{AWS::AccountId}:domain/*"

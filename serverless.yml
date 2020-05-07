@@ -17,6 +17,7 @@ provider:
     ES_HOST:
       Fn::GetAtt: [ElasticSearchInstance, DomainEndpoint]
     ENABLE_TRANSACTIONS_EXTENSION: false
+    PUBLISHED_TOPIC: !GetAtt publishedTopic.Arn
   iamRoleStatements:
     - Effect: "Allow"
       Resource: "arn:aws:es:#{AWS::Region}:#{AWS::AccountId}:domain/*"
@@ -77,6 +78,10 @@ functions:
 resources:
   Description: A STAC API running on stac-server
   Resources:
+    publishedTopic:
+      Type: 'AWS::SNS::Topic'
+      Properties:
+        TopicName: ${self:service}-${self:provider.stage}-published
     ingestTopic:
       Type: 'AWS::SNS::Topic'
       Properties:

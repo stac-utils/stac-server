@@ -82,6 +82,18 @@ resources:
       Type: 'AWS::SNS::Topic'
       Properties:
         TopicName: ${self:service}-${self:provider.stage}-published
+    publishedTopicPolicy:
+      Type: AWS::SNS::TopicPolicy
+      Properties:
+        Topics: !Ref publishedTopic
+        PolicyDocument:
+          Statement:
+            Action:
+              - sns:Publish
+              - sns:Receive
+              - sns:ListSubscriptionsByTopic
+            Principal:
+              AWS: '*'
     ingestTopic:
       Type: 'AWS::SNS::Topic'
       Properties:

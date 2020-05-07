@@ -303,8 +303,13 @@ const buildPageLinks = function (meta, parameters, endpoint) {
 
   const dictToURI = (dict) => (
     Object.keys(dict).map(
-      (p) => `${encodeURIComponent(p)}=${encodeURIComponent(dict[p])}`
-    ).join('&')
+      (p) => {
+        if (p === "collections") {
+          return `${encodeURIComponent(p)}[]=${encodeURIComponent(dict[p])}`
+        } else {
+          return `${encodeURIComponent(p)}=${encodeURIComponent(dict[p])}`
+        }
+    }).join('&')
   )
   const { matched, page, limit } = meta
   let newParams

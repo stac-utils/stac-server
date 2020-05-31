@@ -3,7 +3,7 @@ service: stac-server
 provider:
   name: aws
   runtime: nodejs12.x
-  stage: ${opt:stage, 'dev'}
+  stage: ${opt:stage, 'v0'}
   region: ${opt:region, 'us-west-2'}
   environment:
     STAC_ID: "earth-search"

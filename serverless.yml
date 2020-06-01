@@ -9,7 +9,7 @@ provider:
     STAC_ID: "earth-search"
     STAC_TITLE: "Earth Search"
     STAC_DESCRIPTION: "A STAC API of AWS Public Datasets powered by stac-server"
-    STAC_VERSION: 1.0.0-b1
+    STAC_VERSION: 1.0.0-beta.1
     STAC_API_VERSION: 0.9.0
     LOG_LEVEL: DEBUG
     ES_BATCH_SIZE: 500

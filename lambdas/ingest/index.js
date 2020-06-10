@@ -5,8 +5,6 @@ const stream = require('../../libs/esStream.js')
 const ingest = require('../../libs/ingest.js')
 const logger = console
 
-const PUBLISH_TOPIC = process.env.PUBLISH_TOPIC
-
 module.exports.handler = async function handler(event) {
   logger.debug(`Event: ${JSON.stringify(event)}`)
   if (event.create_indices) {
@@ -31,17 +29,6 @@ module.exports.handler = async function handler(event) {
     try {
       await ingest.ingestItems(items, stream)
       logger.info(`Ingested ${items.length} Items: ${JSON.stringify(items)}`)
-      if (PUBLISH_TOPIC) {
-        // publish to SNS
-        items.forEach((item) => {
-          await new AWS.SNS().publish({
-            Message: item,
-            MessageStructure: 'json',
-            TargetArn: PUBLISH_TOPIC
-          })
-        })
-        logger.info(`Published ${item.id} to ${PUBLISH_TOPIC}`)
-      }
     } catch (error) {
       console.log(error)
       throw (error)

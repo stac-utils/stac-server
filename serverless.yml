@@ -64,15 +64,6 @@ functions:
       - sqs:
           arn:
             Fn::GetAtt: [deadLetterQueue, Arn]
-  subscribeToSns:
-    description: stac-server SNS Subscription Lambda
-    handler: index.handler
-    memorySize: 128
-    timeout: 15
-    package:
-      artifact: lambdas/subscribe-to-sns/dist/subscribe-to-sns.zip
-    environment:
-      queueName: ${self:service}-${self:provider.stage}-queue
 
 resources:
   Description: A STAC API running on stac-server

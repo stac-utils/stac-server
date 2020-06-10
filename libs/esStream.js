@@ -119,8 +119,10 @@ async function stream() {
       const links = data.links.filter((link) => !hlinks.includes(link.rel))
       const esDataObject = Object.assign({}, data, { links })
 
-      esDataObject.properties.created = new Date().toISOString()
-      esDataObject.properties.updated = new Date().toISOString()
+      if (data.hasOwnProperty('properties')) {
+        esDataObject.properties.created = new Date().toISOString()
+        esDataObject.properties.updated = new Date().toISOString()
+      }
 
       // create ES record
       const record = {

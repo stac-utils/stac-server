@@ -11,6 +11,7 @@ provider:
     STAC_DESCRIPTION: "A STAC API of AWS Public Datasets powered by stac-server"
     STAC_VERSION: 1.0.0-beta.1
     STAC_API_VERSION: 0.9.0
+    STAC_ROOT_URL: https://earth-search.aws.element84.com/v0
     LOG_LEVEL: DEBUG
     ES_BATCH_SIZE: 500
     STAC_DOCS_URL: https://stac-utils.github.io/stac-server/
@@ -40,8 +41,12 @@ functions:
     package:
       artifact: lambdas/api/dist/api.zip
     events:
-      - http: ANY /
-      - http: ANY {proxy+}
+      - http: 
+          method: ANY /
+          cors: true
+      - http:
+          method: ANY {proxy+}
+          cors: true
   ingest:
     description: stac-server Ingest Lambda
     handler: index.handler

@@ -4,7 +4,7 @@ const httpMethods = require('../../utils/http-methods')
 
 
 function determineEndpoint(event) {
-  let endpoint = process.env.SATAPI_URL
+  let endpoint = process.env.STAC_ROOT_URL
   if (typeof endpoint === 'undefined') {
     if ('X-Forwarded-Host' in event.headers) {
       endpoint = `${event.headers['X-Forwarded-Proto']}://${event.headers['X-Forwarded-Host']}`
@@ -45,7 +45,8 @@ module.exports.handler = async (event) => {
   logger.debug(`Event: ${JSON.stringify(event)}`)
   const endpoint = determineEndpoint(event)
   const query = buildRequest(event)
-  const result = await satlib.api.API(event.path, query, satlib.es, endpoint, event.httpMethod)
+  const modpath = event.path.replace('/v0', '')
+  const result = await satlib.api.API(modpath, query, satlib.es, endpoint, event.httpMethod)
   return result instanceof Error ?
     buildResponse(404, result.message) :
     buildResponse(200, JSON.stringify(result))

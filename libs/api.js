@@ -486,6 +486,7 @@ const editPartialItem = async function (itemId, queryParameters, backend, endpoi
 const API = async function (
   inpath = '', queryParameters = {}, backend, endpoint = '', httpMethod = 'GET'
 ) {
+  logger.debug(`API Path: ${inpath}, Query Parameters: ${queryParameters}`)
   let apiResponse
   try {
     const pathElements = parsePath(inpath)

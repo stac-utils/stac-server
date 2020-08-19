@@ -466,7 +466,11 @@ const getCatalog = async function (backend, endpoint = '') {
 const getCollections = async function (backend, endpoint = '') {
   const results = await backend.getCollections(1, COLLECTION_LIMIT)
   const linkedCollections = addCollectionLinks(results, endpoint)
-  return linkedCollections
+  const resp = {
+    collections: results,
+    links: []
+  }
+  return resp
 }
 
 

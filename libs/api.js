@@ -262,13 +262,14 @@ const addItemLinks = function (results, endpoint) {
 
 
 const collectionsToCatalogLinks = function (results, endpoint) {
-  const stac_version = process.env.STAC_VERSION || '1.0.0-b1'
-  const stac_api_version = process.env.STAC_API_VERSION || '0.9.0'
+  const stac_version = process.env.STAC_VERSION
+  const stac_api_version = process.env.STAC_API_VERSION
   const stac_id = process.env.STAC_ID || 'stac-server'
   const stac_title = process.env.STAC_TITLE || 'A STAC API'
   const stac_description = process.env.STAC_DESCRIPTION || 'A STAC API running on stac-server'
   const catalog = {
     stac_version,
+    stac_api_version,
     id: stac_id,
     title: stac_title,
     description: stac_description

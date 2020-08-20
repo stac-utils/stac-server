@@ -315,37 +315,36 @@ const buildPageLinks = function (meta, parameters, endpoint, httpMethod) {
   const { matched, page, limit } = meta
   let newParams, link
   if ((page * limit) < matched) {
-    newParams = { page: page + 1, limit }
+    newParams = Object.assign({}, parameters, { page: page + 1, limit })
     link = {
       rel: 'next',
       title: 'Next page of results',
       method: httpMethod
     }
     if (httpMethod === 'GET') {
-      newParams = Object.assign({}, parameters, newParams)
       const nextQueryParameters = dictToURI(newParams)
       links.href = `${endpoint}?${nextQueryParameters}`
     } else if (httpMethod === 'POST') {
       links.href = endpoint,
-      links.merge = true,
+      links.merge = false,
       links.body = newParams
     }
     pageLinks.push(link)
   }
   if (page > 1) {
-    newParams = { page: page - 1, limit }
+    newParams = Object.assign({}, parameters, { page: page - 1, limit })
     link = {
       rel: 'prev',
       title: 'Previous page of results',
       method: httpMethod
     }
     if (httpMethod === 'GET') {
-      newParams = Object.assign({}, parameters, newParams)
+      
       const prevQueryParameters = dictToURI(newParams)
       links.href = `${endpoint}?${nextQueryParameters}`
     } else if (httpMethod === 'POST') {
       links.href = endpoint
-      links.merge = true,
+      links.merge = false,
       links.body = newParams
     }
     pageLinks.push(link)

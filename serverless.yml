@@ -41,12 +41,8 @@ functions:
     package:
       artifact: lambdas/api/dist/api.zip
     events:
-      - http: 
-          method: ANY /
-          cors: true
-      - http:
-          method: ANY {proxy+}
-          cors: true
+      - http: ANY /
+      - http: ANY {proxy+}
   ingest:
     description: stac-server Ingest Lambda
     handler: index.handler

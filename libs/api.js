@@ -323,11 +323,11 @@ const buildPageLinks = function (meta, parameters, endpoint, httpMethod) {
     }
     if (httpMethod === 'GET') {
       const nextQueryParameters = dictToURI(newParams)
-      links.href = `${endpoint}?${nextQueryParameters}`
+      link.href = `${endpoint}?${nextQueryParameters}`
     } else if (httpMethod === 'POST') {
-      links.href = endpoint,
-      links.merge = false,
-      links.body = newParams
+      link.href = endpoint,
+      link.merge = false,
+      link.body = newParams
     }
     pageLinks.push(link)
   }
@@ -341,11 +341,11 @@ const buildPageLinks = function (meta, parameters, endpoint, httpMethod) {
     if (httpMethod === 'GET') {
       
       const prevQueryParameters = dictToURI(newParams)
-      links.href = `${endpoint}?${nextQueryParameters}`
+      link.href = `${endpoint}?${prevQueryParameters}`
     } else if (httpMethod === 'POST') {
-      links.href = endpoint
-      links.merge = false,
-      links.body = newParams
+      link.href = endpoint
+      link.merge = false,
+      link.body = newParams
     }
     pageLinks.push(link)
   }

@@ -1,188 +1,17 @@
 'use strict'
 
-const AWS = require('aws-sdk')
-const httpAwsEs = require('http-aws-es')
-const elasticsearch = require('elasticsearch')
-const through2 = require('through2')
-const ElasticsearchWritableStream = require('./ElasticSearchWriteableStream')
+const esClient = require('./esClient.js')
 const logger = console //require('./logger')
-const collections_mapping = require('../fixtures/collections.js')()
-const items_mapping = require('../fixtures/items.js')()
 
 const COLLECTIONS_INDEX = process.env.COLLECTIONS_INDEX || 'collections'
 const ITEMS_INDEX = process.env.ITEMS_INDEX || 'items'
 
-let _esClient
 /*
 This module is used for connecting to an Elasticsearch instance, writing records,
 searching records, and managing the indexes. It looks for the ES_HOST environment
 variable which is the URL to the elasticsearch host
 */
 
-// Connect to an Elasticsearch instance
-async function connect() {
-  let esConfig
-
-  // use local client
-  if (!process.env.ES_HOST) {
-    esConfig = {
-      host: 'localhost:9200'
-    }
-  } else {
-    await new Promise((resolve, reject) => AWS.config.getCredentials((err) => {
-      if (err) return reject(err)
-      return resolve()
-    }))
-
-    AWS.config.update({
-      credentials: new AWS.Credentials(process.env.AWS_ACCESS_KEY_ID,
-        process.env.AWS_SECRET_ACCESS_KEY),
-      region: process.env.AWS_REGION || 'us-east-1'
-    })
-
-    esConfig = {
-      hosts: [process.env.ES_HOST],
-      apiVersion: '6.8',
-      connectionClass: httpAwsEs,
-      awsConfig: new AWS.Config({ region: process.env.AWS_REGION || 'us-east-1' }),
-      httpOptions: {},
-      // Note that this doesn't abort the query.
-      requestTimeout: 120000 // milliseconds
-    }
-  }
-
-  logger.debug(`Elasticsearch config: ${JSON.stringify(esConfig)}`)
-  const client = new elasticsearch.Client(esConfig)
-
-  await new Promise((resolve, reject) => client.ping({ requestTimeout: 1000 },
-    (err) => {
-      if (err) {
-        reject(`Unable to connect to elasticsearch: ${err}`)
-      } else {
-        resolve()
-      }
-    }))
-  return client
-}
-
-// get existing ES client or create a new one
-async function esClient() {
-  if (!_esClient) {
-    try {
-      _esClient = await connect()
-    } catch (error) {
-      logger.error(error)
-    }
-    if (_esClient) {
-      logger.debug('Connected to Elasticsearch')
-    }
-  } else {
-    logger.debug('Using existing Elasticsearch connection')
-  }
-  return _esClient
-}
-
-
-// Create STAC mappings
-async function create_indices() {
-  const client = await esClient()
-  // Collection index
-  let indexExists = await client.indices.exists({ index: COLLECTIONS_INDEX })
-  if (!indexExists) {
-    try {
-      await client.indices.create({ index: COLLECTIONS_INDEX, body: collections_mapping })
-      logger.debug(`Collections mapping: ${JSON.stringify(collections_mapping)}`)
-      logger.info('Created collections index')
-    } catch (error) {
-      const debugMessage = `Error creating collection index, already created: ${error}`
-      logger.debug(debugMessage)
-    }
-  }
-  // Item index
-  indexExists = await client.indices.exists({ index: ITEMS_INDEX })
-  if (!indexExists) {
-    try {
-      await client.indices.create({ index: ITEMS_INDEX, body: items_mapping })
-      logger.debug(`Items mapping: ${JSON.stringify(items_mapping)}`)
-      logger.info('Created items index')
-    } catch (error) {
-      const debugMessage = `Error creating items index, already created: ${error}`
-      logger.debug(debugMessage)
-    }
-  }
-}
-
-
-// Given an input stream and a transform, write records to an elasticsearch instance
-async function _stream() {
-  let esStreams
-  try {
-    let collections = []
-    const client = await esClient()
-    const indexExists = await client.indices.exists({ index: COLLECTIONS_INDEX })
-    if (indexExists) {
-      const body = { query: { match_all: {} } }
-      const searchParams = {
-        index: COLLECTIONS_INDEX,
-        body
-      }
-      const resultBody = await client.search(searchParams)
-      collections = resultBody.hits.hits.map((r) => (r._source))
-    }
-
-    const toEs = through2.obj({ objectMode: true }, (data, encoding, next) => {
-      let index = ''
-      if (data && data.hasOwnProperty('extent')) {
-        index = COLLECTIONS_INDEX
-      } else if (data && data.hasOwnProperty('geometry')) {
-        index = ITEMS_INDEX
-      } else {
-        next()
-        return
-      }
-      // remove any hierarchy links in a non-mutating way
-      const hlinks = ['self', 'root', 'parent', 'child', 'collection', 'item']
-      const links = data.links.filter((link) => !hlinks.includes(link.rel))
-      let esDataObject = Object.assign({}, data, { links })
-      if (index === ITEMS_INDEX) {
-        const collectionId = data.collection
-        const itemCollection =
-          collections.find((collection) => (collectionId === collection.id))
-        if (itemCollection) {
-          const flatProperties =
-            Object.assign({}, itemCollection.properties, data.properties)
-          flatProperties.created = new Date().toISOString()
-          flatProperties.updated = new Date().toISOString()
-          esDataObject = Object.assign({}, esDataObject, { properties: flatProperties })
-        } else {
-          logger.error(`${data.id} has no collection`)
-        }
-      }
-
-      // create ES record
-      const record = {
-        index,
-        type: 'doc',
-        id: esDataObject.id,
-        action: 'update',
-        _retry_on_conflict: 3,
-        body: {
-          doc: esDataObject,
-          doc_as_upsert: true
-        }
-      }
-      next(null, record)
-    })
-    const esStream = new ElasticsearchWritableStream({ client: client }, {
-      objectMode: true,
-      highWaterMark: Number(process.env.ES_BATCH_SIZE) || 500
-    })
-    esStreams = { toEs, esStream }
-  } catch (error) {
-    logger.error(error)
-  }
-  return esStreams
-}
 
 function buildRangeQuery(property, operators, operatorsObject) {
   const gt = 'gt'
@@ -384,10 +213,30 @@ function buildFieldsFilter(parameters) {
   return { _sourceIncludes, _sourceExcludes }
 }
 
+/*
+ * Part of the Transaction extension https://github.com/radiantearth/stac-api-spec/tree/master/extensions/transaction
+ *
+ * This conforms to a PATCH request and updates an existing item by ID
+ * using a partial item description, compliant with RFC 7386.
+ *
+ * PUT should be implemented separately and is TODO.
+ */
+async function editPartialItem(itemId, updateFields) {
+  const client = await esClient.client()
+  
+  // Handle inserting required default properties to `updateFields`
+  const requiredProperties = {
+    updated: new Date().toISOString()
+  }
 
-async function editItem(itemId, updateFields) {
-  const client = await esClient()
-  updateFields.properties.updated = new Date().toISOString()
+  if (updateFields.properties) {
+    // If there are properties incoming, merge and overwrite
+    // our required ones.
+    Object.assign(updateFields.properties, requiredProperties)
+  } else {
+    updateFields.properties = requiredProperties
+  }
+
   const response = await client.update({
     index: ITEMS_INDEX,
     id: itemId,
@@ -401,7 +250,38 @@ async function editItem(itemId, updateFields) {
 }
 
 
-async function search(parameters, index = '*', page = 1, limit = 10) {
+async function esQuery(parameters) {
+  logger.info(`Elasticsearch query: ${JSON.stringify(parameters)}`)
+  const client = await esClient.client()
+  const response = await client.search(parameters)
+  logger.info(`Response: ${JSON.stringify(response)}`)
+  return response
+}
+
+
+// get single collection
+async function getCollection(collectionId) {
+  const response = await esQuery({
+    index: COLLECTIONS_INDEX,
+    body: buildIdQuery(collectionId)
+  })
+  const result = response.body.hits.hits[0]._source
+  return result
+}
+
+// get all collections
+async function getCollections(page = 1, limit = 100) {
+  const response = await esQuery({
+    index: COLLECTIONS_INDEX,
+    size: limit,
+    from: (page - 1) * limit
+  })
+  const results = response.body.hits.hits.map((r) => (r._source))
+  return results
+}
+
+
+async function search(parameters, page = 1, limit = 10) {
   let body
   if (parameters.ids) {
     const { ids } = parameters
@@ -414,6 +294,14 @@ async function search(parameters, index = '*', page = 1, limit = 10) {
   }
   const sort = buildSort(parameters)
   body.sort = sort
+
+  let index
+  // determine the right indices
+  if (parameters.hasOwnProperty('collections')) {
+    index = parameters.collections
+  } else {
+    index = '*,-*kibana*,-collections'
+  }
 
   const searchParams = {
     index,
@@ -431,22 +319,20 @@ async function search(parameters, index = '*', page = 1, limit = 10) {
     searchParams._sourceIncludes = _sourceIncludes
   }
 
-  logger.info(`Elasticsearch query: ${JSON.stringify(searchParams)}`)
+  const esResponse = await esQuery(searchParams)
 
-  const client = await esClient()
-  const resultBody = await client.search(searchParams)
-  const results = resultBody.hits.hits.map((r) => (r._source))
+  const results = esResponse.body.hits.hits.map((r) => (r._source))
   const response = {
     results,
     context: {
       page: Number(page),
       limit: Number(limit),
-      matched: resultBody.hits.total,
+      matched: esResponse.body.hits.total,
       returned: results.length
     },
     links: []
   }
-  const nextlink = (((page * limit) < resultBody.hits.total) ? page + 1 : null)
+  const nextlink = (((page * limit) < esResponse.body.hits.total) ? page + 1 : null)
   if (nextlink) {
     response.links.push({
       title: 'next',
@@ -458,9 +344,9 @@ async function search(parameters, index = '*', page = 1, limit = 10) {
   return response
 }
 
-module.exports =  {
-  stream: _stream,
+module.exports = {
+  getCollection,
+  getCollections,
   search,
-  editItem,
-  create_indices
+  editPartialItem
 }

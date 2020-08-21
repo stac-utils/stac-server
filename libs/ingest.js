@@ -3,9 +3,9 @@ const pump = require('pump')
 const logger = console //require('./logger')
 
 
-async function ingestItem(item, backend) {
+async function ingestItem(item, stream) {
   const readable = new Readable({objectMode: true })
-  const { toEs, esStream } = await backend.stream()
+  const { toEs, esStream } = await stream()
   const promise = new Promise((resolve, reject) => {
     pump(
       readable,
@@ -13,10 +13,10 @@ async function ingestItem(item, backend) {
       esStream,
       (error) => {
         if (error) {
-          console.log(error)
+          logger.info(error)
           reject(error)
         } else {
-          console.log(`Ingested item ${item.id}`)
+          logger.info(`Ingested item ${item.id}`)
           resolve(true)
         }
       }
@@ -27,9 +27,9 @@ async function ingestItem(item, backend) {
   return promise
 }
 
-async function ingestItems(items, backend) {
+async function ingestItems(items, stream) {
   const readable = new Readable({ objectMode: true })
-  const { toEs, esStream } = await backend.stream()
+  const { toEs, esStream } = await stream()
   const promise = new Promise((resolve, reject) => {
     pump(
       readable,
@@ -37,10 +37,10 @@ async function ingestItems(items, backend) {
       esStream,
       (error) => {
         if (error) {
-          console.log(error)
+          logger.info(error)
           reject(error)
         } else {
-          console.debug('Ingested item')
+          logger.debug('Ingested item')
           resolve(true)
         }
       }

@@ -1,6 +1,6 @@
 {
   "name": "failed-ingest",
-  "description": "Failed ingest lambda function for stac-api",
+  "description": "Failed ingest lambda function for stac-server",
   "main": "index.js",
   "scripts": {
     "build": "webpack",

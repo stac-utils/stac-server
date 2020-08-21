@@ -4,9 +4,10 @@ const yaml = require('js-yaml')
 const fs = require('fs')
 const logger = console
 const path = require('path')
+const httpMethods = require('../utils/http-methods')
 
 // max number of collections to retrieve
-const COLLECTION_LIMIT = process.env.SATAPI_COLLECTION_LIMIT || 100
+const COLLECTION_LIMIT = process.env.STAC_SERVER_COLLECTION_LIMIT || 100
 
 
 const extractIntersects = function (params) {
@@ -261,16 +262,19 @@ const addItemLinks = function (results, endpoint) {
 
 
 const collectionsToCatalogLinks = function (results, endpoint) {
-  const stac_version = process.env.STAC_VERSION || '0.9.0'
-  const stac_id = process.env.STAC_ID || 'stac-api'
-  const stac_title = process.env.STAC_TITLE || 'STAC API'
-  const stac_description = process.env.STAC_DESCRIPTION || 'A STAC API'
+  const stac_version = process.env.STAC_VERSION
+  const stac_api_version = process.env.STAC_API_VERSION
+  const stac_id = process.env.STAC_ID || 'stac-server'
+  const stac_title = process.env.STAC_TITLE || 'A STAC API'
+  const stac_description = process.env.STAC_DESCRIPTION || 'A STAC API running on stac-server'
   const catalog = {
     stac_version,
+    stac_api_version,
     id: stac_id,
     title: stac_title,
     description: stac_description
   }
+  console.log(`Results: ${results}`)
   catalog.links = results.map((result) => {
     const { id } = result
     return {
@@ -296,38 +300,60 @@ const wrapResponseInFeatureCollection = function (
   }
 }
 
-const buildPageLinks = function (meta, parameters, endpoint) {
+const buildPageLinks = function (meta, parameters, endpoint, httpMethod) {
   const pageLinks = []
 
   const dictToURI = (dict) => (
     Object.keys(dict).map(
-      (p) => `${encodeURIComponent(p)}=${encodeURIComponent(dict[p])}`
-    ).join('&')
+      (p) => {
+        if (p === "collections") {
+          return `${encodeURIComponent(p)}[]=${encodeURIComponent(dict[p])}`
+        } else {
+          return `${encodeURIComponent(p)}=${encodeURIComponent(dict[p])}`
+        }
+    }).join('&')
   )
   const { matched, page, limit } = meta
-  let newParams
+  let newParams, link
   if ((page * limit) < matched) {
     newParams = Object.assign({}, parameters, { page: page + 1, limit })
-    const nextQueryParameters = dictToURI(newParams)
-    pageLinks.push({
+    link = {
       rel: 'next',
       title: 'Next page of results',
-      href: `${endpoint}?${nextQueryParameters}`
-    })
+      method: httpMethod
+    }
+    if (httpMethod === 'GET') {
+      const nextQueryParameters = dictToURI(newParams)
+      links.href = `${endpoint}?${nextQueryParameters}`
+    } else if (httpMethod === 'POST') {
+      links.href = endpoint,
+      links.merge = false,
+      links.body = newParams
+    }
+    pageLinks.push(link)
   }
   if (page > 1) {
     newParams = Object.assign({}, parameters, { page: page - 1, limit })
-    const prevQueryParameters = dictToURI(newParams)
-    pageLinks.push({
+    link = {
       rel: 'prev',
       title: 'Previous page of results',
-      href: `${endpoint}?${prevQueryParameters}`
-    })
+      method: httpMethod
+    }
+    if (httpMethod === 'GET') {
+      
+      const prevQueryParameters = dictToURI(newParams)
+      links.href = `${endpoint}?${nextQueryParameters}`
+    } else if (httpMethod === 'POST') {
+      links.href = endpoint
+      links.merge = false,
+      links.body = newParams
+    }
+    pageLinks.push(link)
   }
   return pageLinks
 }
 
-const searchItems = async function (collectionId, queryParameters, backend, endpoint) {
+const searchItems = async function (collectionId, queryParameters, backend, endpoint, httpMethod) {
   logger.debug(`Query parameters: ${JSON.stringify(queryParameters)}`)
   const {
     limit,
@@ -372,8 +398,8 @@ const searchItems = async function (collectionId, queryParameters, backend, endp
   }
   logger.debug(`Search parameters: ${JSON.stringify(searchParameters)}`)
   const { 'results': itemsResults, 'context': itemsMeta } =
-    await backend.search(searchParameters, 'items', page, limit)
-  const pageLinks = buildPageLinks(itemsMeta, searchParameters, new_endpoint)
+    await backend.search(searchParameters, page, limit)
+  const pageLinks = buildPageLinks(itemsMeta, searchParameters, new_endpoint, httpMethod)
   const items = addItemLinks(itemsResults, endpoint)
   const response = wrapResponseInFeatureCollection(itemsMeta, items, pageLinks)
 
@@ -400,8 +426,8 @@ const getConformance = async function () {
 
 
 const getCatalog = async function (backend, endpoint = '') {
-  const { results } = await backend.search({}, 'collections', 1, COLLECTION_LIMIT)
-  const catalog = collectionsToCatalogLinks(results, endpoint)
+  const collections = await backend.getCollections(1, COLLECTION_LIMIT)
+  const catalog = collectionsToCatalogLinks(collections, endpoint)
   catalog.links.push({
     rel: 'service-desc',
     type: 'application/vnd.oai.openapi+json;version=3.0',
@@ -439,19 +465,19 @@ const getCatalog = async function (backend, endpoint = '') {
 
 
 const getCollections = async function (backend, endpoint = '') {
-  const { results, 'search:metadata': meta } =
-  await backend.search({}, 'collections', 1, COLLECTION_LIMIT)
+  const results = await backend.getCollections(1, COLLECTION_LIMIT)
   const linkedCollections = addCollectionLinks(results, endpoint)
-  return { 'search:metadata': meta, collections: linkedCollections }
+  const resp = {
+    collections: results,
+    links: []
+  }
+  return resp
 }
 
 
 const getCollection = async function (collectionId, backend, endpoint = '') {
-  const collectionQuery = { id: collectionId }
-  const { results } = await backend.search(
-    collectionQuery, 'collections', 1, 1
-  )
-  const col = addCollectionLinks(results, endpoint)
+  const result = await backend.getCollection(collectionId)
+  const col = addCollectionLinks([result], endpoint)
   if (col.length > 0) {
     return col[0]
   }
@@ -459,9 +485,9 @@ const getCollection = async function (collectionId, backend, endpoint = '') {
 }
 
 
-const getItem = async function (itemId, backend, endpoint = '') {
-  const itemQuery = { id: itemId }
-  const { results } = await backend.search(itemQuery, 'items')
+const getItem = async function (collectionId, itemId, backend, endpoint = '') {
+  const itemQuery = { collections: [collectionId], id: itemId }
+  const { results } = await backend.search(itemQuery)
   const [it] = addItemLinks(results, endpoint)
   if (it) {
     return it
@@ -470,8 +496,8 @@ const getItem = async function (itemId, backend, endpoint = '') {
 }
 
 
-const editItem = async function (itemId, queryParameters, backend, endpoint = '') {
-  const response = await backend.editItem(itemId, queryParameters)
+const editPartialItem = async function (itemId, queryParameters, backend, endpoint = '') {
+  const response = await backend.editPartialItem(itemId, queryParameters)
   logger.debug(`Edit Item: ${response}`)
   if (response) {
     return addItemLinks([response.get._source], endpoint)[0]
@@ -481,7 +507,7 @@ const editItem = async function (itemId, queryParameters, backend, endpoint = ''
 
 
 const API = async function (
-  inpath = '', queryParameters = {}, backend, endpoint = ''
+  inpath = '', queryParameters = {}, backend, endpoint = '', httpMethod = 'GET'
 ) {
   let apiResponse
   try {
@@ -495,8 +521,7 @@ const API = async function (
       collections,
       collectionId,
       items,
-      itemId,
-      edit
+      itemId
     } = pathElements
 
     // API Root
@@ -514,11 +539,11 @@ const API = async function (
     // STAC Search
     if (searchPath) {
       apiResponse = await searchItems(
-        null, queryParameters, backend, endpoint
+        null, queryParameters, backend, endpoint, httpMethod
       )
     }
     // Search
-    
+
     // All collections
     if (collections && !collectionId) {
       apiResponse = await getCollections(backend, endpoint)
@@ -529,15 +554,23 @@ const API = async function (
     }
     // Items in a collection
     if (collections && collectionId && items && !itemId) {
-      apiResponse = await searchItems(collectionId, queryParameters, backend, endpoint)
+      apiResponse = await searchItems(collectionId, queryParameters, backend, endpoint, httpMethod)
     }
-    // Specific Item
-    if (collections && collectionId && items && itemId && !edit) {
-      apiResponse = await getItem(itemId, backend, endpoint)
-    } /* else if (collections && collectionId && items && itemId && edit) {
-      // Edit Specific Item
-      apiResponse = await editItem(itemId, queryParameters, backend, endpoint)
-    } */
+
+    // Specific item
+    const pathIsToSpecificItem = (collections && collectionId && items && itemId)
+
+    if (pathIsToSpecificItem) {
+      if (httpMethod === httpMethods.GET) {
+        apiResponse = await getItem(collectionId, itemId, backend, endpoint)
+      } else if (httpMethod === httpMethods.PATCH && process.env.ENABLE_TRANSACTIONS_EXTENSION) {
+        // Right now this is the only Transaction extension we support.
+        // https://github.com/radiantearth/stac-api-spec/tree/master/extensions/transaction
+        // When we do more, let's make a more scalable check and not look
+        // for ENABLE_TRANSACTIONS_EXTENSION each time
+        apiResponse = await editPartialItem(itemId, queryParameters, backend, endpoint)
+      }
+    }
   } catch (error) {
     logger.error(error)
     apiResponse = { code: 500, message: error.message }

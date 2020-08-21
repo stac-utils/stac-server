@@ -1,13 +1,13 @@
 {
-  "displayName": "stac-api",
-  "description": "STAC API",
-  "version": "0.1.0",
-  "repository": "https://github.com/stac-utils/stac-api",
+  "displayName": "stac-server",
+  "description": "A STAC API running on stac-server",
+  "version": "0.2.0",
+  "repository": "https://github.com/stac-utils/stac-server",
   "author": "Alireza Jazayeri, Matthew Hanson <matt.a.hanson@gmail.com>, Sean Harkins",
   "license": "MIT",
   "scripts": {
-    "postinstall": "cd lambdas/api; npm install; cd ../ingest; npm install; cd ../subscribe-to-sns; npm install; cd ../failed-ingest; npm install",
-    "build": "cd lambdas/api; npm run build; cd ../ingest; npm run build; cd ../subscribe-to-sns; npm run build; cd ../failed-ingest; npm run build",
+    "postinstall": "cd lambdas/api; npm install; cd ../ingest; npm install; cd ../failed-ingest; npm install",
+    "build": "cd lambdas/api; npm run build; cd ../ingest; npm run build; cd ../failed-ingest; npm run build",
     "test": "ava",
     "eslint": "eslint packages/* --ext .js",
     "deploy": "sls deploy",
@@ -24,13 +24,13 @@
     "access": "public"
   },
   "bugs": {
-    "url": "https://github.com/stac-utils/stac-api/issues"
+    "url": "https://github.com/stac-utils/stac-server/issues"
   },
   "dependencies": {
+    "@acuris/aws-es-connection": "^1.1.0",
+    "@elastic/elasticsearch": "^6.8",
     "@mapbox/extent": "^0.4.0",
-    "elasticsearch": "^16.6",
     "geojson-validation": "^0.2.1",
-    "http-aws-es": "^6.0",
     "js-yaml": "^3.13.1",
     "memorystream": "^0.3.1",
     "pump": "^3.0.0",
@@ -53,5 +53,5 @@
     "sinon": "^7.1.1",
     "widdershins": "^3.6.6"
   },
-  "name": "stac-api"
+  "name": "stac-server"
 }

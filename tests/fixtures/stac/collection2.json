@@ -249,7 +249,7 @@
             "roles": [
                 "processor"
             ],
-            "url": "https://github.com/sat-utils/sat-api"
+            "url": "https://developmentseed.org"
         }
     ],
     "stac_version": "0.8.0",

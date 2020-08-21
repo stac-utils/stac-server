@@ -1,6 +1,6 @@
 {
   "name": "ingest",
-  "description": "ingest lambda function for stac-api",
+  "description": "ingest lambda function for stac-server",
   "main": "index.js",
   "scripts": {
     "build": "webpack",

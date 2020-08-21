@@ -1,4 +1,4 @@
-service: stac-api
+service: stac-server
 
 provider:
   name: aws
@@ -6,15 +6,18 @@ provider:
   stage: ${opt:stage, 'dev'}
   region: ${opt:region, 'us-west-2'}
   environment:
-    STAC_ID: "stac-api"
+    STAC_ID: "stac-server"
     STAC_TITLE: "STAC API"
-    STAC_DESCRIPTION: "STAC API"
-    STAC_VERSION: 0.9.0
+    STAC_DESCRIPTION: "A STAC API using stac-server"
+    STAC_VERSION: 1.0.0-beta.2
+    STAC_API_VERSION: 0.9.0
     LOG_LEVEL: DEBUG
     ES_BATCH_SIZE: 500
-    STAC_DOCS_URL: https://stac-utils.github.io/stac-api/
+    STAC_DOCS_URL: https://stac-utils.github.io/stac-server/
     ES_HOST:
       Fn::GetAtt: [ElasticSearchInstance, DomainEndpoint]
+    ENABLE_TRANSACTIONS_EXTENSION: false
+    PUBLISHED_TOPIC: arn:aws:sns:#{AWS::Region}:#{AWS::AccountId}:${self:service}-${self:provider.stage}-published
   iamRoleStatements:
     - Effect: "Allow"
       Resource: "arn:aws:es:#{AWS::Region}:#{AWS::AccountId}:domain/*"
@@ -33,7 +36,7 @@ package:
 
 functions:
   api:
-    description: STAC API Lambda
+    description: stac-server API Lambda
     handler: index.handler
     package:
       artifact: lambdas/api/dist/api.zip
@@ -41,11 +44,10 @@ functions:
       - http: ANY /
       - http: ANY {proxy+}
   ingest:
-    description: STAC API Ingest Lambda
+    description: stac-server Ingest Lambda
     handler: index.handler
     memorySize: 512
     timeout: 15
-    reservedConcurrency: 100
     package:
       artifact: lambdas/ingest/dist/ingest.zip
     events:
@@ -53,30 +55,36 @@ functions:
           arn:
             Fn::GetAtt: [ingestQueue, Arn]
   failed-ingest:
-    description: STAC API Ingest Lambda
+    description: stac-server Failed Ingest Lambda
     handler: index.handler
     memorySize: 128
     timeout: 30
-    reservedConcurrency: 100
     package:
       artifact: lambdas/failed-ingest/dist/failed-ingest.zip
     events:
       - sqs:
           arn:
             Fn::GetAtt: [deadLetterQueue, Arn]
-  subscribeToSns:
-    description: STAC API SNS Subscription Lambda
-    handler: index.handler
-    memorySize: 128
-    timeout: 15
-    package:
-      artifact: lambdas/subscribe-to-sns/dist/subscribe-to-sns.zip
-    environment:
-      queueName: ${self:service}-${self:provider.stage}-queue
 
 resources:
-  Description: STAC API
+  Description: A STAC API running on stac-server
   Resources:
+    publishedTopic:
+      Type: 'AWS::SNS::Topic'
+      Properties:
+        TopicName: ${self:service}-${self:provider.stage}-published
+    publishedTopicPolicy:
+      Type: AWS::SNS::TopicPolicy
+      Properties:
+        Topics: !Ref publishedTopic
+        PolicyDocument:
+          Statement:
+            Action:
+              - sns:Publish
+              - sns:Receive
+              - sns:ListSubscriptionsByTopic
+            Principal:
+              AWS: '*'
     ingestTopic:
       Type: 'AWS::SNS::Topic'
       Properties:

@@ -28,7 +28,7 @@ function cloneMutatedItem() {
 test('root /', async (t) => {
   const search = sinon.stub().resolves({ results: [], meta: {} })
   const getCollections = sinon.stub().resolves({ collections: [], links: []})
-  const backend = { search }
+  const backend = { search, getCollections }
   const actual = await api.API('/', undefined, backend, 'endpoint')
   t.is(actual.links.length, 6)
 })

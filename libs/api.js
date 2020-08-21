@@ -274,6 +274,7 @@ const collectionsToCatalogLinks = function (results, endpoint) {
     title: stac_title,
     description: stac_description
   }
+  console.log(`Results: ${results}`)
   catalog.links = results.map((result) => {
     const { id } = result
     return {

@@ -27,7 +27,7 @@ function cloneMutatedItem() {
 
 test('root /', async (t) => {
   const search = sinon.stub().resolves({ results: [], meta: {} })
-  const getCollections = sinon.stub().resolves({ results: [] })
+  const getCollections = sinon.stub().resolves(results=[])
   const backend = { search, getCollections }
   const actual = await api.API('/', undefined, backend, 'endpoint')
   t.is(actual.links.length, 6)
@@ -49,13 +49,10 @@ test('search /', async (t) => {
   const collection = 'collection'
   const results = { results: [{ id: collection }] }
   const search = sinon.stub().resolves(results)
-  const backend = { search }
+  const getCollections = sinon.stub().resolves([])
+  const backend = { search, getCollections }
   const actual = await api.API('/', undefined, backend, 'endpoint')
   const expectedLinks = [
-    {
-      rel: 'child',
-      href: 'endpoint/collections/collection'
-    },
     {
       rel: 'service-desc',
       type: 'application/vnd.oai.openapi+json;version=3.0',
@@ -86,7 +83,7 @@ test('search /', async (t) => {
       href: 'test'
     }
   ]
-  t.is(search.firstCall.args[1], 'collections')
+  t.is(getCollections.firstCall.args[0], 1)
   t.deepEqual(actual.links, expectedLinks,
     'Returns STAC catalog with links to collections')
 })
@@ -209,16 +206,10 @@ test('search /collections', async (t) => {
     found: 1,
     returned: 1
   }
-  const search = sinon.stub().resolves({
-    meta,
-    results: [{
-      id: 1,
-      links: []
-    }]
-  })
-  const backend = { search }
+  const getCollections = sinon.stub().resolves([{ id: 1, links: []}])
+  const backend = { getCollections }
   const actual = await api.API('/collections', {}, backend, 'endpoint')
-  t.is(search.firstCall.args[1], 'collections')
+  t.is(getCollections.firstCall.args[1], 100)
   t.is(actual.collections.length, 1)
   t.is(actual.collections[0].links.length, 4, 'Adds STAC links to each collection')
 })
@@ -230,28 +221,19 @@ test('search /collections/collectionId', async (t) => {
     found: 1,
     returned: 1
   }
-  const search = sinon.stub().resolves({
-    meta,
-    results: [{
-      id: 1,
-      links: []
-    }]
-  })
-  const backend = { search }
+  const getCollection = sinon.stub().resolves({ id: 1, links: []})
+  const backend = { getCollection }
   const collectionId = 'collectionId'
   let actual = await api.API(
     `/collections/${collectionId}`, { test: 'test' }, backend, 'endpoint'
   )
-  t.deepEqual(search.firstCall.args[0], { id: collectionId },
+  t.deepEqual(getCollection.firstCall.args[0], collectionId,
     'Calls search with the collectionId path element as id parameter' +
     ' and ignores other passed filter parameters')
   t.is(actual.links.length, 4, 'Returns the first found collection as object')
 
-  search.reset()
-  search.resolves({
-    meta,
-    results: []
-  })
+  getCollection.reset()
+  getCollection.throws('err', 'Collection not found')
   actual = await api.API(
     `/collections/${collectionId}`, {}, backend, 'endpoint'
   )
@@ -301,10 +283,10 @@ test('search /collections/collectionId/items/itemId', async (t) => {
   const actual = await api.API(
     `/collections/collectionId/items/${itemId}`, {}, backend, 'endpoint'
   )
-  t.deepEqual(search.firstCall.args[0], { id: itemId },
+  t.deepEqual(search.firstCall.args[0], { collections: ['collectionId'], id: itemId },
     'Calls search with the itemId path element as id parameter' +
     ' and ignores other passed filter parameters')
-
+  
   t.is(actual.type, 'Feature')
   t.is(actual.links.length, 4, 'Adds STAC links to response object')
 })

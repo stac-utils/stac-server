@@ -7,7 +7,7 @@ const path = require('path')
 const httpMethods = require('../utils/http-methods')
 
 // max number of collections to retrieve
-const COLLECTION_LIMIT = process.env.SATAPI_COLLECTION_LIMIT || 100
+const COLLECTION_LIMIT = process.env.STAC_SERVER_COLLECTION_LIMIT || 100
 
 
 const extractIntersects = function (params) {

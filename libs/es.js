@@ -300,6 +300,7 @@ async function search(parameters, page = 1, limit = 10) {
   if (parameters.hasOwnProperty('collections')) {
     index = parameters.collections
   } else {
+    // do not search `kibana` or `collections` indices (just indices named after specific collections, containing items)
     index = '*,-*kibana*,-collections'
   }
 

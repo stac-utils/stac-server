@@ -163,13 +163,13 @@ const parsePath = function (inpath) {
     root: false,
     api: false,
     conformance: false,
-    stac: false,
     collections: false,
     search: false,
     collectionId: false,
     items: false,
     itemId: false,
-    edit: false
+    edit: false,
+    browse: false
   }
   const api = 'api'
   const conformance = 'conformance'
@@ -178,17 +178,12 @@ const parsePath = function (inpath) {
   const items = 'items'
   const edit = 'edit'
 
-  const stac = 'stac'
-
   const pathComponents = inpath.split('/').filter((x) => x)
   const { length } = pathComponents
   searchFilters.root = length === 0
   searchFilters.api = pathComponents[0] === api
   searchFilters.conformance = pathComponents[0] === conformance
   searchFilters.collections = pathComponents[0] === collections
-
-  searchFilters.stac = pathComponents[0] === stac
-  // searchFilters.stac = pathComponents[0] === stac.length > 3
 
   searchFilters.collectionId =
     pathComponents[0] === collections && length >= 2 ? pathComponents[1] : false
@@ -197,6 +192,10 @@ const parsePath = function (inpath) {
   searchFilters.itemId =
     pathComponents[2] === items && length >= 4 ? pathComponents[3] : false
   searchFilters.edit = pathComponents[4] === edit
+  // browse by sub-catalog if path is /collections/<collectionId>/<path> where <path> is not /items
+  //searchFilters.browse =
+  //  pathComponents[2] != items && length > 2 && searchFilters.collectionId ? pathComponents.slice(2) : false
+  //console.log(`parsePath: ${JSON.stringify(searchFilters)}`)
   return searchFilters
 }
 
@@ -425,6 +424,35 @@ const getConformance = async function () {
 }
 
 
+const getSubCatalog = async function (collectionId, pathComponents, endpoint = '') {
+
+  // determine sub-catalog ID and description
+
+  const catalog = {
+    stac_version: process.env.STAC_VERSION,
+    stac_api_version: process.env.STAC_API_VERSION,
+    id
+  }
+  const parentPath = pathComponents.length > 1 ? pathComponents.slice(1) : ''
+  const links = [
+    {
+      rel: "self",
+      href: `${endpoint}/collections/${collectionId}/${path}`
+    },
+    {
+      rel: "root",
+      href: `${endpoint}`
+    },
+    {
+      rel: "parent",
+      href: `${endpoint}/collections/${collectionId}`
+    }
+  ]
+  catalog.links = links
+  return catalog
+}
+
+
 const getCatalog = async function (backend, endpoint = '') {
   const collections = await backend.getCollections(1, COLLECTION_LIMIT)
   const catalog = collectionsToCatalogLinks(collections, endpoint)
@@ -542,7 +570,6 @@ const API = async function (
         null, queryParameters, backend, endpoint, httpMethod
       )
     }
-    // Search
 
     // All collections
     if (collections && !collectionId) {

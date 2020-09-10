@@ -396,8 +396,11 @@ const searchItems = async function (collectionId, queryParameters, backend, endp
     new_endpoint = `${endpoint}/collections/${collectionId}/items`
   }
   logger.debug(`Search parameters: ${JSON.stringify(searchParameters)}`)
+
+
   const { 'results': itemsResults, 'context': itemsMeta } =
     await backend.search(searchParameters, page, limit)
+    
   const pageLinks = buildPageLinks(itemsMeta, searchParameters, new_endpoint, httpMethod)
   const items = addItemLinks(itemsResults, endpoint)
   const response = wrapResponseInFeatureCollection(itemsMeta, items, pageLinks)

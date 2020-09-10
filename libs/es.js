@@ -130,6 +130,7 @@ function buildQuery(parameters) {
   return { query: queryBody }
 }
 
+
 function buildIdQuery(id) {
   return {
     query: {
@@ -143,6 +144,7 @@ function buildIdQuery(id) {
     }
   }
 }
+
 
 function buildIdsQuery(ids) {
   return {
@@ -281,7 +283,7 @@ async function getCollections(page = 1, limit = 100) {
 }
 
 
-async function search(parameters, page = 1, limit = 10) {
+async function buildEsQuery(parameters, page = 1, limit = 10) {
   let body
   if (parameters.ids) {
     const { ids } = parameters
@@ -292,6 +294,7 @@ async function search(parameters, page = 1, limit = 10) {
   } else {
     body = buildQuery(parameters)
   }
+  // sort
   const sort = buildSort(parameters)
   body.sort = sort
 
@@ -304,14 +307,13 @@ async function search(parameters, page = 1, limit = 10) {
     index = '*,-*kibana*,-collections'
   }
 
-  const searchParams = {
+  const query = {
     index,
     body,
     size: limit,
     from: (page - 1) * limit
   }
 
-  // disable fields filter for now
   const { _sourceIncludes, _sourceExcludes } = buildFieldsFilter(parameters)
   if (_sourceExcludes.length > 0) {
     searchParams._sourceExcludes = _sourceExcludes
@@ -320,7 +322,15 @@ async function search(parameters, page = 1, limit = 10) {
     searchParams._sourceIncludes = _sourceIncludes
   }
 
-  const esResponse = await esQuery(searchParams)
+  return query
+}
+
+
+async function search(parameters, page = 1, limit = 10) {
+
+  const query = buildEsQuery(parameters)
+
+  const esResponse = await esQuery(query)
 
   const results = esResponse.body.hits.hits.map((r) => (r._source))
   const response = {
@@ -344,6 +354,7 @@ async function search(parameters, page = 1, limit = 10) {
   }
   return response
 }
+
 
 module.exports = {
   getCollection,

@@ -3,6 +3,7 @@ const sinon = require('sinon')
 const MemoryStream = require('memorystream')
 const { ingestItems } = require('../libs/ingest')
 const firstItem = require('./fixtures/stac/LC80100102015050LGN00.json')
+const stream = require('../../libs/esStream.js')
 
 const setup = () => {
   const dupOptions = {
@@ -52,6 +53,6 @@ const setup = () => {
 
 test('ingestItem passes item through transform stream', async (t) => {
   const { esStream, backend } = setup()
-  await ingestItems([firstItem], backend)
+  await ingestItems([firstItem], stream)
   t.deepEqual(esStream.queue[0], firstItem)
 })

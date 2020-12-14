@@ -5,12 +5,21 @@ module.exports = () => ({
     doc: {
       dynamic_templates: common.dynamic_templates,
       properties: {
-        properties: common.properties,
         extent: {
           type: 'object',
           properties: {
-            spatial: { type: 'long' },
-            temporal: { type: 'date' }
+            spatial: { 
+              type: 'object',
+              properties: {
+                bbox: { type: 'long' }
+              }
+            },
+            temporal: {
+              type: 'object',
+              properties: {
+                interval: { type: 'date' }
+              }
+            }
           }
         }
       }

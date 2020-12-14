@@ -7,7 +7,7 @@ const path = require('path')
 const httpMethods = require('../utils/http-methods')
 
 // max number of collections to retrieve
-const COLLECTION_LIMIT = process.env.SATAPI_COLLECTION_LIMIT || 100
+const COLLECTION_LIMIT = process.env.STAC_SERVER_COLLECTION_LIMIT || 100
 
 
 const extractIntersects = function (params) {
@@ -163,7 +163,6 @@ const parsePath = function (inpath) {
     root: false,
     api: false,
     conformance: false,
-    stac: false,
     collections: false,
     search: false,
     collectionId: false,
@@ -178,17 +177,12 @@ const parsePath = function (inpath) {
   const items = 'items'
   const edit = 'edit'
 
-  const stac = 'stac'
-
   const pathComponents = inpath.split('/').filter((x) => x)
   const { length } = pathComponents
   searchFilters.root = length === 0
   searchFilters.api = pathComponents[0] === api
   searchFilters.conformance = pathComponents[0] === conformance
   searchFilters.collections = pathComponents[0] === collections
-
-  searchFilters.stac = pathComponents[0] === stac
-  // searchFilters.stac = pathComponents[0] === stac.length > 3
 
   searchFilters.collectionId =
     pathComponents[0] === collections && length >= 2 ? pathComponents[1] : false
@@ -274,6 +268,7 @@ const collectionsToCatalogLinks = function (results, endpoint) {
     title: stac_title,
     description: stac_description
   }
+
   catalog.links = results.map((result) => {
     const { id } = result
     return {
@@ -339,7 +334,6 @@ const buildPageLinks = function (meta, parameters, endpoint, httpMethod) {
       method: httpMethod
     }
     if (httpMethod === 'GET') {
-      
       const prevQueryParameters = dictToURI(newParams)
       link.href = `${endpoint}?${prevQueryParameters}`
     } else if (httpMethod === 'POST') {

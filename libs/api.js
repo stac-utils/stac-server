@@ -163,7 +163,6 @@ const parsePath = function (inpath) {
     root: false,
     api: false,
     conformance: false,
-    stac: false,
     collections: false,
     search: false,
     collectionId: false,
@@ -178,17 +177,12 @@ const parsePath = function (inpath) {
   const items = 'items'
   const edit = 'edit'
 
-  const stac = 'stac'
-
   const pathComponents = inpath.split('/').filter((x) => x)
   const { length } = pathComponents
   searchFilters.root = length === 0
   searchFilters.api = pathComponents[0] === api
   searchFilters.conformance = pathComponents[0] === conformance
   searchFilters.collections = pathComponents[0] === collections
-
-  searchFilters.stac = pathComponents[0] === stac
-  // searchFilters.stac = pathComponents[0] === stac.length > 3
 
   searchFilters.collectionId =
     pathComponents[0] === collections && length >= 2 ? pathComponents[1] : false

@@ -326,9 +326,38 @@ async function buildEsQuery(parameters, page = 1, limit = 10) {
 }
 
 
+async function aggregate(parameters) {
+
+  const { aggregations, ...params } = parameters
+
+  const query = await buildEsQuery(params)
+
+  if (hasOwnProperty(aggregations, "unique_values")) {
+    query.body.aggs = {
+      composite: {
+        sources: {
+          [aggregations.unique_values]: {
+            terms: {
+              field: aggregations.unique_values
+            }
+          }
+        }
+      }      
+    }
+  }
+
+  console.log(`ES Query Parameters: ${JSON.stringify(query)}`)
+
+  // TODO - loop through pages and get unique values
+  const esResponse = await esQuery(query)
+
+  console.log(`ES Response: ${JSON.stringify(esResponse)}`)
+}
+
+
 async function search(parameters, page = 1, limit = 10) {
 
-  const query = buildEsQuery(parameters)
+  const query = buildEsQuery(parameters, page, limit)
 
   const esResponse = await esQuery(query)
 

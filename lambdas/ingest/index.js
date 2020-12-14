@@ -25,13 +25,13 @@ module.exports.handler = async function handler(event) {
       logger.debug(`Record: ${JSON.stringify(i)}`)
       return i
     }))
+  }
 
-    try {
-      await ingest.ingestItems(items, stream)
-      logger.info(`Ingested ${items.length} Items: ${JSON.stringify(items)}`)
-    } catch (error) {
-      console.log(error)
-      throw (error)
-    }
+  try {
+    await ingest.ingestItems(items, stream)
+    logger.info(`Ingested ${items.length} Items: ${JSON.stringify(items)}`)
+  } catch (error) {
+    console.log(error)
+    throw (error)
   }
 }

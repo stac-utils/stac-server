@@ -9,7 +9,7 @@ provider:
     STAC_ID: "earth-search"
     STAC_TITLE: "Earth Search"
     STAC_DESCRIPTION: "A STAC API of AWS Public Datasets powered by stac-server"
-    STAC_VERSION: 1.0.0-beta.1
+    STAC_VERSION: 1.0.0-beta.2
     STAC_API_VERSION: 0.9.0
     STAC_ROOT_URL: https://earth-search.aws.element84.com/v0
     LOG_LEVEL: DEBUG
@@ -42,12 +42,21 @@ functions:
       artifact: lambdas/api/dist/api.zip
     events:
       - http: 
+<<<<<<< HEAD
           path: "/"
           method: ANY
           cors: true
       - http:
           path: "{proxy+}"
           method: ANY 
+=======
+          method: ANY 
+          path: "/"
+          cors: true
+      - http:
+          method: ANY
+          path: "{proxy+}"
+>>>>>>> fc8021c18aa63e117e61a32089f97a9f2e76d95d
           cors: true
   ingest:
     description: stac-server Ingest Lambda

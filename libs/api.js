@@ -262,13 +262,14 @@ const addItemLinks = function (results, endpoint) {
 
 
 const collectionsToCatalogLinks = function (results, endpoint) {
-  const stac_version = process.env.STAC_VERSION || '1.0.0-b1'
-  const stac_api_version = process.env.STAC_API_VERSION || '0.9.0'
+  const stac_version = process.env.STAC_VERSION
+  const stac_api_version = process.env.STAC_API_VERSION
   const stac_id = process.env.STAC_ID || 'stac-server'
   const stac_title = process.env.STAC_TITLE || 'A STAC API'
   const stac_description = process.env.STAC_DESCRIPTION || 'A STAC API running on stac-server'
   const catalog = {
     stac_version,
+    stac_api_version,
     id: stac_id,
     title: stac_title,
     description: stac_description
@@ -298,7 +299,7 @@ const wrapResponseInFeatureCollection = function (
   }
 }
 
-const buildPageLinks = function (meta, parameters, endpoint) {
+const buildPageLinks = function (meta, parameters, endpoint, httpMethod) {
   const pageLinks = []
 
   const dictToURI = (dict) => (
@@ -312,29 +313,46 @@ const buildPageLinks = function (meta, parameters, endpoint) {
     }).join('&')
   )
   const { matched, page, limit } = meta
-  let newParams
+  let newParams, link
   if ((page * limit) < matched) {
     newParams = Object.assign({}, parameters, { page: page + 1, limit })
-    const nextQueryParameters = dictToURI(newParams)
-    pageLinks.push({
+    link = {
       rel: 'next',
       title: 'Next page of results',
-      href: `${endpoint}?${nextQueryParameters}`
-    })
+      method: httpMethod
+    }
+    if (httpMethod === 'GET') {
+      const nextQueryParameters = dictToURI(newParams)
+      link.href = `${endpoint}?${nextQueryParameters}`
+    } else if (httpMethod === 'POST') {
+      link.href = endpoint,
+      link.merge = false,
+      link.body = newParams
+    }
+    pageLinks.push(link)
   }
   if (page > 1) {
     newParams = Object.assign({}, parameters, { page: page - 1, limit })
-    const prevQueryParameters = dictToURI(newParams)
-    pageLinks.push({
+    link = {
       rel: 'prev',
       title: 'Previous page of results',
-      href: `${endpoint}?${prevQueryParameters}`
-    })
+      method: httpMethod
+    }
+    if (httpMethod === 'GET') {
+      
+      const prevQueryParameters = dictToURI(newParams)
+      link.href = `${endpoint}?${prevQueryParameters}`
+    } else if (httpMethod === 'POST') {
+      link.href = endpoint
+      link.merge = false,
+      link.body = newParams
+    }
+    pageLinks.push(link)
   }
   return pageLinks
 }
 
-const searchItems = async function (collectionId, queryParameters, backend, endpoint) {
+const searchItems = async function (collectionId, queryParameters, backend, endpoint, httpMethod) {
   logger.debug(`Query parameters: ${JSON.stringify(queryParameters)}`)
   const {
     limit,
@@ -380,7 +398,7 @@ const searchItems = async function (collectionId, queryParameters, backend, endp
   logger.debug(`Search parameters: ${JSON.stringify(searchParameters)}`)
   const { 'results': itemsResults, 'context': itemsMeta } =
     await backend.search(searchParameters, page, limit)
-  const pageLinks = buildPageLinks(itemsMeta, searchParameters, new_endpoint)
+  const pageLinks = buildPageLinks(itemsMeta, searchParameters, new_endpoint, httpMethod)
   const items = addItemLinks(itemsResults, endpoint)
   const response = wrapResponseInFeatureCollection(itemsMeta, items, pageLinks)
 
@@ -448,7 +466,11 @@ const getCatalog = async function (backend, endpoint = '') {
 const getCollections = async function (backend, endpoint = '') {
   const results = await backend.getCollections(1, COLLECTION_LIMIT)
   const linkedCollections = addCollectionLinks(results, endpoint)
-  return linkedCollections
+  const resp = {
+    collections: results,
+    links: []
+  }
+  return resp
 }
 
 
@@ -517,7 +539,7 @@ const API = async function (
     // STAC Search
     if (searchPath) {
       apiResponse = await searchItems(
-        null, queryParameters, backend, endpoint
+        null, queryParameters, backend, endpoint, httpMethod
       )
     }
     // Search
@@ -532,7 +554,7 @@ const API = async function (
     }
     // Items in a collection
     if (collections && collectionId && items && !itemId) {
-      apiResponse = await searchItems(collectionId, queryParameters, backend, endpoint)
+      apiResponse = await searchItems(collectionId, queryParameters, backend, endpoint, httpMethod)
     }
 
     // Specific item

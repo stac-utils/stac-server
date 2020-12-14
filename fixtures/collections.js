@@ -9,8 +9,18 @@ module.exports = () => ({
         extent: {
           type: 'object',
           properties: {
-            spatial: { type: 'long' },
-            temporal: { type: 'date' }
+            spatial: { 
+              type: 'object',
+              properties: {
+                bbox: { type: 'long' }
+              }
+            },
+            temporal: {
+              type: 'object',
+              properties: {
+                interval: { type: 'date' }
+              }
+            }
           }
         }
       }

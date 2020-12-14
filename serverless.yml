@@ -42,12 +42,21 @@ functions:
       artifact: lambdas/api/dist/api.zip
     events:
       - http: 
+<<<<<<< HEAD
+          path: "/"
+          method: ANY
+          cors: true
+      - http:
+          path: "{proxy+}"
+          method: ANY 
+=======
           method: ANY 
           path: "/"
           cors: true
       - http:
           method: ANY
           path: "{proxy+}"
+>>>>>>> fc8021c18aa63e117e61a32089f97a9f2e76d95d
           cors: true
   ingest:
     description: stac-server Ingest Lambda

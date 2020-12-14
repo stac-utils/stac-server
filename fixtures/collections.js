@@ -5,7 +5,6 @@ module.exports = () => ({
     doc: {
       dynamic_templates: common.dynamic_templates,
       properties: {
-        properties: common.properties,
         extent: {
           type: 'object',
           properties: {

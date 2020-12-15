@@ -64,7 +64,7 @@ This will create a CloudFormation stack in the `us-west-2` region called `stac-s
 $ npm run deploy -- --stage mystage --region eu-central-1
 ```
 
-Once deployed there is one final step - creating the indices and mappings in Elasticsearch. Invoke the Lambda function (either through the AWS Console or the AWS CLI) with a payload of:
+Once deployed there is one final step - creating the indices and mappings in Elasticsearch. Invoke the `stac-server-<stage>-ingest` Lambda function (either through the AWS Console or the AWS CLI) with a payload of:
 
 ```
 {

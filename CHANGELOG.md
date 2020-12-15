@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [0.2.0] - 2020-12-14
+
 ### Added
 - Partial STAC transaction extension added, disabled by default - set ENABLE_TRANSACTIONS_EXTENSION=true to enable
 
@@ -16,6 +18,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Removed
 - Collection properties no longer merged into Item on ingest (commons extension removed from STAC)
 
+### Fixed
+- Pagination is now STAC compliant
+- Response from `/collections` is now STAC compliant
+
 
 ## [0.1.0] - 2020-03-20
 
@@ -24,4 +30,5 @@ Initial release, forked from [sat-api](https://github.com/sat-utils/sat-api/tree
 Compliant with STAC 0.9.0
 
 [Unreleased]: https://github.com/stac-utils/stac-api/compare/master...develop
+[0.2.0]: https://github.com/stac-utils/stac-api/compare/0.1.0...0.2.0
 [0.1.0]: https://github.com/stac-utils/stac-api/tree/0.1.0

@@ -76,15 +76,18 @@ resources:
     publishedTopicPolicy:
       Type: AWS::SNS::TopicPolicy
       Properties:
-        Topics: !Ref publishedTopic
+        Topics: 
+          - !Ref publishedTopic
         PolicyDocument:
           Statement:
-            Action:
-              - sns:Publish
-              - sns:Receive
-              - sns:ListSubscriptionsByTopic
-            Principal:
-              AWS: '*'
+            - Effect: Allow
+              Action:
+                - sns:Publish
+                - sns:Subscribe
+                - sns:ListSubscriptionsByTopic
+              Principal:
+                AWS: '*'
+              Resource: !Ref publishedTopic
     ingestTopic:
       Type: 'AWS::SNS::Topic'
       Properties:

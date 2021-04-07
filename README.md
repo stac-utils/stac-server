@@ -5,8 +5,9 @@
 Stac-server is a STAC compliant Rest API for searching and serving metadata for geospatial data (including but not limited to satellite imagery). The STAC version supported by a given version of stac-api is shown in the table below. Additional information can be found in the [CHANGELOG](CHANGELOG.md)
 
 | stac-server Version | STAC Version  |
-| -------- | ----  |
-| 0.1.0    | 0.9.x |
+| -------- | ---------- |
+| 0.1.x    | 0.9.x      |
+| 0.2.x    | <1.0.0-rc.1 |
 
 The following APIs are deployed instances of stac-server:
 

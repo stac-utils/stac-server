@@ -163,7 +163,6 @@ const parsePath = function (inpath) {
     root: false,
     api: false,
     conformance: false,
-    stac: false,
     collections: false,
     search: false,
     collectionId: false,
@@ -178,17 +177,12 @@ const parsePath = function (inpath) {
   const items = 'items'
   const edit = 'edit'
 
-  const stac = 'stac'
-
   const pathComponents = inpath.split('/').filter((x) => x)
   const { length } = pathComponents
   searchFilters.root = length === 0
   searchFilters.api = pathComponents[0] === api
   searchFilters.conformance = pathComponents[0] === conformance
   searchFilters.collections = pathComponents[0] === collections
-
-  searchFilters.stac = pathComponents[0] === stac
-  // searchFilters.stac = pathComponents[0] === stac.length > 3
 
   searchFilters.collectionId =
     pathComponents[0] === collections && length >= 2 ? pathComponents[1] : false
@@ -274,7 +268,7 @@ const collectionsToCatalogLinks = function (results, endpoint) {
     title: stac_title,
     description: stac_description
   }
-  console.log(`Results: ${results}`)
+
   catalog.links = results.map((result) => {
     const { id } = result
     return {
@@ -324,11 +318,11 @@ const buildPageLinks = function (meta, parameters, endpoint, httpMethod) {
     }
     if (httpMethod === 'GET') {
       const nextQueryParameters = dictToURI(newParams)
-      links.href = `${endpoint}?${nextQueryParameters}`
+      link.href = `${endpoint}?${nextQueryParameters}`
     } else if (httpMethod === 'POST') {
-      links.href = endpoint,
-      links.merge = false,
-      links.body = newParams
+      link.href = endpoint,
+      link.merge = false,
+      link.body = newParams
     }
     pageLinks.push(link)
   }
@@ -342,11 +336,11 @@ const buildPageLinks = function (meta, parameters, endpoint, httpMethod) {
     if (httpMethod === 'GET') {
       
       const prevQueryParameters = dictToURI(newParams)
-      links.href = `${endpoint}?${nextQueryParameters}`
+      link.href = `${endpoint}?${nextQueryParameters}`
     } else if (httpMethod === 'POST') {
-      links.href = endpoint
-      links.merge = false,
-      links.body = newParams
+      link.href = endpoint
+      link.merge = false,
+      link.body = newParams
     }
     pageLinks.push(link)
   }
@@ -509,6 +503,7 @@ const editPartialItem = async function (itemId, queryParameters, backend, endpoi
 const API = async function (
   inpath = '', queryParameters = {}, backend, endpoint = '', httpMethod = 'GET'
 ) {
+  logger.debug(`API Path: ${inpath}, Query Parameters: ${queryParameters}`)
   let apiResponse
   try {
     const pathElements = parsePath(inpath)

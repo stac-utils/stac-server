@@ -474,7 +474,7 @@ const getCollection = async function (collectionId, backend, endpoint = '') {
   if (col.length > 0) {
     return col[0]
   }
-  return { code: 404, message: 'Collection not found' }
+  return new Error('Collection not found')
 }
 
 
@@ -485,7 +485,7 @@ const getItem = async function (collectionId, itemId, backend, endpoint = '') {
   if (it) {
     return it
   }
-  return { code: 404, message: 'Item not found' }
+  return new Error('Item not found')
 }
 
 
@@ -495,7 +495,7 @@ const editPartialItem = async function (itemId, queryParameters, backend, endpoi
   if (response) {
     return addItemLinks([response.get._source], endpoint)[0]
   }
-  return { code: 404, message: `Error editing item ${itemId}` }
+  return new Error(`Error editing item ${itemId}`)
 }
 
 
@@ -567,7 +567,7 @@ const API = async function (
     }
   } catch (error) {
     logger.error(error)
-    apiResponse = { code: 500, message: error.message }
+    apiResponse = new Error(error.message)
   }
   return apiResponse
 }

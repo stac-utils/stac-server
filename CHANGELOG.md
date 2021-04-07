@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Fixed
 - Pagination is now STAC compliant
 - Response from `/collections` is now STAC compliant
+- Return 404 errors when collections or items not found
 
 ### Removed
 - Specified mapping for temporal and spatial properties (will auto map)

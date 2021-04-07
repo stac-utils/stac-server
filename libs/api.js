@@ -334,9 +334,8 @@ const buildPageLinks = function (meta, parameters, endpoint, httpMethod) {
       method: httpMethod
     }
     if (httpMethod === 'GET') {
-      
       const prevQueryParameters = dictToURI(newParams)
-      link.href = `${endpoint}?${nextQueryParameters}`
+      link.href = `${endpoint}?${prevQueryParameters}`
     } else if (httpMethod === 'POST') {
       link.href = endpoint
       link.merge = false,

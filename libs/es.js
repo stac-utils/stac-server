@@ -327,12 +327,12 @@ async function search(parameters, page = 1, limit = 10) {
     context: {
       page: Number(page),
       limit: Number(limit),
-      matched: esResponse.body.hits.total,
+      matched: esResponse.body.hits.total.value,
       returned: results.length
     },
     links: []
   }
-  const nextlink = (((page * limit) < esResponse.body.hits.total) ? page + 1 : null)
+  const nextlink = (((page * limit) < esResponse.body.hits.total.value) ? page + 1 : null)
   if (nextlink) {
     response.links.push({
       title: 'next',

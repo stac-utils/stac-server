@@ -52,7 +52,7 @@ functions:
     description: stac-server Ingest Lambda
     handler: index.handler
     memorySize: 512
-    timeout: 15
+    timeout: 30
     package:
       artifact: lambdas/ingest/dist/ingest.zip
     events:
@@ -128,7 +128,7 @@ resources:
           InstanceCount: 3
           DedicatedMasterEnabled: false
           ZoneAwarenessEnabled: false
-        ElasticsearchVersion: 6.8
+        ElasticsearchVersion: 7.9
   Outputs:
     ESEndpoint:
       Value:

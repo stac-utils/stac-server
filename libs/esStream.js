@@ -56,7 +56,7 @@ class ElasticSearchWritableStream extends _stream.Writable {
 
       await this.client.update({
         index,
-        type: 'doc',
+        type: '_doc',
         id,
         body
       })
@@ -127,7 +127,6 @@ async function stream() {
       // create ES record
       const record = {
         index,
-        type: 'doc',
         id: esDataObject.id,
         action: 'update',
         _retry_on_conflict: 3,

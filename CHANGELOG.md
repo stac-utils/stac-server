@@ -5,7 +5,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
-
+- Elasticsearch version update 6.8 -> 7.9
+- Enforce only HTTPS access
+- Migrate base configuration from t2.small -> t3.small instances
 
 ## [0.2.1] - 2020-12-14
 

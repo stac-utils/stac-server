@@ -40,8 +40,8 @@ functions:
     package:
       artifact: lambdas/api/dist/api.zip
     events:
-      - http: 
-          method: ANY 
+      - http:
+          method: ANY
           path: "/"
           cors: true
       - http:
@@ -86,7 +86,7 @@ resources:
       Type: AWS::SQS::Queue
       Properties:
         DelaySeconds: 1
-        VisibilityTimeout: 25
+        VisibilityTimeout: 45
         ReceiveMessageWaitTimeSeconds: 5
         QueueName: ${self:service}-${self:provider.stage}-queue
         RedrivePolicy:

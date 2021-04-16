@@ -87,11 +87,10 @@ Stac-server can also be subscribed to SNS Topics that publish complete STAC Item
 
 ### Ingest Errors
 
-Errors that occur during ingest will end up in the dead letter processing queue, where they are processed by the `stac-server-<stage>-failed-ingest` Lambda function. Currently all the failed-ingest Lambda does is log the error, see the CloudWatch log '/aws/lambda/stac-server-<stage>-failed-ingest' for errors.
+Errors that occur during ingest will end up in the dead letter processing queue, where they are processed by the `stac-server-<stage>-failed-ingest` Lambda function. Currently all the failed-ingest Lambda does is log the error, see the CloudWatch log `/aws/lambda/stac-server-<stage>-failed-ingest` for errors.
 
 ## Development
 
-The latest released version is on the [master branch](https://github.com/stac-utils/stac-server/tree/master), and the latest development version is on the [develop](https://github.com/stac-utils/stac-server/tree/develop) branch.
 
 ```
 # Install dependencies in package.json

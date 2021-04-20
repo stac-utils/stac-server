@@ -13,7 +13,7 @@ The following APIs are deployed instances of stac-server:
 
 | Name     | Version   | Description |
 | -------- | ----      | ----        |
-| [Earth Search](https://earth-search-v0.aws.element84.com/) | 0.9.0 | Catalog of some AWS Public Datasets |
+| [Earth Search](https://earth-search.aws.element84.com/v0/) | 1.0.0-beta.2 | Catalog of some AWS Public Datasets |
 
 
 ## Usage

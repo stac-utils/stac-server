@@ -4,7 +4,7 @@ const httpMethods = require('../../utils/http-methods')
 
 
 function determineEndpoint(event) {
-  let endpoint = process.env.STAC_ROOT_URL
+  let endpoint = process.env.STAC_API_URL
   if (typeof endpoint === 'undefined') {
     if ('X-Forwarded-Host' in event.headers) {
       endpoint = `${event.headers['X-Forwarded-Proto']}://${event.headers['X-Forwarded-Host']}`

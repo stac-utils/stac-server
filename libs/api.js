@@ -300,7 +300,7 @@ const buildPageLinks = function (meta, parameters, endpoint, httpMethod) {
   const dictToURI = (dict) => (
     Object.keys(dict).map(
       (p) => {
-        if (p === "collections") {
+        if (p === 'collections') {
           return `${encodeURIComponent(p)}[]=${encodeURIComponent(dict[p])}`
         } else {
           return `${encodeURIComponent(p)}=${encodeURIComponent(dict[p])}`
@@ -320,8 +320,8 @@ const buildPageLinks = function (meta, parameters, endpoint, httpMethod) {
       const nextQueryParameters = dictToURI(newParams)
       link.href = `${endpoint}?${nextQueryParameters}`
     } else if (httpMethod === 'POST') {
-      link.href = endpoint,
-      link.merge = false,
+      link.href = endpoint
+      link.merge = false
       link.body = newParams
     }
     pageLinks.push(link)
@@ -338,7 +338,7 @@ const buildPageLinks = function (meta, parameters, endpoint, httpMethod) {
       link.href = `${endpoint}?${prevQueryParameters}`
     } else if (httpMethod === 'POST') {
       link.href = endpoint
-      link.merge = false,
+      link.merge = false
       link.body = newParams
     }
     pageLinks.push(link)
@@ -390,8 +390,8 @@ const searchItems = async function (collectionId, queryParameters, backend, endp
     new_endpoint = `${endpoint}/collections/${collectionId}/items`
   }
   logger.debug(`Search parameters: ${JSON.stringify(searchParameters)}`)
-  const { 'results': itemsResults, 'context': itemsMeta } =
-    await backend.search(searchParameters, page, limit)
+  const results = await backend.search(searchParameters, page, limit)
+  const { 'results': itemsResults, 'meta': itemsMeta } = results
   const pageLinks = buildPageLinks(itemsMeta, searchParameters, new_endpoint, httpMethod)
   const items = addItemLinks(itemsResults, endpoint)
   const response = wrapResponseInFeatureCollection(itemsMeta, items, pageLinks)
@@ -502,7 +502,7 @@ const editPartialItem = async function (itemId, queryParameters, backend, endpoi
 const API = async function (
   inpath = '', queryParameters = {}, backend, endpoint = '', httpMethod = 'GET'
 ) {
-  logger.debug(`API Path: ${inpath}, Query Parameters: ${queryParameters}`)
+  logger.debug(`API Path: ${inpath}, Query Parameters: ${JSON.stringify(queryParameters)}`)
   let apiResponse
   try {
     const pathElements = parsePath(inpath)

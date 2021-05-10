@@ -200,12 +200,6 @@ test('search /search time parameter', async (t) => {
 })
 
 test('search /collections', async (t) => {
-  const meta = {
-    limit: 1,
-    page: 1,
-    found: 1,
-    returned: 1
-  }
   const getCollections = sinon.stub().resolves([{ id: 1, links: []}])
   const backend = { getCollections }
   const actual = await api.API('/collections', {}, backend, 'endpoint')
@@ -215,13 +209,7 @@ test('search /collections', async (t) => {
 })
 
 test('search /collections/collectionId', async (t) => {
-  const meta = {
-    limit: 1,
-    page: 1,
-    found: 1,
-    returned: 1
-  }
-  const getCollection = sinon.stub().resolves({ id: 1, links: []})
+  const getCollection = sinon.stub().resolves({ id: 1, links: [] })
   const backend = { getCollection }
   const collectionId = 'collectionId'
   let actual = await api.API(
@@ -286,7 +274,7 @@ test('search /collections/collectionId/items/itemId', async (t) => {
   t.deepEqual(search.firstCall.args[0], { collections: ['collectionId'], id: itemId },
     'Calls search with the itemId path element as id parameter' +
     ' and ignores other passed filter parameters')
-  
+
   t.is(actual.type, 'Feature')
   t.is(actual.links.length, 4, 'Adds STAC links to response object')
 })

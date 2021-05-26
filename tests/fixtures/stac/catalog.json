@@ -1,27 +1,29 @@
 {
-    "description": "Landsat imagery",
     "id": "landsat",
+    "type": "Catalog",
+    "description": "Landsat imagery",
     "links": [
         {
             "href": "catalog.json",
-            "rel": "self"
+            "rel": "self",
+            "type": "application/json"
         },
         {
             "href": "catalog.json",
-            "rel": "root"
+            "rel": "root",
+            "type": "application/json"
         },
         {
             "href": "collection.json",
-            "rel": "child"
+            "rel": "child",
+            "type": "application/json"
         },
         {
             "href": "collection2.json",
-            "rel": "child"
+            "rel": "child",
+            "type": "application/json"
         }
     ],
-    "stac_extensions": [
-        "eo",
-        "landsat"
-    ],
-    "stac_version": "0.8.0"
+    "stac_extensions": ["eo", "landsat"],
+    "stac_version": "1.0.0"
 }

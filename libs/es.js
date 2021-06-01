@@ -266,6 +266,7 @@ async function getCollection(collectionId) {
     index: COLLECTIONS_INDEX,
     body: buildIdQuery(collectionId)
   })
+  // TODO: handle zero hits, _source is undefined
   const result = response.body.hits.hits[0]._source
   return result
 }

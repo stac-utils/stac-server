@@ -11,12 +11,12 @@ const noIntersectsGeometry = require('../fixtures/stac/noIntersectsGeometry.json
 const { API } = api
 const endpoint = 'endpoint'
 
-// test('collections', async (t) => {
-//   const response = await API('/collections', {}, backend, endpoint)
-//   t.is(response.collections.length, 2)
-//   // the 'meta' field is not STAC API mandate, but is a nicety
-//   t.is(response.meta.returned, 2)
-// })
+test('collections', async (t) => {
+  const response = await API('/collections', {}, backend, endpoint)
+  t.is(response.collections.length, 2)
+  // the 'meta' field is not STAC API mandate, but is a nicety
+  t.is(response.meta.returned, 2)
+})
 
 test('collections/{collectionId}', async (t) => {
   let response = await API('/collections/landsat-8-l1', {}, backend, endpoint)
@@ -25,118 +25,119 @@ test('collections/{collectionId}', async (t) => {
   t.is(response.id, 'collection2')
 })
 
-// test('collections/{collectionId}/items', async (t) => {
-//   const response = await API('/collections/landsat-8-l1/items',
-//     {}, backend, endpoint)
-//   t.is(response.type, 'FeatureCollection')
-//   t.is(response.features.length, 2)
-//   t.is(response.features[0].id, 'LC80100102015082LGN00')
-//   t.is(response.features[1].id, 'LC80100102015050LGN00')
-// })
-// 
-// test('collections/{collectionId}/items/{itemId}', async (t) => {
-//   const response =
-//     await API('/collections/landsat-8-l1/items/LC80100102015082LGN00',
-//       {}, backend, endpoint)
-//   t.is(response.type, 'Feature')
-//   t.is(response.id, 'LC80100102015082LGN00')
-// })
-// 
-// test('collections/{collectionId}/items with bbox', async (t) => {
-//   let response = await API('/collections/landsat-8-l1/items', {
-//     bbox: [-180, -90, 180, 90]
-//   }, backend, endpoint)
-//   t.is(response.type, 'FeatureCollection')
-//   t.is(response.features[0].id, 'LC80100102015082LGN00')
-//   t.is(response.features[1].id, 'LC80100102015050LGN00')
-// 
-//   response = await API('/collections/landsat-8-l1/items', {
-//     bbox: [-5, -5, 5, 5]
-//   }, backend, endpoint)
-//   t.is(response.features.length, 0)
-// })
-// 
-// test('collections/{collectionId}/items with bbox and intersects', async (t) => {
-//   const response = await API('/collections/landsat-8-l1/items', {
-//     bbox: [-180, -90, 180, 90],
-//     intersects: intersectsGeometry
-//   }, backend, endpoint)
-//   t.truthy(response.code)
-// })
-// 
-// test('collections/{collectionId}/items with time', async (t) => {
-//   let response = await API('/collections/landsat-8-l1/items', {
-//     datetime: '2015-02-19T15:06:12.565047+00:00'
-//   }, backend, endpoint)
-//   t.is(response.type, 'FeatureCollection')
-//   t.is(response.features[0].id, 'LC80100102015050LGN00')
-// 
-//   response = await API('/collections/landsat-8-l1/items', {
-//     datetime: '2015-02-17/2015-02-20'
-//   }, backend, endpoint)
-//   t.is(response.type, 'FeatureCollection')
-//   t.is(response.features[0].id, 'LC80100102015050LGN00')
-// 
-//   response = await API('/collections/landsat-8-l1/items', {
-//     datetime: '2015-02-19/2015-02-20'
-//   }, backend, endpoint)
-//   t.is(response.features[0].id, 'LC80100102015050LGN00',
-//     'Handles date range without times inclusion issue')
-// })
-// 
-// test('collections/{collectionId}/items with limit', async (t) => {
-//   const response = await API('/collections/landsat-8-l1/items', {
-//     limit: 1
-//   }, backend, endpoint)
-//   t.is(response.type, 'FeatureCollection')
-//   t.is(response.features.length, 1)
-// })
-// 
-// test('collections/{collectionId}/items with intersects', async (t) => {
-//   let response = await API('/collections/landsat-8-l1/items', {
-//     intersects: intersectsGeometry
-//   }, backend, endpoint)
-//   t.is(response.type, 'FeatureCollection')
-//   t.is(response.features[0].id, 'LC80100102015082LGN00')
-//   t.is(response.features[1].id, 'LC80100102015050LGN00')
-// 
-//   response = await API('/collections/landsat-8-l1/items', {
-//     intersects: intersectsFeature
-//   }, backend, endpoint)
-//   t.truthy(response.code)
-// 
-//   response = await API('/collections/landsat-8-l1/items', {
-//     intersects: noIntersectsGeometry
-//   }, backend, endpoint)
-//   t.is(response.features.length, 0)
-// })
-// 
-// test('collections/{collectionId}/items with eq query', async (t) => {
-//   const response = await API('/collections/landsat-8-l1/items', {
-//     query: {
-//       'eo:cloud_cover': {
-//         eq: 0.54
-//       }
-//     }
-//   }, backend, endpoint)
-//   t.is(response.features.length, 1)
-//   t.is(response.features[0].id, 'LC80100102015050LGN00')
-// })
-// 
-// test('collections/{collectionId}/items with gt lt query', async (t) => {
-//   const response = await API('/collections/landsat-8-l1/items', {
-//     query: {
-//       'eo:cloud_cover': {
-//         gt: 0.5,
-//         lt: 0.6
-//       }
-//     }
-//   }, backend, endpoint)
-//   t.is(response.features.length, 1)
-//   t.is(response.features[0].id, 'LC80100102015050LGN00')
-// })
-// 
-// 
+test('collections/{collectionId}/items', async (t) => {
+  const response = await API('/collections/landsat-8-l1/items',
+    {}, backend, endpoint)
+  t.is(response.type, 'FeatureCollection')
+  t.is(response.features.length, 2)
+  t.is(response.features[0].id, 'LC80100102015082LGN00')
+  t.is(response.features[1].id, 'LC80100102015050LGN00')
+})
+
+test('collections/{collectionId}/items/{itemId}', async (t) => {
+  const response =
+    await API('/collections/landsat-8-l1/items/LC80100102015082LGN00',
+      {}, backend, endpoint)
+  t.is(response.type, 'Feature')
+  t.is(response.id, 'LC80100102015082LGN00')
+})
+
+test('collections/{collectionId}/items with bbox', async (t) => {
+  let response = await API('/collections/landsat-8-l1/items', {
+    bbox: [-180, -90, 180, 90]
+  }, backend, endpoint)
+  t.is(response.type, 'FeatureCollection')
+  t.is(response.features[0].id, 'LC80100102015082LGN00')
+  t.is(response.features[1].id, 'LC80100102015050LGN00')
+
+  response = await API('/collections/landsat-8-l1/items', {
+    bbox: [-5, -5, 5, 5]
+  }, backend, endpoint)
+  t.is(response.features.length, 0)
+})
+
+test('collections/{collectionId}/items with bbox and intersects', async (t) => {
+  const response = await API('/collections/landsat-8-l1/items', {
+    bbox: [-180, -90, 180, 90],
+    intersects: intersectsGeometry
+  }, backend, endpoint)
+
+  t.truthy(response.context.matched === 2)
+})
+
+test('collections/{collectionId}/items with time', async (t) => {
+  let response = await API('/collections/landsat-8-l1/items', {
+    datetime: '2015-02-19T15:06:12.565047+00:00'
+  }, backend, endpoint)
+  t.is(response.type, 'FeatureCollection')
+  t.is(response.features[0].id, 'LC80100102015050LGN00')
+
+  response = await API('/collections/landsat-8-l1/items', {
+    datetime: '2015-02-17/2015-02-20'
+  }, backend, endpoint)
+  t.is(response.type, 'FeatureCollection')
+  t.is(response.features[0].id, 'LC80100102015050LGN00')
+
+  response = await API('/collections/landsat-8-l1/items', {
+    datetime: '2015-02-19/2015-02-20'
+  }, backend, endpoint)
+  t.is(response.features[0].id, 'LC80100102015050LGN00',
+    'Handles date range without times inclusion issue')
+})
+
+test('collections/{collectionId}/items with limit', async (t) => {
+  const response = await API('/collections/landsat-8-l1/items', {
+    limit: 1
+  }, backend, endpoint)
+  t.is(response.type, 'FeatureCollection')
+  t.is(response.features.length, 1)
+})
+
+test('collections/{collectionId}/items with intersects', async (t) => {
+  let response = await API('/collections/landsat-8-l1/items', {
+    intersects: intersectsGeometry
+  }, backend, endpoint)
+  t.is(response.type, 'FeatureCollection')
+  t.is(response.features[0].id, 'LC80100102015082LGN00')
+  t.is(response.features[1].id, 'LC80100102015050LGN00')
+
+  // response = await API('/collections/landsat-8-l1/items', {
+  //   intersects: intersectsFeature
+  // }, backend, endpoint)
+  // t.truthy(response.code)
+
+  response = await API('/collections/landsat-8-l1/items', {
+    intersects: noIntersectsGeometry
+  }, backend, endpoint)
+  t.is(response.features.length, 0)
+})
+
+test('collections/{collectionId}/items with eq query', async (t) => {
+  const response = await API('/collections/landsat-8-l1/items', {
+    query: {
+      'eo:cloud_cover': {
+        eq: 0.54
+      }
+    }
+  }, backend, endpoint)
+  t.is(response.features.length, 1)
+  t.is(response.features[0].id, 'LC80100102015050LGN00')
+})
+
+test('collections/{collectionId}/items with gt lt query', async (t) => {
+  const response = await API('/collections/landsat-8-l1/items', {
+    query: {
+      'eo:cloud_cover': {
+        gt: 0.5,
+        lt: 0.6
+      }
+    }
+  }, backend, endpoint)
+  t.is(response.features.length, 1)
+  t.is(response.features[0].id, 'LC80100102015050LGN00')
+})
+
+
 // test('stac', async (t) => {
 //   const response = await API('/stac', {}, backend, endpoint)
 //   t.is(response.links.length, 5)
@@ -159,7 +160,7 @@ test('collections/{collectionId}', async (t) => {
 //   const response = await API('/stac/search', {}, backend, endpoint)
 //   t.is(response.features[0].id, 'LC80100102015082LGN00')
 // })
-// 
+
 // test('stac/search sort', async (t) => {
 //   let response = await API('/stac/search', {
 //     sort: [{

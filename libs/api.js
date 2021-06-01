@@ -308,7 +308,8 @@ const buildPageLinks = function (meta, parameters, endpoint, httpMethod) {
     }).join('&')
   )
   const { matched, page, limit } = meta
-  let newParams, link
+  let newParams
+  let link
   if ((page * limit) < matched) {
     newParams = Object.assign({}, parameters, { page: page + 1, limit })
     link = {
@@ -355,9 +356,10 @@ const searchItems = async function (collectionId, queryParameters, backend, endp
   } = queryParameters
   const bbox = extractBbox(queryParameters)
   const hasIntersects = extractIntersects(queryParameters)
-  if (bbox && hasIntersects) {
-    throw new Error('Expected bbox OR intersects, not both')
-  }
+  // TODO: Figure out, why is this not allowed?
+  // if (bbox && hasIntersects) {
+  //   throw new Error('Expected bbox OR intersects, not both')
+  // }
   const sortby = extractSortby(queryParameters)
   // Prefer intersects
   const intersects = hasIntersects || bbox
@@ -391,11 +393,10 @@ const searchItems = async function (collectionId, queryParameters, backend, endp
   }
   logger.debug(`Search parameters: ${JSON.stringify(searchParameters)}`)
   const results = await backend.search(searchParameters, page, limit)
-  const { 'results': itemsResults, 'meta': itemsMeta } = results
+  const { 'results': itemsResults, 'context': itemsMeta } = results
   const pageLinks = buildPageLinks(itemsMeta, searchParameters, new_endpoint, httpMethod)
   const items = addItemLinks(itemsResults, endpoint)
   const response = wrapResponseInFeatureCollection(itemsMeta, items, pageLinks)
-
   return response
 }
 

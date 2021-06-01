@@ -1,5 +1,4 @@
 'use strict'
-const AWS = require('aws-sdk')
 const esClient = require('../../libs/esClient.js')
 const stream = require('../../libs/esStream.js')
 const ingest = require('../../libs/ingest.js')

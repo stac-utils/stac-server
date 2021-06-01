@@ -3,6 +3,7 @@ services:
   local:
     image: localstack/localstack:latest
     environment:
-      SERVICES: 'elasticsearch'
+      SERVICES: 'es'
     ports:
       - 4571:4571 # elasticsearch
+      - 4566:4566 # localstack

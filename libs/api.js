@@ -460,9 +460,17 @@ const getCatalog = async function (backend, endpoint = '') {
 const getCollections = async function (backend, endpoint = '') {
   const results = await backend.getCollections(1, COLLECTION_LIMIT)
   const linkedCollections = addCollectionLinks(results, endpoint)
+
+  // TODO: Attention, this is a SHIM. Implement proper pagination!
   const resp = {
     collections: results,
-    links: []
+    links: [],
+    meta: {
+      page: 1,
+      limit: COLLECTION_LIMIT,
+      found: linkedCollections && linkedCollections.length,
+      returned: linkedCollections && linkedCollections.length
+    }
   }
   return resp
 }

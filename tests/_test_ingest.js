@@ -3,7 +3,7 @@ const sinon = require('sinon')
 const MemoryStream = require('memorystream')
 const { ingestItems } = require('../libs/ingest')
 const firstItem = require('./fixtures/stac/LC80100102015050LGN00.json')
-const stream = require('../../libs/esStream.js')
+const stream = require('../libs/esStream.js')
 
 const setup = () => {
   const dupOptions = {

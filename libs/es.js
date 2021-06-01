@@ -131,12 +131,13 @@ function buildQuery(parameters) {
 }
 
 function buildIdQuery(id) {
+  // TODO: Figure out why term: {id} does not work but {_id} does
   return {
     query: {
       constant_score: {
         filter: {
           term: {
-            id
+            _id: id
           }
         }
       }
@@ -223,7 +224,7 @@ function buildFieldsFilter(parameters) {
  */
 async function editPartialItem(itemId, updateFields) {
   const client = await esClient.client()
-  
+
   // Handle inserting required default properties to `updateFields`
   const requiredProperties = {
     updated: new Date().toISOString()

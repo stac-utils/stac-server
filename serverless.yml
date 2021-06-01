@@ -52,7 +52,7 @@ functions:
     description: stac-server Ingest Lambda
     handler: index.handler
     memorySize: 512
-    timeout: 30
+    timeout: 60
     package:
       artifact: lambdas/ingest/dist/ingest.zip
     events:

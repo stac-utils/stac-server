@@ -210,6 +210,7 @@
     ],
     "collection": "landsat-8-l1",
     "properties": {
+        "platform": "landsat-8",
         "datetime": "2015-02-19T15:06:12.565047+00:00",
         "eo:cloud_cover": 0.54,
         "eo:epsg": 32622,

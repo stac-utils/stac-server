@@ -4,7 +4,7 @@
    "id": "collection2_item",
    "properties": {
       "gsd": 30,
-      "platform": "LANDSAT_8",
+      "platform": "platform2",
       "instruments": ["OLI", "TIRS"],
       "datetime": "2015-02-19T15:06:12.565047+00:00",
       "eo:cloud_cover": 0.54,

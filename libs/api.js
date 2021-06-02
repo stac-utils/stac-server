@@ -300,10 +300,13 @@ const buildPageLinks = function (meta, parameters, endpoint, httpMethod) {
   const dictToURI = (dict) => (
     Object.keys(dict).map(
       (p) => {
+        //TODO: how did this work without JSON.stringify?
+        // const query = encodeURIComponent(dict[p])
+        const query = encodeURIComponent(JSON.stringify(dict[p]))
         if (p === 'collections') {
-          return `${encodeURIComponent(p)}[]=${encodeURIComponent(dict[p])}`
+          return `${encodeURIComponent(p)}[]=${query}`
         } else {
-          return `${encodeURIComponent(p)}=${encodeURIComponent(dict[p])}`
+          return `${encodeURIComponent(p)}=${query}`
         }
     }).join('&')
   )
@@ -344,6 +347,7 @@ const buildPageLinks = function (meta, parameters, endpoint, httpMethod) {
     }
     pageLinks.push(link)
   }
+  console.log(pageLinks)
   return pageLinks
 }
 

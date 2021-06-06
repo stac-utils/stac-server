@@ -414,6 +414,12 @@ const getAPI = async function () {
 const getConformance = async function () {
   const conformance = {
     conformsTo: [
+      'https://api.stacspec.org/v1.0.0/core',
+      'https://api.stacspec.org/v1.0.0/item-search',
+      'https://api.stacspec.org/v1.0.0/item-search#fields',
+      'https://api.stacspec.org/v1.0.0/item-search#query',
+      'https://api.stacspec.org/v1.0.0/item-search#sort',
+      'https://api.stacspec.org/v1.0.0/item-search#context',
       'http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/core',
       'http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/html',
       'http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/geojson'

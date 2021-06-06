@@ -137,10 +137,11 @@ test('collections/{collectionId}/items with gt lt query', async (t) => {
   t.is(response.features[0].id, 'LC80100102015050LGN00')
 })
 
+// Search API
 
 test('search', async (t) => {
   const response = await API('/', {}, backend, endpoint)
-  console.log(response.links)
+  // console.log(response.links)
   t.is(response.links.length, 8)
 })
 
@@ -372,4 +373,10 @@ test('search collections', async (t) => {
 
   response = await API('/search', query, backend, endpoint)
   t.is(response.features.length, 3)
+})
+
+// Search formatting
+test('search conformsTo', async (t) => {
+  const response = await API('/', {}, backend, endpoint)
+  t.is(response.conformsTo.length, 5)
 })

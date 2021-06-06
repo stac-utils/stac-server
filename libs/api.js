@@ -416,10 +416,6 @@ const getConformance = async function () {
     conformsTo: [
       'https://api.stacspec.org/v1.0.0/core',
       'https://api.stacspec.org/v1.0.0/item-search',
-      'https://api.stacspec.org/v1.0.0/item-search#fields',
-      'https://api.stacspec.org/v1.0.0/item-search#query',
-      'https://api.stacspec.org/v1.0.0/item-search#sort',
-      'https://api.stacspec.org/v1.0.0/item-search#context',
       'http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/core',
       'http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/html',
       'http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/geojson'
@@ -431,7 +427,7 @@ const getConformance = async function () {
 
 const getCatalog = async function (backend, endpoint = '') {
   const collections = await backend.getCollections(1, COLLECTION_LIMIT)
-  const catalog = collectionsToCatalogLinks(collections, endpoint)
+  let catalog = collectionsToCatalogLinks(collections, endpoint)
   catalog.links.push({
     rel: 'service-desc',
     type: 'application/vnd.oai.openapi+json;version=3.0',
@@ -464,6 +460,7 @@ const getCatalog = async function (backend, endpoint = '') {
       href: process.env.STAC_DOCS_URL
     })
   }
+  catalog = Object.assign(catalog, await getConformance());
   return catalog
 }
 

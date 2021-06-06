@@ -8,6 +8,7 @@ Stac-server is a STAC compliant Rest API for searching and serving metadata for 
 | -------- | ---------- |
 | 0.1.x    | 0.9.x      |
 | 0.2.x    | <1.0.0-rc.1 |
+| 0.3.x    | 1.0.0 |
 
 The following APIs are deployed instances of stac-server:
 
@@ -40,7 +41,7 @@ There are some settings that should be reviewed and updated as needeed in the [s
 
 | Name | Description | Default Value |
 | ---- | ----------- | ------------- |
-| STAC_VERSION | STAC Version of this STAC API | 1.0.0-beta.2 |
+| STAC_VERSION | STAC Version of this STAC API | 1.0.0 |
 | STAC_API_VERSION | STAC API Version of this STAC API | 0.9.0 |
 | STAC_ID | ID of this catalog | stac-server |
 | STAC_TITLE | Title of this catalog | STAC API |
@@ -84,6 +85,8 @@ STAC Collections should be ingested before Items that belong to that Collection.
 ### Subscribing to SNS Topics
 
 Stac-server can also be subscribed to SNS Topics that publish complete STAC Items as their message. This provides a way to keep stac-server up to date with new data. Use the AWS Lambda console for the function `stac-server-<stage>-subscibe-to-sns` to subscribe to an SNS Topic for which you have the full ARN and permission to subscribe to. This could be an SNS Topic you created yourself to publish STAC records to, or a publicly available one, such as for [Sentinel](https://github.com/sat-utils/sat-stac-sentinel).
+
+*Note*, that adding the subscription via the topic page does not seem to work. Instead, add a trigger on Lambda edit page.
 
 ### Ingest Errors
 

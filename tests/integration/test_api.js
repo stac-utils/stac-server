@@ -399,7 +399,6 @@ test('search preserve geometry in page GET links', async (t) => {
     limit: 2,
     page: 2
   }, backend, endpoint)
-  console.log(response)
 
   t.is(response.features.length, 1)
 })

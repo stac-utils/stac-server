@@ -380,3 +380,26 @@ test('search conformsTo', async (t) => {
   const response = await API('/', {}, backend, endpoint)
   t.is(response.conformsTo.length, 5)
 })
+
+test('search preserve geometry in page GET links', async (t) => {
+  let response = await API('/search', {
+    intersects: intersectsGeometry,
+    limit: 2
+  }, backend, endpoint)
+  t.is(response.features.length, 2)
+
+  response = await API('/search', {
+    intersects: intersectsGeometry,
+    limit: 2,
+    page: 2
+  }, backend, endpoint)
+
+  response = await API('/search', {
+    intersects: encodeURIComponent(JSON.stringify(intersectsGeometry)),
+    limit: 2,
+    page: 2
+  }, backend, endpoint)
+  console.log(response)
+
+  t.is(response.features.length, 1)
+})

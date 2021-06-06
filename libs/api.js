@@ -347,7 +347,7 @@ const buildPageLinks = function (meta, parameters, endpoint, httpMethod) {
     }
     pageLinks.push(link)
   }
-  console.log(pageLinks)
+
   return pageLinks
 }
 
@@ -460,7 +460,7 @@ const getCatalog = async function (backend, endpoint = '') {
       href: process.env.STAC_DOCS_URL
     })
   }
-  catalog = Object.assign(catalog, await getConformance());
+  catalog = Object.assign(catalog, await getConformance())
   return catalog
 }
 
@@ -521,6 +521,15 @@ const API = async function (
   logger.debug(`API Path: ${inpath}, Query Parameters: ${JSON.stringify(queryParameters)}`)
   let apiResponse
   try {
+    if (httpMethod === 'GET') {
+      // Lets attempt to HTML entity decode values if they have been passed from GET
+      Object.keys(queryParameters).forEach((key) => {
+        if (queryParameters[key][0] === '%') {
+          queryParameters[key] = decodeURIComponent(queryParameters[key])
+        }
+      })
+    }
+
     const pathElements = parsePath(inpath)
 
     const {

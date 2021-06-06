@@ -450,7 +450,7 @@ const getCatalog = async function (backend, endpoint = '') {
   })
   catalog.links.push({
     rel: 'search',
-    type: 'application/json',
+    type: 'application/geo+json',
     href: `${endpoint}/search`
   })
   const docsUrl = process.env.STAC_DOCS_URL || 'https://stac-utils.github.io/stac-api'

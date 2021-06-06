@@ -41,7 +41,7 @@ test('search /api', async (t) => {
 test('search /conformance', async (t) => {
   const actual = await api.API('/conformance', undefined, undefined, 'endpoint')
   t.truthy(actual.conformsTo)
-  t.is(actual.conformsTo.length, 3)
+  t.is(actual.conformsTo.length, 5)
 })
 
 test('search /', async (t) => {
@@ -64,7 +64,7 @@ test('search /', async (t) => {
       href: 'endpoint/conformance'
     },
     {
-      rel: 'children',
+      rel: 'data',
       type: 'application/json',
       href: 'endpoint/collections'
     },
@@ -75,7 +75,7 @@ test('search /', async (t) => {
     },
     {
       rel: 'search',
-      type: 'application/json',
+      type: 'application/geo+json',
       href: 'endpoint/search'
     },
     {

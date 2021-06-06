@@ -439,7 +439,7 @@ const getCatalog = async function (backend, endpoint = '') {
     href: `${endpoint}/conformance`
   })
   catalog.links.push({
-    rel: 'children',
+    rel: 'data',
     type: 'application/json',
     href: `${endpoint}/collections`
   })

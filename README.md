@@ -42,7 +42,7 @@ There are some settings that should be reviewed and updated as needeed in the [s
 | Name | Description | Default Value |
 | ---- | ----------- | ------------- |
 | STAC_VERSION | STAC Version of this STAC API | 1.0.0 |
-| STAC_API_VERSION | STAC API Version of this STAC API | 0.9.0 |
+| STAC_API_VERSION | STAC API Version of this STAC API | 1.0.0-beta.1 |
 | STAC_ID | ID of this catalog | stac-server |
 | STAC_TITLE | Title of this catalog | STAC API |
 | STAC_DESCRIPTION | Description of this catalog | A STAC API |

@@ -4,13 +4,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [0.3.0]
+## [Unreleased]
+
+### Added
+- Added conformsTo to root catalog
+- Added geo_point mapping to items -> properties -> epsg:centroid
+
+### Changed
 - Elasticsearch version update 6.8 -> 7.9
 - Enforce only HTTPS access
 - Migrate base configuration from t2.small -> t3.small instances
-- Added conformsTo to root catalog
-- Added geo_point mapping to items -> properties -> epsg:centroid
-- Updated integration tests to use more update STAC 1.0.0 spec, WIP
+- Updated integration tests to use more update STAC 1.0.0 spec
 
 ## [0.2.1] - 2020-12-14
 

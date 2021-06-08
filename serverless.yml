@@ -85,8 +85,7 @@ resources:
     ingestQueue:
       Type: AWS::SQS::Queue
       Properties:
-        DelaySeconds: 1
-        VisibilityTimeout: 45
+        VisibilityTimeout: 120
         ReceiveMessageWaitTimeSeconds: 5
         QueueName: ${self:service}-${self:provider.stage}-queue
         RedrivePolicy:

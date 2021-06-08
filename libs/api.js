@@ -473,10 +473,10 @@ const getCollections = async function (backend, endpoint = '') {
   const resp = {
     collections: results,
     links: [],
-    meta: {
+    context: {
       page: 1,
       limit: COLLECTION_LIMIT,
-      found: linkedCollections && linkedCollections.length,
+      matched: linkedCollections && linkedCollections.length,
       returned: linkedCollections && linkedCollections.length
     }
   }

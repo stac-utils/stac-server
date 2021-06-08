@@ -26,9 +26,13 @@ async function connect() {
   } else {
     //const awsCredentials = await awsGetCredentials()
     const AWSConnector = createAWSConnection(AWS.config.credentials)
+    let esHost = process.env.ES_HOST;
+    if (esHost.indexOf('http') != 0) {
+      esHost = `https://${process.env.ES_HOST}`
+    }
     client = awsCredsifyAll(
       new elasticsearch.Client({
-        node: `https://${process.env.ES_HOST}`,
+        node: esHost,
         Connection: AWSConnector
       })
     )

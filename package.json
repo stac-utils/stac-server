@@ -8,14 +8,16 @@
   "scripts": {
     "postinstall": "cd lambdas/api; npm install; cd ../ingest; npm install; cd ../failed-ingest; npm install",
     "build": "cd lambdas/api; npm run build; cd ../ingest; npm run build; cd ../failed-ingest; npm run build",
-    "test": "ava",
+    "test": "ava tests/*.js",
+    "test_integrations": "ava ./tests/integration/test_*.js",
     "eslint": "eslint packages/* --ext .js",
     "deploy": "sls deploy",
     "build-api-docs": "npm run widdershins --search false --language_tabs 'nodejs:NodeJS' 'python:Python' --summary ./packages/api-lib/api-spec.yaml -o ./docs/api.md & npm run shins --inline --logo ./docs/images/logo.png -o ./docs/index.html ./docs/api.md"
   },
   "ava": {
     "files": [
-      "tests/*.js"
+      "tests/*.js",
+      "tests/integration/test_*.js"
     ],
     "verbose": true,
     "serial": true

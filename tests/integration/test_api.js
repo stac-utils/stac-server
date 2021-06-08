@@ -14,7 +14,8 @@ const endpoint = 'endpoint'
 test('collections', async (t) => {
   const response = await API('/collections', {}, backend, endpoint)
   t.is(response.collections.length, 2)
-  t.is(response['search:metadata'].returned, 2)
+  // the 'meta' field is not STAC API mandate, but is a nicety
+  t.is(response.meta.returned, 2)
 })
 
 test('collections/{collectionId}', async (t) => {
@@ -60,7 +61,8 @@ test('collections/{collectionId}/items with bbox and intersects', async (t) => {
     bbox: [-180, -90, 180, 90],
     intersects: intersectsGeometry
   }, backend, endpoint)
-  t.truthy(response.code)
+
+  t.truthy(response.context.matched === 2)
 })
 
 test('collections/{collectionId}/items with time', async (t) => {
@@ -99,10 +101,10 @@ test('collections/{collectionId}/items with intersects', async (t) => {
   t.is(response.features[0].id, 'LC80100102015082LGN00')
   t.is(response.features[1].id, 'LC80100102015050LGN00')
 
-  response = await API('/collections/landsat-8-l1/items', {
-    intersects: intersectsFeature
-  }, backend, endpoint)
-  t.truthy(response.code)
+  // response = await API('/collections/landsat-8-l1/items', {
+  //   intersects: intersectsFeature
+  // }, backend, endpoint)
+  // t.truthy(response.code)
 
   response = await API('/collections/landsat-8-l1/items', {
     intersects: noIntersectsGeometry
@@ -135,32 +137,37 @@ test('collections/{collectionId}/items with gt lt query', async (t) => {
   t.is(response.features[0].id, 'LC80100102015050LGN00')
 })
 
+// Search API
 
-test('stac', async (t) => {
-  const response = await API('/stac', {}, backend, endpoint)
-  t.is(response.links.length, 5)
+test('search', async (t) => {
+  const response = await API('/', {}, backend, endpoint)
+  // console.log(response.links)
+  t.is(response.links.length, 8)
 })
 
-test('stac/search bbox', async (t) => {
-  let response = await API('/stac/search', {
+test('search bbox', async (t) => {
+  let response = await API('/search', {
     bbox: [-180, -90, 180, 90]
   }, backend, endpoint)
   t.is(response.type, 'FeatureCollection')
-  t.is(response.features[0].id, 'LC80100102015082LGN00')
-  t.is(response.features[1].id, 'collection2_item')
-  response = await API('/stac/search', {
+
+  const ids = response.features.map((item) => item.id)
+  t.truthy(ids.indexOf('LC80100102015082LGN00') > -1)
+  t.truthy(ids.indexOf('collection2_item') > -1)
+
+  response = await API('/search', {
     bbox: [-5, -5, 5, 5]
   }, backend, endpoint)
   t.is(response.features.length, 0)
 })
 
-test('stac/search default sort', async (t) => {
-  const response = await API('/stac/search', {}, backend, endpoint)
+test('search default sort', async (t) => {
+  const response = await API('/search', {}, backend, endpoint)
   t.is(response.features[0].id, 'LC80100102015082LGN00')
 })
 
-test('stac/search sort', async (t) => {
-  let response = await API('/stac/search', {
+test('search sort', async (t) => {
+  let response = await API('/search', {
     sort: [{
       field: 'eo:cloud_cover',
       direction: 'desc'
@@ -168,41 +175,42 @@ test('stac/search sort', async (t) => {
   }, backend, endpoint)
   t.is(response.features[0].id, 'LC80100102015082LGN00')
 
-  response = await API('/stac/search', {
+  response = await API('/search', {
     sort: '[{ "field": "eo:cloud_cover", "direction": "desc" }]'
   }, backend, endpoint)
   t.is(response.features[0].id, 'LC80100102015082LGN00')
 })
 
-test('stac/search flattened collection properties', async (t) => {
-  let response = await API('/stac/search', {
+test('search flattened collection properties', async (t) => {
+  let response = await API('/search', {
     query: {
-      'eo:platform': {
+      'platform': {
         eq: 'platform2'
       }
     }
   }, backend, endpoint)
   t.is(response.features[0].id, 'collection2_item')
 
-  response = await API('/stac/search', {
+  response = await API('/search', {
     query: {
-      'eo:platform': {
+      'platform': {
         eq: 'landsat-8'
       }
     },
     fields: {
-      include: ['properties.eo:platform']
+      include: ['properties.platform']
     }
   }, backend, endpoint)
   const havePlatform =
     response.features.filter(
-      (item) => (item.properties['eo:platform'] === 'landsat-8')
+      (item) => (item.properties['platform'] === 'landsat-8')
     )
   t.is(havePlatform.length, response.features.length)
 })
 
-test('stac/search fields filter', async (t) => {
-  let response = await API('/stac/search', {
+
+test('search fields filter', async (t) => {
+  let response = await API('/search', {
     fields: {
     }
   }, backend, endpoint)
@@ -214,21 +222,21 @@ test('stac/search fields filter', async (t) => {
   t.truthy(response.features[0].links)
   t.truthy(response.features[0].assets)
 
-  response = await API('/stac/search', {
+  response = await API('/search', {
     fields: {
       exclude: ['collection']
     }
   }, backend, endpoint)
   t.falsy(response.features[0].collection)
 
-  response = await API('/stac/search', {
+  response = await API('/search', {
     fields: {
       exclude: ['geometry']
     }
   }, backend, endpoint)
   t.falsy(response.features[0].geometry)
 
-  response = await API('/stac/search', {
+  response = await API('/search', {
     fields: {
       include: ['properties'],
       exclude: ['properties.datetime']
@@ -236,11 +244,11 @@ test('stac/search fields filter', async (t) => {
   }, backend, endpoint)
   t.falsy(response.features[0].properties.datetime)
 
-  response = await API('/stac/search', {
+  response = await API('/search', {
   }, backend, endpoint)
   t.truthy(response.features[0].geometry)
 
-  response = await API('/stac/search', {
+  response = await API('/search', {
     fields: {
       include: ['collection', 'properties.eo:epsg']
     }
@@ -249,7 +257,7 @@ test('stac/search fields filter', async (t) => {
   t.truthy(response.features[0].properties['eo:epsg'])
   t.falsy(response.features[0].properties['eo:cloud_cover'])
 
-  response = await API('/stac/search', {
+  response = await API('/search', {
     fields: {
       exclude: ['id', 'links']
     }
@@ -257,10 +265,10 @@ test('stac/search fields filter', async (t) => {
   t.truthy(response.features.length, 'Does not exclude required fields')
 })
 
-test('stac/search created and updated', async (t) => {
-  const response = await API('/stac/search', {
+test('search created and updated', async (t) => {
+  const response = await API('/search', {
     query: {
-      'eo:platform': {
+      'platform': {
         eq: 'landsat-8'
       }
     },
@@ -272,10 +280,10 @@ test('stac/search created and updated', async (t) => {
   t.truthy(response.features[0].properties.updated)
 })
 
-test('stac/search in query', async (t) => {
-  const response = await API('/stac/search', {
+test('search in query', async (t) => {
+  const response = await API('/search', {
     query: {
-      'landsat:path': {
+      'landsat:wrs_path': {
         in: ['10']
       }
     }
@@ -283,10 +291,10 @@ test('stac/search in query', async (t) => {
   t.is(response.features.length, 3)
 })
 
-test('stac/search limit next query', async (t) => {
-  let response = await API('/stac/search', {
+test('search limit next query', async (t) => {
+  let response = await API('/search', {
     query: {
-      'landsat:path': {
+      'landsat:wrs_path': {
         in: ['10']
       }
     },
@@ -294,55 +302,103 @@ test('stac/search limit next query', async (t) => {
   }, backend, endpoint)
   t.is(response.features.length, 2)
 
-  response = await API('/stac/search', {
+  response = await API('/search', {
     query: {
-      'landsat:path': {
+      'landsat:wrs_path': {
         in: ['10']
       }
     },
     limit: 2,
-    next: response['search:metadata'].next
+    page: 2
   }, backend, endpoint)
+
   t.is(response.features.length, 1)
 })
 
-test('stac/search ids', async (t) => {
-  const response = await API('/stac/search', {
+test('search ids', async (t) => {
+  const response = await API('/search', {
     ids: ['collection2_item', 'LC80100102015050LGN00']
   }, backend, endpoint)
   t.is(response.features.length, 2)
-  t.is(response.features[0].id, 'collection2_item')
-  t.is(response.features[1].id, 'LC80100102015050LGN00')
+
+  const ids = response.features.map((item) => item.id)
+  t.truthy(ids.indexOf('LC80100102015050LGN00') > -1)
+  t.truthy(ids.indexOf('collection2_item') > -1)
 })
 
-test('stac/search collections', async (t) => {
-  let response = await API('/stac/search', {
-    query: {
-      collection: {
-        in: ['collection2']
-      }
-    }
-  }, backend, endpoint)
+test('search collections', async (t) => {
+  // const query = {
+  //   query: {
+  //     collection: {
+  //       in: ['collection2']
+  //     }
+  //   }
+  // }
+  let query = {
+    collections: ['collection2']
+  }
+  let response = await API('/search', query, backend, endpoint)
   t.is(response.features.length, 1)
   t.is(response.features[0].id, 'collection2_item')
 
-  response = await API('/stac/search', {
-    query: {
-      collection: {
-        in: ['landsat-8-l1']
-      }
-    }
-  }, backend, endpoint)
+  // query = {
+  //   query: {
+  //     collection: {
+  //       in: ['landsat-8-l1']
+  //     }
+  //   }
+  // }
+
+  query = {
+    collections: ['landsat-8-l1']
+  }
+
+  response = await API('/search', query, backend, endpoint)
+
   t.is(response.features.length, 2)
   t.is(response.features[0].id, 'LC80100102015082LGN00')
   t.is(response.features[1].id, 'LC80100102015050LGN00')
 
-  response = await API('/stac/search', {
-    query: {
-      collection: {
-        in: ['collection2', 'landsat-8-l1']
-      }
-    }
-  }, backend, endpoint)
+  // query =  {
+  //   query: {
+  //     collection: {
+  //       in: ['collection2', 'landsat-8-l1']
+  //     }
+  //   }
+  // }
+
+  query = {
+    collections: ['collection2', 'landsat-8-l1']
+  }
+
+  response = await API('/search', query, backend, endpoint)
   t.is(response.features.length, 3)
+})
+
+// Search formatting
+test('search conformsTo', async (t) => {
+  const response = await API('/', {}, backend, endpoint)
+  t.is(response.conformsTo.length, 5)
+})
+
+test('search preserve geometry in page GET links', async (t) => {
+  let response = await API('/search', {
+    intersects: intersectsGeometry,
+    limit: 2
+  }, backend, endpoint)
+  t.is(response.features.length, 2)
+
+  response = await API('/search', {
+    intersects: intersectsGeometry,
+    limit: 2,
+    page: 2
+  }, backend, endpoint)
+
+  response = await API('/search', {
+    intersects: encodeURIComponent(JSON.stringify(intersectsGeometry)),
+    limit: 2,
+    page: 2
+  }, backend, endpoint)
+
+  t.is(response.features.length, 1)
 })

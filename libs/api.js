@@ -302,7 +302,11 @@ const buildPageLinks = function (meta, parameters, endpoint, httpMethod) {
       (p) => {
         //TODO: how did this work without JSON.stringify?
         // const query = encodeURIComponent(dict[p])
-        const query = encodeURIComponent(JSON.stringify(dict[p]))
+        let value = dict[p]
+        if (typeof value === 'object' && value !== null) {
+          value = JSON.stringify(value)
+        }
+        const query = encodeURIComponent(value)
         if (p === 'collections') {
           return `${encodeURIComponent(p)}[]=${query}`
         } else {

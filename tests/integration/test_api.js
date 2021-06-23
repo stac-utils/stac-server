@@ -14,8 +14,7 @@ const endpoint = 'endpoint'
 test('collections', async (t) => {
   const response = await API('/collections', {}, backend, endpoint)
   t.is(response.collections.length, 2)
-  // the 'meta' field is not STAC API mandate, but is a nicety
-  t.is(response.meta.returned, 2)
+  t.is(response.context.returned, 2)
 })
 
 test('collections/{collectionId}', async (t) => {
@@ -401,4 +400,20 @@ test('search preserve geometry in page GET links', async (t) => {
   }, backend, endpoint)
 
   t.is(response.features.length, 1)
+
+  const datetime = '2015-02-19/2015-02-20'
+  response = await API('/search', {
+    intersects: intersectsGeometry,
+    datetime: datetime,
+    limit: 1
+  }, backend, endpoint)
+  t.is(response.features.length, 1)
+
+  const next = response.links[0].href
+  const params = {}
+  next.split('?', 2)[1].split('&').forEach((pair) => {
+    const [key, val] = pair.split('=', 2)
+    params[key] = decodeURIComponent(val)
+  })
+  t.is(params.datetime, datetime)
 })

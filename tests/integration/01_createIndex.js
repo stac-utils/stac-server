@@ -6,7 +6,7 @@ async function doCreate() {
   try {
     await client.create_index('collections')
   } catch (error) {
-    console.log(error)
+    console.log("Import error", error)
   }
 }
 doCreate()

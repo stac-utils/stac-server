@@ -311,7 +311,7 @@ async function search(parameters, page = 1, limit = 10) {
     body,
     size: limit,
     from: (page - 1) * limit,
-    scroll: "1m"
+    track_total_hits: true
   }
 
   // disable fields filter for now

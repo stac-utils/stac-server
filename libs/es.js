@@ -305,11 +305,13 @@ async function search(parameters, page = 1, limit = 10) {
     index = '*,-*kibana*,-collections'
   }
 
+  // Specifying the scroll parameter makes the total work
   const searchParams = {
     index,
     body,
     size: limit,
-    from: (page - 1) * limit
+    from: (page - 1) * limit,
+    scroll: "1m"
   }
 
   // disable fields filter for now

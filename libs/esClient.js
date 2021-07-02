@@ -67,7 +67,7 @@ async function create_index(index) {
   const exists = await client.indices.exists({ index })
   const mapping = (index === 'collections' ? collections_mapping : items_mapping)
   if (!exists.body) {
-    logger.info('does not exist')
+    logger.info(`${index} does not exist, creating...`)
     try {
       await client.indices.create({ index, body: mapping })
       logger.info(`Created index ${index}`)

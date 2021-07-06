@@ -49,7 +49,11 @@ const extractBbox = function (params) {
   if (bbox) {
     let bboxArray
     if (typeof bbox === 'string') {
-      bboxArray = JSON.parse(bbox)
+      try {
+        bboxArray = JSON.parse(bbox)
+      } catch(e) {
+        bboxArray = bbox.split(',')
+      }
     } else {
       bboxArray = bbox
     }
@@ -135,7 +139,11 @@ const extractIds = function (params) {
   const { ids } = params
   if (ids) {
     if (typeof ids === 'string') {
-      idsRules = JSON.parse(ids)
+      try {
+        idsRules = JSON.parse(ids)
+      } catch(e) {
+        idsRules = ids.split(',')
+      }
     } else {
       idsRules = ids.slice()
     }
@@ -149,7 +157,11 @@ const extractCollectionIds = function (params) {
   const { collections } = params
   if (collections) {
     if (typeof collections === 'string') {
-      idsRules = JSON.parse(collections)
+      try {
+        idsRules = JSON.parse(collections)
+      } catch(e) {
+        idsRules = collections.split(',')
+      }
     } else {
       idsRules = collections.slice()
     }
@@ -300,7 +312,6 @@ const buildPageLinks = function (meta, parameters, endpoint, httpMethod) {
   const dictToURI = (dict) => (
     Object.keys(dict).map(
       (p) => {
-        //TODO: how did this work without JSON.stringify?
         // const query = encodeURIComponent(dict[p])
         let value = dict[p]
         if (typeof value === 'object' && value !== null) {

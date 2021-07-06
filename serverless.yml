@@ -17,18 +17,20 @@ provider:
     ES_HOST:
       Fn::GetAtt: [ElasticSearchInstance, DomainEndpoint]
     ENABLE_TRANSACTIONS_EXTENSION: false
-  iamRoleStatements:
-    - Effect: "Allow"
-      Resource: "arn:aws:es:#{AWS::Region}:#{AWS::AccountId}:domain/*"
-      Action: "es:*"
-    - Effect: "Allow"
-      Action:
-        - sqs:GetQueueUrl
-        - sqs:SendMessage
-        - sqs:ReceiveMessage
-        - sqs:DeleteMessage
-      Resource:
-        Fn::GetAtt: [ingestQueue, Arn]
+  iam:
+    role:
+      statements:
+      - Effect: "Allow"
+        Resource: "arn:aws:es:#{AWS::Region}:#{AWS::AccountId}:domain/*"
+        Action: "es:*"
+      - Effect: "Allow"
+        Action:
+          - sqs:GetQueueUrl
+          - sqs:SendMessage
+          - sqs:ReceiveMessage
+          - sqs:DeleteMessage
+        Resource:
+          Fn::GetAtt: [ingestQueue, Arn]
 
 package:
   individually: true

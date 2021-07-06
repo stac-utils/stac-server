@@ -31,12 +31,12 @@ module.exports = {
     __filename: false
   },
   plugins: [
-    new CopyPlugin([
-      {
+    new CopyPlugin({
+      patterns: [{
         from: '../../libs/api.yaml',
         to: 'api.yaml'
-      }
-    ]),
+      }]
+    }),
     new ZipPlugin({
       filename: 'api.zip'
     })

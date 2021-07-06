@@ -17,13 +17,21 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Collections link rel type changed to `data`
 - Added required rel=search links in root
 - Geometry now properly being serialized
+- Multiple security vulnerability updaets in dependent libraries
+- Integration tests
 
 ### Changed
 - Elasticsearch version update 6.8 -> 7.9
+- Updated all mappings
 - Enforce only HTTPS access
 - Migrate base configuration from t2.small -> t3.small instances
 - Updated integration tests to use more update STAC 1.0.0 spec
 - Some fields, such as assets and links, are now excluded from indexing
+- Enforce https
+- Increase SQS VisibilityTimeout and Ingest Lambda timeout
+
+### Removed
+- Mapping types (deprecated in Elasticsearch)
 
 ## [0.2.1] - 2020-12-14
 
@@ -56,6 +64,7 @@ Initial release, forked from [sat-api](https://github.com/sat-utils/sat-api/tree
 Compliant with STAC 0.9.0
 
 [Unreleased]: https://github.com/stac-utils/stac-api/compare/v0.2.1...main
+[0.3.0]: https://github.com/stac-utils/stac-api/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/stac-utils/stac-api/compare/v0.1.0...v0.2.1
 [0.2.0]: https://github.com/stac-utils/stac-api/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/stac-utils/stac-api/tree/v0.1.0

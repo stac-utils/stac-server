@@ -21,7 +21,7 @@
     "aws-event-mocks": "0.0.0",
     "proxyquire": "^2.1.0",
     "sinon": "^7.1.1",
-    "webpack": "~4.42",
+    "webpack": "^5.42.1",
     "webpack-cli": "~3.3",
     "zip-webpack-plugin": "^3.0.0"
   }

@@ -41,7 +41,7 @@ test('search /api', async (t) => {
 test('search /conformance', async (t) => {
   const actual = await api.API('/conformance', undefined, undefined, 'endpoint')
   t.truthy(actual.conformsTo)
-  t.is(actual.conformsTo.length, 5)
+  t.is(actual.conformsTo.length, 8)
 })
 
 test('search /', async (t) => {

@@ -276,6 +276,7 @@ const collectionsToCatalogLinks = function (results, endpoint) {
   const catalog = {
     stac_version,
     stac_api_version,
+    type: "Catalog",
     id: stac_id,
     title: stac_title,
     description: stac_description

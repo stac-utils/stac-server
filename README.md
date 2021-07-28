@@ -22,8 +22,7 @@ The following APIs are deployed instances of stac-server:
 Stac-server is a RESTful API that returns JSON, see the [documentation](http://stac-utils.github.io/stac-server), or the /api endpoint which is a self-documenting OpenAPI document. Here are some additional tools that might prove useful:
 
 - [JSONView Chrome Extension](https://chrome.google.com/webstore/detail/jsonview/chklaanhfefbnpoihckbnefhakgolnmc?hl=en): Useful for exploring the API in the browser.
-- [sat-search](https://github.com/sat-utils/sat-search): A Python client library and CLI for searching a STAC compliant API
-- [sat-fetch](https://github.com/sat-utils/sat-fetch): A Python client library and CLI for fetching areas of interest and creating stacked clipped imagery from a STAC catalog that has Cloud-Optimized GeoTiff (COG) assets.
+- [pystac-client](https://github.com/stac-utils/pystac-client): A Python client library and CLI for searching a STAC compliant API
 
 
 ## Deployment

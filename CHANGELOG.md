@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [0.3.1] - 2021-07-28
 
+### Removed
+- stac_api_version from root catalog ([#126](https://github.com/stac-utils/stac-server/pull/126))
+
 ### Fixed
 - Root catalog now properly includes `type: Catalog`
 

@@ -541,5 +541,7 @@ module.exports = {
   parsePath,
   extractIntersects,
   extractBbox,
-  editPartialItem
+  editPartialItem,
+  addCollectionLinks,
+  addItemLinks
 }

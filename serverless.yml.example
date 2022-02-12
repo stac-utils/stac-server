@@ -54,12 +54,17 @@ functions:
     handler: index.handler
     memorySize: 512
     timeout: 60
+    environment:
+      POST_INGEST_TOPIC_ARN: !Ref PostIngestTopic
     package:
       artifact: dist/ingest/ingest.zip
     events:
       - sqs:
           arn:
             Fn::GetAtt: [ingestQueue, Arn]
+  # Question: not sure how to reason about failed-ingest now.
+  # Messages could still fall into the DLQ I suppose, so it
+  # is not like it has no further purpose with these changes.
   failed-ingest:
     description: stac-server Failed Ingest Lambda
     handler: index.handler
@@ -131,6 +136,10 @@ resources:
         ElasticsearchVersion: "7.10"
         DomainEndpointOptions:
           EnforceHTTPS: true
+    PostIngestTopic:
+      Type: 'AWS::SNS::Topic'
+      Properties:
+        TopicName: ${self:service}-${self:provider.stage}-post-ingest
   Outputs:
     ESEndpoint:
       Value:

@@ -1,8 +1,11 @@
 const { default: got } = require('got')
-const esClient = require('../../lib/esClient.js')
-const stream = require('../../lib/esStream.js')
-const ingest = require('../../lib/ingest.js')
+const esClient = require('../../lib/esClient')
+const ingest = require('../../lib/ingest')
+const publishRecordToSNS = require('../../lib/sns')
 const s3Utils = require('../../lib/s3-utils')
+
+const POST_INGEST_TOPIC_ARN = process.env.POST_INGEST_TOPIC_ARN || ''
+const API_ENDPOINT = process.env.API_ENDPOINT || ''
 
 const isSqsEvent = (event) => 'Records' in event
 
@@ -47,6 +50,14 @@ const stacItemsFromSqsEvent = async (event) => {
   )
 }
 
+const postIngestHandler = async function (record, err) {
+  await publishRecordToSNS(
+    POST_INGEST_TOPIC_ARN,
+    record,
+    err
+  )
+}
+
 module.exports.handler = async function handler(event, context) {
   const { logger = console } = context
 
@@ -60,11 +71,20 @@ module.exports.handler = async function handler(event, context) {
     ? await stacItemsFromSqsEvent(event)
     : [event]
 
+  logger.info(`Ingesting ${stacItems.length} items`)
+  const ingestOptions = {
+    endpoint: API_ENDPOINT
+  }
+  if (POST_INGEST_TOPIC_ARN) {
+    ingestOptions.successHandler = postIngestHandler
+    ingestOptions.errorHandler = postIngestHandler
+  }
+
   try {
-    await ingest.ingestItems(stacItems, stream)
-    logger.info(`Ingested ${stacItems.length} Items: ${JSON.stringify(stacItems)}`)
+    await ingest(stacItems, ingestOptions)
   } catch (error) {
-    console.log(error)
+    logger.error(error)
     throw (error)
   }
+  logger.debug('Ingest completed')
 }

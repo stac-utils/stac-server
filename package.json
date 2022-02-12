@@ -48,9 +48,7 @@
     "memorystream": "^0.3.1",
     "morgan": "^1.10.0",
     "p-filter": "^2.0.0",
-    "pump": "^3.0.0",
-    "serverless-http": "^2.7.0",
-    "through2": "^3.0.1"
+    "serverless-http": "^2.7.0"
   },
   "devDependencies": {
     "@tsconfig/node14": "^1.0.1",

@@ -128,7 +128,7 @@ resources:
           InstanceCount: 3
           DedicatedMasterEnabled: false
           ZoneAwarenessEnabled: false
-        ElasticsearchVersion: "7.9"
+        ElasticsearchVersion: "7.10"
         DomainEndpointOptions:
           EnforceHTTPS: true
   Outputs:

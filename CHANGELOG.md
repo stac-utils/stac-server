@@ -6,7 +6,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+- Add conformance classes for `STAC API - Features` and `STAC API - Collections`. Both were already fully-supported, but
+  were not advertised in the landing page conformsTo attribute or the /conformance endpoint. 
+
+### Fixed
+
+### Changed
 - Upgrade to Node 14
+
+### Removed
 
 ## [0.3.1] - 2021-07-28
 

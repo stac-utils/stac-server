@@ -8,9 +8,7 @@ const logger = console //require('./logger')
 const collections_mapping = require('../fixtures/collections.js')()
 const items_mapping = require('../fixtures/items.js')()
 
-
 let _esClient
-
 
 // Connect to an Elasticsearch instance
 async function connect() {
@@ -26,8 +24,8 @@ async function connect() {
   } else {
     //const awsCredentials = await awsGetCredentials()
     const AWSConnector = createAWSConnection(AWS.config.credentials)
-    let esHost = process.env.ES_HOST;
-    if (esHost.indexOf('http') != 0) {
+    let esHost = process.env.ES_HOST
+    if (!esHost.startsWith('http')) {
       esHost = `https://${process.env.ES_HOST}`
     }
     client = awsCredsifyAll(
@@ -61,7 +59,6 @@ async function esClient() {
   return _esClient
 }
 
-
 async function create_index(index) {
   const client = await esClient()
   const exists = await client.indices.exists({ index })
@@ -78,7 +75,6 @@ async function create_index(index) {
     }
   }
 }
-
 
 module.exports = {
   client: esClient,

@@ -52,7 +52,7 @@ const setup = () => {
 // })
 
 test('ingestItem passes item through transform stream', async (t) => {
-  const { esStream, backend } = setup()
+  const { esStream } = setup()
   await ingestItems([firstItem], stream)
   t.deepEqual(esStream.queue[0], firstItem)
 })

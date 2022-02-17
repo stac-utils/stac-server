@@ -1,4 +1,5 @@
 'use strict'
+
 const esClient = require('../../libs/esClient.js')
 const stream = require('../../libs/esStream.js')
 const ingest = require('../../libs/ingest.js')

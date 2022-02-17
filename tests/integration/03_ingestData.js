@@ -1,10 +1,8 @@
 process.env.ES_HOST = `http://${process.env.DOCKER_NAME}:4571`
 
+const fs = require('fs')
 const stream = require('../../libs/esStream.js')
 const ingest = require('../../libs/ingest.js')
-
-const fs = require('fs')
-
 
 async function doIngest() {
   [

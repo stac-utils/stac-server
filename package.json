@@ -10,7 +10,8 @@
     "build": "cd lambdas/api; npm run build; cd ../ingest; npm run build; cd ../failed-ingest; npm run build",
     "test": "ava tests/*.js",
     "test_integrations": "ava ./tests/integration/test_*.js",
-    "eslint": "eslint packages/* --ext .js",
+    "lint": "eslint . --ext .js",
+    "lint-js-fix": "eslint . --ext .js --fix",
     "deploy": "sls deploy",
     "build-api-docs": "npm run widdershins --search false --language_tabs 'nodejs:NodeJS' 'python:Python' --summary ./packages/api-lib/api-spec.yaml -o ./docs/api.md & npm run shins --inline --logo ./docs/images/logo.png -o ./docs/index.html ./docs/api.md"
   },
@@ -41,8 +42,8 @@
   "devDependencies": {
     "ava": "^3.5.0",
     "aws-sdk": "^2.382.0",
-    "eslint": "^5.7.0",
-    "eslint-config-airbnb": "^16.1.0",
+    "eslint": "^7.2.0",
+    "eslint-config-airbnb": "^19.0.4",
     "eslint-plugin-import": "^2.9.0",
     "eslint-plugin-jsdoc": "^3.5.0",
     "eslint-plugin-jsx-a11y": "^6.0.3",

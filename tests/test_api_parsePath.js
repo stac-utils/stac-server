@@ -11,7 +11,7 @@ test('parsePath', (t) => {
     collectionId: false,
     items: false,
     itemId: false,
-    edit: false
+    edit: false,
   }
   let actual = api.parsePath('/')
   t.deepEqual(actual, expected)
@@ -25,7 +25,7 @@ test('parsePath', (t) => {
     collectionId: false,
     items: false,
     itemId: false,
-    edit: false
+    edit: false,
   }
   actual = api.parsePath('/api')
   t.deepEqual(actual, expected)
@@ -39,7 +39,7 @@ test('parsePath', (t) => {
     collectionId: false,
     items: false,
     itemId: false,
-    edit: false
+    edit: false,
   }
   actual = api.parsePath('/conformance')
   t.deepEqual(actual, expected)
@@ -53,7 +53,7 @@ test('parsePath', (t) => {
     collectionId: false,
     items: false,
     itemId: false,
-    edit: false
+    edit: false,
   }
   actual = api.parsePath('/search')
   t.deepEqual(actual, expected)
@@ -67,7 +67,7 @@ test('parsePath', (t) => {
     collectionId: false,
     items: false,
     itemId: false,
-    edit: false
+    edit: false,
   }
   actual = api.parsePath('/collections')
   t.deepEqual(actual, expected)
@@ -81,7 +81,7 @@ test('parsePath', (t) => {
     collectionId: 'id',
     items: false,
     itemId: false,
-    edit: false
+    edit: false,
   }
   actual = api.parsePath('/collections/id')
   t.deepEqual(actual, expected)
@@ -95,7 +95,7 @@ test('parsePath', (t) => {
     collectionId: 'id',
     items: true,
     itemId: false,
-    edit: false
+    edit: false,
   }
   actual = api.parsePath('/collections/id/items')
   t.deepEqual(actual, expected)
@@ -109,9 +109,8 @@ test('parsePath', (t) => {
     collectionId: 'id',
     items: true,
     itemId: 'id',
-    edit: false
+    edit: false,
   }
   actual = api.parsePath('/collections/id/items/id')
   t.deepEqual(actual, expected)
 })
-

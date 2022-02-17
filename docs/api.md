@@ -8,7 +8,6 @@ includes: []
 search: false
 highlight_theme: darkula
 headingLevel: 2
-
 ---
 
 <h1 id="stac-server">stac-server</h1>
@@ -19,7 +18,7 @@ Stac-server is a STAC compliant web API for searching and serving metadata for g
 
 Base URLs:
 
-* <a href="https://earth-search.aws.element84.com/">https://earth-search.aws.element84.com/</a>
+- <a href="https://earth-search.aws.element84.com/">https://earth-search.aws.element84.com/</a>
 
 License: <a href="https://github.com/stac-utils/stac-server/blob/master/LICENSE">MIT License</a>
 
@@ -94,9 +93,9 @@ Returns the root STAC Catalog or STAC Collection that is the entry point for use
 
 <h3 id="return-the-root-catalog-or-collection.-responses">Responses</h3>
 
-|Status|Meaning|Description|Schema|
-|---|---|---|---|
-|200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|A catalog json definition. Used as an entry point for a crawler.|[catalogDefinition](#schemacatalogdefinition)|
+| Status | Meaning                                                 | Description                                                      | Schema                                        |
+| ------ | ------------------------------------------------------- | ---------------------------------------------------------------- | --------------------------------------------- |
+| 200    | [OK](https://tools.ietf.org/html/rfc7231#section-6.3.1) | A catalog json definition. Used as an entry point for a crawler. | [catalogDefinition](#schemacatalogdefinition) |
 
 <aside class="success">
 This operation does not require authentication
@@ -150,14 +149,14 @@ Retrieve Items matching filters. Intended as a shorthand API for simple queries.
 
 <h3 id="search-stac-items-by-simple-filtering.-parameters">Parameters</h3>
 
-|Name|In|Type|Required|Description|
-|---|---|---|---|---|
-|bbox|query|array[number]|false|Only features that have a geometry that intersects the bounding box are|
-|time|query|string|false|Either a date-time or a period string that adheres to RFC3339. Examples:|
-|limit|query|integer|false|The optional limit parameter limits the number of items that are|
-|query|query|string|false|query for properties in items. Use the JSON form of the queryFilter used in POST.|
-|sort|query|[sort](#schemasort)|false|Allows sorting results by the specified properties|
-|fields|query|[fields](#schemafields)|false|Determines the shape of the features in the response|
+| Name   | In    | Type                    | Required | Description                                                                       |
+| ------ | ----- | ----------------------- | -------- | --------------------------------------------------------------------------------- |
+| bbox   | query | array[number]           | false    | Only features that have a geometry that intersects the bounding box are           |
+| time   | query | string                  | false    | Either a date-time or a period string that adheres to RFC3339. Examples:          |
+| limit  | query | integer                 | false    | The optional limit parameter limits the number of items that are                  |
+| query  | query | string                  | false    | query for properties in items. Use the JSON form of the queryFilter used in POST. |
+| sort   | query | [sort](#schemasort)     | false    | Allows sorting results by the specified properties                                |
+| fields | query | [fields](#schemafields) | false    | Determines the shape of the features in the response                              |
 
 #### Detailed descriptions
 
@@ -166,12 +165,12 @@ selected. The bounding box is provided as four or six numbers,
 depending on whether the coordinate reference system includes a
 vertical axis (elevation or depth):
 
-* Lower left corner, coordinate axis 1
-* Lower left corner, coordinate axis 2
-* Lower left corner, coordinate axis 3 (optional)
-* Upper right corner, coordinate axis 1
-* Upper right corner, coordinate axis 2
-* Upper right corner, coordinate axis 3 (optional)
+- Lower left corner, coordinate axis 1
+- Lower left corner, coordinate axis 2
+- Lower left corner, coordinate axis 3 (optional)
+- Upper right corner, coordinate axis 1
+- Upper right corner, coordinate axis 2
+- Upper right corner, coordinate axis 3 (optional)
 
 The coordinate reference system of the values is WGS84
 longitude/latitude (http://www.opengis.net/def/crs/OGC/1.3/CRS84) unless
@@ -189,8 +188,9 @@ decision of the server whether only a single spatial geometry property
 is used to determine the extent or all relevant geometries.
 
 **time**: Either a date-time or a period string that adheres to RFC3339. Examples:
-* A date-time: "2018-02-12T23:20:50Z" * A period: "2018-02-12T00:00:00Z/2018-03-18T12:31:12Z" or "2018-02-12T00:00:00Z/P1M6DT12H31M12S"
-Only features that have a temporal property that intersects the value of `time` are selected. If a feature has multiple temporal properties, it is the decision of the server whether only a single temporal property is used to determine the extent or all relevant temporal properties.
+
+- A date-time: "2018-02-12T23:20:50Z" \* A period: "2018-02-12T00:00:00Z/2018-03-18T12:31:12Z" or "2018-02-12T00:00:00Z/P1M6DT12H31M12S"
+  Only features that have a temporal property that intersects the value of `time` are selected. If a feature has multiple temporal properties, it is the decision of the server whether only a single temporal property is used to determine the extent or all relevant temporal properties.
 
 **limit**: The optional limit parameter limits the number of items that are
 presented in the response document.
@@ -199,9 +199,9 @@ Only items are counted that are on the first level of the collection in
 the response document. Nested objects contained within the explicitly
 requested items shall not be counted.
 
-* Minimum = 1
-* Maximum = 10000
-* Default = 10
+- Minimum = 1
+- Maximum = 10000
+- Default = 10
 
 > Example responses
 
@@ -214,36 +214,16 @@ requested items shall not be counted.
     {
       "type": "Feature",
       "id": "CS3-20160503_132130_04",
-      "bbox": [
-        -122.59750209,
-        37.48803556,
-        -122.2880486,
-        37.613537207
-      ],
+      "bbox": [-122.59750209, 37.48803556, -122.2880486, 37.613537207],
       "geometry": {
         "type": "Polygon",
         "coordinates": [
           [
-            [
-              -122.308150179,
-              37.488035566
-            ],
-            [
-              -122.597502109,
-              37.538869539
-            ],
-            [
-              -122.576687533,
-              37.613537207
-            ],
-            [
-              -122.2880486,
-              37.562818007
-            ],
-            [
-              -122.308150179,
-              37.488035566
-            ]
+            [-122.308150179, 37.488035566],
+            [-122.597502109, 37.538869539],
+            [-122.576687533, 37.613537207],
+            [-122.2880486, 37.562818007],
+            [-122.308150179, 37.488035566]
           ]
         ]
       },
@@ -281,10 +261,10 @@ requested items shall not be counted.
 
 <h3 id="search-stac-items-by-simple-filtering.-responses">Responses</h3>
 
-|Status|Meaning|Description|Schema|
-|---|---|---|---|
-|200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|A feature collection.|[itemCollection](#schemaitemcollection)|
-|default|Default|An error occurred.|[exception](#schemaexception)|
+| Status  | Meaning                                                 | Description           | Schema                                  |
+| ------- | ------------------------------------------------------- | --------------------- | --------------------------------------- |
+| 200     | [OK](https://tools.ietf.org/html/rfc7231#section-6.3.1) | A feature collection. | [itemCollection](#schemaitemcollection) |
+| default | Default                                                 | An error occurred.    | [exception](#schemaexception)           |
 
 <aside class="success">
 This operation does not require authentication
@@ -362,12 +342,7 @@ retrieve items matching filters. Intended as the standard, full-featured query A
 
 ```json
 {
-  "bbox": [
-    -110,
-    39.5,
-    -105,
-    40.5
-  ],
+  "bbox": [-110, 39.5, -105, 40.5],
   "time": "2018-02-12T00:00:00Z/2018-03-18T12:31:12Z",
   "intersects": null,
   "query": {
@@ -386,9 +361,9 @@ retrieve items matching filters. Intended as the standard, full-featured query A
 
 <h3 id="search-stac-items-by-full-featured-filtering.-parameters">Parameters</h3>
 
-|Name|In|Type|Required|Description|
-|---|---|---|---|---|
-|body|body|[searchBody](#schemasearchbody)|false|none|
+| Name | In   | Type                            | Required | Description |
+| ---- | ---- | ------------------------------- | -------- | ----------- |
+| body | body | [searchBody](#schemasearchbody) | false    | none        |
 
 > Example responses
 
@@ -401,36 +376,16 @@ retrieve items matching filters. Intended as the standard, full-featured query A
     {
       "type": "Feature",
       "id": "CS3-20160503_132130_04",
-      "bbox": [
-        -122.59750209,
-        37.48803556,
-        -122.2880486,
-        37.613537207
-      ],
+      "bbox": [-122.59750209, 37.48803556, -122.2880486, 37.613537207],
       "geometry": {
         "type": "Polygon",
         "coordinates": [
           [
-            [
-              -122.308150179,
-              37.488035566
-            ],
-            [
-              -122.597502109,
-              37.538869539
-            ],
-            [
-              -122.576687533,
-              37.613537207
-            ],
-            [
-              -122.2880486,
-              37.562818007
-            ],
-            [
-              -122.308150179,
-              37.488035566
-            ]
+            [-122.308150179, 37.488035566],
+            [-122.597502109, 37.538869539],
+            [-122.576687533, 37.613537207],
+            [-122.2880486, 37.562818007],
+            [-122.308150179, 37.488035566]
           ]
         ]
       },
@@ -468,10 +423,10 @@ retrieve items matching filters. Intended as the standard, full-featured query A
 
 <h3 id="search-stac-items-by-full-featured-filtering.-responses">Responses</h3>
 
-|Status|Meaning|Description|Schema|
-|---|---|---|---|
-|200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|A feature collection.|string|
-|default|Default|An error occurred.|string|
+| Status  | Meaning                                                 | Description           | Schema |
+| ------- | ------------------------------------------------------- | --------------------- | ------ |
+| 200     | [OK](https://tools.ietf.org/html/rfc7231#section-6.3.1) | A feature collection. | string |
+| default | Default                                                 | An error occurred.    | string |
 
 <aside class="success">
 This operation does not require authentication
@@ -556,9 +511,9 @@ The landing page provides links to the API definition, the Conformance statement
 
 <h3 id="landing-page-of-this-api-responses">Responses</h3>
 
-|Status|Meaning|Description|Schema|
-|---|---|---|---|
-|200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|links to the API capabilities|string|
+| Status | Meaning                                                 | Description                   | Schema |
+| ------ | ------------------------------------------------------- | ----------------------------- | ------ |
+| 200    | [OK](https://tools.ietf.org/html/rfc7231#section-6.3.1) | links to the API capabilities | string |
 
 <aside class="success">
 This operation does not require authentication
@@ -655,40 +610,21 @@ print r.json()
       ],
       "extent": {
         "crs": "http://www.opengis.net/def/crs/OGC/1.3/CRS84",
-        "spatial": [
-          -180,
-          -90,
-          180,
-          90
-        ],
+        "spatial": [-180, -90, 180, 90],
         "trs": "http://www.opengis.net/def/uom/ISO-8601/0/Gregorian",
-        "temporal": [
-          "2011-11-11T12:22:11Z",
-          "2012-11-24T12:32:43Z"
-        ]
+        "temporal": ["2011-11-11T12:22:11Z", "2012-11-24T12:32:43Z"]
       },
-      "crs": [
-        "http://www.opengis.net/def/crs/OGC/1.3/CRS84"
-      ],
+      "crs": ["http://www.opengis.net/def/crs/OGC/1.3/CRS84"],
       "stac_version": "0.6.0",
       "id": "buildings",
-      "keywords": [
-        [
-          "buildings",
-          "properties",
-          "constructions"
-        ]
-      ],
+      "keywords": [["buildings", "properties", "constructions"]],
       "version": 1,
       "license": "Apache-2.0",
       "providers": [
         {
           "name": "Big Building Corp",
           "description": "No further processing applied.",
-          "roles": [
-            "producer",
-            "licensor"
-          ],
+          "roles": ["producer", "licensor"],
           "url": "http://www.big-building.com"
         }
       ]
@@ -699,9 +635,9 @@ print r.json()
 
 <h3 id="describe-the-feature-collections-in-the-dataset-responses">Responses</h3>
 
-|Status|Meaning|Description|Schema|
-|---|---|---|---|
-|200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|Metdata about the feature collections shared by this API.|[content](#schemacontent)|
+| Status | Meaning                                                 | Description                                               | Schema                    |
+| ------ | ------------------------------------------------------- | --------------------------------------------------------- | ------------------------- |
+| 200    | [OK](https://tools.ietf.org/html/rfc7231#section-6.3.1) | Metdata about the feature collections shared by this API. | [content](#schemacontent) |
 
 <aside class="success">
 This operation does not require authentication
@@ -718,15 +654,14 @@ This operation does not require authentication
   "code": "string",
   "description": "string"
 }
-
 ```
 
 ### Properties
 
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|code|string|true|none|none|
-|description|string|false|none|none|
+| Name        | Type   | Required | Restrictions | Description |
+| ----------- | ------ | -------- | ------------ | ----------- |
+| code        | string | true     | none         | none        |
+| description | string | false    | none         | none        |
 
 <h2 id="tocSlinks">links</h2>
 
@@ -741,14 +676,13 @@ This operation does not require authentication
     "title": "NAIP Child Catalog"
   }
 ]
-
 ```
 
 ### Properties
 
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|*anonymous*|[[link](#schemalink)]|false|none|none|
+| Name        | Type                  | Required | Restrictions | Description |
+| ----------- | --------------------- | -------- | ------------ | ----------- |
+| _anonymous_ | [[link](#schemalink)] | false    | none         | none        |
 
 <h2 id="tocSlink">link</h2>
 
@@ -761,17 +695,16 @@ This operation does not require authentication
   "type": "application/json",
   "title": "NAIP Child Catalog"
 }
-
 ```
 
 ### Properties
 
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|href|string(url)|true|none|none|
-|rel|string|true|none|none|
-|type|string|false|none|none|
-|title|string|false|none|none|
+| Name  | Type        | Required | Restrictions | Description |
+| ----- | ----------- | -------- | ------------ | ----------- |
+| href  | string(url) | true     | none         | none        |
+| rel   | string      | true     | none         | none        |
+| type  | string      | false    | none         | none        |
+| title | string      | false    | none         | none        |
 
 <h2 id="tocSsearchbody">searchBody</h2>
 
@@ -779,12 +712,7 @@ This operation does not require authentication
 
 ```json
 {
-  "bbox": [
-    -110,
-    39.5,
-    -105,
-    40.5
-  ],
+  "bbox": [-110, 39.5, -105, 40.5],
   "time": "2018-02-12T00:00:00Z/2018-03-18T12:31:12Z",
   "intersects": null,
   "query": {
@@ -799,68 +727,61 @@ This operation does not require authentication
     }
   ]
 }
-
 ```
 
-*The search criteria*
+_The search criteria_
 
 ### Properties
 
-*allOf*
+_allOf_
 
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|*anonymous*|[bboxFilter](#schemabboxfilter)|false|none|Only return items that intersect the provided bounding box.|
+| Name        | Type                            | Required | Restrictions | Description                                                 |
+| ----------- | ------------------------------- | -------- | ------------ | ----------------------------------------------------------- |
+| _anonymous_ | [bboxFilter](#schemabboxfilter) | false    | none         | Only return items that intersect the provided bounding box. |
 
-*and*
+_and_
 
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|*anonymous*|[timeFilter](#schematimefilter)|false|none|An object representing a time based filter.|
+| Name        | Type                            | Required | Restrictions | Description                                 |
+| ----------- | ------------------------------- | -------- | ------------ | ------------------------------------------- |
+| _anonymous_ | [timeFilter](#schematimefilter) | false    | none         | An object representing a time based filter. |
 
-*and*
+_and_
 
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|*anonymous*|[intersectsFilter](#schemaintersectsfilter)|false|none|Only returns items that intersect with the provided polygon.|
+| Name        | Type                                        | Required | Restrictions | Description                                                  |
+| ----------- | ------------------------------------------- | -------- | ------------ | ------------------------------------------------------------ |
+| _anonymous_ | [intersectsFilter](#schemaintersectsfilter) | false    | none         | Only returns items that intersect with the provided polygon. |
 
-*and*
+_and_
 
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|*anonymous*|[queryFilter](#schemaqueryfilter)|false|none|Allows users to query properties for specific values|
+| Name        | Type                              | Required | Restrictions | Description                                          |
+| ----------- | --------------------------------- | -------- | ------------ | ---------------------------------------------------- |
+| _anonymous_ | [queryFilter](#schemaqueryfilter) | false    | none         | Allows users to query properties for specific values |
 
-*and*
+_and_
 
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|*anonymous*|[sortFilter](#schemasortfilter)|false|none|Sort the results|
+| Name        | Type                            | Required | Restrictions | Description      |
+| ----------- | ------------------------------- | -------- | ------------ | ---------------- |
+| _anonymous_ | [sortFilter](#schemasortfilter) | false    | none         | Sort the results |
 
 <h2 id="tocSbbox">bbox</h2>
 
 <a id="schemabbox"></a>
 
 ```json
-[
-  -110,
-  39.5,
-  -105,
-  40.5
-]
-
+[-110, 39.5, -105, 40.5]
 ```
 
-*Only features that have a geometry that intersects the bounding box are
+\*Only features that have a geometry that intersects the bounding box are
 selected. The bounding box is provided as four or six numbers,
 depending on whether the coordinate reference system includes a
 vertical axis (elevation or depth):
 
-* Lower left corner, coordinate axis 1
-* Lower left corner, coordinate axis 2
-* Lower left corner, coordinate axis 3 (optional)
-* Upper right corner, coordinate axis 1
-* Upper right corner, coordinate axis 2
-* Upper right corner, coordinate axis 3 (optional)
+- Lower left corner, coordinate axis 1
+- Lower left corner, coordinate axis 2
+- Lower left corner, coordinate axis 3 (optional)
+- Upper right corner, coordinate axis 1
+- Upper right corner, coordinate axis 2
+- Upper right corner, coordinate axis 3 (optional)
 
 The coordinate reference system of the values is WGS84
 longitude/latitude (http://www.opengis.net/def/crs/OGC/1.3/CRS84) unless
@@ -876,11 +797,12 @@ first value (west-most box edge) is larger than the third value
 If a feature has multiple spatial geometry properties, it is the
 decision of the server whether only a single spatial geometry property
 is used to determine the extent or all relevant geometries.
-*
+
+-
 
 ### Properties
 
-*None*
+_None_
 
 <h2 id="tocSbboxfilter">bboxFilter</h2>
 
@@ -888,23 +810,17 @@ is used to determine the extent or all relevant geometries.
 
 ```json
 {
-  "bbox": [
-    -110,
-    39.5,
-    -105,
-    40.5
-  ]
+  "bbox": [-110, 39.5, -105, 40.5]
 }
-
 ```
 
-*Only return items that intersect the provided bounding box.*
+_Only return items that intersect the provided bounding box._
 
 ### Properties
 
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|bbox|[bbox](#schemabbox)|false|none|Only features that have a geometry that intersects the bounding box are selected. The bounding box is provided as four or six numbers, depending on whether the coordinate reference system includes a vertical axis (elevation or depth):  * Lower left corner, coordinate axis 1 * Lower left corner, coordinate axis 2 * Lower left corner, coordinate axis 3 (optional) * Upper right corner, coordinate axis 1 * Upper right corner, coordinate axis 2 * Upper right corner, coordinate axis 3 (optional)  The coordinate reference system of the values is WGS84 longitude/latitude (http://www.opengis.net/def/crs/OGC/1.3/CRS84) unless a different coordinate reference system is specified in the parameter `bbox-crs`.  For WGS84 longitude/latitude the values are in most cases the sequence of minimum longitude, minimum latitude, maximum longitude and maximum latitude. However, in cases where the box spans the antimeridian the first value (west-most box edge) is larger than the third value (east-most box edge).   If a feature has multiple spatial geometry properties, it is the decision of the server whether only a single spatial geometry property is used to determine the extent or all relevant geometries.|
+| Name | Type                | Required | Restrictions | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| ---- | ------------------- | -------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| bbox | [bbox](#schemabbox) | false    | none         | Only features that have a geometry that intersects the bounding box are selected. The bounding box is provided as four or six numbers, depending on whether the coordinate reference system includes a vertical axis (elevation or depth): _ Lower left corner, coordinate axis 1 _ Lower left corner, coordinate axis 2 _ Lower left corner, coordinate axis 3 (optional) _ Upper right corner, coordinate axis 1 _ Upper right corner, coordinate axis 2 _ Upper right corner, coordinate axis 3 (optional) The coordinate reference system of the values is WGS84 longitude/latitude (http://www.opengis.net/def/crs/OGC/1.3/CRS84) unless a different coordinate reference system is specified in the parameter `bbox-crs`. For WGS84 longitude/latitude the values are in most cases the sequence of minimum longitude, minimum latitude, maximum longitude and maximum latitude. However, in cases where the box spans the antimeridian the first value (west-most box edge) is larger than the third value (east-most box edge). If a feature has multiple spatial geometry properties, it is the decision of the server whether only a single spatial geometry property is used to determine the extent or all relevant geometries. |
 
 <h2 id="tocStimefilter">timeFilter</h2>
 
@@ -914,16 +830,15 @@ is used to determine the extent or all relevant geometries.
 {
   "time": "2018-02-12T00:00:00Z/2018-03-18T12:31:12Z"
 }
-
 ```
 
-*An object representing a time based filter.*
+_An object representing a time based filter._
 
 ### Properties
 
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|time|[time](#schematime)|false|none|Either a date-time or a period string that adheres to RFC 3339. Examples: * A date-time: "2018-02-12T23:20:50Z" * A period: "2018-02-12T00:00:00Z/2018-03-18T12:31:12Z" or "2018-02-12T00:00:00Z/P1M6DT12H31M12S" Only features that have a temporal property that intersects the value of `time` are selected. If a feature has multiple temporal properties, it is the decision of the server whether only a single temporal property is used to determine the extent or all relevant temporal properties.|
+| Name | Type                | Required | Restrictions | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| ---- | ------------------- | -------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| time | [time](#schematime) | false    | none         | Either a date-time or a period string that adheres to RFC 3339. Examples: _ A date-time: "2018-02-12T23:20:50Z" _ A period: "2018-02-12T00:00:00Z/2018-03-18T12:31:12Z" or "2018-02-12T00:00:00Z/P1M6DT12H31M12S" Only features that have a temporal property that intersects the value of `time` are selected. If a feature has multiple temporal properties, it is the decision of the server whether only a single temporal property is used to determine the extent or all relevant temporal properties. |
 
 <h2 id="tocSintersectsfilter">intersectsFilter</h2>
 
@@ -933,16 +848,15 @@ is used to determine the extent or all relevant geometries.
 {
   "intersects": null
 }
-
 ```
 
-*Only returns items that intersect with the provided polygon.*
+_Only returns items that intersect with the provided polygon._
 
 ### Properties
 
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|intersects|[http://geojson.org/schema/Geometry.json](#schemahttp://geojson.org/schema/geometry.json)|false|none|none|
+| Name       | Type                                                                                      | Required | Restrictions | Description |
+| ---------- | ----------------------------------------------------------------------------------------- | -------- | ------------ | ----------- |
+| intersects | [http://geojson.org/schema/Geometry.json](#schemahttp://geojson.org/schema/geometry.json) | false    | none         | none        |
 
 <h2 id="tocStime">time</h2>
 
@@ -950,20 +864,20 @@ is used to determine the extent or all relevant geometries.
 
 ```json
 "2018-02-12T00:00:00Z/2018-03-18T12:31:12Z"
-
 ```
 
-*Either a date-time or a period string that adheres to RFC 3339. Examples:
-* A date-time: "2018-02-12T23:20:50Z" * A period: "2018-02-12T00:00:00Z/2018-03-18T12:31:12Z" or "2018-02-12T00:00:00Z/P1M6DT12H31M12S"
-Only features that have a temporal property that intersects the value of `time` are selected.
-If a feature has multiple temporal properties, it is the decision of the server whether only a single temporal property is used to determine the extent or all relevant temporal properties.
-*
+\*Either a date-time or a period string that adheres to RFC 3339. Examples:
+
+- A date-time: "2018-02-12T23:20:50Z" \* A period: "2018-02-12T00:00:00Z/2018-03-18T12:31:12Z" or "2018-02-12T00:00:00Z/P1M6DT12H31M12S"
+  Only features that have a temporal property that intersects the value of `time` are selected.
+  If a feature has multiple temporal properties, it is the decision of the server whether only a single temporal property is used to determine the extent or all relevant temporal properties.
+-
 
 ### Properties
 
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|*anonymous*|string|false|none|Either a date-time or a period string that adheres to RFC 3339. Examples: * A date-time: "2018-02-12T23:20:50Z" * A period: "2018-02-12T00:00:00Z/2018-03-18T12:31:12Z" or "2018-02-12T00:00:00Z/P1M6DT12H31M12S" Only features that have a temporal property that intersects the value of `time` are selected. If a feature has multiple temporal properties, it is the decision of the server whether only a single temporal property is used to determine the extent or all relevant temporal properties.|
+| Name        | Type   | Required | Restrictions | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| ----------- | ------ | -------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| _anonymous_ | string | false    | none         | Either a date-time or a period string that adheres to RFC 3339. Examples: _ A date-time: "2018-02-12T23:20:50Z" _ A period: "2018-02-12T00:00:00Z/2018-03-18T12:31:12Z" or "2018-02-12T00:00:00Z/P1M6DT12H31M12S" Only features that have a temporal property that intersects the value of `time` are selected. If a feature has multiple temporal properties, it is the decision of the server whether only a single temporal property is used to determine the extent or all relevant temporal properties. |
 
 <h2 id="tocScatalogdefinition">catalogDefinition</h2>
 
@@ -984,18 +898,17 @@ If a feature has multiple temporal properties, it is the decision of the server 
     }
   ]
 }
-
 ```
 
 ### Properties
 
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|stac_version|string|true|none|none|
-|id|string|true|none|none|
-|title|string|false|none|none|
-|description|string|true|none|none|
-|links|[links](#schemalinks)|true|none|none|
+| Name         | Type                  | Required | Restrictions | Description |
+| ------------ | --------------------- | -------- | ------------ | ----------- |
+| stac_version | string                | true     | none         | none        |
+| id           | string                | true     | none         | none        |
+| title        | string                | false    | none         | none        |
+| description  | string                | true     | none         | none        |
+| links        | [links](#schemalinks) | true     | none         | none        |
 
 <h2 id="tocSitemcollection">itemCollection</h2>
 
@@ -1008,36 +921,16 @@ If a feature has multiple temporal properties, it is the decision of the server 
     {
       "type": "Feature",
       "id": "CS3-20160503_132130_04",
-      "bbox": [
-        -122.59750209,
-        37.48803556,
-        -122.2880486,
-        37.613537207
-      ],
+      "bbox": [-122.59750209, 37.48803556, -122.2880486, 37.613537207],
       "geometry": {
         "type": "Polygon",
         "coordinates": [
           [
-            [
-              -122.308150179,
-              37.488035566
-            ],
-            [
-              -122.597502109,
-              37.538869539
-            ],
-            [
-              -122.576687533,
-              37.613537207
-            ],
-            [
-              -122.2880486,
-              37.562818007
-            ],
-            [
-              -122.308150179,
-              37.488035566
-            ]
+            [-122.308150179, 37.488035566],
+            [-122.597502109, 37.538869539],
+            [-122.576687533, 37.613537207],
+            [-122.2880486, 37.562818007],
+            [-122.308150179, 37.488035566]
           ]
         ]
       },
@@ -1071,22 +964,21 @@ If a feature has multiple temporal properties, it is the decision of the server 
     }
   ]
 }
-
 ```
 
 ### Properties
 
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|type|string|true|none|none|
-|features|[[item](#schemaitem)]|true|none|none|
-|links|[itemCollectionLinks](#schemaitemcollectionlinks)|false|none|An array of links. Can be used for pagination, e.g. by providing a link with the `next` relation type.|
+| Name     | Type                                              | Required | Restrictions | Description                                                                                            |
+| -------- | ------------------------------------------------- | -------- | ------------ | ------------------------------------------------------------------------------------------------------ |
+| type     | string                                            | true     | none         | none                                                                                                   |
+| features | [[item](#schemaitem)]                             | true     | none         | none                                                                                                   |
+| links    | [itemCollectionLinks](#schemaitemcollectionlinks) | false    | none         | An array of links. Can be used for pagination, e.g. by providing a link with the `next` relation type. |
 
 #### Enumerated Values
 
-|Property|Value|
-|---|---|
-|type|FeatureCollection|
+| Property | Value             |
+| -------- | ----------------- |
+| type     | FeatureCollection |
 
 <h2 id="tocSitem">item</h2>
 
@@ -1096,36 +988,16 @@ If a feature has multiple temporal properties, it is the decision of the server 
 {
   "type": "Feature",
   "id": "CS3-20160503_132130_04",
-  "bbox": [
-    -122.59750209,
-    37.48803556,
-    -122.2880486,
-    37.613537207
-  ],
+  "bbox": [-122.59750209, 37.48803556, -122.2880486, 37.613537207],
   "geometry": {
     "type": "Polygon",
     "coordinates": [
       [
-        [
-          -122.308150179,
-          37.488035566
-        ],
-        [
-          -122.597502109,
-          37.538869539
-        ],
-        [
-          -122.576687533,
-          37.613537207
-        ],
-        [
-          -122.2880486,
-          37.562818007
-        ],
-        [
-          -122.308150179,
-          37.488035566
-        ]
+        [-122.308150179, 37.488035566],
+        [-122.597502109, 37.538869539],
+        [-122.576687533, 37.613537207],
+        [-122.2880486, 37.562818007],
+        [-122.308150179, 37.488035566]
       ]
     ]
   },
@@ -1151,20 +1023,19 @@ If a feature has multiple temporal properties, it is the decision of the server 
     }
   }
 }
-
 ```
 
 ### Properties
 
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|id|[itemId](#schemaitemid)|true|none|Provider identifier, a unique ID, potentially a link to a file.|
-|bbox|[bbox](#schemabbox)|true|none|Only features that have a geometry that intersects the bounding box are selected. The bounding box is provided as four or six numbers, depending on whether the coordinate reference system includes a vertical axis (elevation or depth):  * Lower left corner, coordinate axis 1 * Lower left corner, coordinate axis 2 * Lower left corner, coordinate axis 3 (optional) * Upper right corner, coordinate axis 1 * Upper right corner, coordinate axis 2 * Upper right corner, coordinate axis 3 (optional)  The coordinate reference system of the values is WGS84 longitude/latitude (http://www.opengis.net/def/crs/OGC/1.3/CRS84) unless a different coordinate reference system is specified in the parameter `bbox-crs`.  For WGS84 longitude/latitude the values are in most cases the sequence of minimum longitude, minimum latitude, maximum longitude and maximum latitude. However, in cases where the box spans the antimeridian the first value (west-most box edge) is larger than the third value (east-most box edge).   If a feature has multiple spatial geometry properties, it is the decision of the server whether only a single spatial geometry property is used to determine the extent or all relevant geometries.|
-|geometry|[http://geojson.org/schema/Geometry.json](#schemahttp://geojson.org/schema/geometry.json)|true|none|none|
-|type|[itemType](#schemaitemtype)|true|none|The GeoJSON type|
-|properties|[itemProperties](#schemaitemproperties)|true|none|provides the core metatdata fields plus extensions|
-|links|[links](#schemalinks)|true|none|none|
-|assets|[itemAssets](#schemaitemassets)|true|none|none|
+| Name       | Type                                                                                      | Required | Restrictions | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| ---------- | ----------------------------------------------------------------------------------------- | -------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| id         | [itemId](#schemaitemid)                                                                   | true     | none         | Provider identifier, a unique ID, potentially a link to a file.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| bbox       | [bbox](#schemabbox)                                                                       | true     | none         | Only features that have a geometry that intersects the bounding box are selected. The bounding box is provided as four or six numbers, depending on whether the coordinate reference system includes a vertical axis (elevation or depth): _ Lower left corner, coordinate axis 1 _ Lower left corner, coordinate axis 2 _ Lower left corner, coordinate axis 3 (optional) _ Upper right corner, coordinate axis 1 _ Upper right corner, coordinate axis 2 _ Upper right corner, coordinate axis 3 (optional) The coordinate reference system of the values is WGS84 longitude/latitude (http://www.opengis.net/def/crs/OGC/1.3/CRS84) unless a different coordinate reference system is specified in the parameter `bbox-crs`. For WGS84 longitude/latitude the values are in most cases the sequence of minimum longitude, minimum latitude, maximum longitude and maximum latitude. However, in cases where the box spans the antimeridian the first value (west-most box edge) is larger than the third value (east-most box edge). If a feature has multiple spatial geometry properties, it is the decision of the server whether only a single spatial geometry property is used to determine the extent or all relevant geometries. |
+| geometry   | [http://geojson.org/schema/Geometry.json](#schemahttp://geojson.org/schema/geometry.json) | true     | none         | none                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| type       | [itemType](#schemaitemtype)                                                               | true     | none         | The GeoJSON type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| properties | [itemProperties](#schemaitemproperties)                                                   | true     | none         | provides the core metatdata fields plus extensions                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| links      | [links](#schemalinks)                                                                     | true     | none         | none                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| assets     | [itemAssets](#schemaitemassets)                                                           | true     | none         | none                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
 
 <h2 id="tocSitemid">itemId</h2>
 
@@ -1172,16 +1043,15 @@ If a feature has multiple temporal properties, it is the decision of the server 
 
 ```json
 "path/to/example.tif"
-
 ```
 
-*Provider identifier, a unique ID, potentially a link to a file.*
+_Provider identifier, a unique ID, potentially a link to a file._
 
 ### Properties
 
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|*anonymous*|string|false|none|Provider identifier, a unique ID, potentially a link to a file.|
+| Name        | Type   | Required | Restrictions | Description                                                     |
+| ----------- | ------ | -------- | ------------ | --------------------------------------------------------------- |
+| _anonymous_ | string | false    | none         | Provider identifier, a unique ID, potentially a link to a file. |
 
 <h2 id="tocSitemtype">itemType</h2>
 
@@ -1189,22 +1059,21 @@ If a feature has multiple temporal properties, it is the decision of the server 
 
 ```json
 "Feature"
-
 ```
 
-*The GeoJSON type*
+_The GeoJSON type_
 
 ### Properties
 
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|*anonymous*|string|false|none|The GeoJSON type|
+| Name        | Type   | Required | Restrictions | Description      |
+| ----------- | ------ | -------- | ------------ | ---------------- |
+| _anonymous_ | string | false    | none         | The GeoJSON type |
 
 #### Enumerated Values
 
-|Property|Value|
-|---|---|
-|*anonymous*|Feature|
+| Property    | Value   |
+| ----------- | ------- |
+| _anonymous_ | Feature |
 
 <h2 id="tocSitemassets">itemAssets</h2>
 
@@ -1223,17 +1092,16 @@ If a feature has multiple temporal properties, it is the decision of the server 
     "type": "image/png"
   }
 }
-
 ```
 
 ### Properties
 
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|**additionalProperties**|object|false|none|none|
-|» href|string(url)|true|none|Link to the asset object|
-|» title|string|false|none|Displayed title|
-|» type|string|false|none|Media type of the asset|
+| Name                     | Type        | Required | Restrictions | Description              |
+| ------------------------ | ----------- | -------- | ------------ | ------------------------ |
+| **additionalProperties** | object      | false    | none         | none                     |
+| » href                   | string(url) | true     | none         | Link to the asset object |
+| » title                  | string      | false    | none         | Displayed title          |
+| » type                   | string      | false    | none         | Media type of the asset  |
 
 <h2 id="tocSitemproperties">itemProperties</h2>
 
@@ -1245,17 +1113,16 @@ If a feature has multiple temporal properties, it is the decision of the server 
   "property1": null,
   "property2": null
 }
-
 ```
 
-*provides the core metatdata fields plus extensions*
+_provides the core metatdata fields plus extensions_
 
 ### Properties
 
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|**additionalProperties**|any|false|none|Any additional properties added in via extensions.|
-|datetime|[time](#schematime)|true|none|Either a date-time or a period string that adheres to RFC 3339. Examples: * A date-time: "2018-02-12T23:20:50Z" * A period: "2018-02-12T00:00:00Z/2018-03-18T12:31:12Z" or "2018-02-12T00:00:00Z/P1M6DT12H31M12S" Only features that have a temporal property that intersects the value of `time` are selected. If a feature has multiple temporal properties, it is the decision of the server whether only a single temporal property is used to determine the extent or all relevant temporal properties.|
+| Name                     | Type                | Required | Restrictions | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| ------------------------ | ------------------- | -------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **additionalProperties** | any                 | false    | none         | Any additional properties added in via extensions.                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| datetime                 | [time](#schematime) | true     | none         | Either a date-time or a period string that adheres to RFC 3339. Examples: _ A date-time: "2018-02-12T23:20:50Z" _ A period: "2018-02-12T00:00:00Z/2018-03-18T12:31:12Z" or "2018-02-12T00:00:00Z/P1M6DT12H31M12S" Only features that have a temporal property that intersects the value of `time` are selected. If a feature has multiple temporal properties, it is the decision of the server whether only a single temporal property is used to determine the extent or all relevant temporal properties. |
 
 <h2 id="tocSitemcollectionlinks">itemCollectionLinks</h2>
 
@@ -1268,16 +1135,15 @@ If a feature has multiple temporal properties, it is the decision of the server 
     "href": "http://earth-search.aws.element84.com/collections/landsat-8-l1/items/gasd312fsaeg"
   }
 ]
-
 ```
 
-*An array of links. Can be used for pagination, e.g. by providing a link with the `next` relation type.*
+_An array of links. Can be used for pagination, e.g. by providing a link with the `next` relation type._
 
 ### Properties
 
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|*anonymous*|[[link](#schemalink)]|false|none|An array of links. Can be used for pagination, e.g. by providing a link with the `next` relation type.|
+| Name        | Type                  | Required | Restrictions | Description                                                                                            |
+| ----------- | --------------------- | -------- | ------------ | ------------------------------------------------------------------------------------------------------ |
+| _anonymous_ | [[link](#schemalink)] | false    | none         | An array of links. Can be used for pagination, e.g. by providing a link with the `next` relation type. |
 
 <h2 id="tocSroot">root</h2>
 
@@ -1306,14 +1172,13 @@ If a feature has multiple temporal properties, it is the decision of the server 
     }
   ]
 }
-
 ```
 
 ### Properties
 
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|links|[[link](#schemalink)]|true|none|none|
+| Name  | Type                  | Required | Restrictions | Description |
+| ----- | --------------------- | -------- | ------------ | ----------- |
+| links | [[link](#schemalink)] | true     | none         | none        |
 
 <h2 id="tocSreq-classes">req-classes</h2>
 
@@ -1328,14 +1193,13 @@ If a feature has multiple temporal properties, it is the decision of the server 
     "http://www.opengis.net/spec/wfs-1/3.0/req/geojson"
   ]
 }
-
 ```
 
 ### Properties
 
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|conformsTo|[string]|true|none|none|
+| Name       | Type     | Required | Restrictions | Description |
+| ---------- | -------- | -------- | ------------ | ----------- |
+| conformsTo | [string] | true     | none         | none        |
 
 <h2 id="tocScontent">content</h2>
 
@@ -1384,55 +1248,35 @@ If a feature has multiple temporal properties, it is the decision of the server 
       ],
       "extent": {
         "crs": "http://www.opengis.net/def/crs/OGC/1.3/CRS84",
-        "spatial": [
-          -180,
-          -90,
-          180,
-          90
-        ],
+        "spatial": [-180, -90, 180, 90],
         "trs": "http://www.opengis.net/def/uom/ISO-8601/0/Gregorian",
-        "temporal": [
-          "2011-11-11T12:22:11Z",
-          "2012-11-24T12:32:43Z"
-        ]
+        "temporal": ["2011-11-11T12:22:11Z", "2012-11-24T12:32:43Z"]
       },
-      "crs": [
-        "http://www.opengis.net/def/crs/OGC/1.3/CRS84"
-      ],
+      "crs": ["http://www.opengis.net/def/crs/OGC/1.3/CRS84"],
       "stac_version": "0.6.0",
       "id": "buildings",
-      "keywords": [
-        [
-          "buildings",
-          "properties",
-          "constructions"
-        ]
-      ],
+      "keywords": [["buildings", "properties", "constructions"]],
       "version": 1,
       "license": "Apache-2.0",
       "providers": [
         {
           "name": "Big Building Corp",
           "description": "No further processing applied.",
-          "roles": [
-            "producer",
-            "licensor"
-          ],
+          "roles": ["producer", "licensor"],
           "url": "http://www.big-building.com"
         }
       ]
     }
   ]
 }
-
 ```
 
 ### Properties
 
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|links|[[link](#schemalink)]|true|none|none|
-|collections|[[collectionInfo](#schemacollectioninfo)]|true|none|none|
+| Name        | Type                                      | Required | Restrictions | Description |
+| ----------- | ----------------------------------------- | -------- | ------------ | ----------- |
+| links       | [[link](#schemalink)]                     | true     | none         | none        |
+| collections | [[collectionInfo](#schemacollectioninfo)] | true     | none         | none        |
 
 <h2 id="tocScollectioninfo">collectionInfo</h2>
 
@@ -1459,67 +1303,47 @@ If a feature has multiple temporal properties, it is the decision of the server 
   ],
   "extent": {
     "crs": "http://www.opengis.net/def/crs/OGC/1.3/CRS84",
-    "spatial": [
-      -180,
-      -90,
-      180,
-      90
-    ],
+    "spatial": [-180, -90, 180, 90],
     "trs": "http://www.opengis.net/def/uom/ISO-8601/0/Gregorian",
-    "temporal": [
-      "2011-11-11T12:22:11Z",
-      "2012-11-24T12:32:43Z"
-    ]
+    "temporal": ["2011-11-11T12:22:11Z", "2012-11-24T12:32:43Z"]
   },
-  "crs": [
-    "http://www.opengis.net/def/crs/OGC/1.3/CRS84"
-  ],
+  "crs": ["http://www.opengis.net/def/crs/OGC/1.3/CRS84"],
   "stac_version": "0.6.0",
   "id": "buildings",
-  "keywords": [
-    [
-      "buildings",
-      "properties",
-      "constructions"
-    ]
-  ],
+  "keywords": [["buildings", "properties", "constructions"]],
   "version": 1,
   "license": "Apache-2.0",
   "providers": [
     {
       "name": "Big Building Corp",
       "description": "No further processing applied.",
-      "roles": [
-        "producer",
-        "licensor"
-      ],
+      "roles": ["producer", "licensor"],
       "url": "http://www.big-building.com"
     }
   ]
 }
-
 ```
 
 ### Properties
 
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|name|string|true|none|identifier of the collection used, for example, in URIs|
-|title|string|false|none|human readable title of the collection|
-|description|string|true|none|a description of the features in the collection|
-|links|[[link](#schemalink)]|true|none|none|
-|extent|[extent](#schemaextent)|true|none|none|
-|crs|[string]|false|none|The coordinate reference systems in which geometries may be retrieved. Coordinate reference systems are identified by a URI. The first coordinate reference system is the coordinate reference system that is used by default. This is always "http://www.opengis.net/def/crs/OGC/1.3/CRS84", i.e. WGS84 longitude/latitude.|
-|stac_version|string|true|none|none|
-|id|string|true|none|identifier of the collection used, for example, in URIs|
-|keywords|[string]|false|none|none|
-|version|string|false|none|none|
-|license|string|true|none|none|
-|providers|[any]|false|none|none|
-|» name|string|false|none|none|
-|» description|string|false|none|none|
-|» roles|[string]|false|none|none|
-|» url|string(url)|false|none|Homepage on which the provider describes the dataset and publishes contact information.|
+| Name          | Type                    | Required | Restrictions | Description                                                                                                                                                                                                                                                                                                                  |
+| ------------- | ----------------------- | -------- | ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| name          | string                  | true     | none         | identifier of the collection used, for example, in URIs                                                                                                                                                                                                                                                                      |
+| title         | string                  | false    | none         | human readable title of the collection                                                                                                                                                                                                                                                                                       |
+| description   | string                  | true     | none         | a description of the features in the collection                                                                                                                                                                                                                                                                              |
+| links         | [[link](#schemalink)]   | true     | none         | none                                                                                                                                                                                                                                                                                                                         |
+| extent        | [extent](#schemaextent) | true     | none         | none                                                                                                                                                                                                                                                                                                                         |
+| crs           | [string]                | false    | none         | The coordinate reference systems in which geometries may be retrieved. Coordinate reference systems are identified by a URI. The first coordinate reference system is the coordinate reference system that is used by default. This is always "http://www.opengis.net/def/crs/OGC/1.3/CRS84", i.e. WGS84 longitude/latitude. |
+| stac_version  | string                  | true     | none         | none                                                                                                                                                                                                                                                                                                                         |
+| id            | string                  | true     | none         | identifier of the collection used, for example, in URIs                                                                                                                                                                                                                                                                      |
+| keywords      | [string]                | false    | none         | none                                                                                                                                                                                                                                                                                                                         |
+| version       | string                  | false    | none         | none                                                                                                                                                                                                                                                                                                                         |
+| license       | string                  | true     | none         | none                                                                                                                                                                                                                                                                                                                         |
+| providers     | [any]                   | false    | none         | none                                                                                                                                                                                                                                                                                                                         |
+| » name        | string                  | false    | none         | none                                                                                                                                                                                                                                                                                                                         |
+| » description | string                  | false    | none         | none                                                                                                                                                                                                                                                                                                                         |
+| » roles       | [string]                | false    | none         | none                                                                                                                                                                                                                                                                                                                         |
+| » url         | string(url)             | false    | none         | Homepage on which the provider describes the dataset and publishes contact information.                                                                                                                                                                                                                                      |
 
 <h2 id="tocSqueryfilter">queryFilter</h2>
 
@@ -1533,16 +1357,15 @@ If a feature has multiple temporal properties, it is the decision of the server 
     }
   }
 }
-
 ```
 
-*Allows users to query properties for specific values*
+_Allows users to query properties for specific values_
 
 ### Properties
 
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|query|[query](#schemaquery)|false|none|Define which properties to query and the operatations to apply|
+| Name  | Type                  | Required | Restrictions | Description                                                    |
+| ----- | --------------------- | -------- | ------------ | -------------------------------------------------------------- |
+| query | [query](#schemaquery) | false    | none         | Define which properties to query and the operatations to apply |
 
 <h2 id="tocSquery">query</h2>
 
@@ -1554,16 +1377,15 @@ If a feature has multiple temporal properties, it is the decision of the server 
     "lt": 50
   }
 }
-
 ```
 
-*Define which properties to query and the operatations to apply*
+_Define which properties to query and the operatations to apply_
 
 ### Properties
 
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|**additionalProperties**|[queryProp](#schemaqueryprop)|false|none|Apply query operations to a specific property|
+| Name                     | Type                          | Required | Restrictions | Description                                   |
+| ------------------------ | ----------------------------- | -------- | ------------ | --------------------------------------------- |
+| **additionalProperties** | [queryProp](#schemaqueryprop) | false    | none         | Apply query operations to a specific property |
 
 <h2 id="tocSqueryprop">queryProp</h2>
 
@@ -1571,29 +1393,28 @@ If a feature has multiple temporal properties, it is the decision of the server 
 
 ```json
 null
-
 ```
 
-*Apply query operations to a specific property*
+_Apply query operations to a specific property_
 
 ### Properties
 
-*anyOf*
+_anyOf_
 
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|*anonymous*|any|false|none|if the object doesn't contain any of the operators, it is equivalent to using the equals operator|
+| Name        | Type | Required | Restrictions | Description                                                                                       |
+| ----------- | ---- | -------- | ------------ | ------------------------------------------------------------------------------------------------- |
+| _anonymous_ | any  | false    | none         | if the object doesn't contain any of the operators, it is equivalent to using the equals operator |
 
-*or*
+_or_
 
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|*anonymous*|object|false|none|Match using an operator|
-|» eq|any|false|none|Find items with a property that is equal to the specified value. For strings, a case-insensitive comparison must be performed.|
-|» gt|number|false|none|Find items with a property value greater than the specified value.|
-|» lt|number|false|none|Find items with a property value less than the specified value.|
-|» gte|number|false|none|Find items with a property value greater than or equal the specified value.|
-|» lte|number|false|none|Find items with a property value greater than or equal the specified value.|
+| Name        | Type   | Required | Restrictions | Description                                                                                                                    |
+| ----------- | ------ | -------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------ |
+| _anonymous_ | object | false    | none         | Match using an operator                                                                                                        |
+| » eq        | any    | false    | none         | Find items with a property that is equal to the specified value. For strings, a case-insensitive comparison must be performed. |
+| » gt        | number | false    | none         | Find items with a property value greater than the specified value.                                                             |
+| » lt        | number | false    | none         | Find items with a property value less than the specified value.                                                                |
+| » gte       | number | false    | none         | Find items with a property value greater than or equal the specified value.                                                    |
+| » lte       | number | false    | none         | Find items with a property value greater than or equal the specified value.                                                    |
 
 <h2 id="tocSsortfilter">sortFilter</h2>
 
@@ -1608,16 +1429,15 @@ null
     }
   ]
 }
-
 ```
 
-*Sort the results*
+_Sort the results_
 
 ### Properties
 
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|sort|[sort](#schemasort)|false|none|An array of objects containing a property name and sort direction.|
+| Name | Type                | Required | Restrictions | Description                                                        |
+| ---- | ------------------- | -------- | ------------ | ------------------------------------------------------------------ |
+| sort | [sort](#schemasort) | false    | none         | An array of objects containing a property name and sort direction. |
 
 <h2 id="tocSsort">sort</h2>
 
@@ -1630,25 +1450,25 @@ null
     "direction": "desc"
   }
 ]
-
 ```
 
-*An array of objects containing a property name and sort direction.
-*
+\*An array of objects containing a property name and sort direction.
+
+-
 
 ### Properties
 
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|field|string|true|none|none|
-|direction|string|false|none|none|
+| Name      | Type   | Required | Restrictions | Description |
+| --------- | ------ | -------- | ------------ | ----------- |
+| field     | string | true     | none         | none        |
+| direction | string | false    | none         | none        |
 
 #### Enumerated Values
 
-|Property|Value|
-|---|---|
-|direction|asc|
-|direction|desc|
+| Property  | Value |
+| --------- | ----- |
+| direction | asc   |
+| direction | desc  |
 
 <h2 id="tocSextent">extent</h2>
 
@@ -1657,36 +1477,27 @@ null
 ```json
 {
   "crs": "http://www.opengis.net/def/crs/OGC/1.3/CRS84",
-  "spatial": [
-    -180,
-    -90,
-    180,
-    90
-  ],
+  "spatial": [-180, -90, 180, 90],
   "trs": "http://www.opengis.net/def/uom/ISO-8601/0/Gregorian",
-  "temporal": [
-    "2011-11-11T12:22:11Z",
-    "2012-11-24T12:32:43Z"
-  ]
+  "temporal": ["2011-11-11T12:22:11Z", "2012-11-24T12:32:43Z"]
 }
-
 ```
 
 ### Properties
 
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|crs|string|false|none|Coordinate reference system of the coordinates in the spatial extent (property `spatial`). In the Core, only WGS84 longitude/latitude is supported. Extensions may support additional coordinate reference systems.|
-|spatial|[number]|false|none|West, south, east, north edges of the spatial extent. The minimum and maximum values apply to the coordinate reference system WGS84 longitude/latitude that is supported in the Core. If, for example, a projected coordinate reference system is used, the minimum and maximum values need to be adjusted.|
-|trs|string|false|none|Temporal reference system of the coordinates in the temporal extent (property `temporal`). In the Core, only the Gregorian calendar is supported. Extensions may support additional temporal reference systems.|
-|temporal|[string]|false|none|Begin and end times of the temporal extent.|
+| Name     | Type     | Required | Restrictions | Description                                                                                                                                                                                                                                                                                                 |
+| -------- | -------- | -------- | ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| crs      | string   | false    | none         | Coordinate reference system of the coordinates in the spatial extent (property `spatial`). In the Core, only WGS84 longitude/latitude is supported. Extensions may support additional coordinate reference systems.                                                                                         |
+| spatial  | [number] | false    | none         | West, south, east, north edges of the spatial extent. The minimum and maximum values apply to the coordinate reference system WGS84 longitude/latitude that is supported in the Core. If, for example, a projected coordinate reference system is used, the minimum and maximum values need to be adjusted. |
+| trs      | string   | false    | none         | Temporal reference system of the coordinates in the temporal extent (property `temporal`). In the Core, only the Gregorian calendar is supported. Extensions may support additional temporal reference systems.                                                                                             |
+| temporal | [string] | false    | none         | Begin and end times of the temporal extent.                                                                                                                                                                                                                                                                 |
 
 #### Enumerated Values
 
-|Property|Value|
-|---|---|
-|crs|http://www.opengis.net/def/crs/OGC/1.3/CRS84|
-|trs|http://www.opengis.net/def/uom/ISO-8601/0/Gregorian|
+| Property | Value                                               |
+| -------- | --------------------------------------------------- |
+| crs      | http://www.opengis.net/def/crs/OGC/1.3/CRS84        |
+| trs      | http://www.opengis.net/def/uom/ISO-8601/0/Gregorian |
 
 <h2 id="tocSfieldsfilter">fieldsFilter</h2>
 
@@ -1696,28 +1507,19 @@ null
 {
   "fields": {
     "geometry": true,
-    "include": [
-      [
-        "eo:cloud_cover"
-      ]
-    ],
-    "exclude": [
-      [
-        "eo:sun_azimuth"
-      ]
-    ]
+    "include": [["eo:cloud_cover"]],
+    "exclude": [["eo:sun_azimuth"]]
   }
 }
-
 ```
 
-*Determines the shape of the features in the response*
+_Determines the shape of the features in the response_
 
 ### Properties
 
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|fields|[fields](#schemafields)|false|none|The geometry member determines whether the geometry is populated or is null. The include and exclude members specify an array of property names that are either  included or excluded from the result, respectively. If both include and exclude  are specified, include takes precedence. id and links are required feature properties and cannot be excluded.|
+| Name   | Type                    | Required | Restrictions | Description                                                                                                                                                                                                                                                                                                                                                   |
+| ------ | ----------------------- | -------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| fields | [fields](#schemafields) | false    | none         | The geometry member determines whether the geometry is populated or is null. The include and exclude members specify an array of property names that are either included or excluded from the result, respectively. If both include and exclude are specified, include takes precedence. id and links are required feature properties and cannot be excluded. |
 
 <h2 id="tocSfields">fields</h2>
 
@@ -1726,32 +1528,23 @@ null
 ```json
 {
   "geometry": true,
-  "include": [
-    [
-      "eo:cloud_cover"
-    ]
-  ],
-  "exclude": [
-    [
-      "eo:sun_azimuth"
-    ]
-  ]
+  "include": [["eo:cloud_cover"]],
+  "exclude": [["eo:sun_azimuth"]]
 }
-
 ```
 
-*The geometry member determines whether the geometry is populated or is null. The
-include and exclude members specify an array of property names that are either 
-included or excluded from the result, respectively. If both include and exclude 
+\*The geometry member determines whether the geometry is populated or is null. The
+include and exclude members specify an array of property names that are either
+included or excluded from the result, respectively. If both include and exclude
 are specified, include takes precedence.
 id and links are required feature properties and cannot be excluded.
-*
+
+-
 
 ### Properties
 
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|geometry|boolean|false|none|none|
-|include|[string]|false|none|none|
-|exclude|[string]|false|none|none|
-
+| Name     | Type     | Required | Restrictions | Description |
+| -------- | -------- | -------- | ------------ | ----------- |
+| geometry | boolean  | false    | none         | none        |
+| include  | [string] | false    | none         | none        |
+| exclude  | [string] | false    | none         | none        |

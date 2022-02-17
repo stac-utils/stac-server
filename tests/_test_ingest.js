@@ -9,24 +9,24 @@ const setup = () => {
   const dupOptions = {
     readable: true,
     writable: true,
-    objectMode: true
+    objectMode: true,
   }
   const writeOptions = {
     writable: true,
     readable: false,
-    objectMode: true
+    objectMode: true,
   }
   // Catalog is filtered by real toEs transform stream but is left in here.
   const toEs = new MemoryStream(null, dupOptions)
   const esStream = new MemoryStream(null, writeOptions)
   const backend = {
     stream: () => ({ toEs, esStream }),
-    prepare: sinon.stub().resolves(true)
+    prepare: sinon.stub().resolves(true),
   }
   return {
     toEs,
     esStream,
-    backend
+    backend,
   }
 }
 
@@ -52,7 +52,7 @@ const setup = () => {
 // })
 
 test('ingestItem passes item through transform stream', async (t) => {
-  const { esStream, backend } = setup()
+  const { esStream } = setup()
   await ingestItems([firstItem], stream)
   t.deepEqual(esStream.queue[0], firstItem)
 })

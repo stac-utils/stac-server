@@ -5,9 +5,8 @@ const ingest = require('../../libs/ingest.js')
 
 const fs = require('fs')
 
-
 async function doIngest() {
-  [
+  ;[
     '../fixtures/stac/collection2_item.json',
     '../fixtures/stac/LC80100102015050LGN00.json',
     '../fixtures/stac/LC80100102015082LGN00.json'

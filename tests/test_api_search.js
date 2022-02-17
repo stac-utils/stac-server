@@ -1,6 +1,6 @@
 const test = require('ava')
 const sinon = require('sinon')
-const proxquire = require('proxyquire')
+// const proxquire = require('proxyquire')
 const api = require('../libs/api')
 const item = require('./fixtures/item.json')
 
@@ -8,7 +8,7 @@ function cloneMutatedItem() {
   return Object.assign({}, item, { links: item.links.slice(0) })
 }
 
-/*test('search es error', async (t) => {
+/* test('search es error', async (t) => {
   const error = sinon.spy()
   const proxyApi = proxquire('../libs/api', {
     console: {
@@ -23,7 +23,7 @@ function cloneMutatedItem() {
     'Logs Elasticsearch error via Winston transport')
   t.is(response.message, errorMessage)
   t.is(response.code, 500)
-})*/
+}) */
 
 test('root /', async (t) => {
   const search = sinon.stub().resolves({ results: [], meta: {} })
@@ -56,36 +56,39 @@ test('search /', async (t) => {
     {
       rel: 'service-desc',
       type: 'application/vnd.oai.openapi+json;version=3.0',
-      href: 'endpoint/api'
+      href: 'endpoint/api',
     },
     {
       rel: 'conformance',
       type: 'application/json',
-      href: 'endpoint/conformance'
+      href: 'endpoint/conformance',
     },
     {
       rel: 'data',
       type: 'application/json',
-      href: 'endpoint/collections'
+      href: 'endpoint/collections',
     },
     {
       rel: 'self',
       type: 'application/json',
-      href: 'endpoint/'
+      href: 'endpoint/',
     },
     {
       rel: 'search',
       type: 'application/geo+json',
-      href: 'endpoint/search'
+      href: 'endpoint/search',
     },
     {
       rel: 'docs',
-      href: 'test'
+      href: 'test',
     }
   ]
   t.is(getCollections.firstCall.args[0], 1)
-  t.deepEqual(actual.links, expectedLinks,
-    'Returns STAC catalog with links to collections')
+  t.deepEqual(
+    actual.links,
+    expectedLinks,
+    'Returns STAC catalog with links to collections'
+  )
 })
 
 // test('search /search wraps results', async (t) => {
@@ -121,15 +124,18 @@ test('search /', async (t) => {
 test('search /search query parameters', async (t) => {
   const search = sinon.stub().resolves({ results: [], meta: {} })
   const backend = { search }
-  const query = { 'test': true }
+  const query = { test: true }
   const queryParams = {
     page: 1,
     limit: 2,
-    query
+    query,
   }
   api.API('/search', queryParams, backend, 'endpoint')
-  t.deepEqual(search.firstCall.args[0], { query },
-    'Extracts query to use in search parameters')
+  t.deepEqual(
+    search.firstCall.args[0],
+    { query },
+    'Extracts query to use in search parameters'
+  )
 })
 
 test('search /search intersects parameter', async (t) => {
@@ -138,17 +144,23 @@ test('search /search intersects parameter', async (t) => {
   const queryParams = {
     intersects: item.geometry,
     page: 1,
-    limit: 1
+    limit: 1,
   }
   api.API('/search', queryParams, backend, 'endpoint')
-  t.deepEqual(search.firstCall.args[0].intersects, item.geometry,
-    'Uses valid GeoJSON as intersects search parameter')
+  t.deepEqual(
+    search.firstCall.args[0].intersects,
+    item.geometry,
+    'Uses valid GeoJSON as intersects search parameter'
+  )
 
   search.resetHistory()
   queryParams.intersects = JSON.stringify(item.geometry)
   api.API('/search', queryParams, backend, 'endpoint')
-  t.deepEqual(search.firstCall.args[0].intersects, item.geometry,
-    'Handles stringified GeoJSON intersects parameter')
+  t.deepEqual(
+    search.firstCall.args[0].intersects,
+    item.geometry,
+    'Handles stringified GeoJSON intersects parameter'
+  )
 })
 
 test('search /search bbox parameter', async (t) => {
@@ -162,26 +174,34 @@ test('search /search bbox parameter', async (t) => {
   const queryParams = {
     bbox,
     page: 1,
-    limit: 1
+    limit: 1,
   }
   const expected = {
     type: 'Polygon',
-    coordinates: [[
-      [s, w],
-      [n, w],
-      [n, e],
-      [s, e],
-      [s, w]
-    ]]
+    coordinates: [
+      [
+        [s, w],
+        [n, w],
+        [n, e],
+        [s, e],
+        [s, w]
+      ]
+    ],
   }
   await api.API('/search', queryParams, backend, 'endpoint')
-  t.deepEqual(search.firstCall.args[0].intersects, expected,
-    'Converts a [w,s,e,n] bbox to an intersects search parameter')
+  t.deepEqual(
+    search.firstCall.args[0].intersects,
+    expected,
+    'Converts a [w,s,e,n] bbox to an intersects search parameter'
+  )
   search.resetHistory()
   queryParams.bbox = `[${bbox.toString()}]`
   await api.API('/search', queryParams, backend, 'endpoint')
-  t.deepEqual(search.firstCall.args[0].intersects, expected,
-    'Converts stringified [w,s,e,n] bbox to an intersects search parameter')
+  t.deepEqual(
+    search.firstCall.args[0].intersects,
+    expected,
+    'Converts stringified [w,s,e,n] bbox to an intersects search parameter'
+  )
 })
 
 test('search /search time parameter', async (t) => {
@@ -191,21 +211,28 @@ test('search /search time parameter', async (t) => {
   const queryParams = {
     page: 1,
     limit: 2,
-    datetime: range
+    datetime: range,
   }
   await api.API('/search', queryParams, backend, 'endpoint')
-  t.deepEqual(search.firstCall.args[0], { datetime: range },
+  t.deepEqual(
+    search.firstCall.args[0],
+    { datetime: range },
     'Extracts time query parameter and transforms it into ' +
-    'datetime search parameter')
+      'datetime search parameter'
+  )
 })
 
 test('search /collections', async (t) => {
-  const getCollections = sinon.stub().resolves([{ id: 1, links: []}])
+  const getCollections = sinon.stub().resolves([{ id: 1, links: [] }])
   const backend = { getCollections }
   const actual = await api.API('/collections', {}, backend, 'endpoint')
   t.is(getCollections.firstCall.args[1], 100)
   t.is(actual.collections.length, 1)
-  t.is(actual.collections[0].links.length, 4, 'Adds STAC links to each collection')
+  t.is(
+    actual.collections[0].links.length,
+    4,
+    'Adds STAC links to each collection'
+  )
 })
 
 test('search /collections/collectionId', async (t) => {
@@ -213,20 +240,32 @@ test('search /collections/collectionId', async (t) => {
   const backend = { getCollection }
   const collectionId = 'collectionId'
   let actual = await api.API(
-    `/collections/${collectionId}`, { test: 'test' }, backend, 'endpoint'
+    `/collections/${collectionId}`,
+    { test: 'test' },
+    backend,
+    'endpoint'
   )
-  t.deepEqual(getCollection.firstCall.args[0], collectionId,
+  t.deepEqual(
+    getCollection.firstCall.args[0],
+    collectionId,
     'Calls search with the collectionId path element as id parameter' +
-    ' and ignores other passed filter parameters')
+      ' and ignores other passed filter parameters'
+  )
   t.is(actual.links.length, 4, 'Returns the first found collection as object')
 
   getCollection.reset()
   getCollection.throws('err', 'Collection not found')
   actual = await api.API(
-    `/collections/${collectionId}`, {}, backend, 'endpoint'
+    `/collections/${collectionId}`,
+    {},
+    backend,
+    'endpoint'
   )
-  t.is(actual.message, 'Collection not found',
-    'Sends error when not collections are found in search')
+  t.is(
+    actual.message,
+    'Collection not found',
+    'Sends error when not collections are found in search'
+  )
 })
 
 test('search /collections/collectionId/items', async (t) => {
@@ -234,23 +273,24 @@ test('search /collections/collectionId/items', async (t) => {
     limit: 1,
     page: 1,
     found: 1,
-    returned: 1
+    returned: 1,
   }
 
   const search = sinon.stub().resolves({
     meta,
-    results: []
+    results: [],
   })
   const backend = { search }
   const collectionId = 'collectionId'
-  await api.API(
-    `/collections/${collectionId}/items`, {}, backend, 'endpoint'
-  )
+  await api.API(`/collections/${collectionId}/items`, {}, backend, 'endpoint')
   const expectedParameters = {
-    collections: [collectionId]
+    collections: [collectionId],
   }
-  t.deepEqual(search.firstCall.args[0], expectedParameters,
-    'Calls search with the collectionId as a parameter')
+  t.deepEqual(
+    search.firstCall.args[0],
+    expectedParameters,
+    'Calls search with the collectionId as a parameter'
+  )
 })
 
 test('search /collections/collectionId/items/itemId', async (t) => {
@@ -258,22 +298,28 @@ test('search /collections/collectionId/items/itemId', async (t) => {
     limit: 1,
     page: 1,
     found: 1,
-    returned: 1
+    returned: 1,
   }
   const clonedItem = cloneMutatedItem()
   const results = [clonedItem]
   const search = sinon.stub().resolves({
     meta,
-    results
+    results,
   })
   const backend = { search }
   const itemId = 'itemId'
   const actual = await api.API(
-    `/collections/collectionId/items/${itemId}`, {}, backend, 'endpoint'
+    `/collections/collectionId/items/${itemId}`,
+    {},
+    backend,
+    'endpoint'
   )
-  t.deepEqual(search.firstCall.args[0], { collections: ['collectionId'], id: itemId },
+  t.deepEqual(
+    search.firstCall.args[0],
+    { collections: ['collectionId'], id: itemId },
     'Calls search with the itemId path element as id parameter' +
-    ' and ignores other passed filter parameters')
+      ' and ignores other passed filter parameters'
+  )
 
   t.is(actual.type, 'Feature')
   t.is(actual.links.length, 4, 'Adds STAC links to response object')

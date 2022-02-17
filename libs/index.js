@@ -6,5 +6,5 @@ module.exports = {
   api: require('./api.js'),
   es: require('./es.js'),
   esStream: require('./esStream.js'),
-  ingest: require('./ingest.js')
+  ingest: require('./ingest.js'),
 }

@@ -5,3 +5,7 @@
 **/.serverless/**
 **/coverage/**
 tmp/**
+tests/**/*.json
+*.html
+package-lock.json
+package.json

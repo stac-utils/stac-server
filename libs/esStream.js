@@ -1,10 +1,9 @@
 const _stream = require('stream')
 const through2 = require('through2')
-const logger = console //require('./logger')
+const logger = console // require('./logger')
 const esClient = require('./esClient.js')
 
 const COLLECTIONS_INDEX = process.env.COLLECTIONS_INDEX || 'collections'
-
 
 class ElasticSearchWritableStream extends _stream.Writable {
   constructor(config, options) {
@@ -26,7 +25,7 @@ class ElasticSearchWritableStream extends _stream.Writable {
       operation[record.action] = {
         _index: record.index,
         _type: record.type,
-        _id: record.id
+        _id: record.id,
       }
       if (record.parent) {
         operation[record.action]._parent = record.parent
@@ -40,6 +39,7 @@ class ElasticSearchWritableStream extends _stream.Writable {
     }, [])
     return operations
   }
+
   // Write individual records with update/upsert
   async _write(record, enc, next) {
     try {
@@ -50,7 +50,9 @@ class ElasticSearchWritableStream extends _stream.Writable {
         // if this isn't a collection check if index exists
         const exists = await this.client.indices.exists({ index })
         if (!exists.body) {
-          throw new Error(`Index ${index} does not exist, add before ingesting items`)
+          throw new Error(
+            `Index ${index} does not exist, add before ingesting items`
+          )
         }
       }
 
@@ -58,7 +60,7 @@ class ElasticSearchWritableStream extends _stream.Writable {
         index,
         type: '_doc',
         id,
-        body
+        body,
       })
 
       logger.debug(`Wrote document ${id}`)
@@ -95,7 +97,6 @@ class ElasticSearchWritableStream extends _stream.Writable {
   }
 }
 
-
 // Given an input stream and a transform, write records to an elasticsearch instance
 async function stream() {
   let esStreams
@@ -105,9 +106,12 @@ async function stream() {
     const toEs = through2.obj({ objectMode: true }, (data, encoding, next) => {
       let index = ''
       logger.debug(`Data: ${JSON.stringify(data)}`)
-      if (data && data.hasOwnProperty('extent')) {
+      if (data && Object.prototype.hasOwnProperty.call(data, 'extent')) {
         index = COLLECTIONS_INDEX
-      } else if (data && data.hasOwnProperty('geometry')) {
+      } else if (
+        data &&
+        Object.prototype.hasOwnProperty.call(data, 'geometry')
+      ) {
         index = data.collection
       } else {
         next()
@@ -115,11 +119,19 @@ async function stream() {
       }
 
       // remove any hierarchy links in a non-mutating way
-      const hlinks = ['self', 'root', 'parent', 'child', 'collection', 'item', 'items']
+      const hlinks = [
+        'self',
+        'root',
+        'parent',
+        'child',
+        'collection',
+        'item',
+        'items'
+      ]
       const links = data.links.filter((link) => !hlinks.includes(link.rel))
       const esDataObject = Object.assign({}, data, { links })
 
-      if (data.hasOwnProperty('properties')) {
+      if (Object.prototype.hasOwnProperty.call(data, 'properties')) {
         esDataObject.properties.created = new Date().toISOString()
         esDataObject.properties.updated = new Date().toISOString()
       }
@@ -132,22 +144,24 @@ async function stream() {
         _retry_on_conflict: 3,
         body: {
           doc: esDataObject,
-          doc_as_upsert: true
-        }
+          doc_as_upsert: true,
+        },
       }
       next(null, record)
     })
 
-    const esStream = new ElasticSearchWritableStream({ client: client }, {
-      objectMode: true,
-      highWaterMark: Number(process.env.ES_BATCH_SIZE) || 500
-    })
+    const esStream = new ElasticSearchWritableStream(
+      { client: client },
+      {
+        objectMode: true,
+        highWaterMark: Number(process.env.ES_BATCH_SIZE) || 500,
+      }
+    )
     esStreams = { toEs, esStream }
   } catch (error) {
     logger.error(error)
   }
   return esStreams
 }
-
 
 module.exports = stream

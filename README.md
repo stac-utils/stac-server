@@ -1,21 +1,20 @@
-# stac-server 
+# stac-server
 
 ![](https://github.com/stac-utils/stac-server/workflows/Push%20Event/badge.svg)
 
 Stac-server is a STAC compliant Rest API for searching and serving metadata for geospatial data (including but not limited to satellite imagery). The STAC version supported by a given version of stac-api is shown in the table below. Additional information can be found in the [CHANGELOG](CHANGELOG.md)
 
-| stac-server Version | STAC Version  |
-| -------- | ---------- |
-| 0.1.x    | 0.9.x      |
-| 0.2.x    | <1.0.0-rc.1 |
-| 0.3.x    | 1.0.0 |
+| stac-server Version | STAC Version |
+| ------------------- | ------------ |
+| 0.1.x               | 0.9.x        |
+| 0.2.x               | <1.0.0-rc.1  |
+| 0.3.x               | 1.0.0        |
 
 The following APIs are deployed instances of stac-server:
 
-| Name     | Version   | Description |
-| -------- | ----      | ----        |
+| Name                                                       | Version      | Description                         |
+| ---------------------------------------------------------- | ------------ | ----------------------------------- |
 | [Earth Search](https://earth-search.aws.element84.com/v0/) | 1.0.0-beta.2 | Catalog of some AWS Public Datasets |
-
 
 ## Usage
 
@@ -23,7 +22,6 @@ Stac-server is a RESTful API that returns JSON, see the [documentation](http://s
 
 - [JSONView Chrome Extension](https://chrome.google.com/webstore/detail/jsonview/chklaanhfefbnpoihckbnefhakgolnmc?hl=en): Useful for exploring the API in the browser.
 - [pystac-client](https://github.com/stac-utils/pystac-client): A Python client library and CLI for searching a STAC compliant API
-
 
 ## Deployment
 
@@ -38,18 +36,18 @@ $ cd stac-server
 
 There are some settings that should be reviewed and updated as needeed in the [serverless config file](serverless.yml), under provider->environment:
 
-| Name | Description | Default Value |
-| ---- | ----------- | ------------- |
-| STAC_VERSION | STAC Version of this STAC API | 1.0.0 |
-| STAC_API_VERSION | STAC API Version of this STAC API | 1.0.0-beta.1 |
-| STAC_ID | ID of this catalog | stac-server |
-| STAC_TITLE | Title of this catalog | STAC API |
-| STAC_DESCRIPTION | Description of this catalog | A STAC API |
-| STAC_DOCS_URL | URL to documentation | [https://stac-utils.github.io/stac-server](https://stac-utils.github.io/stac-server) |
-| ES_BATCH_SIZE | Number of records to ingest in single batch | 500 |
-| LOG_LEVEL | Level for logging (CRITICAL, ERROR, WARNING, INFO, DEBUG) | INFO |
-| STAC_API_URL | The root endpoint of this API | Inferred from request |
-| ENABLE_TRANSACTIONS_EXTENSION | Boolean specifying if the [Transaction Extension](https://github.com/radiantearth/stac-api-spec/tree/master/extensions/transaction) should be activated | false |
+| Name                          | Description                                                                                                                                             | Default Value                                                                        |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| STAC_VERSION                  | STAC Version of this STAC API                                                                                                                           | 1.0.0                                                                                |
+| STAC_API_VERSION              | STAC API Version of this STAC API                                                                                                                       | 1.0.0-beta.1                                                                         |
+| STAC_ID                       | ID of this catalog                                                                                                                                      | stac-server                                                                          |
+| STAC_TITLE                    | Title of this catalog                                                                                                                                   | STAC API                                                                             |
+| STAC_DESCRIPTION              | Description of this catalog                                                                                                                             | A STAC API                                                                           |
+| STAC_DOCS_URL                 | URL to documentation                                                                                                                                    | [https://stac-utils.github.io/stac-server](https://stac-utils.github.io/stac-server) |
+| ES_BATCH_SIZE                 | Number of records to ingest in single batch                                                                                                             | 500                                                                                  |
+| LOG_LEVEL                     | Level for logging (CRITICAL, ERROR, WARNING, INFO, DEBUG)                                                                                               | INFO                                                                                 |
+| STAC_API_URL                  | The root endpoint of this API                                                                                                                           | Inferred from request                                                                |
+| ENABLE_TRANSACTIONS_EXTENSION | Boolean specifying if the [Transaction Extension](https://github.com/radiantearth/stac-api-spec/tree/master/extensions/transaction) should be activated | false                                                                                |
 
 After reviewing the settings, build and deploy the project.
 
@@ -85,14 +83,13 @@ STAC Collections should be ingested before Items that belong to that Collection.
 
 Stac-server can also be subscribed to SNS Topics that publish complete STAC Items as their message. This provides a way to keep stac-server up to date with new data. Use the AWS Lambda console for the function `stac-server-<stage>-subscibe-to-sns` to subscribe to an SNS Topic for which you have the full ARN and permission to subscribe to. This could be an SNS Topic you created yourself to publish STAC records to, or a publicly available one, such as for [Sentinel](https://github.com/sat-utils/sat-stac-sentinel).
 
-*Note*, that adding the subscription via the topic page does not seem to work. Instead, add a trigger on Lambda edit page.
+_Note_, that adding the subscription via the topic page does not seem to work. Instead, add a trigger on Lambda edit page.
 
 ### Ingest Errors
 
 Errors that occur during ingest will end up in the dead letter processing queue, where they are processed by the `stac-server-<stage>-failed-ingest` Lambda function. Currently all the failed-ingest Lambda does is log the error, see the CloudWatch log `/aws/lambda/stac-server-<stage>-failed-ingest` for errors.
 
 ## Development
-
 
 ```
 # Install dependencies in package.json

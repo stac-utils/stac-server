@@ -8,30 +8,33 @@ const setup = () => {
   const ingestItem = sinon.stub().resolves(true)
   const elasticsearch = 'elasticsearch'
   const ECS = sinon.stub()
-  const runTask = sinon.stub().resolves(true).returns({
-    promise: () => (Promise.resolve(true))
-  })
+  const runTask = sinon
+    .stub()
+    .resolves(true)
+    .returns({
+      promise: () => Promise.resolve(true),
+    })
   ECS.prototype.runTask = runTask
   const AWS = {
-    ECS
+    ECS,
   }
   const satlib = {
     ingest: {
       ingest,
-      ingestItem
+      ingestItem,
     },
-    es: elasticsearch
+    es: elasticsearch,
   }
   const lambda = proxyquire('../index.js', {
     '@sat-utils/api-lib': satlib,
-    'aws-sdk': AWS
+    'aws-sdk': AWS,
   })
   return {
     ingest,
     ingestItem,
     elasticsearch,
     lambda,
-    runTask
+    runTask,
   }
 }
 
@@ -42,47 +45,63 @@ test('handler uses non-recursive ingest for S3 SNS Event', async (t) => {
   const s3Event = createEvent({
     template: 'aws:s3',
     merge: {
-      Records: [{
-        eventName: 'ObjectCreated:Put',
-        s3: {
-          bucket: {
-            name: bucket
+      Records: [
+        {
+          eventName: 'ObjectCreated:Put',
+          s3: {
+            bucket: {
+              name: bucket,
+            },
+            object: {
+              key: key,
+            },
           },
-          object: {
-            key: key
-          }
         }
-      }]
-    }
+      ],
+    },
   })
   const message = JSON.stringify(s3Event)
 
   const snsEvent = createEvent({
     template: 'aws:sns',
     merge: {
-      Records: [{
-        Sns: {
-          Message: message
+      Records: [
+        {
+          Sns: {
+            Message: message,
+          },
         }
-      }]
-    }
+      ],
+    },
   })
   await lambda.handler(snsEvent)
   const expectedUrl = `https://${bucket}.s3.amazonaws.com/${key}`
   const expectedRecursive = false
   t.is(ingest.firstCall.args[0], expectedUrl, 'S3 Url is parsed correctly')
-  t.is(ingest.firstCall.args[1], elasticsearch, 'ES library passed as parameter')
+  t.is(
+    ingest.firstCall.args[1],
+    elasticsearch,
+    'ES library passed as parameter'
+  )
   t.is(ingest.firstCall.args[2], expectedRecursive, 'Recursive is false')
 })
 
 test('handler calls ingestItem when event payload is a feature', async (t) => {
   const { ingestItem, lambda, elasticsearch } = setup()
   const event = {
-    type: 'Feature'
+    type: 'Feature',
   }
   await lambda.handler(event)
-  t.deepEqual(ingestItem.firstCall.args[0], event, 'Calls ingestItem with event')
-  t.is(ingestItem.firstCall.args[1], elasticsearch, 'ES library passed as a parameter')
+  t.deepEqual(
+    ingestItem.firstCall.args[0],
+    event,
+    'Calls ingestItem with event'
+  )
+  t.is(
+    ingestItem.firstCall.args[1],
+    elasticsearch,
+    'ES library passed as a parameter'
+  )
 })
 
 test('handler call ingest when event payload contains url', async (t) => {
@@ -93,11 +112,13 @@ test('handler call ingest when event payload contains url', async (t) => {
   const event = {
     url,
     recursive,
-    collectionsOnly
+    collectionsOnly,
   }
   await lambda.handler(event)
-  t.truthy(ingest.calledOnceWith(url, elasticsearch, recursive, collectionsOnly),
-    'Calls ingest with url and correct parameters.')
+  t.truthy(
+    ingest.calledOnceWith(url, elasticsearch, recursive, collectionsOnly),
+    'Calls ingest with url and correct parameters.'
+  )
 })
 
 test('ingest with fargate event creates ecs task with command', async (t) => {
@@ -106,8 +127,8 @@ test('ingest with fargate event creates ecs task with command', async (t) => {
   const { lambda, runTask } = setup()
   const event = {
     fargate: {
-      url: 'url'
-    }
+      url: 'url',
+    },
   }
   await lambda.handler(event)
   const params = runTask.firstCall.args[0]

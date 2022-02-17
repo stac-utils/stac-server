@@ -2,7 +2,6 @@ const satlib = require('../../libs')
 const logger = console
 const httpMethods = require('../../utils/http-methods')
 
-
 function determineEndpoint(event) {
   let endpoint = process.env.STAC_API_URL
   if (typeof endpoint === 'undefined') {
@@ -35,9 +34,9 @@ function buildResponse(statusCode, result) {
     headers: {
       'Content-Type': 'application/json',
       'Access-Control-Allow-Origin': '*', // Required for CORS support to work
-      'Access-Control-Allow-Credentials': true
+      'Access-Control-Allow-Credentials': true,
     },
-    body: result
+    body: result,
   }
 }
 
@@ -45,8 +44,14 @@ module.exports.handler = async (event) => {
   logger.debug(`Event: ${JSON.stringify(event)}`)
   const endpoint = determineEndpoint(event)
   const query = buildRequest(event)
-  const result = await satlib.api.API(event.path, query, satlib.es, endpoint, event.httpMethod)
-  return result instanceof Error ?
-    buildResponse(404, result.message) :
-    buildResponse(200, JSON.stringify(result))
+  const result = await satlib.api.API(
+    event.path,
+    query,
+    satlib.es,
+    endpoint,
+    event.httpMethod
+  )
+  return result instanceof Error
+    ? buildResponse(404, result.message)
+    : buildResponse(200, JSON.stringify(result))
 }

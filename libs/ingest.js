@@ -1,26 +1,20 @@
 const { Readable } = require('readable-stream')
 const pump = require('pump')
-const logger = console //require('./logger')
-
+const logger = console // require('./logger')
 
 async function ingestItem(item, stream) {
-  const readable = new Readable({objectMode: true })
+  const readable = new Readable({ objectMode: true })
   const { toEs, esStream } = await stream()
   const promise = new Promise((resolve, reject) => {
-    pump(
-      readable,
-      toEs,
-      esStream,
-      (error) => {
-        if (error) {
-          logger.info(error)
-          reject(error)
-        } else {
-          logger.info(`Ingested item ${item.id}`)
-          resolve(true)
-        }
+    pump(readable, toEs, esStream, (error) => {
+      if (error) {
+        logger.info(error)
+        reject(error)
+      } else {
+        logger.info(`Ingested item ${item.id}`)
+        resolve(true)
       }
-    )
+    })
   })
   readable.push(item)
   readable.push(null)
@@ -31,20 +25,15 @@ async function ingestItems(items, stream) {
   const readable = new Readable({ objectMode: true })
   const { toEs, esStream } = await stream()
   const promise = new Promise((resolve, reject) => {
-    pump(
-      readable,
-      toEs,
-      esStream,
-      (error) => {
-        if (error) {
-          logger.info(error)
-          reject(error)
-        } else {
-          logger.debug('Ingested item')
-          resolve(true)
-        }
+    pump(readable, toEs, esStream, (error) => {
+      if (error) {
+        logger.info(error)
+        reject(error)
+      } else {
+        logger.debug('Ingested item')
+        resolve(true)
       }
-    )
+    })
   })
   items.forEach((item) => readable.push(item))
   readable.push(null)

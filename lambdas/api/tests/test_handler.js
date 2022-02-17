@@ -8,31 +8,31 @@ test('handler calls search with parameters', async (t) => {
   const search = sinon.stub().resolves(result)
   const satlib = {
     api: {
-      search
-    }
+      search,
+    },
   }
   const lambda = proxyquire('../index.js', {
-    '@sat-utils/api-lib': satlib
+    '@sat-utils/api-lib': satlib,
   })
   const host = 'host'
   const httpMethod = 'GET'
   const path = 'path'
 
   const queryStringParameters = {
-    test: 'test'
+    test: 'test',
   }
   const event = createEvent({
     template: 'aws:apiGateway',
     merge: {
       headers: {
         Host: host,
-        'Accept-Encoding': ''
+        'Accept-Encoding': '',
       },
       requestContext: {},
       httpMethod,
       queryStringParameters,
-      path
-    }
+      path,
+    },
   })
 
   const actual = await lambda.handler(event)
@@ -50,31 +50,31 @@ test('handler returns 404 for error', async (t) => {
   const search = sinon.stub().resolves(result)
   const satlib = {
     api: {
-      search
-    }
+      search,
+    },
   }
   const lambda = proxyquire('../index.js', {
-    '@sat-utils/api-lib': satlib
+    '@sat-utils/api-lib': satlib,
   })
   const host = 'host'
   const httpMethod = 'GET'
   const path = 'path'
 
   const queryStringParameters = {
-    test: 'test'
+    test: 'test',
   }
   const event = createEvent({
     template: 'aws:apiGateway',
     merge: {
       headers: {
         Host: host,
-        'Accept-Encoding': ''
+        'Accept-Encoding': '',
       },
       requestContext: {},
       httpMethod,
       queryStringParameters,
-      path
-    }
+      path,
+    },
   })
 
   const actual = await lambda.handler(event)

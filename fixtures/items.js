@@ -6,8 +6,8 @@ module.exports = () => ({
     properties: {
       geometry: { type: 'geo_shape' },
       properties: common.properties,
-      assets: { type: "object", enabled: false },
-      links: { type: "object", enabled: false },
-    }
-  }
+      assets: { type: 'object', enabled: false },
+      links: { type: 'object', enabled: false },
+    },
+  },
 })

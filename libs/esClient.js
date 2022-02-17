@@ -1,16 +1,17 @@
 'use strict'
 
 const AWS = require('aws-sdk')
-const { createAWSConnection, awsCredsifyAll } = require('@acuris/aws-es-connection')
+const {
+  createAWSConnection,
+  awsCredsifyAll,
+} = require('@acuris/aws-es-connection')
 const elasticsearch = require('@elastic/elasticsearch')
-const logger = console //require('./logger')
+const logger = console // require('./logger')
 
-const collections_mapping = require('../fixtures/collections.js')()
-const items_mapping = require('../fixtures/items.js')()
-
+const collectionsMapping = require('../fixtures/collections.js')()
+const itemsMapping = require('../fixtures/items.js')()
 
 let _esClient
-
 
 // Connect to an Elasticsearch instance
 async function connect() {
@@ -20,20 +21,20 @@ async function connect() {
   // use local client
   if (!process.env.ES_HOST) {
     esConfig = {
-      node: 'localhost:9200'
+      node: 'localhost:9200',
     }
     client = new elasticsearch.Client(esConfig)
   } else {
-    //const awsCredentials = await awsGetCredentials()
+    // const awsCredentials = await awsGetCredentials()
     const AWSConnector = createAWSConnection(AWS.config.credentials)
-    let esHost = process.env.ES_HOST;
-    if (esHost.indexOf('http') != 0) {
+    let esHost = process.env.ES_HOST
+    if (!esHost.startsWith('http')) {
       esHost = `https://${process.env.ES_HOST}`
     }
     client = awsCredsifyAll(
       new elasticsearch.Client({
         node: esHost,
-        Connection: AWSConnector
+        Connection: AWSConnector,
       })
     )
   }
@@ -61,11 +62,10 @@ async function esClient() {
   return _esClient
 }
 
-
-async function create_index(index) {
+async function createIndex(index) {
   const client = await esClient()
   const exists = await client.indices.exists({ index })
-  const mapping = (index === 'collections' ? collections_mapping : items_mapping)
+  const mapping = index === 'collections' ? collectionsMapping : itemsMapping
   if (!exists.body) {
     logger.info(`${index} does not exist, creating...`)
     try {
@@ -79,8 +79,7 @@ async function create_index(index) {
   }
 }
 
-
 module.exports = {
   client: esClient,
-  create_index
+  create_index: createIndex,
 }

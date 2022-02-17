@@ -1,64 +1,65 @@
-
 const properties = {
-  'type': 'object',
+  type: 'object',
   properties: {
-    'datetime': { type: 'date' },
-    'start_datetime': { type: 'date' },
-    'end_datetime': { type: 'date' },
-    'created': { type: 'date' },
-    'updated': { type: 'date' },
+    datetime: { type: 'date' },
+    start_datetime: { type: 'date' },
+    end_datetime: { type: 'date' },
+    created: { type: 'date' },
+    updated: { type: 'date' },
     'eo:cloud_cover': { type: 'float' },
-    'eo:gsd': { type: 'float' }
-  }
+    'eo:gsd': { type: 'float' },
+  },
 }
 
+/* dynamic_templates is a value used in Elastisearch configuration */
+/* eslint camelcase: "off" */
 const dynamic_templates = [
   {
     descriptions: {
       match_mapping_type: 'string',
       match: 'description',
-      mapping: { type: 'text' }
-    }
+      mapping: { type: 'text' },
+    },
   },
   {
     titles: {
       match_mapping_type: 'string',
       match: 'title',
-      mapping: { type: 'text' }
-    }
+      mapping: { type: 'text' },
+    },
   },
   {
     proj_centroid: {
       match_mapping_type: 'string',
       match: 'proj:centroid',
-      mapping: { type: 'geo_point' }
-    }
+      mapping: { type: 'geo_point' },
+    },
   },
   {
     proj_geometry: {
       match_mapping_type: 'string',
       match: 'proj:geometry',
-      mapping: { type: 'geo_shape' }
-    }
+      mapping: { type: 'geo_shape' },
+    },
   },
   {
     no_index_href: {
       match: 'href',
       mapping: {
         type: 'text',
-        index: false
-      }
-    }
+        index: false,
+      },
+    },
   },
   {
     strings: {
       match_mapping_type: 'string',
-      mapping: { type: 'keyword' }
-    }
+      mapping: { type: 'keyword' },
+    },
   }
 ]
 
 module.exports = {
   properties,
-  dynamic_templates
+  dynamic_templates,
 }

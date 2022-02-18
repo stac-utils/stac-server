@@ -51,8 +51,8 @@ const extractBbox = function (params) {
     if (typeof bbox === 'string') {
       try {
         bboxArray = JSON.parse(bbox)
-      } catch(e) {
-        bboxArray = bbox.split(',')
+      } catch (e) {
+        bboxArray = bbox.split(',').map(parseFloat)
       }
     } else {
       bboxArray = bbox
@@ -624,5 +624,6 @@ module.exports = {
   searchItems,
   API,
   parsePath,
-  extractIntersects
+  extractIntersects,
+  extractBbox
 }

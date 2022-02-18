@@ -2,7 +2,7 @@ service: stac-server
 
 provider:
   name: aws
-  runtime: nodejs12.x
+  runtime: nodejs14.x
   stage: ${opt:stage, 'dev'}
   region: ${opt:region, 'us-west-2'}
   environment:
@@ -30,7 +30,7 @@ provider:
           - sqs:DeleteMessage
         Resource:
           Fn::GetAtt: [ingestQueue, Arn]
-
+  lambdaHashingVersion: 20201221
 package:
   individually: true
 
@@ -128,7 +128,7 @@ resources:
           InstanceCount: 3
           DedicatedMasterEnabled: false
           ZoneAwarenessEnabled: false
-        ElasticsearchVersion: 7.9
+        ElasticsearchVersion: "7.9"
         DomainEndpointOptions:
           EnforceHTTPS: true
   Outputs:
@@ -140,3 +140,4 @@ resources:
 
 plugins:
   - serverless-pseudo-parameters
+  - serverless-offline

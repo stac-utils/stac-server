@@ -167,6 +167,5 @@
         "view",
         "landsat"
     ],
-    "stac_version": "1.0.0-beta.2",
-    "stac_api_version": "0.9.0"
+    "stac_version": "1.0.0"
 }

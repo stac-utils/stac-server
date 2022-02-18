@@ -12,6 +12,7 @@
     "test_integrations": "ava ./tests/integration/test_*.js",
     "eslint": "eslint packages/* --ext .js",
     "deploy": "sls deploy",
+    "serve": "serverless offline start",
     "build-api-docs": "npm run widdershins --search false --language_tabs 'nodejs:NodeJS' 'python:Python' --summary ./packages/api-lib/api-spec.yaml -o ./docs/api.md & npm run shins --inline --logo ./docs/images/logo.png -o ./docs/index.html ./docs/api.md"
   },
   "ava": {
@@ -50,6 +51,7 @@
     "nock": "^12.0.3",
     "proxyquire": "^2.1.0",
     "serverless": "^2.51.0",
+    "serverless-offline": "^8.4.0",
     "serverless-pseudo-parameters": "^2.5.0",
     "shins": "^2.3.2-3",
     "sinon": "^7.1.1",

@@ -12,3 +12,5 @@ _book
 .idea/
 .DS_STORE
 .serverless/
+.serverless-offline
+serverless.yml

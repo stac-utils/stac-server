@@ -33,7 +33,7 @@ The following APIs are deployed instances of stac-server:
 | ---------------------------------------------------------- | ------------ | ---------------- |
 | [Earth Search](https://earth-search.aws.element84.com/v0/) | 1.0.0-beta.2 | 0.9.0            | Catalog of some AWS Public Datasets |
 | [Landsat Look](https://landsatlook.usgs.gov/stac-server)   | 1.0.0        | 0.9.0            |                                     |
-
+| [USGS Planetary Catalog](https://asc-stacbrowser.s3.us-west-2.amazonaws.com/catalog.json) | 1.0.0 |  | USGS Astrogeology hosted Analysis Ready Data (ARD) |
 ## Migration
 
 ### 0.3 -> 0.4

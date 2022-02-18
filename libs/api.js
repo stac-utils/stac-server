@@ -51,8 +51,8 @@ const extractBbox = function (params) {
     if (typeof bbox === 'string') {
       try {
         bboxArray = JSON.parse(bbox)
-      } catch(e) {
-        bboxArray = bbox.split(',')
+      } catch (e) {
+        bboxArray = bbox.split(',').map(parseFloat)
       }
     } else {
       bboxArray = bbox
@@ -428,11 +428,16 @@ const getAPI = async function () {
 const getConformance = async function () {
   const conformance = {
     conformsTo: [
-      'https://api.stacspec.org/v1.0.0-beta.2/core',
-      'https://api.stacspec.org/v1.0.0-beta.2/item-search',
-      'https://api.stacspec.org/v1.0.0-beta.2/item-search#fields',
-      'https://api.stacspec.org/v1.0.0-beta.2/item-search#sort',
-      'https://api.stacspec.org/v1.0.0-beta.2/item-search#query',
+      'https://api.stacspec.org/v1.0.0-beta.5/core',
+      'https://api.stacspec.org/v1.0.0-beta.5/collections',
+      'https://api.stacspec.org/v1.0.0-beta.5/ogcapi-features',
+      'https://api.stacspec.org/v1.0.0-beta.5/ogcapi-features#fields',
+      'https://api.stacspec.org/v1.0.0-beta.5/ogcapi-features#sort',
+      'https://api.stacspec.org/v1.0.0-beta.5/ogcapi-features#query',
+      'https://api.stacspec.org/v1.0.0-beta.5/item-search',
+      'https://api.stacspec.org/v1.0.0-beta.5/item-search#fields',
+      'https://api.stacspec.org/v1.0.0-beta.5/item-search#sort',
+      'https://api.stacspec.org/v1.0.0-beta.5/item-search#query',
       'http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/core',
       'http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/oas30',
       'http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/geojson'
@@ -624,5 +629,6 @@ module.exports = {
   searchItems,
   API,
   parsePath,
-  extractIntersects
+  extractIntersects,
+  extractBbox
 }

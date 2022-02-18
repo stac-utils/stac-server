@@ -205,6 +205,27 @@ TBD, possibly using:
 - https://github.com/localstack/localstack
 - https://github.com/localstack/serverless-localstack
 
+## Running Tests
+
+stac-server uses [ava](https://github.com/avajs/ava) to execute tests.
+
+```sh
+# alias to run unit tests
+npm run test
+
+# run unit tests in tests directory
+npm run test:unit
+
+# run unit tests with coverage
+npm run test:coverage
+
+# run integration tests
+npm run test:integration
+
+# run tests from a single test file whose titles match 'foobar*'
+npx ava tests/test_es.js --match='foobar*'
+```
+
 ## About
 
 [stac-server](https://github.com/stac-utils/stac-server) was forked from [sat-api](https://github.com/sat-utils/sat-api). Stac-server is for STAC versions 0.9.0+, while sat-api exists for versions of STAC prior to 0.9.0.

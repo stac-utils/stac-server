@@ -1,6 +1,6 @@
 const test = require('ava')
 const sinon = require('sinon')
-const proxquire = require('proxyquire')
+// const proxquire = require('proxyquire')
 const api = require('../libs/api')
 const item = require('./fixtures/item.json')
 
@@ -184,7 +184,23 @@ test('search /search bbox parameter', async (t) => {
     'Converts stringified [w,s,e,n] bbox to an intersects search parameter')
 })
 
-test('search /search time parameter', async (t) => {
+test('Item Search: /search id parameter', async (t) => {
+  const search = sinon.stub().resolves({ results: [], meta: {} })
+  const backend = { search }
+  const queryParams = {
+    page: 1,
+    limit: 2,
+    ids: 'a,b,c'
+  }
+  await api.API('/search', queryParams, backend, 'endpoint')
+  t.deepEqual(
+    search.firstCall.args[0],
+    { ids: ['a', 'b', 'c'] },
+    'Extracts ids query parameter and transforms it into ids search parameter'
+  )
+})
+
+test('search /search datetime parameter', async (t) => {
   const search = sinon.stub().resolves({ results: [], meta: {} })
   const backend = { search }
   const range = '2007-03-01T13:00:00Z/2008-05-11T15:30:00Z'
@@ -194,9 +210,11 @@ test('search /search time parameter', async (t) => {
     datetime: range
   }
   await api.API('/search', queryParams, backend, 'endpoint')
-  t.deepEqual(search.firstCall.args[0], { datetime: range },
-    'Extracts time query parameter and transforms it into ' +
-    'datetime search parameter')
+  t.deepEqual(
+    search.firstCall.args[0],
+    { datetime: range },
+    'Extracts datetime query parameter and transforms it into datetime search parameter'
+  )
 })
 
 test('search /collections', async (t) => {

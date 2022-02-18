@@ -1,6 +1,6 @@
 'use strict'
 
-const esClient = require('./esClient.js')
+const esClient = require('./esClient')
 const logger = console //require('./logger')
 
 const COLLECTIONS_INDEX = process.env.COLLECTIONS_INDEX || 'collections'
@@ -70,7 +70,7 @@ function buildDatetimeQuery(parameters) {
 function buildQuery(parameters) {
   const eq = 'eq'
   const inop = 'in'
-  const { query, intersects, collections } = parameters
+  const { query, intersects, collections, ids } = parameters
   let must = []
   if (query) {
     // Using reduce rather than map as we don't currently support all
@@ -102,10 +102,18 @@ function buildQuery(parameters) {
     }, must)
   }
 
+  if (ids) {
+    must.push({
+      terms: {
+        id: ids
+      }
+    })
+  }
+
   if (collections) {
     must.push({
       terms: {
-        'collection': collections
+        collection: collections
       }
     })
   }
@@ -144,17 +152,6 @@ function buildIdQuery(id) {
     }
   }
 }
-
-function buildIdsQuery(ids) {
-  return {
-    query: {
-      ids: {
-        values: ids
-      }
-    }
-  }
-}
-
 
 function buildSort(parameters) {
   const { sortby } = parameters
@@ -282,13 +279,9 @@ async function getCollections(page = 1, limit = 100) {
   return results
 }
 
-
-async function search(parameters, page = 1, limit = 10) {
+async function constructSearchParams(parameters, page, limit) {
   let body
-  if (parameters.ids) {
-    const { ids } = parameters
-    body = buildIdsQuery(ids)
-  } else if (parameters.id) {
+  if (parameters.id) {
     const { id } = parameters
     body = buildIdQuery(id)
   } else {
@@ -323,6 +316,11 @@ async function search(parameters, page = 1, limit = 10) {
     searchParams._sourceIncludes = _sourceIncludes
   }
 
+  return searchParams
+}
+
+async function search(parameters, page = 1, limit = 10) {
+  const searchParams = await constructSearchParams(parameters, page, limit)
   const esResponse = await esQuery(searchParams)
 
   const results = esResponse.body.hits.hits.map((r) => (r._source))
@@ -342,7 +340,6 @@ async function search(parameters, page = 1, limit = 10) {
       title: 'next',
       type: 'application/json',
       href: nextlink
-      // TODO - add link to next page
     })
   }
   return response
@@ -352,5 +349,6 @@ module.exports = {
   getCollection,
   getCollections,
   search,
-  editPartialItem
+  editPartialItem,
+  constructSearchParams
 }

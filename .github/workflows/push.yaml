@@ -22,6 +22,6 @@ jobs:
 
       - run: npm run lint
 
-      - run: npm run audit --omit dev
+      - run: npm audit --omit dev
 
       - run: npm run test

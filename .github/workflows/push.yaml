@@ -18,6 +18,8 @@ jobs:
         with:
           node-version: '14.18'
 
+      - run: npm install -g npm@latest
+
       - run: npm install
 
       - run: npm run lint

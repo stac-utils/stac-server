@@ -1,4 +1,3 @@
-
 const properties = {
   'type': 'object',
   properties: {

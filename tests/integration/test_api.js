@@ -4,7 +4,7 @@ process.env.AWS_ACCESS_KEY_ID = 'none'
 process.env.AWS_SECRET_ACCESS_KEY = 'none'
 const backend = require('../../libs/es')
 const api = require('../../libs/api')
-const intersectsFeature = require('../fixtures/stac/intersectsFeature.json')
+// const intersectsFeature = require('../fixtures/stac/intersectsFeature.json')
 const intersectsGeometry = require('../fixtures/stac/intersectsGeometry.json')
 const noIntersectsGeometry = require('../fixtures/stac/noIntersectsGeometry.json')
 
@@ -26,7 +26,9 @@ test('collections/{collectionId}', async (t) => {
 
 test('collections/{collectionId}/items', async (t) => {
   const response = await API('/collections/landsat-8-l1/items',
-    {}, backend, endpoint)
+    {},
+    backend,
+    endpoint)
   t.is(response.type, 'FeatureCollection')
   t.is(response.features.length, 2)
   t.is(response.features[0].id, 'LC80100102015082LGN00')
@@ -34,9 +36,10 @@ test('collections/{collectionId}/items', async (t) => {
 })
 
 test('collections/{collectionId}/items/{itemId}', async (t) => {
-  const response =
-    await API('/collections/landsat-8-l1/items/LC80100102015082LGN00',
-      {}, backend, endpoint)
+  const response = await API('/collections/landsat-8-l1/items/LC80100102015082LGN00',
+    {},
+    backend,
+    endpoint)
   t.is(response.type, 'Feature')
   t.is(response.id, 'LC80100102015082LGN00')
 })
@@ -80,8 +83,11 @@ test('collections/{collectionId}/items with time', async (t) => {
   response = await API('/collections/landsat-8-l1/items', {
     datetime: '2015-02-19/2015-02-20'
   }, backend, endpoint)
-  t.is(response.features[0].id, 'LC80100102015050LGN00',
-    'Handles date range without times inclusion issue')
+  t.is(
+    response.features[0].id,
+    'LC80100102015050LGN00',
+    'Handles date range without times inclusion issue'
+  )
 })
 
 test('collections/{collectionId}/items with limit', async (t) => {
@@ -200,13 +206,11 @@ test('search flattened collection properties', async (t) => {
       include: ['properties.platform']
     }
   }, backend, endpoint)
-  const havePlatform =
-    response.features.filter(
-      (item) => (item.properties['platform'] === 'landsat-8')
-    )
+  const havePlatform = response.features.filter(
+    (item) => (item.properties.platform === 'landsat-8')
+  )
   t.is(havePlatform.length, response.features.length)
 })
-
 
 test('search fields filter', async (t) => {
   let response = await API('/search', {

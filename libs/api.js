@@ -9,12 +9,12 @@ const httpMethods = require('../utils/http-methods')
 // max number of collections to retrieve
 const COLLECTION_LIMIT = process.env.STAC_SERVER_COLLECTION_LIMIT || 100
 
-
 const extractIntersects = function (params) {
   let intersectsGeometry
   const geojsonError = new Error('Invalid GeoJSON geometry')
-  const geojsonFeatureError =
-        new Error('Expected GeoJSON geometry, not Feature or FeatureCollection')
+  const geojsonFeatureError = new Error(
+    'Expected GeoJSON geometry, not Feature or FeatureCollection'
+  )
   const { intersects } = params
   if (intersects) {
     let geojson
@@ -26,7 +26,7 @@ const extractIntersects = function (params) {
         throw geojsonError
       }
     } else {
-      geojson = Object.assign({}, intersects)
+      geojson = { ...intersects }
     }
 
     if (gjv.valid(geojson)) {
@@ -51,8 +51,8 @@ const extractBbox = function (params) {
     if (typeof bbox === 'string') {
       try {
         bboxArray = JSON.parse(bbox)
-      } catch(e) {
-        bboxArray = bbox.split(',')
+      } catch (e) {
+        bboxArray = bbox.split(',').map(parseFloat)
       }
     } else {
       bboxArray = bbox
@@ -63,7 +63,6 @@ const extractBbox = function (params) {
   return intersectsGeometry
 }
 
-
 const extractStacQuery = function (params) {
   let stacQuery
   const { query } = params
@@ -72,7 +71,7 @@ const extractStacQuery = function (params) {
       const parsed = JSON.parse(query)
       stacQuery = parsed
     } else {
-      stacQuery = Object.assign({}, query)
+      stacQuery = { ...query }
     }
   }
   return stacQuery
@@ -141,7 +140,7 @@ const extractIds = function (params) {
     if (typeof ids === 'string') {
       try {
         idsRules = JSON.parse(ids)
-      } catch(e) {
+      } catch (e) {
         idsRules = ids.split(',')
       }
     } else {
@@ -151,7 +150,6 @@ const extractIds = function (params) {
   return idsRules
 }
 
-
 const extractCollectionIds = function (params) {
   let idsRules
   const { collections } = params
@@ -159,7 +157,7 @@ const extractCollectionIds = function (params) {
     if (typeof collections === 'string') {
       try {
         idsRules = JSON.parse(collections)
-      } catch(e) {
+      } catch (e) {
         idsRules = collections.split(',')
       }
     } else {
@@ -168,7 +166,6 @@ const extractCollectionIds = function (params) {
   }
   return idsRules
 }
-
 
 const parsePath = function (inpath) {
   const searchFilters = {
@@ -196,12 +193,11 @@ const parsePath = function (inpath) {
   searchFilters.conformance = pathComponents[0] === conformance
   searchFilters.collections = pathComponents[0] === collections
 
-  searchFilters.collectionId =
-    pathComponents[0] === collections && length >= 2 ? pathComponents[1] : false
+  searchFilters.collectionId = pathComponents[0] === collections && length >= 2
+    ? pathComponents[1] : false
   searchFilters.search = pathComponents[0] === search
   searchFilters.items = pathComponents[2] === items
-  searchFilters.itemId =
-    pathComponents[2] === items && length >= 4 ? pathComponents[3] : false
+  searchFilters.itemId = pathComponents[2] === items && length >= 4 ? pathComponents[3] : false
   searchFilters.edit = pathComponents[4] === edit
   return searchFilters
 }
@@ -266,7 +262,6 @@ const addItemLinks = function (results, endpoint) {
   return results
 }
 
-
 const collectionsToCatalogLinks = function (results, endpoint) {
   const stac_version = process.env.STAC_VERSION
   const stac_id = process.env.STAC_ID || 'stac-server'
@@ -274,7 +269,7 @@ const collectionsToCatalogLinks = function (results, endpoint) {
   const stac_description = process.env.STAC_DESCRIPTION || 'A STAC API running on stac-server'
   const catalog = {
     stac_version,
-    type: "Catalog",
+    type: 'Catalog',
     id: stac_id,
     title: stac_title,
     description: stac_description
@@ -319,16 +314,16 @@ const buildPageLinks = function (meta, parameters, endpoint, httpMethod) {
         const query = encodeURIComponent(value)
         if (p === 'collections') {
           return `${encodeURIComponent(p)}[]=${query}`
-        } else {
-          return `${encodeURIComponent(p)}=${query}`
         }
-    }).join('&')
+        return `${encodeURIComponent(p)}=${query}`
+      }
+    ).join('&')
   )
   const { matched, page, limit } = meta
   let newParams
   let link
   if ((page * limit) < matched) {
-    newParams = Object.assign({}, parameters, { page: page + 1, limit })
+    newParams = { ...parameters, page: page + 1, limit }
     link = {
       rel: 'next',
       title: 'Next page of results',
@@ -345,7 +340,7 @@ const buildPageLinks = function (meta, parameters, endpoint, httpMethod) {
     pageLinks.push(link)
   }
   if (page > 1) {
-    newParams = Object.assign({}, parameters, { page: page - 1, limit })
+    newParams = { ...parameters, page: page - 1, limit }
     link = {
       rel: 'prev',
       title: 'Previous page of results',
@@ -418,12 +413,10 @@ const searchItems = async function (collectionId, queryParameters, backend, endp
   return response
 }
 
-
 const getAPI = async function () {
   const spec = yaml.safeLoad(fs.readFileSync(path.resolve(__dirname, './api.yaml'), 'utf8'))
   return spec
 }
-
 
 const getConformance = async function () {
   const conformance = {
@@ -445,7 +438,6 @@ const getConformance = async function () {
   }
   return conformance
 }
-
 
 const getCatalog = async function (backend, endpoint = '') {
   const collections = await backend.getCollections(1, COLLECTION_LIMIT)
@@ -486,7 +478,6 @@ const getCatalog = async function (backend, endpoint = '') {
   return catalog
 }
 
-
 const getCollections = async function (backend, endpoint = '') {
   const results = await backend.getCollections(1, COLLECTION_LIMIT)
   const linkedCollections = addCollectionLinks(results, endpoint)
@@ -505,7 +496,6 @@ const getCollections = async function (backend, endpoint = '') {
   return resp
 }
 
-
 const getCollection = async function (collectionId, backend, endpoint = '') {
   const result = await backend.getCollection(collectionId)
   const col = addCollectionLinks([result], endpoint)
@@ -514,7 +504,6 @@ const getCollection = async function (collectionId, backend, endpoint = '') {
   }
   return new Error('Collection not found')
 }
-
 
 const getItem = async function (collectionId, itemId, backend, endpoint = '') {
   const itemQuery = { collections: [collectionId], id: itemId }
@@ -526,7 +515,6 @@ const getItem = async function (collectionId, itemId, backend, endpoint = '') {
   return new Error('Item not found')
 }
 
-
 const editPartialItem = async function (itemId, queryParameters, backend, endpoint = '') {
   const response = await backend.editPartialItem(itemId, queryParameters)
   logger.debug(`Edit Item: ${response}`)
@@ -536,8 +524,8 @@ const editPartialItem = async function (itemId, queryParameters, backend, endpoi
   return new Error(`Error editing item ${itemId}`)
 }
 
-
 const API = async function (
+  // eslint-disable-next-line default-param-last
   inpath = '', queryParameters = {}, backend, endpoint = '', httpMethod = 'GET'
 ) {
   logger.debug(`API Path: ${inpath}, Query Parameters: ${JSON.stringify(queryParameters)}`)
@@ -629,5 +617,6 @@ module.exports = {
   searchItems,
   API,
   parsePath,
-  extractIntersects
+  extractIntersects,
+  extractBbox
 }

@@ -1,6 +1,6 @@
 'use strict'
 
-const esClient = require('./esClient.js')
+const esClient = require('./esClient')
 const logger = console //require('./logger')
 
 const COLLECTIONS_INDEX = process.env.COLLECTIONS_INDEX || 'collections'
@@ -12,7 +12,6 @@ searching records, and managing the indexes. It looks for the ES_HOST environmen
 variable which is the URL to the elasticsearch host
 */
 
-
 function buildRangeQuery(property, operators, operatorsObject) {
   const gt = 'gt'
   const lt = 'lt'
@@ -20,8 +19,8 @@ function buildRangeQuery(property, operators, operatorsObject) {
   const lte = 'lte'
   const comparisons = [gt, lt, gte, lte]
   let rangeQuery
-  if (operators.includes(gt) || operators.includes(lt) ||
-         operators.includes(gte) || operators.includes(lte)) {
+  if (operators.includes(gt) || operators.includes(lt)
+         || operators.includes(gte) || operators.includes(lte)) {
     const propertyKey = `properties.${property}`
     rangeQuery = {
       range: {
@@ -33,9 +32,7 @@ function buildRangeQuery(property, operators, operatorsObject) {
     comparisons.forEach((comparison) => {
       if (operators.includes(comparison)) {
         const exisiting = rangeQuery.range[propertyKey]
-        rangeQuery.range[propertyKey] = Object.assign({}, exisiting, {
-          [comparison]: operatorsObject[comparison]
-        })
+        rangeQuery.range[propertyKey] = { ...exisiting, [comparison]: operatorsObject[comparison] }
       }
     })
   }
@@ -70,7 +67,7 @@ function buildDatetimeQuery(parameters) {
 function buildQuery(parameters) {
   const eq = 'eq'
   const inop = 'in'
-  const { query, intersects, collections } = parameters
+  const { query, intersects, collections, ids } = parameters
   let must = []
   if (query) {
     // Using reduce rather than map as we don't currently support all
@@ -93,8 +90,7 @@ function buildQuery(parameters) {
         }
         accumulator.push(termsQuery)
       }
-      const rangeQuery =
-        buildRangeQuery(property, operators, operatorsObject)
+      const rangeQuery = buildRangeQuery(property, operators, operatorsObject)
       if (rangeQuery) {
         accumulator.push(rangeQuery)
       }
@@ -102,10 +98,18 @@ function buildQuery(parameters) {
     }, must)
   }
 
+  if (ids) {
+    must.push({
+      terms: {
+        id: ids
+      }
+    })
+  }
+
   if (collections) {
     must.push({
       terms: {
-        'collection': collections
+        collection: collections
       }
     })
   }
@@ -145,17 +149,6 @@ function buildIdQuery(id) {
   }
 }
 
-function buildIdsQuery(ids) {
-  return {
-    query: {
-      ids: {
-        values: ids
-      }
-    }
-  }
-}
-
-
 function buildSort(parameters) {
   const { sortby } = parameters
   let sorting
@@ -176,7 +169,6 @@ function buildSort(parameters) {
   }
   return sorting
 }
-
 
 function buildFieldsFilter(parameters) {
   const { fields } = parameters
@@ -250,7 +242,6 @@ async function editPartialItem(itemId, updateFields) {
   return response
 }
 
-
 async function esQuery(parameters) {
   logger.info(`Elasticsearch query: ${JSON.stringify(parameters)}`)
   const client = await esClient.client()
@@ -258,7 +249,6 @@ async function esQuery(parameters) {
   logger.info(`Response: ${JSON.stringify(response)}`)
   return response
 }
-
 
 // get single collection
 async function getCollection(collectionId) {
@@ -282,13 +272,9 @@ async function getCollections(page = 1, limit = 100) {
   return results
 }
 
-
-async function search(parameters, page = 1, limit = 10) {
+async function constructSearchParams(parameters, page, limit) {
   let body
-  if (parameters.ids) {
-    const { ids } = parameters
-    body = buildIdsQuery(ids)
-  } else if (parameters.id) {
+  if (parameters.id) {
     const { id } = parameters
     body = buildIdQuery(id)
   } else {
@@ -323,6 +309,11 @@ async function search(parameters, page = 1, limit = 10) {
     searchParams._sourceIncludes = _sourceIncludes
   }
 
+  return searchParams
+}
+
+async function search(parameters, page = 1, limit = 10) {
+  const searchParams = await constructSearchParams(parameters, page, limit)
   const esResponse = await esQuery(searchParams)
 
   const results = esResponse.body.hits.hits.map((r) => (r._source))
@@ -342,7 +333,6 @@ async function search(parameters, page = 1, limit = 10) {
       title: 'next',
       type: 'application/json',
       href: nextlink
-      // TODO - add link to next page
     })
   }
   return response
@@ -352,5 +342,6 @@ module.exports = {
   getCollection,
   getCollections,
   search,
-  editPartialItem
+  editPartialItem,
+  constructSearchParams
 }

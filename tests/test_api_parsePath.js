@@ -114,4 +114,3 @@ test('parsePath', (t) => {
   actual = api.parsePath('/collections/id/items/id')
   t.deepEqual(actual, expected)
 })
-

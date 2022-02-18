@@ -5,7 +5,6 @@ const esClient = require('./esClient.js')
 
 const COLLECTIONS_INDEX = process.env.COLLECTIONS_INDEX || 'collections'
 
-
 class ElasticSearchWritableStream extends _stream.Writable {
   constructor(config, options) {
     super(options)
@@ -40,6 +39,7 @@ class ElasticSearchWritableStream extends _stream.Writable {
     }, [])
     return operations
   }
+
   // Write individual records with update/upsert
   async _write(record, enc, next) {
     try {
@@ -95,7 +95,6 @@ class ElasticSearchWritableStream extends _stream.Writable {
   }
 }
 
-
 // Given an input stream and a transform, write records to an elasticsearch instance
 async function stream() {
   let esStreams
@@ -117,7 +116,7 @@ async function stream() {
       // remove any hierarchy links in a non-mutating way
       const hlinks = ['self', 'root', 'parent', 'child', 'collection', 'item', 'items']
       const links = data.links.filter((link) => !hlinks.includes(link.rel))
-      const esDataObject = Object.assign({}, data, { links })
+      const esDataObject = { ...data, links }
 
       if (data.hasOwnProperty('properties')) {
         esDataObject.properties.created = new Date().toISOString()
@@ -148,6 +147,5 @@ async function stream() {
   }
   return esStreams
 }
-
 
 module.exports = stream

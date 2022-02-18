@@ -12,7 +12,6 @@ searching records, and managing the indexes. It looks for the ES_HOST environmen
 variable which is the URL to the elasticsearch host
 */
 
-
 function buildRangeQuery(property, operators, operatorsObject) {
   const gt = 'gt'
   const lt = 'lt'
@@ -20,8 +19,8 @@ function buildRangeQuery(property, operators, operatorsObject) {
   const lte = 'lte'
   const comparisons = [gt, lt, gte, lte]
   let rangeQuery
-  if (operators.includes(gt) || operators.includes(lt) ||
-         operators.includes(gte) || operators.includes(lte)) {
+  if (operators.includes(gt) || operators.includes(lt)
+         || operators.includes(gte) || operators.includes(lte)) {
     const propertyKey = `properties.${property}`
     rangeQuery = {
       range: {
@@ -33,9 +32,7 @@ function buildRangeQuery(property, operators, operatorsObject) {
     comparisons.forEach((comparison) => {
       if (operators.includes(comparison)) {
         const exisiting = rangeQuery.range[propertyKey]
-        rangeQuery.range[propertyKey] = Object.assign({}, exisiting, {
-          [comparison]: operatorsObject[comparison]
-        })
+        rangeQuery.range[propertyKey] = { ...exisiting, [comparison]: operatorsObject[comparison] }
       }
     })
   }
@@ -93,8 +90,7 @@ function buildQuery(parameters) {
         }
         accumulator.push(termsQuery)
       }
-      const rangeQuery =
-        buildRangeQuery(property, operators, operatorsObject)
+      const rangeQuery = buildRangeQuery(property, operators, operatorsObject)
       if (rangeQuery) {
         accumulator.push(rangeQuery)
       }
@@ -174,7 +170,6 @@ function buildSort(parameters) {
   return sorting
 }
 
-
 function buildFieldsFilter(parameters) {
   const { fields } = parameters
   let _sourceIncludes = []
@@ -247,7 +242,6 @@ async function editPartialItem(itemId, updateFields) {
   return response
 }
 
-
 async function esQuery(parameters) {
   logger.info(`Elasticsearch query: ${JSON.stringify(parameters)}`)
   const client = await esClient.client()
@@ -255,7 +249,6 @@ async function esQuery(parameters) {
   logger.info(`Response: ${JSON.stringify(response)}`)
   return response
 }
-
 
 // get single collection
 async function getCollection(collectionId) {

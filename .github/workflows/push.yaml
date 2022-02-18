@@ -2,7 +2,7 @@ on:
   push:
     branches:
       - main
-      - 'feature/**'
+      - "feature/**"
   pull_request:
     branches:
       - main
@@ -12,15 +12,18 @@ jobs:
     name: Run tests
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v1
+      - uses: actions/checkout@v1
 
-    - name: install node
-      uses: actions/setup-node@master
-      with:
-        node-version: 14.18
+      - uses: actions/setup-node@master
+        with:
+          node-version: '14.18'
 
-    - name: npm install
-      run: npm install
+      - run: npm install -g npm@latest
 
-    - run: npm run test:coverage
+      - run: npm install
 
+      - run: npm run lint
+
+      - run: npm audit --omit dev
+
+      - run: npm run test:coverage

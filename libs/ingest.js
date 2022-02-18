@@ -2,9 +2,8 @@ const { Readable } = require('readable-stream')
 const pump = require('pump')
 const logger = console //require('./logger')
 
-
 async function ingestItem(item, stream) {
-  const readable = new Readable({objectMode: true })
+  const readable = new Readable({ objectMode: true })
   const { toEs, esStream } = await stream()
   const promise = new Promise((resolve, reject) => {
     pump(

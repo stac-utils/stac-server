@@ -5,7 +5,7 @@ const api = require('../libs/api')
 const item = require('./fixtures/item.json')
 
 function cloneMutatedItem() {
-  return Object.assign({}, item, { links: item.links.slice(0) })
+  return { ...item, links: item.links.slice(0) }
 }
 
 /*test('search es error', async (t) => {
@@ -84,8 +84,7 @@ test('search /', async (t) => {
     }
   ]
   t.is(getCollections.firstCall.args[0], 1)
-  t.deepEqual(actual.links, expectedLinks,
-    'Returns STAC catalog with links to collections')
+  t.deepEqual(actual.links, expectedLinks, 'Returns STAC catalog with links to collections')
 })
 
 // test('search /search wraps results', async (t) => {
@@ -128,8 +127,7 @@ test('search /search query parameters', async (t) => {
     query
   }
   api.API('/search', queryParams, backend, 'endpoint')
-  t.deepEqual(search.firstCall.args[0], { query },
-    'Extracts query to use in search parameters')
+  t.deepEqual(search.firstCall.args[0], { query }, 'Extracts query to use in search parameters')
 })
 
 test('search /search intersects parameter', async (t) => {
@@ -141,14 +139,20 @@ test('search /search intersects parameter', async (t) => {
     limit: 1
   }
   api.API('/search', queryParams, backend, 'endpoint')
-  t.deepEqual(search.firstCall.args[0].intersects, item.geometry,
-    'Uses valid GeoJSON as intersects search parameter')
+  t.deepEqual(
+    search.firstCall.args[0].intersects,
+    item.geometry,
+    'Uses valid GeoJSON as intersects search parameter'
+  )
 
   search.resetHistory()
   queryParams.intersects = JSON.stringify(item.geometry)
   api.API('/search', queryParams, backend, 'endpoint')
-  t.deepEqual(search.firstCall.args[0].intersects, item.geometry,
-    'Handles stringified GeoJSON intersects parameter')
+  t.deepEqual(
+    search.firstCall.args[0].intersects,
+    item.geometry,
+    'Handles stringified GeoJSON intersects parameter'
+  )
 })
 
 test('search /search bbox parameter', async (t) => {
@@ -175,13 +179,19 @@ test('search /search bbox parameter', async (t) => {
     ]]
   }
   await api.API('/search', queryParams, backend, 'endpoint')
-  t.deepEqual(search.firstCall.args[0].intersects, expected,
-    'Converts a [w,s,e,n] bbox to an intersects search parameter')
+  t.deepEqual(
+    search.firstCall.args[0].intersects,
+    expected,
+    'Converts a [w,s,e,n] bbox to an intersects search parameter'
+  )
   search.resetHistory()
   queryParams.bbox = `[${bbox.toString()}]`
   await api.API('/search', queryParams, backend, 'endpoint')
-  t.deepEqual(search.firstCall.args[0].intersects, expected,
-    'Converts stringified [w,s,e,n] bbox to an intersects search parameter')
+  t.deepEqual(
+    search.firstCall.args[0].intersects,
+    expected,
+    'Converts stringified [w,s,e,n] bbox to an intersects search parameter'
+  )
 })
 
 test('Item Search: /search id parameter', async (t) => {
@@ -218,7 +228,7 @@ test('search /search datetime parameter', async (t) => {
 })
 
 test('search /collections', async (t) => {
-  const getCollections = sinon.stub().resolves([{ id: 1, links: []}])
+  const getCollections = sinon.stub().resolves([{ id: 1, links: [] }])
   const backend = { getCollections }
   const actual = await api.API('/collections', {}, backend, 'endpoint')
   t.is(getCollections.firstCall.args[1], 100)
@@ -233,9 +243,11 @@ test('search /collections/collectionId', async (t) => {
   let actual = await api.API(
     `/collections/${collectionId}`, { test: 'test' }, backend, 'endpoint'
   )
-  t.deepEqual(getCollection.firstCall.args[0], collectionId,
-    'Calls search with the collectionId path element as id parameter' +
-    ' and ignores other passed filter parameters')
+  t.deepEqual(
+    getCollection.firstCall.args[0],
+    collectionId,
+    'Calls search with the collectionId path element as id parameter and ignores other passed filter parameters' // eslint-disable-line max-len
+  )
   t.is(actual.links.length, 4, 'Returns the first found collection as object')
 
   getCollection.reset()
@@ -243,8 +255,11 @@ test('search /collections/collectionId', async (t) => {
   actual = await api.API(
     `/collections/${collectionId}`, {}, backend, 'endpoint'
   )
-  t.is(actual.message, 'Collection not found',
-    'Sends error when not collections are found in search')
+  t.is(
+    actual.message,
+    'Collection not found',
+    'Sends error when not collections are found in search'
+  )
 })
 
 test('search /collections/collectionId/items', async (t) => {
@@ -267,8 +282,11 @@ test('search /collections/collectionId/items', async (t) => {
   const expectedParameters = {
     collections: [collectionId]
   }
-  t.deepEqual(search.firstCall.args[0], expectedParameters,
-    'Calls search with the collectionId as a parameter')
+  t.deepEqual(
+    search.firstCall.args[0],
+    expectedParameters,
+    'Calls search with the collectionId as a parameter'
+  )
 })
 
 test('search /collections/collectionId/items/itemId', async (t) => {
@@ -289,9 +307,11 @@ test('search /collections/collectionId/items/itemId', async (t) => {
   const actual = await api.API(
     `/collections/collectionId/items/${itemId}`, {}, backend, 'endpoint'
   )
-  t.deepEqual(search.firstCall.args[0], { collections: ['collectionId'], id: itemId },
-    'Calls search with the itemId path element as id parameter' +
-    ' and ignores other passed filter parameters')
+  t.deepEqual(
+    search.firstCall.args[0],
+    { collections: ['collectionId'], id: itemId },
+    'Calls search with the itemId path element as id parameter and ignores other passed filter parameters' // eslint-disable-line max-len
+  )
 
   t.is(actual.type, 'Feature')
   t.is(actual.links.length, 4, 'Adds STAC links to response object')

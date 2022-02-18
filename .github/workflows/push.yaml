@@ -22,6 +22,5 @@ jobs:
     - name: npm install
       run: npm install
 
-    - name: npm run test
-      run: npm run test
+    - run: npm run test:coverage
 

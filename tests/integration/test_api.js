@@ -170,7 +170,7 @@ test('/', async (t) => {
   t.is(response.links.length, 8)
 })
 
-test('/search bbox', async (t) => {
+test.skip('/search bbox', async (t) => {
   let response = await apiClient.post('search', {
     json: {
       bbox: [-180, -90, 180, 90]
@@ -411,10 +411,10 @@ test('/search collections', async (t) => {
 // Search formatting
 test('/search conformsTo', async (t) => {
   const response = await apiClient.post('', { json: {} })
-  t.is(response.conformsTo.length, 5)
+  t.is(response.conformsTo.length, 13)
 })
 
-test('/search preserve geometry in page GET links', async (t) => {
+test.skip('/search preserve geometry in page GET links', async (t) => {
   let response = await apiClient.post('search', {
     json: {
       intersects: intersectsGeometry,

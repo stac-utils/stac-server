@@ -11,19 +11,28 @@ jobs:
   test:
     name: Run tests
     runs-on: ubuntu-latest
+    services:
+      elasticsearch:
+        image: docker.elastic.co/elasticsearch/elasticsearch:7.9.3
+        env:
+          discovery.type: single-node
+        ports:
+          - 9200:9200
+          - 9300:9300
     steps:
-      - uses: actions/checkout@v1
-
-      - uses: actions/setup-node@master
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
         with:
-          node-version: '14.18'
-
-      - run: npm install -g npm@latest
-
-      - run: npm install
-
-      - run: npm run lint
-
-      - run: npm audit --omit dev
-
-      - run: npm run test:coverage
+          node-version-file: ".nvmrc"
+          cache: npm
+          cache-dependency-path: package.json
+      - name: Install dependencies
+        run: npm install
+      - name: eslint
+        run: npm run lint
+      - name: audit
+        run: npm audit --omit dev
+      - name: unit tests
+        run: npm run test:coverage
+      - name: Run integration tests
+        run: npm run test:integration

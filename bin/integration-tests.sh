@@ -1,0 +1,25 @@
+#!/bin/sh
+
+set -e
+
+./bin/wait-for-elasticsearch/run.sh
+
+echo "Setting up Elasticsearch"
+node tests/integration/setup.js
+
+echo "Starting serverless-offline"
+npx serverless offline start >/dev/null 2>&2 &
+SERVERLESS_PID="$!"
+
+./bin/wait-for-serverless-offline/run.sh
+
+echo "Running tests"
+set +e
+npx ava ./tests/integration/test_*.js
+TEST_RESULT="$?"
+set -e
+
+echo "Stopping serverless-offline"
+kill "$SERVERLESS_PID"
+
+exit "$TEST_RESULT"

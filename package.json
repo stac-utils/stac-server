@@ -13,7 +13,7 @@
     "test": "npm run test:unit",
     "test:unit": "ava tests/*.js",
     "test:coverage": "c8 ava tests/*.js",
-    "test:integration": "ava ./tests/integration/test_*.js",
+    "test:integration": "bin/integration-tests.sh",
     "deploy": "sls deploy",
     "serve": "serverless offline start",
     "build-api-docs": "npm run widdershins --search false --language_tabs 'nodejs:NodeJS' 'python:Python' --summary ./packages/api-lib/api-spec.yaml -o ./docs/api.md & npm run shins --inline --logo ./docs/images/logo.png -o ./docs/index.html ./docs/api.md"
@@ -52,6 +52,7 @@
     "eslint-plugin-jsdoc": "^3.5.0",
     "eslint-plugin-jsx-a11y": "^6.0.3",
     "eslint-plugin-react": "^7.7.0",
+    "got": "^11.0.0",
     "nock": "^12.0.3",
     "prettier": "^2.0.5",
     "prettier-eslint": "^11.0.0",

@@ -80,7 +80,7 @@ class ElasticSearchWritableStream extends _stream.Writable {
     const body = this.transformRecords(records)
     try {
       const result = await this.client.bulk({ body })
-      logger.debug(`Result: ${result}`)
+      logger.debug(`Result: ${JSON.stringify(result, undefined, 2)}`)
       const { errors, items } = result.body
       if (errors) {
         logger.error(items)

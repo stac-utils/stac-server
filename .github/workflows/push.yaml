@@ -30,11 +30,11 @@ jobs:
         run: npm install -g npm@latest
       - name: Install dependencies
         run: npm install
-      # - name: Eslint
-      #   run: npm run lint
-      # - name: Audit
-      #   run: npm audit --omit dev
-      # - name: Unit tests
-      #   run: npm run test:coverage
+      - name: Eslint
+        run: npm run lint
+      - name: Audit
+        run: npm audit --omit dev
+      - name: Unit tests
+        run: npm run test:coverage
       - name: Integration tests
         run: npm run test:integration

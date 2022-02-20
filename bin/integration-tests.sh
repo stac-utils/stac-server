@@ -15,6 +15,9 @@ fi
 grep -v 'ElasticSearchInstance, DomainEndpoint' serverless.yml.example |\
   sed 's/ES_HOST.*/ES_HOST: http:\/\/localhost:9200/' > serverless.yml
 
+echo "Building packages"
+npm run build
+
 echo "Starting serverless-offline"
 npx serverless offline start >/dev/null 2>&2 &
 SERVERLESS_PID="$!"

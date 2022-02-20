@@ -12,8 +12,9 @@
     - [Subscribing to SNS Topics](#subscribing-to-sns-topics)
     - [Ingest Errors](#ingest-errors)
   - [Development](#development)
-    - [Running Locally using AWS Resources](#running-locally-using-aws-resources)
-    - [Running Locally using Local Resources](#running-locally-using-local-resources)
+    - [Running Locally](#running-locally)
+    - [Running Tests](#running-tests)
+    - [Integration Tests](#integration-tests)
   - [About](#about)
 
 ## Overview
@@ -224,7 +225,7 @@ npm run test:coverage
 npx ava tests/test_es.js --match='foobar*'
 ```
 
-### Integration tests
+### Integration Tests
 
 The integration tests use an Elasticsearch server running in Docker and an instance of the API using [Serverless Offline](https://www.npmjs.com/package/serverless-offline).
 

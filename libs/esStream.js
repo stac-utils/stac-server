@@ -13,10 +13,6 @@ class ElasticSearchWritableStream extends _stream.Writable {
     this.client = this.config.client
   }
 
-  _destroy() {
-    return this.client.close()
-  }
-
   // Allows the flexibility to batch write to multiple indexes.
   transformRecords(chunks) {
     const operations = chunks.reduce((bulkOperations, chunk) => {

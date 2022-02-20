@@ -26,13 +26,15 @@ jobs:
           node-version-file: ".nvmrc"
           cache: npm
           cache-dependency-path: package.json
+      - name: Upgrade npm
+        run: npm install -g npm@latest
       - name: Install dependencies
         run: npm install
-      - name: eslint
-        run: npm run lint
-      - name: audit
-        run: npm audit --omit dev
-      - name: unit tests
-        run: npm run test:coverage
-      - name: Run integration tests
+      # - name: Eslint
+      #   run: npm run lint
+      # - name: Audit
+      #   run: npm audit --omit dev
+      # - name: Unit tests
+      #   run: npm run test:coverage
+      - name: Integration tests
         run: npm run test:integration

@@ -13,7 +13,7 @@
     "test": "npm run test:unit",
     "test:unit": "ava tests/*.js",
     "test:coverage": "c8 ava tests/*.js",
-    "test:integration": "bin/integration-tests.sh",
+    "test:integration": "./bin/integration-tests.sh",
     "deploy": "sls deploy",
     "serve": "serverless offline start",
     "build-api-docs": "npm run widdershins --search false --language_tabs 'nodejs:NodeJS' 'python:Python' --summary ./packages/api-lib/api-spec.yaml -o ./docs/api.md & npm run shins --inline --logo ./docs/images/logo.png -o ./docs/index.html ./docs/api.md"

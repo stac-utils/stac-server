@@ -17,7 +17,7 @@ if [ -e serverless.yml ]; then
 fi
 
 grep -v 'ElasticSearchInstance, DomainEndpoint' serverless.yml.example |\
-  sed 's/ES_HOST.*/ES_HOST: http:\/\/localhost:9200/' > serverless.yml
+  sed 's/ES_HOST.*/ES_HOST: http:\/\/localhost:9200\n    STAC_API_URL: http:\/\/localhost:3000\/dev/' > serverless.yml
 
 echo "Building packages"
 npm run build
@@ -33,6 +33,8 @@ set +e
 npx ava ./tests/integration/test_*.js
 TEST_RESULT="$?"
 set -e
+
+rm -f serverless.yml
 
 if [ -e serverless.yml.original ]; then
   mv serverless.yml.original serverless.yml

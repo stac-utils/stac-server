@@ -2,6 +2,10 @@
 
 set -e
 
+export ES_HOST='http://localhost:9200'
+export AWS_ACCESS_KEY_ID='none'
+export AWS_SECRET_ACCESS_KEY='none'
+
 ./bin/wait-for-elasticsearch/run.sh
 
 echo "Setting up Elasticsearch"
@@ -30,11 +34,11 @@ npx ava ./tests/integration/test_*.js
 TEST_RESULT="$?"
 set -e
 
-echo "Stopping serverless-offline"
-kill "$SERVERLESS_PID"
-
 if [ -e serverless.yml.original ]; then
   mv serverless.yml.original serverless.yml
 fi
+
+echo "Stopping serverless-offline"
+kill "$SERVERLESS_PID"
 
 exit "$TEST_RESULT"

@@ -1,7 +1,3 @@
-process.env.ES_HOST = 'http://localhost:9200'
-process.env.AWS_ACCESS_KEY_ID = 'none'
-process.env.AWS_SECRET_ACCESS_KEY = 'none'
-
 const { promisify } = require('util')
 const fs = require('fs')
 const path = require('path')

@@ -18,7 +18,7 @@ async function connect() {
   // use local client
   if (!process.env.ES_HOST) {
     esConfig = {
-      node: 'localhost:9200'
+      node: 'http://localhost:9200'
     }
     client = new elasticsearch.Client(esConfig)
   } else {

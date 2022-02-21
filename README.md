@@ -4,6 +4,7 @@
 
 - [stac-server](#stac-server)
   - [Overview](#overview)
+  - [Architecture](#architecture)
   - [Migration](#migration)
     - [0.3 -> 0.4](#03---04)
   - [Usage](#usage)
@@ -35,6 +36,49 @@ The following APIs are deployed instances of stac-server:
 | [Earth Search](https://earth-search.aws.element84.com/v0/) | 1.0.0-beta.2 | 0.9.0            | Catalog of some AWS Public Datasets |
 | [Landsat Look](https://landsatlook.usgs.gov/stac-server)   | 1.0.0        | 0.9.0            |                                     |
 | [USGS Planetary Catalog](https://asc-stacbrowser.s3.us-west-2.amazonaws.com/catalog.json) | 1.0.0 |  | USGS Astrogeology hosted Analysis Ready Data (ARD) |
+
+## Architecture
+
+```mermaid
+flowchart LR
+
+itemsForIngest[Items for ingest]
+
+subgraph ingest[Ingest]
+  ingestSnsTopic[Ingest SNS Topic]
+  ingestQueue[Ingest SQS Queue]
+  ingestLambda[Ingest Lambda]
+
+  ingestDeadLetterQueue[Ingest Dead Letter Queue]
+  failedIngestLambda[Failed Ingest Lambda]
+end
+
+users[Users]
+
+subgraph api[STAC API]
+  apiGateway[API Gateway]
+  apiLambda[API Lambda]
+end
+
+elasticsearch[(Elasticsearch)]
+
+%% Ingest workflow
+
+itemsForIngest --> ingestSnsTopic
+ingestSnsTopic --> ingestQueue
+ingestQueue --> ingestLambda
+ingestLambda --> elasticsearch
+
+ingestDeadLetterQueue --> failedIngestLambda
+
+%% API workflow
+
+users --> api
+apiGateway --> apiLambda
+apiLambda --> elasticsearch
+
+```
+
 ## Migration
 
 ### 0.3 -> 0.4

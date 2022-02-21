@@ -245,6 +245,7 @@ async function editPartialItem(itemId, updateFields) {
 async function esQuery(parameters) {
   logger.info(`Elasticsearch query: ${JSON.stringify(parameters)}`)
   const client = await esClient.client()
+  if (client === undefined) throw new Error('Client is undefined')
   const response = await client.search(parameters)
   logger.info(`Response: ${JSON.stringify(response)}`)
   return response

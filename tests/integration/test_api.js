@@ -1,88 +1,104 @@
+const got = require('got')
 const test = require('ava')
-process.env.ES_HOST = `http://${process.env.DOCKER_NAME}:4571`
-process.env.AWS_ACCESS_KEY_ID = 'none'
-process.env.AWS_SECRET_ACCESS_KEY = 'none'
-const backend = require('../../libs/es')
-const api = require('../../libs/api')
-// const intersectsFeature = require('../fixtures/stac/intersectsFeature.json')
 const intersectsGeometry = require('../fixtures/stac/intersectsGeometry.json')
 const noIntersectsGeometry = require('../fixtures/stac/noIntersectsGeometry.json')
 
-const { API } = api
-const endpoint = 'endpoint'
+const apiClient = got.extend({
+  prefixUrl: 'http://localhost:3000/dev/',
+  headers: {
+    'X-Forwarded-Proto': 'http'
+  },
+  responseType: 'json',
+  resolveBodyOnly: true
+})
 
-test('collections', async (t) => {
-  const response = await API('/collections', {}, backend, endpoint)
+test('/collections', async (t) => {
+  const response = await apiClient.get('collections')
+
   t.is(response.collections.length, 2)
   t.is(response.context.returned, 2)
 })
 
-test('collections/{collectionId}', async (t) => {
-  let response = await API('/collections/landsat-8-l1', {}, backend, endpoint)
+test('/collections/landsat-8-l1', async (t) => {
+  const response = await apiClient.get('collections/landsat-8-l1')
+
   t.is(response.id, 'landsat-8-l1')
-  response = await API('/collections/collection2', {}, backend, endpoint)
+})
+
+test('/collections/collection2', async (t) => {
+  const response = await apiClient.get('collections/collection2')
+
   t.is(response.id, 'collection2')
 })
 
-test('collections/{collectionId}/items', async (t) => {
-  const response = await API('/collections/landsat-8-l1/items',
-    {},
-    backend,
-    endpoint)
+test('/collections/{collectionId}/items', async (t) => {
+  const response = await apiClient.get('collections/landsat-8-l1/items')
   t.is(response.type, 'FeatureCollection')
   t.is(response.features.length, 2)
   t.is(response.features[0].id, 'LC80100102015082LGN00')
   t.is(response.features[1].id, 'LC80100102015050LGN00')
 })
 
-test('collections/{collectionId}/items/{itemId}', async (t) => {
-  const response = await API('/collections/landsat-8-l1/items/LC80100102015082LGN00',
-    {},
-    backend,
-    endpoint)
+test('/collections/{collectionId}/items/{itemId}', async (t) => {
+  const response = await apiClient.get('collections/landsat-8-l1/items/LC80100102015082LGN00')
   t.is(response.type, 'Feature')
   t.is(response.id, 'LC80100102015082LGN00')
 })
 
-test('collections/{collectionId}/items with bbox', async (t) => {
-  let response = await API('/collections/landsat-8-l1/items', {
-    bbox: [-180, -90, 180, 90]
-  }, backend, endpoint)
+test('/collections/{collectionId}/items with bbox 1', async (t) => {
+  const response = await apiClient.post('collections/landsat-8-l1/items', {
+    json: {
+      bbox: [-180, -90, 180, 90]
+    }
+  })
   t.is(response.type, 'FeatureCollection')
   t.is(response.features[0].id, 'LC80100102015082LGN00')
   t.is(response.features[1].id, 'LC80100102015050LGN00')
+})
 
-  response = await API('/collections/landsat-8-l1/items', {
-    bbox: [-5, -5, 5, 5]
-  }, backend, endpoint)
+test('/collections/{collectionId}/items with bbox 2', async (t) => {
+  const response = await apiClient.post('collections/landsat-8-l1/items', {
+    json: {
+      bbox: [-5, -5, 5, 5]
+    }
+  })
+
   t.is(response.features.length, 0)
 })
 
-test('collections/{collectionId}/items with bbox and intersects', async (t) => {
-  const response = await API('/collections/landsat-8-l1/items', {
-    bbox: [-180, -90, 180, 90],
-    intersects: intersectsGeometry
-  }, backend, endpoint)
+test('/collections/{collectionId}/items with bbox and intersects', async (t) => {
+  const response = await apiClient.post('collections/landsat-8-l1/items', {
+    json: {
+      bbox: [-180, -90, 180, 90],
+      intersects: intersectsGeometry
+    }
+  })
 
   t.truthy(response.context.matched === 2)
 })
 
-test('collections/{collectionId}/items with time', async (t) => {
-  let response = await API('/collections/landsat-8-l1/items', {
-    datetime: '2015-02-19T15:06:12.565047+00:00'
-  }, backend, endpoint)
+test('/collections/{collectionId}/items with time', async (t) => {
+  let response = await apiClient.post('collections/landsat-8-l1/items', {
+    json: {
+      datetime: '2015-02-19T15:06:12.565047+00:00'
+    }
+  })
   t.is(response.type, 'FeatureCollection')
   t.is(response.features[0].id, 'LC80100102015050LGN00')
 
-  response = await API('/collections/landsat-8-l1/items', {
-    datetime: '2015-02-17/2015-02-20'
-  }, backend, endpoint)
+  response = await apiClient.post('collections/landsat-8-l1/items', {
+    json: {
+      datetime: '2015-02-17/2015-02-20'
+    }
+  })
   t.is(response.type, 'FeatureCollection')
   t.is(response.features[0].id, 'LC80100102015050LGN00')
 
-  response = await API('/collections/landsat-8-l1/items', {
-    datetime: '2015-02-19/2015-02-20'
-  }, backend, endpoint)
+  response = await apiClient.post('collections/landsat-8-l1/items', {
+    json: {
+      datetime: '2015-02-19/2015-02-20'
+    }
+  })
   t.is(
     response.features[0].id,
     'LC80100102015050LGN00',
@@ -90,133 +106,151 @@ test('collections/{collectionId}/items with time', async (t) => {
   )
 })
 
-test('collections/{collectionId}/items with limit', async (t) => {
-  const response = await API('/collections/landsat-8-l1/items', {
-    limit: 1
-  }, backend, endpoint)
+test('/collections/{collectionId}/items with limit', async (t) => {
+  const response = await apiClient.post('collections/landsat-8-l1/items', {
+    json: {
+      limit: 1
+    }
+  })
   t.is(response.type, 'FeatureCollection')
   t.is(response.features.length, 1)
 })
 
-test('collections/{collectionId}/items with intersects', async (t) => {
-  let response = await API('/collections/landsat-8-l1/items', {
-    intersects: intersectsGeometry
-  }, backend, endpoint)
+test('/collections/{collectionId}/items with intersects', async (t) => {
+  let response = await apiClient.post('collections/landsat-8-l1/items', {
+    json: {
+      intersects: intersectsGeometry
+    }
+  })
   t.is(response.type, 'FeatureCollection')
   t.is(response.features[0].id, 'LC80100102015082LGN00')
   t.is(response.features[1].id, 'LC80100102015050LGN00')
 
-  // response = await API('/collections/landsat-8-l1/items', {
-  //   intersects: intersectsFeature
-  // }, backend, endpoint)
-  // t.truthy(response.code)
-
-  response = await API('/collections/landsat-8-l1/items', {
-    intersects: noIntersectsGeometry
-  }, backend, endpoint)
+  response = await apiClient.post('collections/landsat-8-l1/items', {
+    json: {
+      intersects: noIntersectsGeometry
+    }
+  })
   t.is(response.features.length, 0)
 })
 
-test('collections/{collectionId}/items with eq query', async (t) => {
-  const response = await API('/collections/landsat-8-l1/items', {
-    query: {
-      'eo:cloud_cover': {
-        eq: 0.54
+test('/collections/{collectionId}/items with eq query', async (t) => {
+  const response = await apiClient.post('collections/landsat-8-l1/items', {
+    json: {
+      query: {
+        'eo:cloud_cover': {
+          eq: 0.54
+        }
       }
     }
-  }, backend, endpoint)
+  })
   t.is(response.features.length, 1)
   t.is(response.features[0].id, 'LC80100102015050LGN00')
 })
 
-test('collections/{collectionId}/items with gt lt query', async (t) => {
-  const response = await API('/collections/landsat-8-l1/items', {
-    query: {
-      'eo:cloud_cover': {
-        gt: 0.5,
-        lt: 0.6
+test('/collections/{collectionId}/items with gt lt query', async (t) => {
+  const response = await apiClient.post('collections/landsat-8-l1/items', {
+    json: {
+      query: {
+        'eo:cloud_cover': {
+          gt: 0.5,
+          lt: 0.6
+        }
       }
     }
-  }, backend, endpoint)
+  })
   t.is(response.features.length, 1)
   t.is(response.features[0].id, 'LC80100102015050LGN00')
 })
 
 // Search API
 
-test('search', async (t) => {
-  const response = await API('/', {}, backend, endpoint)
-  // console.log(response.links)
+test('/', async (t) => {
+  const response = await apiClient.post('', { json: {} })
   t.is(response.links.length, 8)
 })
 
-test('search bbox', async (t) => {
-  let response = await API('/search', {
-    bbox: [-180, -90, 180, 90]
-  }, backend, endpoint)
+test.skip('/search bbox', async (t) => {
+  let response = await apiClient.post('search', {
+    json: {
+      bbox: [-180, -90, 180, 90]
+    }
+  })
   t.is(response.type, 'FeatureCollection')
 
   const ids = response.features.map((item) => item.id)
   t.truthy(ids.indexOf('LC80100102015082LGN00') > -1)
   t.truthy(ids.indexOf('collection2_item') > -1)
 
-  response = await API('/search', {
-    bbox: [-5, -5, 5, 5]
-  }, backend, endpoint)
+  response = await apiClient.post('search', {
+    json: {
+      bbox: [-5, -5, 5, 5]
+    }
+  })
   t.is(response.features.length, 0)
 })
 
-test('search default sort', async (t) => {
-  const response = await API('/search', {}, backend, endpoint)
+test('/search default sort', async (t) => {
+  const response = await apiClient.post('search', { json: {} })
   t.is(response.features[0].id, 'LC80100102015082LGN00')
 })
 
-test('search sort', async (t) => {
-  let response = await API('/search', {
-    sort: [{
-      field: 'eo:cloud_cover',
-      direction: 'desc'
-    }]
-  }, backend, endpoint)
+test('/search sort', async (t) => {
+  let response = await apiClient.post('search', {
+    json: {
+      sort: [{
+        field: 'eo:cloud_cover',
+        direction: 'desc'
+      }]
+    }
+  })
   t.is(response.features[0].id, 'LC80100102015082LGN00')
 
-  response = await API('/search', {
-    sort: '[{ "field": "eo:cloud_cover", "direction": "desc" }]'
-  }, backend, endpoint)
+  response = await apiClient.post('search', {
+    json: {
+      sort: '[{ "field": "eo:cloud_cover", "direction": "desc" }]'
+    }
+  })
   t.is(response.features[0].id, 'LC80100102015082LGN00')
 })
 
-test('search flattened collection properties', async (t) => {
-  let response = await API('/search', {
-    query: {
-      'platform': {
-        eq: 'platform2'
+test('/search flattened collection properties', async (t) => {
+  let response = await apiClient.post('search', {
+    json: {
+      query: {
+        'platform': {
+          eq: 'platform2'
+        }
       }
     }
-  }, backend, endpoint)
+  })
   t.is(response.features[0].id, 'collection2_item')
 
-  response = await API('/search', {
-    query: {
-      'platform': {
-        eq: 'landsat-8'
+  response = await apiClient.post('search', {
+    json: {
+      query: {
+        'platform': {
+          eq: 'landsat-8'
+        }
+      },
+      fields: {
+        include: ['properties.platform']
       }
-    },
-    fields: {
-      include: ['properties.platform']
     }
-  }, backend, endpoint)
+  })
   const havePlatform = response.features.filter(
     (item) => (item.properties.platform === 'landsat-8')
   )
   t.is(havePlatform.length, response.features.length)
 })
 
-test('search fields filter', async (t) => {
-  let response = await API('/search', {
-    fields: {
+test('/search fields filter', async (t) => {
+  let response = await apiClient.post('search', {
+    json: {
+      fields: {
+      }
     }
-  }, backend, endpoint)
+  })
   t.truthy(response.features[0].collection)
   t.truthy(response.features[0].id)
   t.truthy(response.features[0].type)
@@ -225,103 +259,122 @@ test('search fields filter', async (t) => {
   t.truthy(response.features[0].links)
   t.truthy(response.features[0].assets)
 
-  response = await API('/search', {
-    fields: {
-      exclude: ['collection']
+  response = await apiClient.post('search', {
+    json: {
+      fields: {
+        exclude: ['collection']
+      }
     }
-  }, backend, endpoint)
+  })
   t.falsy(response.features[0].collection)
 
-  response = await API('/search', {
-    fields: {
-      exclude: ['geometry']
+  response = await apiClient.post('search', {
+    json: {
+      fields: {
+        exclude: ['geometry']
+      }
     }
-  }, backend, endpoint)
+  })
   t.falsy(response.features[0].geometry)
 
-  response = await API('/search', {
-    fields: {
-      include: ['properties'],
-      exclude: ['properties.datetime']
+  response = await apiClient.post('search', {
+    json: {
+      fields: {
+        include: ['properties'],
+        exclude: ['properties.datetime']
+      }
     }
-  }, backend, endpoint)
+  })
   t.falsy(response.features[0].properties.datetime)
 
-  response = await API('/search', {
-  }, backend, endpoint)
+  response = await apiClient.post('search', { json: {} })
   t.truthy(response.features[0].geometry)
 
-  response = await API('/search', {
-    fields: {
-      include: ['collection', 'properties.eo:epsg']
+  response = await apiClient.post('search', {
+    json: {
+      fields: {
+        include: ['collection', 'properties.eo:epsg']
+      }
     }
-  }, backend, endpoint)
+  })
   t.truthy(response.features[0].collection)
   t.truthy(response.features[0].properties['eo:epsg'])
   t.falsy(response.features[0].properties['eo:cloud_cover'])
 
-  response = await API('/search', {
-    fields: {
-      exclude: ['id', 'links']
+  response = await apiClient.post('search', {
+    json: {
+      fields: {
+        exclude: ['id', 'links']
+      }
     }
-  }, backend, endpoint)
+  })
   t.truthy(response.features.length, 'Does not exclude required fields')
 })
 
-test('search created and updated', async (t) => {
-  const response = await API('/search', {
-    query: {
-      'platform': {
-        eq: 'landsat-8'
+test('/search created and updated', async (t) => {
+  const response = await apiClient.post('search', {
+    json: {
+      query: {
+        'platform': {
+          eq: 'landsat-8'
+        }
+      },
+      fields: {
+        include: ['properties.created', 'properties.updated']
       }
-    },
-    fields: {
-      include: ['properties.created', 'properties.updated']
     }
-  }, backend, endpoint)
+  })
   t.truthy(response.features[0].properties.created)
   t.truthy(response.features[0].properties.updated)
 })
 
-test('search in query', async (t) => {
-  const response = await API('/search', {
-    query: {
-      'landsat:wrs_path': {
-        in: ['10']
+test('/search in query', async (t) => {
+  const response = await apiClient.post('search', {
+    json: {
+      query: {
+        'landsat:wrs_path': {
+          in: ['10']
+        }
       }
     }
-  }, backend, endpoint)
+  })
   t.is(response.features.length, 3)
 })
 
-test('search limit next query', async (t) => {
-  let response = await API('/search', {
-    query: {
-      'landsat:wrs_path': {
-        in: ['10']
-      }
-    },
-    limit: 2
-  }, backend, endpoint)
+test('/search limit next query', async (t) => {
+  let response = await apiClient.post('search', {
+    json: {
+      query: {
+        'landsat:wrs_path': {
+          in: ['10']
+        }
+      },
+      limit: 2
+    }
+  })
   t.is(response.features.length, 2)
 
-  response = await API('/search', {
-    query: {
-      'landsat:wrs_path': {
-        in: ['10']
-      }
-    },
-    limit: 2,
-    page: 2
-  }, backend, endpoint)
+  response = await apiClient.post('search', {
+    json: {
+      query: {
+        'landsat:wrs_path': {
+          in: ['10']
+        }
+      },
+      limit: 2,
+      page: 2
+    }
+  })
 
   t.is(response.features.length, 1)
 })
 
-test('search ids', async (t) => {
-  const response = await API('/search', {
-    ids: ['collection2_item', 'LC80100102015050LGN00']
-  }, backend, endpoint)
+test('/search ids', async (t) => {
+  const response = await apiClient.post('search', {
+    json: {
+      ids: ['collection2_item', 'LC80100102015050LGN00']
+    }
+  })
   t.is(response.features.length, 2)
 
   const ids = response.features.map((item) => item.id)
@@ -329,88 +382,73 @@ test('search ids', async (t) => {
   t.truthy(ids.indexOf('collection2_item') > -1)
 })
 
-test('search collections', async (t) => {
-  // const query = {
-  //   query: {
-  //     collection: {
-  //       in: ['collection2']
-  //     }
-  //   }
-  // }
+test('/search collections', async (t) => {
   let query = {
     collections: ['collection2']
   }
-  let response = await API('/search', query, backend, endpoint)
+  let response = await apiClient.post('search', { json: query })
   t.is(response.features.length, 1)
   t.is(response.features[0].id, 'collection2_item')
-
-  // query = {
-  //   query: {
-  //     collection: {
-  //       in: ['landsat-8-l1']
-  //     }
-  //   }
-  // }
 
   query = {
     collections: ['landsat-8-l1']
   }
 
-  response = await API('/search', query, backend, endpoint)
+  response = await apiClient.post('search', { json: query })
 
   t.is(response.features.length, 2)
   t.is(response.features[0].id, 'LC80100102015082LGN00')
   t.is(response.features[1].id, 'LC80100102015050LGN00')
 
-  // query =  {
-  //   query: {
-  //     collection: {
-  //       in: ['collection2', 'landsat-8-l1']
-  //     }
-  //   }
-  // }
-
   query = {
     collections: ['collection2', 'landsat-8-l1']
   }
 
-  response = await API('/search', query, backend, endpoint)
+  response = await apiClient.post('search', { json: query })
   t.is(response.features.length, 3)
 })
 
 // Search formatting
-test('search conformsTo', async (t) => {
-  const response = await API('/', {}, backend, endpoint)
-  t.is(response.conformsTo.length, 5)
+test('/search conformsTo', async (t) => {
+  const response = await apiClient.post('', { json: {} })
+  t.is(response.conformsTo.length, 13)
 })
 
-test('search preserve geometry in page GET links', async (t) => {
-  let response = await API('/search', {
-    intersects: intersectsGeometry,
-    limit: 2
-  }, backend, endpoint)
+test.skip('/search preserve geometry in page GET links', async (t) => {
+  let response = await apiClient.post('search', {
+    json: {
+      intersects: intersectsGeometry,
+      limit: 2
+    }
+  })
   t.is(response.features.length, 2)
 
-  response = await API('/search', {
-    intersects: intersectsGeometry,
-    limit: 2,
-    page: 2
-  }, backend, endpoint)
+  response = await apiClient.post('search', {
+    json: {
+      intersects: intersectsGeometry,
+      limit: 2,
+      page: 2
+    }
+  })
 
-  response = await API('/search', {
-    intersects: encodeURIComponent(JSON.stringify(intersectsGeometry)),
-    limit: 2,
-    page: 2
-  }, backend, endpoint)
+  response = await apiClient.post('search', {
+    json: {
+      intersects: encodeURIComponent(JSON.stringify(intersectsGeometry)),
+      limit: 2,
+      page: 2
+    }
+  })
 
   t.is(response.features.length, 1)
 
   const datetime = '2015-02-19/2015-02-20'
-  response = await API('/search', {
-    intersects: intersectsGeometry,
-    datetime: datetime,
-    limit: 1
-  }, backend, endpoint)
+  response = await apiClient.post('search', {
+    json: {
+      intersects: intersectsGeometry,
+      datetime: datetime,
+      limit: 1
+    }
+  })
   t.is(response.features.length, 1)
 
   const next = response.links[0].href

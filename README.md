@@ -13,8 +13,9 @@
     - [Subscribing to SNS Topics](#subscribing-to-sns-topics)
     - [Ingest Errors](#ingest-errors)
   - [Development](#development)
-    - [Running Locally using AWS Resources](#running-locally-using-aws-resources)
-    - [Running Locally using Local Resources](#running-locally-using-local-resources)
+    - [Running Locally](#running-locally)
+    - [Running Tests](#running-tests)
+    - [Integration Tests](#integration-tests)
   - [About](#about)
 
 ## Overview
@@ -202,27 +203,35 @@ npm run test
 npm run build-api-docs # TODO: this fails
 ```
 
-### Running Locally using AWS Resources
+### Running Locally
 
-The easiest way to run the API server locally is to deploy an instance to AWS, and then run a local instance pointing at the Elasticsearch resource created by that deployment. 
+The easiest way to run the API server locally is to use an Elasticsearch container running in Docker and `serverless-offline`.
+
+There is a `docker-compose.yml` file to simplify running Elasticsearch locally:
+
+```sh
+docker-compose up -d
+```
+
+The API can be run using `serverless-offline`, which will require a `serverless.yml` file. Copy `serverless.yml.example` to `serverless.yml`. You'll also need to edit the `serverless.yml` file to set the `ES_HOST` value.
 
 To do this, first change the value of `ES_HOST` in the serverless.yml file from the default (which dynamically populates it from the resource created upon deploy):
 
-```
+```yml
 ES_HOST:
   Fn::GetAtt: [ElasticSearchInstance, DomainEndpoint]
 ```
 
 to instead use a hard-coded string of the Elasticsearch instance URL, e.g.,
 
-```
-ES_HOST: https://search-stac-server-dev-es-7bwzvxndbxp4dl6h344xlpvly.us-west-2.es.amazonaws.com/
+```yml
+ES_HOST: http://localhost:9200
 ```
 
 also set the STAC_API_URL explicitly:
 
-```
-STAC_API_URL: http://localhost:3000
+```yml
+STAC_API_URL: http://localhost:3000/dev
 ```
 
 Then, use npm `serve` command to run serverless offline:
@@ -242,13 +251,6 @@ curl -s https://planetarycomputer.microsoft.com/api/stac/v1/collections/aster-l1
     aws sns publish --topic-arn ${TOPIC_ARN} --message file:///dev/stdin
 ```
 
-### Running Locally using Local Resources
-
-TBD, possibly using:
-
-- https://github.com/localstack/localstack
-- https://github.com/localstack/serverless-localstack
-
 ## Running Tests
 
 stac-server uses [ava](https://github.com/avajs/ava) to execute tests.
@@ -263,11 +265,39 @@ npm run test:unit
 # run unit tests with coverage
 npm run test:coverage
 
-# run integration tests
-npm run test:integration
-
 # run tests from a single test file whose titles match 'foobar*'
 npx ava tests/test_es.js --match='foobar*'
+```
+
+### Integration Tests
+
+The integration tests use an Elasticsearch server running in Docker and an instance of the API using [Serverless Offline](https://www.npmjs.com/package/serverless-offline).
+
+When the integration tests run, they:
+
+1. Wait for Elasticsearch to be available
+1. Delete all indices from Elasticsearch
+1. Add indices and test data to Elasticsearch
+1. Move any existing `serverless.yml` file to `serverless.yml.original`
+1. Create a `serverless.yml` file to support serverless-offline
+1. Build the packages
+1. Start an instance of the API using serverless-offline. That API will be available at <http://localhost:3000/dev/>
+1. Wait for the API to be available
+1. Run the integration tests in `./tests/integration/test_*.js`
+1. Remove the serverless.yml file
+1. Restore `serverless.yml.original` to `serverless.yml`, if necessary
+1. Stop the API
+
+Before running the integration tests, make sure to start Elasticsearch using:
+
+```sh
+docker-compose up -d
+```
+
+Once Elasticsearch has been started, run the integration tests:
+
+```sh
+npm run test:integration
 ```
 
 ## About

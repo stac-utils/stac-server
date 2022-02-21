@@ -66,7 +66,7 @@ elasticsearch[(Elasticsearch)]
 itemsForIngest --> ingestSnsTopic
 ingestSnsTopic --> ingestQueue
 ingestQueue --> ingestLambda
-ingestLambda --> elasticsearch[(Elasticsarch)]
+ingestLambda --> elasticsearch
 
 ingestDeadLetterQueue --> failedIngestLambda
 

@@ -4,6 +4,7 @@
 
 - [stac-server](#stac-server)
   - [Overview](#overview)
+  - [Architecture](#architecture)
   - [Migration](#migration)
     - [0.3 -> 0.4](#03---04)
   - [Usage](#usage)

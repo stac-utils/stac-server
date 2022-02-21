@@ -19,6 +19,12 @@ jobs:
         ports:
           - 9200:9200
           - 9300:9300
+      localstack:
+        image: localstack/localstack
+        env:
+          SERVICES: s3,sns,sqs
+        ports:
+          - 4566:4566
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v2
@@ -38,3 +44,6 @@ jobs:
         run: npm run test:coverage
       - name: Integration tests
         run: npm run test:integration
+      - name: Ingest integration tests
+        working-directory: lambdas/ingest
+        run: npm run test

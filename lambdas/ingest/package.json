@@ -19,6 +19,7 @@
   "devDependencies": {
     "ava": "^3.5.0",
     "aws-event-mocks": "0.0.0",
+    "crypto-random-string": "^3.0.0",
     "proxyquire": "^2.1.0",
     "sinon": "^7.1.1",
     "webpack": "^5.42.1",

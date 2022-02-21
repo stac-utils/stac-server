@@ -118,6 +118,17 @@ STAC Collections and Items are ingested by the `ingest` Lambda function, however
 
 STAC Collections should be ingested before Items that belong to that Collection. Items should have the `collection` field populated with the ID of an existing Collection.
 
+### Ingesting large items
+
+There is a 256 KB limit on the size of SQS messages. Larger items can be ingested by writing their contents to S3, then publishing a message to the `stac-server-<stage>-ingest` SNS topic in with the format:
+
+```json
+{
+  Bucket: "<source_bucket>",
+  Key: "<source_key>"
+}
+```
+
 ### Subscribing to SNS Topics
 
 Stac-server can also be subscribed to SNS Topics that publish complete STAC Items as their message. This provides a way to keep stac-server up to date with new data. Use the AWS Lambda console for the function `stac-server-<stage>-subscibe-to-sns` to subscribe to an SNS Topic for which you have the full ARN and permission to subscribe to. This could be an SNS Topic you created yourself to publish STAC records to, or a publicly available one, such as for [Sentinel](https://github.com/sat-utils/sat-stac-sentinel).

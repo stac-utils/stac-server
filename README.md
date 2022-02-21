@@ -59,7 +59,7 @@ subgraph api[STAC API]
   apiLambda[API Lambda]
 end
 
-elasticsearch[(Elasticsarch)]
+elasticsearch[(Elasticsearch)]
 
 %% Ingest workflow
 

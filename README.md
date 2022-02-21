@@ -124,8 +124,8 @@ There is a 256 KB limit on the size of SQS messages. Larger items can be ingeste
 
 ```json
 {
-  Bucket: "<source_bucket>",
-  Key: "<source_key>"
+  "Bucket": "<source_bucket>",
+  "Key": "<source_key>"
 }
 ```
 

@@ -19,17 +19,17 @@ provider:
   iam:
     role:
       statements:
-      - Effect: "Allow"
-        Resource: "arn:aws:es:#{AWS::Region}:#{AWS::AccountId}:domain/*"
-        Action: "es:*"
-      - Effect: "Allow"
-        Action:
-          - sqs:GetQueueUrl
-          - sqs:SendMessage
-          - sqs:ReceiveMessage
-          - sqs:DeleteMessage
-        Resource:
-          Fn::GetAtt: [ingestQueue, Arn]
+        - Effect: "Allow"
+          Resource: "arn:aws:es:#{AWS::Region}:#{AWS::AccountId}:domain/*"
+          Action: "es:*"
+        - Effect: "Allow"
+          Action:
+            - sqs:GetQueueUrl
+            - sqs:SendMessage
+            - sqs:ReceiveMessage
+            - sqs:DeleteMessage
+          Resource:
+            Fn::GetAtt: [ingestQueue, Arn]
   lambdaHashingVersion: 20201221
 package:
   individually: true
@@ -39,7 +39,7 @@ functions:
     description: stac-server API Lambda
     handler: index.handler
     package:
-      artifact: lambdas/api/dist/api.zip
+      artifact: dist/api/api.zip
     events:
       - http:
           method: ANY
@@ -55,7 +55,7 @@ functions:
     memorySize: 512
     timeout: 60
     package:
-      artifact: lambdas/ingest/dist/ingest.zip
+      artifact: dist/ingest/ingest.zip
     events:
       - sqs:
           arn:
@@ -66,7 +66,7 @@ functions:
     memorySize: 128
     timeout: 30
     package:
-      artifact: lambdas/failed-ingest/dist/failed-ingest.zip
+      artifact: dist/failed-ingest/failed-ingest.zip
     events:
       - sqs:
           arn:
@@ -76,7 +76,7 @@ resources:
   Description: A STAC API running on stac-server
   Resources:
     ingestTopic:
-      Type: 'AWS::SNS::Topic'
+      Type: "AWS::SNS::Topic"
       Properties:
         TopicName: ${self:service}-${self:provider.stage}-ingest
     deadLetterQueue:
@@ -134,7 +134,7 @@ resources:
   Outputs:
     ESEndpoint:
       Value:
-        Fn::GetAtt: [ ElasticSearchInstance, DomainEndpoint ]
+        Fn::GetAtt: [ElasticSearchInstance, DomainEndpoint]
       Export:
         Name: ${self:service}-${self:provider.stage}-es-endpoint
 

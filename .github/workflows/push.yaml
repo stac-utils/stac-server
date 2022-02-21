@@ -36,5 +36,5 @@ jobs:
         run: npm audit --omit dev
       - name: Unit tests
         run: npm run test:coverage
-      - name: Integration tests
-        run: npm run test:integration
+      - name: System tests
+        run: npm run test:system

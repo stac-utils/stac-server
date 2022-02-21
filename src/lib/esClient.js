@@ -44,18 +44,13 @@ async function connect() {
 
 // get existing ES client or create a new one
 async function esClient() {
-  if (!_esClient) {
-    try {
-      _esClient = await connect()
-    } catch (error) {
-      logger.error(error)
-    }
-    if (_esClient) {
-      logger.debug('Connected to Elasticsearch')
-    }
-  } else {
+  if (_esClient) {
     logger.debug('Using existing Elasticsearch connection')
+  } else {
+    _esClient = await connect()
+    logger.debug('Connected to Elasticsearch')
   }
+
   return _esClient
 }
 

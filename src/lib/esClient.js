@@ -5,8 +5,8 @@ const { createAWSConnection, awsCredsifyAll } = require('@acuris/aws-es-connecti
 const elasticsearch = require('@elastic/elasticsearch')
 const logger = console //require('./logger')
 
-const collectionsMapping = require('../../fixtures/collections')()
-const itemsMapping = require('../../fixtures/items')()
+const collectionsMapping = require('../../fixtures/collections')
+const itemsMapping = require('../../fixtures/items')
 
 let _esClient
 

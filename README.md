@@ -165,14 +165,15 @@ STAC Collections should be ingested before Items that belong to that Collection.
 
 ### Ingesting large items
 
-There is a 256 KB limit on the size of SQS messages. Larger items can be ingested by writing their contents to S3, then publishing a message to the `stac-server-<stage>-ingest` SNS topic in with the format:
+There is a 256 KB limit on the size of SQS messages. Larger items can by publishing a message to the `stac-server-<stage>-ingest` SNS topic in with the format:
 
 ```json
 {
-  "Bucket": "<source_bucket>",
-  "Key": "<source_key>"
+  "href": "s3://source-bucket/source-key"
 }
 ```
+
+The `s3://`, `http://`, and `https://` protocols are supported for remote ingest.
 
 ### Subscribing to SNS Topics
 

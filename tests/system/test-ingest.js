@@ -1,31 +1,22 @@
-'use strict'
-
-const test = require('ava')
+const { default: test } = require('ava')
+const nock = require('nock')
 const esClient = require('../../src/lib/esClient')
 const awsClients = require('../../src/lib/aws-clients')
 const { handler } = require('../../src/lambdas/ingest')
 const {
   loadFixture,
   noop,
-  nullLogger,
   randomId
 } = require('../helpers/utils')
 const { getCollectionIds } = require('../helpers/api-client')
-const { connect } = require('../../src/lib/esClient')
-
-const sqsMessageToRecord = (message) => ({
-  messageId: message.MessageId,
-  receiptHandle: message.ReceiptHandle,
-  body: message.Body,
-  attributes: {},
-  messageAttributes: {},
-  md5OfBody: message.MD5OfBody,
-  eventSource: 'aws:sqs',
-  eventSourceARN: 'sqs-queue-arn',
-  awsRegion: 'us-east-1'
-})
+const { refreshIndices } = require('../helpers/es')
+const { sqsTriggerLambda } = require('../helpers/sqs')
+const { nullLoggerContext } = require('../helpers/context')
 
 test.before(async (t) => {
+  nock.disableNetConnect()
+  nock.enableNetConnect('localhost')
+
   // Create SNS topic
   const sns = awsClients.sns()
 
@@ -64,7 +55,13 @@ test.beforeEach(async (t) => {
   await awsClients.sqs().purgeQueue({ QueueUrl: ingestQueueUrl }).promise()
 })
 
+test.afterEach.always(() => {
+  nock.cleanAll()
+})
+
 test.after.always(async (t) => {
+  nock.enableNetConnect()
+
   const { ingestQueueUrl } = t.context
 
   // Delete SQS queue
@@ -78,18 +75,7 @@ test.after.always(async (t) => {
   }).promise().catch(noop)
 })
 
-const eventFromQueue = async (ingestQueueUrl) => {
-  const { Messages } = await awsClients.sqs().receiveMessage({
-    QueueUrl: ingestQueueUrl,
-    WaitTimeSeconds: 1
-  }).promise()
-
-  return {
-    Records: Messages.map((m) => sqsMessageToRecord(m))
-  }
-}
-
-test.only('The ingest lambda supports ingesting a collection published to SNS', async (t) => {
+test('The ingest lambda supports ingesting a collection published to SNS', async (t) => {
   const { ingestQueueUrl, ingestTopicArn } = t.context
 
   const collection = await loadFixture(
@@ -102,18 +88,11 @@ test.only('The ingest lambda supports ingesting a collection published to SNS', 
     Message: JSON.stringify(collection)
   }).promise()
 
-  const event = await eventFromQueue(ingestQueueUrl)
+  await sqsTriggerLambda(ingestQueueUrl, handler, nullLoggerContext)
 
-  await handler(event, { logger: nullLogger })
-
-  const e = await connect()
-
-  await e.indices.refresh({ index: '_all' })
+  await refreshIndices()
 
   const collectionIds = await getCollectionIds()
-
-  console.log('>>> collection.id:', collection.id)
-  console.log('>>> collectionIds:', collectionIds)
 
   t.true(collectionIds.includes(collection.id))
 })
@@ -145,12 +124,37 @@ test('The ingest lambda supports ingesting a collection sourced from S3', async 
 
   await awsClients.sns().publish({
     TopicArn: ingestTopicArn,
-    Message: JSON.stringify({ Bucket: sourceBucket, Key: sourceKey })
+    Message: JSON.stringify({ href: `s3://${sourceBucket}/${sourceKey}` })
   }).promise()
 
-  const event = await eventFromQueue(ingestQueueUrl)
+  await sqsTriggerLambda(ingestQueueUrl, handler, nullLoggerContext)
 
-  await handler(event, { logger: nullLogger })
+  await refreshIndices()
+
+  const collectionIds = await getCollectionIds()
+
+  t.true(collectionIds.includes(collection.id))
+})
+
+test('The ingest lambda supports ingesting a collection sourced from http', async (t) => {
+  const { ingestQueueUrl, ingestTopicArn } = t.context
+
+  // Load the collection to be ingested
+  const collection = await loadFixture(
+    'landsat-8-l1-collection.json',
+    { id: randomId('collection') }
+  )
+
+  nock('http://source.local').get('/my-file.dat').reply(200, collection)
+
+  await awsClients.sns().publish({
+    TopicArn: ingestTopicArn,
+    Message: JSON.stringify({ href: 'http://source.local/my-file.dat' })
+  }).promise()
+
+  await sqsTriggerLambda(ingestQueueUrl, handler, nullLoggerContext)
+
+  await refreshIndices()
 
   const collectionIds = await getCollectionIds()
 

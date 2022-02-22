@@ -1,14 +1,19 @@
 {
   "root": true,
   "extends": "airbnb",
-  "plugins": ["eslint-plugin-jsdoc"],
+  "plugins": [
+    "eslint-plugin-jsdoc"
+  ],
   "env": {
     "node": true,
     "mocha": true
   },
   "rules": {
     "object-curly-newline": 0,
-    "semi": [2, "never"],
+    "semi": [
+      2,
+      "never"
+    ],
     "quote-props": 0,
     "camelcase": 0,
     "func-names": 0,
@@ -16,26 +21,32 @@
     "no-prototype-builtins": "off",
     "radix": "off",
     "no-console": "off",
-    "indent": [ "error", 2 ],
+    "indent": [
+      "error",
+      2
+    ],
     "require-jsdoc": "off",
-    "valid-jsdoc": [ "error", {
-      "prefer": {
-        "arg": "param",
-        "return": "returns"
-      },
-      "preferType": {
-        "Boolean": "boolean",
-        "Number": "number",
-        "String": "string",
-        "object": "Object",
-        "array": "Array",
-        "date": "Date",
-        "regexp": "RegExp",
-        "Regexp": "RegExp",
-        "promise": "Promise"
-      },
-      "requireReturn": true
-    }],
+    "valid-jsdoc": [
+      "error",
+      {
+        "prefer": {
+          "arg": "param",
+          "return": "returns"
+        },
+        "preferType": {
+          "Boolean": "boolean",
+          "Number": "number",
+          "String": "string",
+          "object": "Object",
+          "array": "Array",
+          "date": "Date",
+          "regexp": "RegExp",
+          "Regexp": "RegExp",
+          "promise": "Promise"
+        },
+        "requireReturn": true
+      }
+    ],
     "jsdoc/check-param-names": "error",
     "jsdoc/check-tag-names": "error",
     "jsdoc/check-types": "off",
@@ -53,10 +64,13 @@
     "import/no-extraneous-dependencies": "off",
     "import/newline-after-import": "off",
     "class-methods-use-this": "off",
+    "no-return-await": "off",
     "no-warning-comments": "off",
     "no-unused-vars": [
       "error",
-      { "argsIgnorePattern": "^_" }
+      {
+        "argsIgnorePattern": "^_"
+      }
     ],
     "no-useless-escape": "off",
     "spaced-comment": "off",
@@ -86,9 +100,15 @@
         "ignorePattern": "(https?:|JSON\\.parse|[Uu]rl =)"
       }
     ],
-    "arrow-parens": ["error", "always"],
+    "arrow-parens": [
+      "error",
+      "always"
+    ],
     "prefer-destructuring": "off",
-    "function-paren-newline": ["error", "consistent"],
+    "function-paren-newline": [
+      "error",
+      "consistent"
+    ],
     "import/extensions": "off"
   }
 }

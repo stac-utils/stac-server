@@ -1,7 +1,6 @@
-/* eslint-disable no-return-await */
+// @ts-check
 
-'use strict'
-
+const { default: got } = require('got')
 const esClient = require('../../lib/esClient.js')
 const stream = require('../../lib/esStream.js')
 const ingest = require('../../lib/ingest.js')
@@ -11,14 +10,24 @@ const isSqsEvent = (event) => 'Records' in event
 
 const isSnsMessage = (record) => record.Type === 'Notification'
 
-const isS3SourcedIngestMessage = (record) => 'Bucket' in record && 'Key' in record
-
 const stacItemFromSnsMessage = async (message) => {
-  if (isS3SourcedIngestMessage(message)) {
-    return await s3Utils.getObjectJson({
-      bucket: message.Bucket,
-      key: message.Key
-    })
+  if ('href' in message) {
+    const { protocol, hostname, pathname } = new URL(message.href)
+
+    if (protocol === 's3:') {
+      return await s3Utils.getObjectJson({
+        bucket: hostname,
+        key: pathname.replace(/^\//, '')
+      })
+    }
+
+    if (protocol.startsWith('http')) {
+      return await got.get(message.href, {
+        resolveBodyOnly: true
+      }).json()
+    }
+
+    throw new Error(`Unsupported source: ${message.href}`)
   }
 
   return message

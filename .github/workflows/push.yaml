@@ -38,6 +38,8 @@ jobs:
         run: npm install
       - name: Eslint
         run: npm run lint
+      - name: Typecheck
+        run: npm run typecheck
       - name: Audit
         run: npm audit --omit dev
       - name: Unit tests

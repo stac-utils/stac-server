@@ -17,7 +17,9 @@ test('extractIntersects', (t) => {
   })
   t.throws(() => {
     proxyApi.extractIntersects({ intersects: {} })
-  }, null, 'Throws exception when GeoJSON is invalid')
+  },
+  { instanceOf: Error, message: 'Invalid GeoJSON geometry' },
+  'Throws exception when GeoJSON is invalid')
 })
 
 test('extractIntersects FeatureCollection', (t) => {
@@ -29,5 +31,7 @@ test('extractIntersects FeatureCollection', (t) => {
     proxyApi.extractIntersects({
       intersects: { type: 'FeatureCollection' }
     })
-  }, null, 'Throws exception when GeoJSON type is FeatureCollection')
+  },
+  { instanceOf: Error, message: 'Expected GeoJSON geometry, not Feature or FeatureCollection' },
+  'Throws exception when GeoJSON type is FeatureCollection')
 })

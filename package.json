@@ -44,7 +44,7 @@
     "@types/memorystream": "^0.3.0",
     "@types/node": "^14.18.12",
     "@types/sinon": "^10.0.11",
-    "ava": "^3.15.0",
+    "ava": "^4.0.1",
     "aws-event-mocks": "^0.0.0",
     "aws-sdk": "^2.382.0",
     "c8": "^7.11.0",

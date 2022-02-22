@@ -13,6 +13,7 @@ const attrsFromPayload = function (payload) {
   return {
     recordType: {
       DataType: 'String',
+      // is it okay for pre-1.0.0 stac items this is unknown?
       StringValue: payload.record.type || 'unknown'
     },
     ingestStatus: {

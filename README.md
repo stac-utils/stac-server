@@ -15,8 +15,8 @@
     - [Ingest Errors](#ingest-errors)
   - [Development](#development)
     - [Running Locally](#running-locally)
-    - [Running Tests](#running-tests)
-    - [Integration Tests](#integration-tests)
+  - [Running Tests](#running-tests)
+    - [System and Integration Tests](#system-and-integration-tests)
   - [About](#about)
 
 ## Overview
@@ -282,9 +282,9 @@ npm run test:coverage
 npx ava tests/test_es.js --match='foobar*'
 ```
 
-### Integration Tests
+### System and Integration Tests
 
-The integration tests use an Elasticsearch server running in Docker and an instance of the API using [Serverless Offline](https://www.npmjs.com/package/serverless-offline).
+The System and Integration tests use an Elasticsearch server running in Docker and an instance of the API using [Serverless Offline](https://www.npmjs.com/package/serverless-offline).
 
 When the integration tests run, they:
 
@@ -307,7 +307,16 @@ Before running the integration tests, make sure to start Elasticsearch using:
 docker-compose up -d
 ```
 
-Once Elasticsearch has been started, run the integration tests:
+Running these tests requires the timeout utility is installed. On Linux,
+this is probably already installed, and on macOS it can be installed with `brew install coreutils`.
+
+Once Elasticsearch has been started, run the system tests:
+
+```sh
+npm run test:system
+```
+
+Run the integration tests (**Note**: currently none exist):
 
 ```sh
 npm run test:integration

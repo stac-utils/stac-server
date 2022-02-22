@@ -284,12 +284,12 @@ test('/search fields filter', async (t) => {
   response = await apiClient.post('search', {
     json: {
       fields: {
-        include: ['collection', 'properties.eo:epsg']
+        include: ['collection', 'properties.proj:epsg']
       }
     }
   })
   t.truthy(response.features[0].collection)
-  t.truthy(response.features[0].properties['eo:epsg'])
+  t.truthy(response.features[0].properties['proj:epsg'])
   t.falsy(response.features[0].properties['eo:cloud_cover'])
 
   response = await apiClient.post('search', {

@@ -12,7 +12,7 @@ echo "Setting up Elasticsearch"
 node ./tests/system/setup-es.js
 
 echo "Starting API"
-npm run serve >/dev/null 2>&2 &
+node ./src/lambdas/api/local.js >/dev/null 2>&2 &
 API_PID="$!"
 
 ./bin/wait-for-api/run.sh

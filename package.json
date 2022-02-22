@@ -16,7 +16,7 @@
     "test:unit": "ava tests/unit/*.js",
     "typecheck": "tsc",
     "deploy": "sls deploy",
-    "serve": "ts-node ./src/lambdas/api/local.js",
+    "serve": "nodemon ./src/lambdas/api/local.js",
     "build-api-docs": "npm run widdershins --search false --language_tabs 'nodejs:NodeJS' 'python:Python' --summary ./packages/api-lib/api-spec.yaml -o ./docs/api.md & npm run shins --inline --logo ./docs/images/logo.png -o ./docs/index.html ./docs/api.md"
   },
   "ava": {
@@ -68,6 +68,7 @@
     "eslint-plugin-jsx-a11y": "^6.0.3",
     "eslint-plugin-react": "^7.7.0",
     "nock": "^12.0.3",
+    "nodemon": "^2.0.15",
     "prettier": "^2.0.5",
     "prettier-eslint": "^11.0.0",
     "prettier-eslint-cli": "^5.0.0",
@@ -77,7 +78,6 @@
     "serverless-pseudo-parameters": "^2.5.0",
     "shins": "^2.3.2-3",
     "sinon": "^7.5.0",
-    "ts-node": "^10.5.0",
     "typescript": "^4.5.5",
     "webpack": "^5.69.1",
     "webpack-cli": "^4.9.2",

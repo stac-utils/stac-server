@@ -134,7 +134,7 @@ function buildQuery(parameters) {
   if (datetimeQuery instanceof Error) {
     throw datetimeQuery
   }
-  
+
   if (datetimeQuery) {
     must.push(datetimeQuery)
   }

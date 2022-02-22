@@ -218,51 +218,19 @@ npm run build-api-docs # TODO: this fails
 
 ### Running Locally
 
-The easiest way to run the API server locally is to use an Elasticsearch container running in Docker and `serverless-offline`.
-
-There is a `docker-compose.yml` file to simplify running Elasticsearch locally:
+Before the API can be run, Elasticsearch and Localstack need to be running. There is a `docker-compose.yml` file to simplify running Elasticsearch locally:
 
 ```sh
 docker-compose up -d
 ```
 
-The API can be run using `serverless-offline`, which will require a `serverless.yml` file. Copy `serverless.yml.example` to `serverless.yml`. You'll also need to edit the `serverless.yml` file to set the `ES_HOST` value.
+The API can then be run with:
 
-To do this, first change the value of `ES_HOST` in the serverless.yml file from the default (which dynamically populates it from the resource created upon deploy):
-
-```yml
-ES_HOST:
-  Fn::GetAtt: [ElasticSearchInstance, DomainEndpoint]
-```
-
-to instead use a hard-coded string of the Elasticsearch instance URL, e.g.,
-
-```yml
-ES_HOST: http://localhost:9200
-```
-
-also set the STAC_API_URL explicitly:
-
-```yml
-STAC_API_URL: http://localhost:3000/dev
-```
-
-Then, use npm `serve` command to run serverless offline:
-
-```
+```sh
 npm run serve
 ```
 
-Connect to the sever on http://localhost:3000/dev/
-
-To quickly ingest a collection and item into your deployment, run the following (where `TOPIC_ARN` is the ARN for the SNS topic created by your deployment):
-
-```sh
-curl -s https://planetarycomputer.microsoft.com/api/stac/v1/collections/aster-l1t | \
-    aws sns publish --topic-arn ${TOPIC_ARN} --message file:///dev/stdin
-curl -s https://planetarycomputer.microsoft.com/api/stac/v1/collections/aster-l1t/items/AST_L1T_00312272006020322_20150518201805 | \
-    aws sns publish --topic-arn ${TOPIC_ARN} --message file:///dev/stdin
-```
+Connect to the sever on <http://localhost:3000/>
 
 ## Running Tests
 
@@ -284,24 +252,19 @@ npx ava tests/test_es.js --match='foobar*'
 
 ### System and Integration Tests
 
-The System and Integration tests use an Elasticsearch server running in Docker and an instance of the API using [Serverless Offline](https://www.npmjs.com/package/serverless-offline).
+The System and Integration tests use an Elasticsearch server running in Docker and a local instance of the API.
 
-When the integration tests run, they:
+When the system tests run, they:
 
 1. Wait for Elasticsearch to be available
 1. Delete all indices from Elasticsearch
 1. Add indices and test data to Elasticsearch
-1. Move any existing `serverless.yml` file to `serverless.yml.original`
-1. Create a `serverless.yml` file to support serverless-offline
-1. Build the packages
-1. Start an instance of the API using serverless-offline. That API will be available at <http://localhost:3000/dev/>
+1. Start an instance of the API. That API will be available at <http://localhost:3000/dev/>
 1. Wait for the API to be available
-1. Run the integration tests in `./tests/integration/test_*.js`
-1. Remove the serverless.yml file
-1. Restore `serverless.yml.original` to `serverless.yml`, if necessary
+1. Run the integration tests in `./tests/system/test_*.js`
 1. Stop the API
 
-Before running the integration tests, make sure to start Elasticsearch using:
+Before running the system tests, make sure to start Elasticsearch using:
 
 ```sh
 docker-compose up -d

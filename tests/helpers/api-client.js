@@ -1,7 +1,7 @@
 const got = require('got')
 
 const apiClient = got.extend({
-  prefixUrl: 'http://localhost:3000/dev/',
+  prefixUrl: 'http://localhost:3000/',
   headers: {
     'X-Forwarded-Proto': 'http'
   },

@@ -46,7 +46,7 @@ test.before(async (t) => {
   }).promise()
 
   // Create ES collections index
-  await esClient.create_index('collections')
+  await esClient.createIndex('collections')
 })
 
 test.beforeEach(async (t) => {

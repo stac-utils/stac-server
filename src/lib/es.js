@@ -43,20 +43,28 @@ function buildDatetimeQuery(parameters) {
   let dateQuery
   const { datetime } = parameters
   if (datetime) {
-    const dataRange = datetime.split('/')
-    if (dataRange.length === 2) {
-      dateQuery = {
-        range: {
-          'properties.datetime': {
-            gte: dataRange[0],
-            lte: dataRange[1]
-          }
-        }
-      }
-    } else {
+    if (!datetime.includes('/')) {
       dateQuery = {
         term: {
           'properties.datetime': datetime
+        }
+      }
+    } else {
+      const [start, end, ...rest] = datetime.split('/')
+      if (rest.length) {
+        dateQuery = new Error('datetime value is invalid, contains more than one forward slash')
+      } else if ((!start && !end) || (start === '..' && start === end)) {
+        dateQuery = new Error(
+          'datetime value is invalid, at least one end of the interval must be closed'
+        )
+      } else {
+        const datetimeRange = {}
+        if (start && start !== '..') datetimeRange.gte = start
+        if (end && end !== '..') datetimeRange.lte = end
+        dateQuery = {
+          range: {
+            'properties.datetime': datetimeRange
+          }
         }
       }
     }
@@ -123,6 +131,10 @@ function buildQuery(parameters) {
   }
 
   const datetimeQuery = buildDatetimeQuery(parameters)
+  if (datetimeQuery instanceof Error) {
+    throw datetimeQuery
+  }
+
   if (datetimeQuery) {
     must.push(datetimeQuery)
   }
@@ -344,5 +356,6 @@ module.exports = {
   getCollections,
   search,
   editPartialItem,
-  constructSearchParams
+  constructSearchParams,
+  buildDatetimeQuery
 }

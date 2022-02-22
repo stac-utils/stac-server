@@ -57,7 +57,7 @@ async function esClient() {
 async function createIndex(index) {
   const client = await esClient()
   const exists = await client.indices.exists({ index })
-  const mapping = (index === 'collections' ? collectionsMapping : itemsMapping)
+  const mapping = index === 'collections' ? collectionsMapping : itemsMapping
   if (!exists.body) {
     logger.info(`${index} does not exist, creating...`)
     try {
@@ -73,5 +73,6 @@ async function createIndex(index) {
 
 module.exports = {
   client: esClient,
-  createIndex
+  createIndex,
+  connect
 }

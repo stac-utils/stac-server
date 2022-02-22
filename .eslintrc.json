@@ -72,6 +72,7 @@
       }
     ],
     "class-methods-use-this": "off",
+    "no-return-await": "off",
     "no-warning-comments": "off",
     "no-unused-vars": [
       "error",

@@ -61,7 +61,7 @@ class ElasticSearchWritableStream extends _stream.Writable {
 
       // if this was a collection, then add a new index with collection name
       if (index === COLLECTIONS_INDEX) {
-        await esClient.create_index(id)
+        await esClient.createIndex(id)
       }
 
       next()

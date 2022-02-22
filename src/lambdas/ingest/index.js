@@ -53,7 +53,7 @@ module.exports.handler = async function handler(event, context) {
   logger.debug(`Event: ${JSON.stringify(event, undefined, 2)}`)
 
   if (event.create_indices) {
-    await esClient.create_index('collections')
+    await esClient.createIndex('collections')
   }
 
   const stacItems = isSqsEvent(event)

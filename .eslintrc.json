@@ -9,13 +9,13 @@
     "mocha": true
   },
   "rules": {
+    "no-restricted-syntax": ["off", "BinaryExpression[operator='of']"],
     "object-curly-newline": 0,
     "semi": [
       2,
       "never"
     ],
     "quote-props": 0,
-    "camelcase": 0,
     "func-names": 0,
     "no-param-reassign": "off",
     "no-prototype-builtins": "off",

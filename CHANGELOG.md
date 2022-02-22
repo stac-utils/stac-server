@@ -14,6 +14,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Fixed
 
+- open-ended datetime intervals using either empty string or '..' now work
+
 ### Changed
 
 - Upgrade to Node 14

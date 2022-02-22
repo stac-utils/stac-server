@@ -1,6 +1,6 @@
 const common = require('./common')
 
-module.exports = () => ({
+module.exports = {
   mappings: {
     dynamic_templates: common.dynamic_templates,
     properties: {
@@ -11,4 +11,4 @@ module.exports = () => ({
       'item_assets': { type: 'object', enabled: false }
     }
   }
-})
+}

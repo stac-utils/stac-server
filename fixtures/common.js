@@ -35,6 +35,7 @@ const properties = {
   }
 }
 
+// eslint-disable-next-line camelcase
 const dynamic_templates = [
   // Common https://github.com/radiantearth/stac-spec/blob/master/item-spec/common-metadata.md
   {

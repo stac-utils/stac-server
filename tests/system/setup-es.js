@@ -19,7 +19,7 @@ const main = async () => {
 
   await esClient.indices.delete({ index: '*' })
 
-  await client.create_index('collections')
+  await client.createIndex('collections')
 
   const fixtureFiles = [
     'catalog.json',

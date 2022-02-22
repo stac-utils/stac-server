@@ -5,8 +5,8 @@ const { createAWSConnection, awsCredsifyAll } = require('@acuris/aws-es-connecti
 const elasticsearch = require('@elastic/elasticsearch')
 const logger = console //require('./logger')
 
-const collections_mapping = require('../../fixtures/collections')()
-const items_mapping = require('../../fixtures/items')()
+const collectionsMapping = require('../../fixtures/collections')
+const itemsMapping = require('../../fixtures/items')
 
 let _esClient
 
@@ -54,10 +54,10 @@ async function esClient() {
   return _esClient
 }
 
-async function create_index(index) {
+async function createIndex(index) {
   const client = await esClient()
   const exists = await client.indices.exists({ index })
-  const mapping = (index === 'collections' ? collections_mapping : items_mapping)
+  const mapping = index === 'collections' ? collectionsMapping : itemsMapping
   if (!exists.body) {
     logger.info(`${index} does not exist, creating...`)
     try {
@@ -73,6 +73,6 @@ async function create_index(index) {
 
 module.exports = {
   client: esClient,
-  create_index,
+  createIndex,
   connect
 }

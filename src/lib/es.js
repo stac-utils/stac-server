@@ -133,7 +133,9 @@ function buildQuery(parameters) {
   const datetimeQuery = buildDatetimeQuery(parameters)
   if (datetimeQuery instanceof Error) {
     throw datetimeQuery
-  } else if (datetimeQuery) {
+  }
+  
+  if (datetimeQuery) {
     must.push(datetimeQuery)
   }
 

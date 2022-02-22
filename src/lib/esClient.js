@@ -73,5 +73,6 @@ async function create_index(index) {
 
 module.exports = {
   client: esClient,
-  create_index
+  create_index,
+  connect
 }

@@ -10,6 +10,7 @@
   - [Usage](#usage)
   - [Deployment](#deployment)
   - [Ingesting Data](#ingesting-data)
+    - [Ingesting large items](#ingesting-large-items)
     - [Subscribing to SNS Topics](#subscribing-to-sns-topics)
     - [Ingest Errors](#ingest-errors)
   - [Development](#development)
@@ -161,6 +162,17 @@ Stac-server is now ready to ingest data!
 STAC Collections and Items are ingested by the `ingest` Lambda function, however this Lambda is not invoked directly by a user, it consumes records from the `stac-server-<stage>-queue` SQS. To add STAC Items or Collections to the queue, publish them to the SNS Topic `stac-server-<stage>-ingest`.
 
 STAC Collections should be ingested before Items that belong to that Collection. Items should have the `collection` field populated with the ID of an existing Collection.
+
+### Ingesting large items
+
+There is a 256 KB limit on the size of SQS messages. Larger items can be ingested by writing their contents to S3, then publishing a message to the `stac-server-<stage>-ingest` SNS topic in with the format:
+
+```json
+{
+  "Bucket": "<source_bucket>",
+  "Key": "<source_key>"
+}
+```
 
 ### Subscribing to SNS Topics
 

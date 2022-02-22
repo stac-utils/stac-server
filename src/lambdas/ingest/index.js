@@ -1,5 +1,3 @@
-// @ts-check
-
 const { default: got } = require('got')
 const esClient = require('../../lib/esClient.js')
 const stream = require('../../lib/esStream.js')

@@ -7,12 +7,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 
 ### Added
+
 - Add conformance classes for `STAC API - Features` and `STAC API - Collections`. Both were already fully-supported, but
-  were not advertised in the landing page conformsTo attribute or the /conformance endpoint. 
+  were not advertised in the landing page conformsTo attribute or the /conformance endpoint.
+- Items larger than 256 KB can now be ingested by writing their contents to S3
 
 ### Fixed
 
 ### Changed
+
 - Upgrade to Node 14
 - Elasticsearch version update 7.9 -> 7.10
 

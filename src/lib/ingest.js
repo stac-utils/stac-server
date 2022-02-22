@@ -124,7 +124,6 @@ class ElasticSearchIngestClient {
         update: {
           retry_on_conflict: 3,
           _index: index,
-          _type: 'doc',
           _id: item.id
         }
       },

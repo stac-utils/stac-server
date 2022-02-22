@@ -11,6 +11,7 @@ const properties = {
   }
 }
 
+// eslint-disable-next-line camelcase
 const dynamic_templates = [
   {
     descriptions: {

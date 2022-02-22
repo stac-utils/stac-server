@@ -8,8 +8,8 @@ const logger = console
 module.exports.handler = async function handler(event) {
   logger.debug(`Event: ${JSON.stringify(event)}`)
   if (event.create_indices) {
-    await esClient.create_index('collections')
-    //await satlib.es.create_index('items')
+    await esClient.createIndex('collections')
+    //await satlib.es.createIndex('items')
   }
 
   // start with message as is

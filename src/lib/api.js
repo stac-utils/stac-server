@@ -263,16 +263,16 @@ const addItemLinks = function (results, endpoint) {
 }
 
 const collectionsToCatalogLinks = function (results, endpoint) {
-  const stac_version = process.env.STAC_VERSION
-  const stac_id = process.env.STAC_ID || 'stac-server'
-  const stac_title = process.env.STAC_TITLE || 'A STAC API'
-  const stac_description = process.env.STAC_DESCRIPTION || 'A STAC API running on stac-server'
+  const stacVersion = process.env.STAC_VERSION
+  const catalogId = process.env.STAC_ID || 'stac-server'
+  const catalogTitle = process.env.STAC_TITLE || 'A STAC API'
+  const catalogDescription = process.env.STAC_DESCRIPTION || 'A STAC API running on stac-server'
   const catalog = {
-    stac_version,
+    stac_version: stacVersion,
     type: 'Catalog',
-    id: stac_id,
-    title: stac_title,
-    description: stac_description
+    id: catalogId,
+    title: catalogTitle,
+    description: catalogDescription
   }
 
   catalog.links = results.map((result) => {
@@ -399,15 +399,15 @@ const searchItems = async function (collectionId, queryParameters, backend, endp
       [key]: parameters[key]
     }), {})
 
-  let new_endpoint = `${endpoint}/search`
+  let newEndpoint = `${endpoint}/search`
   if (collectionId) {
     searchParameters.collections = [collectionId]
-    new_endpoint = `${endpoint}/collections/${collectionId}/items`
+    newEndpoint = `${endpoint}/collections/${collectionId}/items`
   }
   logger.debug(`Search parameters: ${JSON.stringify(searchParameters)}`)
   const results = await backend.search(searchParameters, page, limit)
   const { 'results': itemsResults, 'context': itemsMeta } = results
-  const pageLinks = buildPageLinks(itemsMeta, searchParameters, new_endpoint, httpMethod)
+  const pageLinks = buildPageLinks(itemsMeta, searchParameters, newEndpoint, httpMethod)
   const items = addItemLinks(itemsResults, endpoint)
   const response = wrapResponseInFeatureCollection(itemsMeta, items, pageLinks)
   return response

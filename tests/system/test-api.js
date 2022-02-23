@@ -190,7 +190,20 @@ test('/', async (t) => {
 })
 
 test('GET /search returns an empty list of results for a collection that does not exist', async (t) => {
-  const response = await apiClient.get('search', {
+  const collectionId = randomId('collection')
+  const searchParams = new URLSearchParams({ collections: [collectionId] })
+
+  const response = await apiClient.get('search', { searchParams })
+
+  t.true(Array.isArray(response.features))
+  t.is(response.features.length, 0)
+})
+
+test('POST /search returns an empty list of results for a collection that does not exist', async (t) => {
+  const response = await apiClient.post('search', {
+    json: {
+      collections: [randomId('collection')]
+    },
     searchParams: {
       collections: randomId('collection')
     }
@@ -200,10 +213,13 @@ test('GET /search returns an empty list of results for a collection that does no
   t.is(response.features.length, 0)
 })
 
-test('POST /search returns an empty list of results for a collection that does not exist', async (t) => {
+test("POST /search returns results when one collection exists and another doesn't", async (t) => {
   const response = await apiClient.post('search', {
     json: {
-      collections: randomId('collection')
+      collections: [
+        'collection2',
+        randomId('collection')
+      ]
     },
     searchParams: {
       collections: randomId('collection')
@@ -211,7 +227,7 @@ test('POST /search returns an empty list of results for a collection that does n
   })
 
   t.true(Array.isArray(response.features))
-  t.is(response.features.length, 0)
+  t.true(response.features.length > 0)
 })
 
 test.skip('/search bbox', async (t) => {

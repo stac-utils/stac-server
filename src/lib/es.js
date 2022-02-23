@@ -356,9 +356,24 @@ async function search(parameters, page = 1, limit = 10) {
   return response
 }
 
+/**
+ * Test if an ES index exists
+ *
+ * @param {string} index
+ * @returns {Promise<boolean>}
+ */
+const indexExists = async (index) => {
+  const client = await esClient.client()
+
+  const result = await client.indices.exists({ index })
+
+  return result.body
+}
+
 module.exports = {
   getCollection,
   getCollections,
+  indexExists,
   isIndexNotFoundError,
   search,
   editPartialItem,

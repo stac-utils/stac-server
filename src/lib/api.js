@@ -1,6 +1,7 @@
 const gjv = require('geojson-validation')
 const extent = require('@mapbox/extent')
-const { isIndexNotFoundError } = require('./es')
+const pFilter = require('p-filter')
+const { isIndexNotFoundError, indexExists } = require('./es')
 const logger = console
 
 // max number of collections to retrieve
@@ -378,6 +379,10 @@ const searchItems = async function (collectionId, queryParameters, backend, endp
   const ids = extractIds(queryParameters)
   const collections = extractCollectionIds(queryParameters)
 
+  const collectionsThatExist = Array.isArray(collections)
+    ? await pFilter(collections, indexExists)
+    : undefined
+
   const parameters = {
     datetime,
     intersects,
@@ -385,7 +390,7 @@ const searchItems = async function (collectionId, queryParameters, backend, endp
     sortby,
     fields,
     ids,
-    collections
+    collections: collectionsThatExist
   }
 
   // Keep only existing parameters

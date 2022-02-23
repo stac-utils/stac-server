@@ -1,4 +1,4 @@
-# stac-server 
+# stac-server
 
 ![](https://github.com/stac-utils/stac-server/workflows/Push%20Event/badge.svg)
 
@@ -140,9 +140,9 @@ npm run deploy -- --stage mystage --region eu-central-1
 Once deployed there is one final step - creating the indices and mappings in Elasticsearch. Invoke the `stac-server-<stage>-ingest` Lambda function with a payload of:
 
 ```json
-{ 
+{
   "create_indices": true
-} 
+}
 ```
 
 This can be done with the AWS CLI with (the final `-` parameter pipes the output to stdout):
@@ -192,7 +192,7 @@ Install [NVM](https://github.com/nvm-sh/nvm) to manage your Node.js environment.
 ```
 # uses version in .nvmrc
 nvm install
-nvm use 
+nvm use
 ```
 
 The package-lock.json was built with npm 8.5.0, so use at least this version.
@@ -258,7 +258,6 @@ When the system tests run, they:
 
 1. Wait for Elasticsearch to be available
 1. Delete all indices from Elasticsearch
-1. Add indices and test data to Elasticsearch
 1. Start an instance of the API. That API will be available at <http://localhost:3000/dev/>
 1. Wait for the API to be available
 1. Run the integration tests in `./tests/system/test_*.js`

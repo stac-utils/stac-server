@@ -8,9 +8,6 @@ export AWS_SECRET_ACCESS_KEY='none'
 
 ./bin/wait-for-elasticsearch/run.sh
 
-echo "Setting up Elasticsearch"
-node ./tests/system/setup-es.js
-
 echo "Starting API"
 node ./src/lambdas/api/local.js >/dev/null 2>&2 &
 API_PID="$!"

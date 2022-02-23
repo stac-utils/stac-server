@@ -1,84 +1,53 @@
-const { default: test } = require('ava')
+// @ts-check
+
+const { default: anyTest } = require('ava')
 const nock = require('nock')
-const esClient = require('../../src/lib/esClient')
-const awsClients = require('../../src/lib/aws-clients')
-const { handler } = require('../../src/lambdas/ingest')
-const {
-  loadFixture,
-  noop,
-  randomId
-} = require('../helpers/utils')
 const { getCollectionIds } = require('../helpers/api-client')
-const { refreshIndices } = require('../helpers/es')
-const { sqsTriggerLambda } = require('../helpers/sqs')
+const { handler } = require('../../src/lambdas/ingest')
+const { loadFixture, randomId } = require('../helpers/utils')
 const { nullLoggerContext } = require('../helpers/context')
+const { refreshIndices, deleteAllIndices } = require('../helpers/es')
+const { sqsTriggerLambda, purgeQueue } = require('../helpers/sqs')
+const awsClients = require('../../src/lib/aws-clients')
+const systemTests = require('../helpers/system-tests')
+
+/**
+ * @template T
+ * @typedef {import('ava').TestFn<T>} TestFn<T>
+ */
+
+/**
+ * @typedef {Object} TestContext
+ * @property {string} [ingestQueueUrl]
+ * @property {string} [ingestTopicArn]
+ */
+
+const test = /** @type {TestFn<TestContext>} */ (anyTest)
 
 test.before(async (t) => {
-  nock.disableNetConnect()
-  nock.enableNetConnect('localhost')
+  await deleteAllIndices()
+  const standUpResult = await systemTests.setup()
 
-  // Create SNS topic
-  const sns = awsClients.sns()
-
-  const ingestTopicName = randomId('topic')
-  const createTopicResult = await sns.createTopic({
-    Name: ingestTopicName
-  }).promise()
-  t.context.ingestTopicArn = createTopicResult.TopicArn
-
-  // Create SQS queue
-  const sqs = awsClients.sqs()
-
-  const ingestQueueName = randomId('queue')
-  const createQueueResult = await sqs.createQueue({
-    QueueName: ingestQueueName
-  }).promise()
-  t.context.ingestQueueUrl = createQueueResult.QueueUrl
-
-  const getQueueAttributesResult = await sqs.getQueueAttributes({
-    QueueUrl: t.context.ingestQueueUrl,
-    AttributeNames: ['QueueArn']
-  }).promise()
-
-  // Subscribe SQS queue to SNS topic
-  await sns.subscribe({
-    TopicArn: t.context.ingestTopicArn,
-    Protocol: 'sqs',
-    Endpoint: getQueueAttributesResult.Attributes.QueueArn
-  }).promise()
-
-  // Create ES collections index
-  await esClient.createIndex('collections')
+  t.context.ingestQueueUrl = standUpResult.ingestQueueUrl
+  t.context.ingestTopicArn = standUpResult.ingestTopicArn
 })
 
 test.beforeEach(async (t) => {
   const { ingestQueueUrl } = t.context
 
-  await awsClients.sqs().purgeQueue({ QueueUrl: ingestQueueUrl }).promise()
+  if (ingestQueueUrl === undefined) throw new Error('No ingest queue url')
+
+  await purgeQueue(ingestQueueUrl)
 })
 
 test.afterEach.always(() => {
   nock.cleanAll()
 })
 
-test.after.always(async (t) => {
-  nock.enableNetConnect()
-
-  const { ingestQueueUrl } = t.context
-
-  // Delete SQS queue
-  await awsClients.sqs().deleteQueue({
-    QueueUrl: ingestQueueUrl
-  }).promise().catch(noop)
-
-  // Delete SNS topic
-  await awsClients.sns().deleteTopic({
-    TopicArn: t.context.ingestTopicArn
-  }).promise().catch(noop)
-})
-
 test('The ingest lambda supports ingesting a collection published to SNS', async (t) => {
   const { ingestQueueUrl, ingestTopicArn } = t.context
+
+  if (ingestTopicArn === undefined) throw new Error('No ingest topic ARN')
 
   const collection = await loadFixture(
     'landsat-8-l1-collection.json',
@@ -101,6 +70,8 @@ test('The ingest lambda supports ingesting a collection published to SNS', async
 
 test('The ingest lambda supports ingesting a collection sourced from S3', async (t) => {
   const { ingestQueueUrl, ingestTopicArn } = t.context
+
+  if (ingestTopicArn === undefined) throw new Error('No ingest topic ARN')
 
   const s3 = awsClients.s3()
 
@@ -140,6 +111,8 @@ test('The ingest lambda supports ingesting a collection sourced from S3', async 
 
 test('The ingest lambda supports ingesting a collection sourced from http', async (t) => {
   const { ingestQueueUrl, ingestTopicArn } = t.context
+
+  if (ingestTopicArn === undefined) throw new Error('No ingest topic ARN')
 
   // Load the collection to be ingested
   const collection = await loadFixture(

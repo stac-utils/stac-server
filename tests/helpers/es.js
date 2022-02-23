@@ -17,7 +17,17 @@ const refreshIndices = async () => {
   await esClient.indices.refresh({ index: '_all' })
 }
 
+/**
+ * @returns {Promise<void>}
+ */
+const deleteAllIndices = async () => {
+  const es = await connect()
+  await es.indices.delete({ index: '_all' })
+  await refreshIndices()
+}
+
 module.exports = {
   createCollectionsIndex,
+  deleteAllIndices,
   refreshIndices
 }

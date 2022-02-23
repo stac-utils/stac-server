@@ -1,4 +1,6 @@
-const test = require('ava')
+// @ts-check
+
+const { default: test } = require('ava')
 const { apiClient } = require('../helpers/api-client')
 
 test('GET /api has a content type of "application/json', async (t) => {

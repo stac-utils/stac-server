@@ -1,7 +1,29 @@
-const test = require('ava')
-const { apiClient } = require('../helpers/api-client')
-const { randomId } = require('../helpers/utils')
+// @ts-check
 
+const { default: anyTest } = require('ava')
+const { apiClient } = require('../helpers/api-client')
+const { deleteAllIndices } = require('../helpers/es')
+const { randomId } = require('../helpers/utils')
+const systemTests = require('../helpers/system-tests')
+
+/**
+ * @template T
+ * @typedef {import('ava').TestFn<T>} TestFn<T>
+ */
+
+/**
+ * @typedef {import('../helpers/types').SystemTestContext} SystemTestContext
+ */
+
+const test = /** @type {TestFn<SystemTestContext>} */ (anyTest)
+
+test.before(async (t) => {
+  await deleteAllIndices()
+  const standUpResult = await systemTests.setup()
+
+  t.context.ingestQueueUrl = standUpResult.ingestQueueUrl
+  t.context.ingestTopicArn = standUpResult.ingestTopicArn
+})
 test('GET /search returns an empty list of results for a collection that does not exist', async (t) => {
   const collectionId = randomId('collection')
   const searchParams = new URLSearchParams({ collections: [collectionId] })

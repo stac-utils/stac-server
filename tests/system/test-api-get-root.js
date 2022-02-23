@@ -24,9 +24,27 @@ test.before(async (t) => {
   t.context.ingestTopicArn = standUpResult.ingestTopicArn
 })
 
-test('/', async (t) => {
+test('GET / includes the default links', async (t) => {
   const response = await apiClient.get('')
+
   t.true(Array.isArray(response.links))
+
+  const defaultLinkRels = [
+    'conformance',
+    'data',
+    'search',
+    'self',
+    'service-desc'
+  ]
+
+  t.true(response.links.length >= defaultLinkRels.length)
+
+  // @ts-expect-error We need to type the response
+  const responseRels = response.links.map((r) => r.rel)
+
+  for (const expectedRel of defaultLinkRels) {
+    t.true(responseRels.includes(expectedRel))
+  }
 })
 
 test('GET / returns a compressed response', async (t) => {

@@ -132,7 +132,7 @@ app.post('/collections/:collectionId/items', async (_req, _res, next) => {
   if (!process.env['ENABLE_TRANSACTIONS_EXTENSION']) return next(createError(404))
 
   // todo: implement
-  next(createError(501))
+  return next(createError(501))
 })
 
 app.get('/collections/:collectionId/items/:itemId', async (req, res, next) => {
@@ -150,15 +150,16 @@ app.get('/collections/:collectionId/items/:itemId', async (req, res, next) => {
 })
 
 app.put('/collections/:collectionId/items/:itemId', async (_req, _res, next) => {
-  if (!process.env['ENABLE_TRANSACTIONS_EXTENSION']) next(createError(404))
+  if (!process.env['ENABLE_TRANSACTIONS_EXTENSION']) return next(createError(404))
 
   // todo: implement
-  next(createError(501))
+  return next(createError(501))
 })
 
 app.patch('/collections/:collectionId/items/:itemId', async (req, res, next) => {
-  if (!process.env['ENABLE_TRANSACTIONS_EXTENSION']) next(createError(404))
-  else {
+  if (!process.env['ENABLE_TRANSACTIONS_EXTENSION']) {
+    next(createError(404))
+  } else {
     try {
       res.json(await api.editPartialItem(req.params.itemId, req.body, satlib.es, req.endpoint))
     } catch (error) {
@@ -168,10 +169,10 @@ app.patch('/collections/:collectionId/items/:itemId', async (req, res, next) => 
 })
 
 app.delete('/collections/:collectionId/items/:itemId', async (_req, _res, next) => {
-  if (!process.env['ENABLE_TRANSACTIONS_EXTENSION']) next(createError(404))
+  if (!process.env['ENABLE_TRANSACTIONS_EXTENSION']) return next(createError(404))
 
   // todo: implement
-  next(createError(501))
+  return next(createError(501))
 })
 
 // catch 404 and forward to error handler

@@ -28,3 +28,9 @@ test('/', async (t) => {
   const response = await apiClient.get('')
   t.true(Array.isArray(response.links))
 })
+
+test('GET / returns a compressed response', async (t) => {
+  const response = await apiClient.get('', { resolveBodyOnly: false })
+
+  t.is(response.headers['content-encoding'], 'gzip')
+})

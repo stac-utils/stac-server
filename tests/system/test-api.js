@@ -3,6 +3,7 @@ const { apiClient } = require('../helpers/api-client')
 const intersectsGeometry = require('../fixtures/stac/intersectsGeometry.json')
 const noIntersectsGeometry = require('../fixtures/stac/noIntersectsGeometry.json')
 const { refreshIndices } = require('../helpers/es')
+const { randomId } = require('../helpers/utils')
 
 test('/collections', async (t) => {
   await refreshIndices()
@@ -160,6 +161,31 @@ test('/collections/{collectionId}/items with gt lt query', async (t) => {
 test('/', async (t) => {
   const response = await apiClient.get('')
   t.is(response.links.length, 8)
+})
+
+test('GET /search returns an empty list of results for a collection that does not exist', async (t) => {
+  const response = await apiClient.get('search', {
+    searchParams: {
+      collections: randomId('collection')
+    }
+  })
+
+  t.true(Array.isArray(response.features))
+  t.is(response.features.length, 0)
+})
+
+test('POST /search returns an empty list of results for a collection that does not exist', async (t) => {
+  const response = await apiClient.post('search', {
+    json: {
+      collections: randomId('collection')
+    },
+    searchParams: {
+      collections: randomId('collection')
+    }
+  })
+
+  t.true(Array.isArray(response.features))
+  t.is(response.features.length, 0)
 })
 
 test.skip('/search bbox', async (t) => {

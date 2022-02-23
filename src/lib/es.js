@@ -6,6 +6,11 @@ const logger = console //require('./logger')
 const COLLECTIONS_INDEX = process.env.COLLECTIONS_INDEX || 'collections'
 const ITEMS_INDEX = process.env.ITEMS_INDEX || 'items'
 
+const isIndexNotFoundError = (e) => (
+  e instanceof Error
+    && e.name === 'ResponseError'
+    && e.message.includes('index_not_found_exception'))
+
 /*
 This module is used for connecting to an Elasticsearch instance, writing records,
 searching records, and managing the indexes. It looks for the ES_HOST environment
@@ -354,6 +359,7 @@ async function search(parameters, page = 1, limit = 10) {
 module.exports = {
   getCollection,
   getCollections,
+  isIndexNotFoundError,
   search,
   editPartialItem,
   constructSearchParams,

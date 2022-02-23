@@ -33,7 +33,7 @@ module.exports = {
   plugins: [
     new CopyPlugin({
       patterns: [{
-        from: '../../lambdas/api/api.yaml',
+        from: 'api.yaml',
         to: 'api.yaml'
       }]
     }),

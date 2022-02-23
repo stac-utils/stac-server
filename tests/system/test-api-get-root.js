@@ -46,3 +46,9 @@ test('GET / includes the default links', async (t) => {
     t.true(responseRels.includes(expectedRel))
   }
 })
+
+test('GET / returns a compressed response', async (t) => {
+  const response = await apiClient.get('', { resolveBodyOnly: false })
+
+  t.is(response.headers['content-encoding'], 'gzip')
+})

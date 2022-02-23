@@ -9,7 +9,11 @@
     "mocha": true
   },
   "rules": {
-    "no-restricted-syntax": ["off", "BinaryExpression[operator='of']"],
+    "dot-notation": "off",
+    "no-restricted-syntax": [
+      "off",
+      "BinaryExpression[operator='of']"
+    ],
     "object-curly-newline": 0,
     "semi": [
       2,
@@ -44,7 +48,9 @@
           "Regexp": "RegExp",
           "promise": "Promise"
         },
-        "requireReturn": true
+        "requireReturn": true,
+        "requireParamDescription": false,
+        "requireReturnDescription": false
       }
     ],
     "jsdoc/check-param-names": "error",
@@ -55,10 +61,10 @@
     "jsdoc/require-example": "off",
     "jsdoc/require-hyphen-before-param-description": "error",
     "jsdoc/require-param": "error",
-    "jsdoc/require-param-description": "error",
+    "jsdoc/require-param-description": "off",
     "jsdoc/require-param-name": "error",
     "jsdoc/require-param-type": "error",
-    "jsdoc/require-returns-description": "error",
+    "jsdoc/require-returns-description": "off",
     "jsdoc/require-returns-type": "error",
     "generator-star-spacing": "off",
     "import/no-extraneous-dependencies": "off",

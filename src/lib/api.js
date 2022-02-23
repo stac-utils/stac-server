@@ -1,10 +1,6 @@
 const gjv = require('geojson-validation')
 const extent = require('@mapbox/extent')
-const yaml = require('js-yaml')
-const fs = require('fs')
 const logger = console
-const path = require('path')
-const httpMethods = require('./http-methods')
 
 // max number of collections to retrieve
 const COLLECTION_LIMIT = process.env.STAC_SERVER_COLLECTION_LIMIT || 100
@@ -413,11 +409,6 @@ const searchItems = async function (collectionId, queryParameters, backend, endp
   return response
 }
 
-const getAPI = async function () {
-  const spec = yaml.safeLoad(fs.readFileSync(path.resolve(__dirname, './api.yaml'), 'utf8'))
-  return spec
-}
-
 const getConformance = async function () {
   const conformance = {
     conformsTo: [
@@ -524,99 +515,15 @@ const editPartialItem = async function (itemId, queryParameters, backend, endpoi
   return new Error(`Error editing item ${itemId}`)
 }
 
-const API = async function (
-  // eslint-disable-next-line default-param-last
-  inpath = '', queryParameters = {}, backend, endpoint = '', httpMethod = 'GET'
-) {
-  logger.debug(`API Path: ${inpath}, Query Parameters: ${JSON.stringify(queryParameters)}`)
-  let apiResponse
-  try {
-    if (httpMethod === 'GET') {
-      // Lets attempt to HTML entity decode values if they have been passed from GET
-      Object.keys(queryParameters).forEach((key) => {
-        if (queryParameters[key][0] === '%') {
-          queryParameters[key] = decodeURIComponent(queryParameters[key])
-        }
-      })
-    }
-
-    const pathElements = parsePath(inpath)
-
-    const {
-      root,
-      api,
-      conformance,
-      search: searchPath,
-      collections,
-      collectionId,
-      items,
-      itemId
-    } = pathElements
-
-    // API Root
-    if (root) {
-      apiResponse = await getCatalog(backend, endpoint)
-    }
-    // API Definition
-    if (api) {
-      apiResponse = await getAPI()
-    }
-    // Conformance
-    if (conformance) {
-      apiResponse = await getConformance()
-    }
-    // STAC Search
-    if (searchPath) {
-      apiResponse = await searchItems(
-        null, queryParameters, backend, endpoint, httpMethod
-      )
-    }
-    // Search
-
-    // All collections
-    if (collections && !collectionId) {
-      apiResponse = await getCollections(backend, endpoint)
-    }
-    // Specific collection
-    if (collections && collectionId && !items) {
-      apiResponse = await getCollection(collectionId, backend, endpoint)
-    }
-    // Items in a collection
-    if (collections && collectionId && items && !itemId) {
-      apiResponse = await searchItems(collectionId, queryParameters, backend, endpoint, httpMethod)
-    }
-
-    // Specific item
-    const pathIsToSpecificItem = (collections && collectionId && items && itemId)
-
-    if (pathIsToSpecificItem) {
-      if (httpMethod === httpMethods.GET) {
-        apiResponse = await getItem(collectionId, itemId, backend, endpoint)
-      } else if (httpMethod === httpMethods.PATCH && process.env.ENABLE_TRANSACTIONS_EXTENSION) {
-        // Right now this is the only Transaction extension we support.
-        // https://github.com/radiantearth/stac-api-spec/tree/master/extensions/transaction
-        // When we do more, let's make a more scalable check and not look
-        // for ENABLE_TRANSACTIONS_EXTENSION each time
-        apiResponse = await editPartialItem(itemId, queryParameters, backend, endpoint)
-      }
-    }
-  } catch (error) {
-    logger.error(error)
-    apiResponse = new Error(error.message)
-  }
-  return apiResponse
-}
-
 module.exports = {
-  getAPI,
   getConformance,
   getCatalog,
   getCollections,
   getCollection,
   getItem,
   searchItems,
-  API,
   parsePath,
   extractIntersects,
-  extractBbox
+  extractBbox,
+  editPartialItem
 }

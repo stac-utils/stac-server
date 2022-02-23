@@ -2,8 +2,11 @@ const test = require('ava')
 const { apiClient } = require('../helpers/api-client')
 const intersectsGeometry = require('../fixtures/stac/intersectsGeometry.json')
 const noIntersectsGeometry = require('../fixtures/stac/noIntersectsGeometry.json')
+const { refreshIndices } = require('../helpers/es')
 
 test('/collections', async (t) => {
+  await refreshIndices()
+
   const response = await apiClient.get('collections')
 
   t.is(response.collections.length, 2)
@@ -154,10 +157,8 @@ test('/collections/{collectionId}/items with gt lt query', async (t) => {
   t.is(response.features[0].id, 'LC80100102015050LGN00')
 })
 
-// Search API
-
 test('/', async (t) => {
-  const response = await apiClient.post('', { json: {} })
+  const response = await apiClient.get('')
   t.is(response.links.length, 8)
 })
 
@@ -400,8 +401,8 @@ test('/search collections', async (t) => {
 })
 
 // Search formatting
-test('/search conformsTo', async (t) => {
-  const response = await apiClient.post('', { json: {} })
+test('/ conformsTo', async (t) => {
+  const response = await apiClient.get('')
   t.is(response.conformsTo.length, 13)
 })
 

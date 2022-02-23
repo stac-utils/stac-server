@@ -129,7 +129,7 @@ app.get('/collections/:collectionId/items', async (req, res, next) => {
 })
 
 app.post('/collections/:collectionId/items', async (_req, _res, next) => {
-  if (!process.env['ENABLE_TRANSACTIONS_EXTENSION']) next(createError(404))
+  if (!process.env['ENABLE_TRANSACTIONS_EXTENSION']) return next(createError(404))
 
   // todo: implement
   next(createError(501))

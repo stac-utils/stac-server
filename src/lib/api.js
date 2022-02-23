@@ -451,7 +451,7 @@ const getCatalog = async function (backend, endpoint = '') {
   let catalog = collectionsToCatalogLinks(collections, endpoint)
   catalog.links.push({
     rel: 'service-desc',
-    type: 'application/vnd.oai.openapi+json;version=3.0',
+    type: 'application/vnd.oai.openapi',
     href: `${endpoint}/api`
   })
   catalog.links.push({

@@ -60,6 +60,7 @@ app.get('/', async (req, res, next) => {
 
 app.get('/api', async (_req, res, next) => {
   try {
+    res.type('application/vnd.oai.openapi')
     const spec = await readYaml(path.join(__dirname, 'api.yaml'))
     res.json(spec)
   } catch (error) {

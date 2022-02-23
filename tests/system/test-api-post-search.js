@@ -1,202 +1,69 @@
-const test = require('ava')
+// @ts-check
+
+const { default: anyTest } = require('ava')
+const { promisify } = require('util')
+const fs = require('fs')
+const path = require('path')
 const { apiClient } = require('../helpers/api-client')
-const intersectsGeometry = require('../fixtures/stac/intersectsGeometry.json')
-const noIntersectsGeometry = require('../fixtures/stac/noIntersectsGeometry.json')
-const { refreshIndices } = require('../helpers/es')
+const { deleteAllIndices, refreshIndices } = require('../helpers/es')
 const { randomId } = require('../helpers/utils')
+const ingest = require('../../src/lib/ingest')
+const intersectsGeometry = require('../fixtures/stac/intersectsGeometry.json')
+const stream = require('../../src/lib/esStream')
+const systemTests = require('../helpers/system-tests')
 
-test('/collections', async (t) => {
+/**
+ * @template T
+ * @typedef {import('ava').TestFn<T>} TestFn<T>
+ */
+
+/**
+ * @typedef {import('../helpers/types').SystemTestContext} SystemTestContext
+ */
+
+/**
+ * @typedef {Object} TestContext
+ * @property {string} collectionId
+ * @property {string} itemId1
+ * @property {string} itemId2
+ */
+
+const test = /** @type {TestFn<TestContext & SystemTestContext>} */ (anyTest)
+
+const readFile = promisify(fs.readFile)
+
+/**
+ * @param {string} filename
+ * @returns {Promise<unknown>}
+ */
+const loadJson = async (filename) => {
+  const filePath = path.join(__dirname, '..', 'fixtures', 'stac', filename)
+
+  const data = await readFile(filePath, 'utf8')
+  return JSON.parse(data)
+}
+
+test.before(async (t) => {
+  await deleteAllIndices()
+  const standUpResult = await systemTests.setup()
+
+  t.context.ingestQueueUrl = standUpResult.ingestQueueUrl
+  t.context.ingestTopicArn = standUpResult.ingestTopicArn
+
+  const fixtureFiles = [
+    'catalog.json',
+    'collection.json',
+    'collection2.json',
+    'collection2_item.json',
+    'LC80100102015050LGN00.json',
+    'LC80100102015082LGN00.json'
+  ]
+
+  const items = await Promise.all(fixtureFiles.map((x) => loadJson(x)))
+
+  await ingest.ingestItems(items, stream)
+
   await refreshIndices()
-
-  const response = await apiClient.get('collections')
-
-  t.true(Array.isArray(response.collections))
-  t.true(response.collections.length > 0)
-
-  t.truthy(response.context.returned)
-})
-
-test('GET /collections has a content type of "application/json', async (t) => {
-  const response = await apiClient.get('collections', { resolveBodyOnly: false })
-
-  t.is(response.headers['content-type'], 'application/json; charset=utf-8')
-})
-
-test('/collections/landsat-8-l1', async (t) => {
-  const response = await apiClient.get('collections/landsat-8-l1')
-
-  t.is(response.id, 'landsat-8-l1')
-})
-
-test('GET /collection/landsat-8-l1 has a content type of "application/json', async (t) => {
-  const response = await apiClient.get('collections/landsat-8-l1', { resolveBodyOnly: false })
-
-  t.is(response.headers['content-type'], 'application/json; charset=utf-8')
-})
-
-test('/collections/collection2', async (t) => {
-  const response = await apiClient.get('collections/collection2')
-
-  t.is(response.id, 'collection2')
-})
-
-test('/collections/{collectionId}/items', async (t) => {
-  const response = await apiClient.get('collections/landsat-8-l1/items')
-  t.is(response.type, 'FeatureCollection')
-  t.is(response.features.length, 2)
-  t.is(response.features[0].id, 'LC80100102015082LGN00')
-  t.is(response.features[1].id, 'LC80100102015050LGN00')
-})
-
-test('GET /collections/{collectionId}/items has a content type of "application/geo+json"', async (t) => {
-  const response = await apiClient.get('collections/landsat-8-l1/items', { resolveBodyOnly: false })
-
-  t.is(response.headers['content-type'], 'application/geo+json; charset=utf-8')
-})
-
-test('/collections/{collectionId}/items/{itemId}', async (t) => {
-  const response = await apiClient.get('collections/landsat-8-l1/items/LC80100102015082LGN00')
-  t.is(response.type, 'Feature')
-  t.is(response.id, 'LC80100102015082LGN00')
-})
-
-test('GET /collections/:collectionId/items/:itemId has a content type of "application/geo+json"', async (t) => {
-  const response = await apiClient.get('collections/landsat-8-l1/items/LC80100102015082LGN00', { resolveBodyOnly: false })
-
-  t.is(response.headers['content-type'], 'application/geo+json; charset=utf-8')
-})
-
-test('/collections/{collectionId}/items with bbox 1', async (t) => {
-  const response = await apiClient.post('collections/landsat-8-l1/items', {
-    json: {
-      bbox: [-180, -90, 180, 90]
-    }
-  })
-  t.is(response.type, 'FeatureCollection')
-  t.is(response.features[0].id, 'LC80100102015082LGN00')
-  t.is(response.features[1].id, 'LC80100102015050LGN00')
-})
-
-test('/collections/{collectionId}/items with bbox 2', async (t) => {
-  const response = await apiClient.post('collections/landsat-8-l1/items', {
-    json: {
-      bbox: [-5, -5, 5, 5]
-    }
-  })
-
-  t.is(response.features.length, 0)
-})
-
-test('/collections/{collectionId}/items with bbox and intersects', async (t) => {
-  const response = await apiClient.post('collections/landsat-8-l1/items', {
-    json: {
-      bbox: [-180, -90, 180, 90],
-      intersects: intersectsGeometry
-    }
-  })
-
-  t.truthy(response.context.matched === 2)
-})
-
-test('/collections/{collectionId}/items with time', async (t) => {
-  let response = await apiClient.post('collections/landsat-8-l1/items', {
-    json: {
-      datetime: '2015-02-19T15:06:12.565047+00:00'
-    }
-  })
-  t.is(response.type, 'FeatureCollection')
-  t.is(response.features[0].id, 'LC80100102015050LGN00')
-
-  response = await apiClient.post('collections/landsat-8-l1/items', {
-    json: {
-      datetime: '2015-02-17/2015-02-20'
-    }
-  })
-  t.is(response.type, 'FeatureCollection')
-  t.is(response.features[0].id, 'LC80100102015050LGN00')
-
-  response = await apiClient.post('collections/landsat-8-l1/items', {
-    json: {
-      datetime: '2015-02-19/2015-02-20'
-    }
-  })
-  t.is(
-    response.features[0].id,
-    'LC80100102015050LGN00',
-    'Handles date range without times inclusion issue'
-  )
-})
-
-test('/collections/{collectionId}/items with limit', async (t) => {
-  const response = await apiClient.post('collections/landsat-8-l1/items', {
-    json: {
-      limit: 1
-    }
-  })
-  t.is(response.type, 'FeatureCollection')
-  t.is(response.features.length, 1)
-})
-
-test('/collections/{collectionId}/items with intersects', async (t) => {
-  let response = await apiClient.post('collections/landsat-8-l1/items', {
-    json: {
-      intersects: intersectsGeometry
-    }
-  })
-  t.is(response.type, 'FeatureCollection')
-  t.is(response.features[0].id, 'LC80100102015082LGN00')
-  t.is(response.features[1].id, 'LC80100102015050LGN00')
-
-  response = await apiClient.post('collections/landsat-8-l1/items', {
-    json: {
-      intersects: noIntersectsGeometry
-    }
-  })
-  t.is(response.features.length, 0)
-})
-
-test('/collections/{collectionId}/items with eq query', async (t) => {
-  const response = await apiClient.post('collections/landsat-8-l1/items', {
-    json: {
-      query: {
-        'eo:cloud_cover': {
-          eq: 0.54
-        }
-      }
-    }
-  })
-  t.is(response.features.length, 1)
-  t.is(response.features[0].id, 'LC80100102015050LGN00')
-})
-
-test('/collections/{collectionId}/items with gt lt query', async (t) => {
-  const response = await apiClient.post('collections/landsat-8-l1/items', {
-    json: {
-      query: {
-        'eo:cloud_cover': {
-          gt: 0.5,
-          lt: 0.6
-        }
-      }
-    }
-  })
-  t.is(response.features.length, 1)
-  t.is(response.features[0].id, 'LC80100102015050LGN00')
-})
-
-test('/', async (t) => {
-  const response = await apiClient.get('')
-  t.true(Array.isArray(response.links))
-})
-
-test('GET /search returns an empty list of results for a collection that does not exist', async (t) => {
-  const collectionId = randomId('collection')
-  const searchParams = new URLSearchParams({ collections: [collectionId] })
-
-  const response = await apiClient.get('search', { searchParams })
-
-  t.true(Array.isArray(response.features))
-  t.is(response.features.length, 0)
 })
 
 test('POST /search returns an empty list of results for a collection that does not exist', async (t) => {
@@ -238,6 +105,7 @@ test.skip('/search bbox', async (t) => {
   })
   t.is(response.type, 'FeatureCollection')
 
+  // @ts-expect-error We need to type this response
   const ids = response.features.map((item) => item.id)
   t.truthy(ids.indexOf('LC80100102015082LGN00') > -1)
   t.truthy(ids.indexOf('collection2_item') > -1)
@@ -248,14 +116,6 @@ test.skip('/search bbox', async (t) => {
     }
   })
   t.is(response.features.length, 0)
-})
-
-test('GET /search has a content type of "application/geo+json; charset=utf-8', async (t) => {
-  const response = await apiClient.get('search', {
-    resolveBodyOnly: false
-  })
-
-  t.is(response.headers['content-type'], 'application/geo+json; charset=utf-8')
 })
 
 test('POST /search has a content type of "application/geo+json; charset=utf-8', async (t) => {
@@ -315,7 +175,9 @@ test('/search flattened collection properties', async (t) => {
       }
     }
   })
+
   const havePlatform = response.features.filter(
+    // @ts-expect-error We need to type this response
     (item) => (item.properties.platform === 'landsat-8')
   )
   t.is(havePlatform.length, response.features.length)
@@ -454,6 +316,7 @@ test('/search ids', async (t) => {
   })
   t.is(response.features.length, 2)
 
+  // @ts-expect-error We need to type this response
   const ids = response.features.map((item) => item.id)
   t.truthy(ids.indexOf('LC80100102015050LGN00') > -1)
   t.truthy(ids.indexOf('collection2_item') > -1)
@@ -483,17 +346,6 @@ test('/search collections', async (t) => {
 
   response = await apiClient.post('search', { json: query })
   t.is(response.features.length, 3)
-})
-
-test('GET /conformance returns the expected conformsTo list', async (t) => {
-  const response = await apiClient.get('conformance')
-  t.is(response.conformsTo.length, 13)
-})
-
-test('GET /conformance has a content type of "application/json', async (t) => {
-  const response = await apiClient.get('conformance', { resolveBodyOnly: false })
-
-  t.is(response.headers['content-type'], 'application/json; charset=utf-8')
 })
 
 test.skip('/search preserve geometry in page GET links', async (t) => {
@@ -533,11 +385,7 @@ test.skip('/search preserve geometry in page GET links', async (t) => {
   })
   t.is(response.features.length, 1)
 
-  const next = response.links[0].href
-  const params = {}
-  next.split('?', 2)[1].split('&').forEach((pair) => {
-    const [key, val] = pair.split('=', 2)
-    params[key] = decodeURIComponent(val)
-  })
-  t.is(params.datetime, datetime)
+  const url = new URL(response.links[0].href)
+
+  t.is(url.searchParams.get('datetime'), datetime)
 })

@@ -1,5 +1,20 @@
 {
+  "editor.formatOnSave": true,
   "editor.rulers": [
     80
-  ]
+  ],
+  "eslint.format.enable": true,
+  "eslint.packageManager": "npm",
+  "files.trimTrailingWhitespace": true,
+  "[javascript]": {
+    "editor.defaultFormatter": "dbaeumer.vscode-eslint"
+  },
+  "[json]": {
+    "editor.defaultFormatter": "vscode.json-language-features"
+  },
+  "[typescript]": {
+    "editor.defaultFormatter": "dbaeumer.vscode-eslint"
+  },
+  "editor.tabSize": 2,
+  "files.insertFinalNewline": true
 }

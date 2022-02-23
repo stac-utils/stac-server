@@ -21,7 +21,9 @@ test.before(async (t) => {
   const sns = awsClients.sns()
 
   const ingestTopicName = randomId('topic')
-  const createTopicResult = await sns.createTopic({ Name: ingestTopicName }).promise()
+  const createTopicResult = await sns.createTopic({
+    Name: ingestTopicName
+  }).promise()
   t.context.ingestTopicArn = createTopicResult.TopicArn
 
   // Create SQS queue

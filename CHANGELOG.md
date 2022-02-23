@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - Open-ended datetime intervals using either empty string or '..' now work
 - Correct content types are now returned
+- Searching for a nonexistent collection returns empty results
 
 ### Changed
 

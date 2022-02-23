@@ -1,5 +1,7 @@
+const { pickBy } = require('lodash')
 const gjv = require('geojson-validation')
 const extent = require('@mapbox/extent')
+const { isIndexNotFoundError } = require('./es')
 const logger = console
 
 // max number of collections to retrieve
@@ -388,12 +390,7 @@ const searchItems = async function (collectionId, queryParameters, backend, endp
   }
 
   // Keep only existing parameters
-  const searchParameters = Object.keys(parameters)
-    .filter((key) => parameters[key])
-    .reduce((obj, key) => ({
-      ...obj,
-      [key]: parameters[key]
-    }), {})
+  const searchParameters = pickBy(parameters)
 
   let newEndpoint = `${endpoint}/search`
   if (collectionId) {
@@ -401,7 +398,26 @@ const searchItems = async function (collectionId, queryParameters, backend, endp
     newEndpoint = `${endpoint}/collections/${collectionId}/items`
   }
   logger.debug(`Search parameters: ${JSON.stringify(searchParameters)}`)
-  const results = await backend.search(searchParameters, page, limit)
+
+  let results
+  try {
+    results = await backend.search(searchParameters, page, limit)
+  } catch (error) {
+    if (isIndexNotFoundError(error)) {
+      results = {
+        context: {
+          matched: 0,
+          returned: 0,
+          page,
+          limit
+        },
+        results: []
+      }
+    } else {
+      throw error
+    }
+  }
+
   const { 'results': itemsResults, 'context': itemsMeta } = results
   const pageLinks = buildPageLinks(itemsMeta, searchParameters, newEndpoint, httpMethod)
   const items = addItemLinks(itemsResults, endpoint)

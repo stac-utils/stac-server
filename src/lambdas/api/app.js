@@ -32,6 +32,8 @@ const determineEndpoint = (req) => {
     : `${req.get('X-Forwarded-Proto')}://${req.get('Host')}`
 }
 
+const txnEnabled = process.env['ENABLE_TRANSACTIONS_EXTENSION'] === 'true'
+
 /**
  * @param {Request} req
  * @param {Response} _res
@@ -129,10 +131,12 @@ app.get('/collections/:collectionId/items', async (req, res, next) => {
 })
 
 app.post('/collections/:collectionId/items', async (_req, _res, next) => {
-  if (!process.env['ENABLE_TRANSACTIONS_EXTENSION']) return next(createError(404))
-
-  // todo: implement
-  return next(createError(501))
+  if (txnEnabled) {
+    // todo: implement
+    next(createError(501))
+  } else {
+    next(createError(404))
+  }
 })
 
 app.get('/collections/:collectionId/items/:itemId', async (req, res, next) => {
@@ -150,29 +154,33 @@ app.get('/collections/:collectionId/items/:itemId', async (req, res, next) => {
 })
 
 app.put('/collections/:collectionId/items/:itemId', async (_req, _res, next) => {
-  if (!process.env['ENABLE_TRANSACTIONS_EXTENSION']) return next(createError(404))
-
-  // todo: implement
-  return next(createError(501))
+  if (txnEnabled) {
+    // todo: implement
+    next(createError(501))
+  } else {
+    next(createError(404))
+  }
 })
 
 app.patch('/collections/:collectionId/items/:itemId', async (req, res, next) => {
-  if (!process.env['ENABLE_TRANSACTIONS_EXTENSION']) {
-    next(createError(404))
-  } else {
+  if (txnEnabled) {
     try {
       res.json(await api.editPartialItem(req.params.itemId, req.body, satlib.es, req.endpoint))
     } catch (error) {
       next(error)
     }
+  } else {
+    next(createError(404))
   }
 })
 
 app.delete('/collections/:collectionId/items/:itemId', async (_req, _res, next) => {
-  if (!process.env['ENABLE_TRANSACTIONS_EXTENSION']) return next(createError(404))
-
-  // todo: implement
-  return next(createError(501))
+  if (txnEnabled) {
+    // todo: implement
+    next(createError(501))
+  } else {
+    next(createError(404))
+  }
 })
 
 // catch 404 and forward to error handler

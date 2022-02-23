@@ -96,8 +96,10 @@ test.skip('handler call ingest when event payload contains url', async (t) => {
     collectionsOnly
   }
   await lambda.handler(event)
-  t.truthy(ingest.calledOnceWith(url, elasticsearch, recursive, collectionsOnly),
-    'Calls ingest with url and correct parameters.')
+  t.truthy(
+    ingest.calledOnceWith(url, elasticsearch, recursive, collectionsOnly),
+    'Calls ingest with url and correct parameters.'
+  )
 })
 
 test.skip('ingest with fargate event creates ecs task with command', async (t) => {

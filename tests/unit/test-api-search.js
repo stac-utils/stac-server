@@ -7,25 +7,6 @@ function cloneMutatedItem() {
   return { ...item, links: item.links.slice(0) }
 }
 
-test.skip('root /', async (t) => {
-  const search = sinon.stub().resolves({ results: [], meta: {} })
-  const getCollections = sinon.stub().resolves([])
-  const backend = { search, getCollections }
-  const actual = await api.API('/', undefined, backend, 'endpoint')
-  t.is(actual.links.length, 6)
-})
-
-test.skip('search /api', async (t) => {
-  const actual = await api.API('/api', undefined, undefined, 'endpoint')
-  t.truthy(actual.openapi)
-})
-
-test.skip('search /conformance', async (t) => {
-  const actual = await api.API('/conformance', undefined, undefined, 'endpoint')
-  t.truthy(actual.conformsTo)
-  t.is(actual.conformsTo.length, 13)
-})
-
 test.skip('search /', async (t) => {
   process.env.STAC_DOCS_URL = 'test'
   const collection = 'collection'

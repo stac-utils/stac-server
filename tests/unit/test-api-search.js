@@ -18,7 +18,7 @@ test.skip('search /', async (t) => {
   const expectedLinks = [
     {
       rel: 'service-desc',
-      type: 'application/vnd.oai.openapi+json;version=3.0',
+      type: 'application/vnd.oai.openapi',
       href: 'endpoint/api'
     },
     {

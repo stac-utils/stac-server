@@ -1,7 +1,7 @@
+const { pickBy } = require('lodash')
 const gjv = require('geojson-validation')
 const extent = require('@mapbox/extent')
-const pFilter = require('p-filter')
-const { isIndexNotFoundError, indexExists } = require('./es')
+const { isIndexNotFoundError } = require('./es')
 const logger = console
 
 // max number of collections to retrieve
@@ -379,10 +379,6 @@ const searchItems = async function (collectionId, queryParameters, backend, endp
   const ids = extractIds(queryParameters)
   const collections = extractCollectionIds(queryParameters)
 
-  const collectionsThatExist = Array.isArray(collections)
-    ? await pFilter(collections, indexExists)
-    : undefined
-
   const parameters = {
     datetime,
     intersects,
@@ -390,16 +386,11 @@ const searchItems = async function (collectionId, queryParameters, backend, endp
     sortby,
     fields,
     ids,
-    collections: collectionsThatExist
+    collections
   }
 
   // Keep only existing parameters
-  const searchParameters = Object.keys(parameters)
-    .filter((key) => parameters[key])
-    .reduce((obj, key) => ({
-      ...obj,
-      [key]: parameters[key]
-    }), {})
+  const searchParameters = pickBy(parameters)
 
   let newEndpoint = `${endpoint}/search`
   if (collectionId) {

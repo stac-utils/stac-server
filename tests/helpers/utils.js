@@ -3,7 +3,7 @@ const cryptoRandomString = require('crypto-random-string')
 const fs = require('fs')
 const path = require('path')
 
-const noop = () => {}
+const noop = () => { }
 
 const nullLogger = {
   debug: noop,

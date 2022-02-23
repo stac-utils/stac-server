@@ -9,14 +9,28 @@ test('/collections', async (t) => {
 
   const response = await apiClient.get('collections')
 
-  t.is(response.collections.length, 2)
-  t.is(response.context.returned, 2)
+  t.true(Array.isArray(response.collections))
+  t.true(response.collections.length > 0)
+
+  t.truthy(response.context.returned)
+})
+
+test('GET /collections has a content type of "application/json', async (t) => {
+  const response = await apiClient.get('collections', { resolveBodyOnly: false })
+
+  t.is(response.headers['content-type'], 'application/json; charset=utf-8')
 })
 
 test('/collections/landsat-8-l1', async (t) => {
   const response = await apiClient.get('collections/landsat-8-l1')
 
   t.is(response.id, 'landsat-8-l1')
+})
+
+test('GET /collection/landsat-8-l1 has a content type of "application/json', async (t) => {
+  const response = await apiClient.get('collections/landsat-8-l1', { resolveBodyOnly: false })
+
+  t.is(response.headers['content-type'], 'application/json; charset=utf-8')
 })
 
 test('/collections/collection2', async (t) => {
@@ -33,10 +47,22 @@ test('/collections/{collectionId}/items', async (t) => {
   t.is(response.features[1].id, 'LC80100102015050LGN00')
 })
 
+test('GET /collections/{collectionId}/items has a content type of "application/geo+json"', async (t) => {
+  const response = await apiClient.get('collections/landsat-8-l1/items', { resolveBodyOnly: false })
+
+  t.is(response.headers['content-type'], 'application/geo+json; charset=utf-8')
+})
+
 test('/collections/{collectionId}/items/{itemId}', async (t) => {
   const response = await apiClient.get('collections/landsat-8-l1/items/LC80100102015082LGN00')
   t.is(response.type, 'Feature')
   t.is(response.id, 'LC80100102015082LGN00')
+})
+
+test('GET /collections/:collectionId/items/:itemId has a content type of "application/geo+json"', async (t) => {
+  const response = await apiClient.get('collections/landsat-8-l1/items/LC80100102015082LGN00', { resolveBodyOnly: false })
+
+  t.is(response.headers['content-type'], 'application/geo+json; charset=utf-8')
 })
 
 test('/collections/{collectionId}/items with bbox 1', async (t) => {
@@ -159,7 +185,7 @@ test('/collections/{collectionId}/items with gt lt query', async (t) => {
 
 test('/', async (t) => {
   const response = await apiClient.get('')
-  t.is(response.links.length, 8)
+  t.true(Array.isArray(response.links))
 })
 
 test.skip('/search bbox', async (t) => {
@@ -180,6 +206,23 @@ test.skip('/search bbox', async (t) => {
     }
   })
   t.is(response.features.length, 0)
+})
+
+test('GET /search has a content type of "application/geo+json; charset=utf-8', async (t) => {
+  const response = await apiClient.get('search', {
+    resolveBodyOnly: false
+  })
+
+  t.is(response.headers['content-type'], 'application/geo+json; charset=utf-8')
+})
+
+test('POST /search has a content type of "application/geo+json; charset=utf-8', async (t) => {
+  const response = await apiClient.post('search', {
+    json: {},
+    resolveBodyOnly: false
+  })
+
+  t.is(response.headers['content-type'], 'application/geo+json; charset=utf-8')
 })
 
 test('/search default sort', async (t) => {
@@ -400,10 +443,15 @@ test('/search collections', async (t) => {
   t.is(response.features.length, 3)
 })
 
-// Search formatting
-test('/ conformsTo', async (t) => {
-  const response = await apiClient.get('')
+test('GET /conformance returns the expected conformsTo list', async (t) => {
+  const response = await apiClient.get('conformance')
   t.is(response.conformsTo.length, 13)
+})
+
+test('GET /conformance has a content type of "application/json', async (t) => {
+  const response = await apiClient.get('conformance', { resolveBodyOnly: false })
+
+  t.is(response.headers['content-type'], 'application/json; charset=utf-8')
 })
 
 test.skip('/search preserve geometry in page GET links', async (t) => {

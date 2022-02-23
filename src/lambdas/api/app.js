@@ -77,6 +77,7 @@ app.get('/conformance', async (_req, res, next) => {
 
 app.get('/search', async (req, res, next) => {
   try {
+    res.type('application/geo+json')
     res.json(await api.searchItems(null, req.query, satlib.es, req.endpoint, 'GET'))
   } catch (error) {
     next(error)
@@ -85,6 +86,7 @@ app.get('/search', async (req, res, next) => {
 
 app.post('/search', async (req, res, next) => {
   try {
+    res.type('application/geo+json')
     res.json(await api.searchItems(null, req.body, satlib.es, req.endpoint, 'POST'))
   } catch (error) {
     next(error)
@@ -112,6 +114,7 @@ app.get('/collections/:collectionId', async (req, res, next) => {
 
 app.get('/collections/:collectionId/items', async (req, res, next) => {
   try {
+    res.type('application/geo+json')
     res.json(await api.searchItems(
       req.params.collectionId,
       req.query,
@@ -140,6 +143,7 @@ app.post('/collections/:collectionId/items', async (req, res, next) => {
 
 app.get('/collections/:collectionId/items/:itemId', async (req, res, next) => {
   try {
+    res.type('application/geo+json')
     res.json(await api.getItem(
       req.params.collectionId,
       req.params.itemId,
@@ -171,6 +175,8 @@ app.use((_req, _res, next) => {
 app.use(
   /** @type {ErrorRequestHandler} */ ((err, _req, res, _next) => {
     res.status(err.status || 500)
+
+    res.type('application/json')
 
     switch (err.status) {
     case 404:

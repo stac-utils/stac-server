@@ -124,5 +124,20 @@
       "consistent"
     ],
     "import/extensions": "off"
-  }
+  },
+  "overrides": [
+    {
+      "files": [
+        "test-*.js"
+      ],
+      "rules": {
+        "max-len": [
+          "error",
+          {
+            "ignoreStrings": true
+          }
+        ]
+      }
+    }
+  ]
 }

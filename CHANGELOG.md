@@ -27,6 +27,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Removed
 
+- Querying Items in a Collection by POST to /collections/:collectionId/items is
+  no longer supported, as this is forbidden by the STAC API - Features
+  conformance class because it conflicts with the Transaction Extension
+
 ## [0.3.1] - 2021-07-28
 
 ### Removed

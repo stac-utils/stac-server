@@ -230,7 +230,15 @@ The API can then be run with:
 npm run serve
 ```
 
-Connect to the sever on <http://localhost:3000/>
+Connect to the server on <http://localhost:3000/>
+
+Other configurations can be passed as shell environment variables, e.g.,
+
+```
+export ENABLE_TRANSACTIONS_EXTENSION=true
+export ES_HOST='https://search-stac-server-dev-es-7awl6h344qlpvly.us-west-2.es.amazonaws.com'
+npm run serve
+```
 
 ## Running Tests
 
@@ -238,7 +246,7 @@ stac-server uses [ava](https://github.com/avajs/ava) to execute tests.
 
 ```sh
 # alias to run unit tests
-npm run test
+npm test
 
 # run unit tests in tests directory
 npm run test:unit

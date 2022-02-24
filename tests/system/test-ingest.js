@@ -2,7 +2,8 @@
 
 const { default: anyTest } = require('ava')
 const nock = require('nock')
-const { getCollectionIds } = require('../helpers/api-client')
+const { DateTime } = require('luxon')
+const { getCollectionIds, getItem } = require('../helpers/api-client')
 const { handler } = require('../../src/lambdas/ingest')
 const { loadFixture, randomId } = require('../helpers/utils')
 const { nullLoggerContext } = require('../helpers/context')
@@ -10,6 +11,7 @@ const { refreshIndices, deleteAllIndices } = require('../helpers/es')
 const { sqsTriggerLambda, purgeQueue } = require('../helpers/sqs')
 const awsClients = require('../../src/lib/aws-clients')
 const systemTests = require('../helpers/system-tests')
+const { ingestItem } = require('../helpers/ingest')
 
 /**
  * @template T
@@ -134,4 +136,98 @@ test('The ingest lambda supports ingesting a collection sourced from http', asyn
   const collectionIds = await getCollectionIds()
 
   t.true(collectionIds.includes(collection.id))
+})
+
+test('Reingesting an item maintains the `created` value', async (t) => {
+  const { ingestQueueUrl, ingestTopicArn } = t.context
+  if (ingestQueueUrl === undefined) throw new Error('ingestQueueUrl undefined')
+  if (ingestTopicArn === undefined) throw new Error('ingestTopicArn undefined')
+
+  const collection = await loadFixture(
+    'landsat-8-l1-collection.json',
+    { id: randomId('collection') }
+  )
+
+  await ingestItem({
+    ingestTopicArn,
+    ingestQueueUrl,
+    item: collection
+  })
+
+  const item = await loadFixture(
+    'stac/LC80100102015082LGN00.json',
+    {
+      id: randomId('item'),
+      collection: collection.id
+    }
+  )
+
+  await ingestItem({
+    ingestQueueUrl,
+    ingestTopicArn,
+    item
+  })
+
+  const originalItem = await getItem(collection.id, item.id)
+  // @ts-expect-error Need to validate these responses
+  const originalCreated = DateTime.fromISO(originalItem.properties.created)
+
+  await ingestItem({
+    ingestQueueUrl,
+    ingestTopicArn,
+    item
+  })
+
+  const updatedItem = await getItem(collection.id, item.id)
+  // @ts-expect-error Need to validate these responses
+  const updatedCreated = DateTime.fromISO(updatedItem.properties.created)
+
+  t.is(updatedCreated.toISO(), originalCreated.toISO())
+})
+
+test('Reingesting an item updates the `updated` value', async (t) => {
+  const { ingestQueueUrl, ingestTopicArn } = t.context
+  if (ingestQueueUrl === undefined) throw new Error('ingestQueueUrl undefined')
+  if (ingestTopicArn === undefined) throw new Error('ingestTopicArn undefined')
+
+  const collection = await loadFixture(
+    'landsat-8-l1-collection.json',
+    { id: randomId('collection') }
+  )
+
+  await ingestItem({
+    ingestTopicArn,
+    ingestQueueUrl,
+    item: collection
+  })
+
+  const item = await loadFixture(
+    'stac/LC80100102015082LGN00.json',
+    {
+      id: randomId('item'),
+      collection: collection.id
+    }
+  )
+
+  await ingestItem({
+    ingestQueueUrl,
+    ingestTopicArn,
+    item
+  })
+
+  const originalItem = await getItem(collection.id, item.id)
+  // @ts-expect-error Need to validate these responses
+  const originalUpdated = DateTime.fromISO(originalItem.properties.updated)
+
+  await ingestItem({
+    ingestQueueUrl,
+    ingestTopicArn,
+    item
+  })
+
+  const updatedItem = await getItem(collection.id, item.id)
+  // @ts-expect-error Need to validate these responses
+  const updatedUpdated = DateTime.fromISO(updatedItem.properties.updated)
+
+  t.true(updatedUpdated.toISO() > originalUpdated.toISO())
 })

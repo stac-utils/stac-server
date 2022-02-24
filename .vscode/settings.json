@@ -1,7 +1,7 @@
 {
   "editor.formatOnSave": true,
   "editor.rulers": [
-    80
+    90
   ],
   "eslint.format.enable": true,
   "eslint.packageManager": "npm",

@@ -2,6 +2,7 @@ const _stream = require('stream')
 const through2 = require('through2')
 const logger = console //require('./logger')
 const esClient = require('./esClient')
+const { getItemCreated } = require('./es')
 
 const COLLECTIONS_INDEX = process.env.COLLECTIONS_INDEX || 'collections'
 
@@ -97,7 +98,7 @@ async function stream() {
   try {
     const client = await esClient.client()
 
-    const toEs = through2.obj({ objectMode: true }, (data, encoding, next) => {
+    const toEs = through2.obj({ objectMode: true }, async (data, encoding, next) => {
       let index = ''
       logger.debug(`Data: ${JSON.stringify(data)}`)
       if (data && data.hasOwnProperty('extent')) {
@@ -115,8 +116,12 @@ async function stream() {
       const esDataObject = { ...data, links }
 
       if (data.hasOwnProperty('properties')) {
-        esDataObject.properties.created = new Date().toISOString()
-        esDataObject.properties.updated = new Date().toISOString()
+        const now = (new Date()).toISOString()
+
+        const created = (await getItemCreated(data.collection, data.id)) || now
+
+        esDataObject.properties.created = created
+        esDataObject.properties.updated = now
       }
 
       // create ES record
@@ -130,6 +135,7 @@ async function stream() {
           doc_as_upsert: true
         }
       }
+
       next(null, record)
     })
 

@@ -1,5 +1,3 @@
-// @ts-check
-
 const { default: anyTest } = require('ava')
 const { promisify } = require('util')
 const fs = require('fs')

@@ -4,9 +4,6 @@ const ingest = require('../../lib/ingest')
 const publishRecordToSNS = require('../../lib/sns')
 const s3Utils = require('../../lib/s3-utils')
 
-const POST_INGEST_TOPIC_ARN = process.env.POST_INGEST_TOPIC_ARN || ''
-const API_ENDPOINT = process.env.API_ENDPOINT || ''
-
 const isSqsEvent = (event) => 'Records' in event
 
 const isSnsMessage = (record) => record.Type === 'Notification'
@@ -50,16 +47,10 @@ const stacItemsFromSqsEvent = async (event) => {
   )
 }
 
-const postIngestHandler = async function (record, err) {
-  await publishRecordToSNS(
-    POST_INGEST_TOPIC_ARN,
-    record,
-    err
-  )
-}
-
 module.exports.handler = async function handler(event, context) {
   const { logger = console } = context
+  const POST_INGEST_TOPIC_ARN = process.env.POST_INGEST_TOPIC_ARN || ''
+  const API_ENDPOINT = process.env.API_ENDPOINT || ''
 
   logger.debug(`Event: ${JSON.stringify(event, undefined, 2)}`)
 
@@ -76,6 +67,13 @@ module.exports.handler = async function handler(event, context) {
     endpoint: API_ENDPOINT
   }
   if (POST_INGEST_TOPIC_ARN) {
+    const postIngestHandler = async function (record, err) {
+      await publishRecordToSNS(
+        POST_INGEST_TOPIC_ARN,
+        record,
+        err
+      )
+    }
     ingestOptions.successHandler = postIngestHandler
     ingestOptions.errorHandler = postIngestHandler
   }

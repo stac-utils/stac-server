@@ -1,20 +1,22 @@
-const AWS = require('aws-sdk')
+const awsClients = require('./aws-clients')
+const stacUtils = require('./stac-utils')
 const logger = console
 
-AWS.config.credentials = new AWS.EnvironmentCredentials('AWS')
-const AWS_REGION = process.env.AWS_REGION
-
-const sns = new AWS.SNS({
-  region: AWS_REGION,
-  apiVersion: '2010-03-31'
-})
-
 const attrsFromPayload = function (payload) {
+  let type = 'unknown'
+  let collection = ''
+  if (stacUtils.isCollection(payload.record)) {
+    type = 'Collection'
+    collection = payload.record.id || ''
+  } else if (stacUtils.isItem(payload.record)) {
+    type = 'Feature'
+    collection = payload.record.collection || ''
+  }
+
   return {
     recordType: {
       DataType: 'String',
-      // is it okay for pre-1.0.0 stac items this is unknown?
-      StringValue: payload.record.type || 'unknown'
+      StringValue: type
     },
     ingestStatus: {
       DataType: 'String',
@@ -22,7 +24,7 @@ const attrsFromPayload = function (payload) {
     },
     collection: {
       DataType: 'String',
-      StringValue: payload.record.collection || ''
+      StringValue: collection
     }
   }
 }
@@ -32,15 +34,17 @@ const publishRecordToSNS = async function (topicArn, record, error) {
     record: record,
     error: error
   }
-  return sns.publish({
-    Message: JSON.stringify(payload),
-    TopicArn: topicArn,
-    MessageAttributes: attrsFromPayload(payload)
-  }).promise().then(() => {
-    logger.info(`Wrote item ${record.id} to ${topicArn}`)
-  }).catch((err) => {
-    logger.error(`Failed to write item ${record.id} to ${topicArn}: ${err}`)
-  })
+
+  try {
+    await awsClients.sns().publish({
+      Message: JSON.stringify(payload),
+      TopicArn: topicArn,
+      MessageAttributes: attrsFromPayload(payload)
+    }).promise()
+    logger.info(`Wrote record ${record.id} to ${topicArn}`)
+  } catch (err) {
+    logger.error(`Failed to write record ${record.id} to ${topicArn}: ${err}`)
+  }
 }
 
 module.exports = publishRecordToSNS

@@ -9,6 +9,8 @@ const { createQueue, getQueueArn } = require('./sqs')
  * @typedef {Object} StandUpResult
  * @property {string} ingestQueueUrl
  * @property {string} ingestTopicArn
+ * @property {string} postIngestQueueUrl
+ * @property {string} postIngestTopicArn
  */
 
 /**
@@ -18,17 +20,24 @@ const setup = async () => {
   nock.disableNetConnect()
   nock.enableNetConnect('localhost')
 
-  // Create Ingest SNS topic
+  // Create Ingest SNS topics
   const ingestTopicArn = await createTopic()
+  const postIngestTopicArn = await createTopic()
 
-  // Create SQS queue
+  // Create SQS queues
   const ingestQueueUrl = await createQueue()
+  const postIngestQueueUrl = await createQueue()
   const ingestQueueArn = await getQueueArn(ingestQueueUrl)
+  const postIngestQueueArn = await getQueueArn(postIngestQueueUrl)
 
-  // Subscribe SQS queue to SNS topic
+  // Subscribe SQS queues to SNS topics
   await addSnsToSqsSubscription(
     ingestTopicArn,
     ingestQueueArn
+  )
+  await addSnsToSqsSubscription(
+    postIngestTopicArn,
+    postIngestQueueArn
   )
 
   // Create ES collections index
@@ -38,7 +47,9 @@ const setup = async () => {
 
   return {
     ingestQueueUrl,
-    ingestTopicArn
+    ingestTopicArn,
+    postIngestQueueUrl,
+    postIngestTopicArn
   }
 }
 

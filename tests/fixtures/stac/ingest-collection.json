@@ -1,0 +1,225 @@
+{
+    "id": "ingest",
+    "stac_version": "1.0.0",
+    "description": "Landat-8 L1 Collection-1 imagery radiometrically calibrated and orthorectified using gound points and Digital Elevation Model (DEM) data to correct relief displacement.",
+    "links": [
+        {
+            "href": "collection.json",
+            "rel": "self",
+            "type": "application/json"
+        },
+        {
+            "href": "catalog.json",
+            "rel": "root",
+            "type": "application/json"
+        },
+        {
+            "href": "catalog.json",
+            "rel": "parent",
+            "type": "application/json"
+        },
+        {
+            "href": "LC80100102015050LGN00.json",
+            "rel": "item",
+            "type": "application/json"
+        },
+        {
+            "href": "LC80100102015082LGN00.json",
+            "rel": "item",
+            "type": "application/json"
+        },
+        {
+            "href": "badGeometryItem.json",
+            "rel": "item",
+            "type": "application/json"
+        }
+    ],
+    "stac_extensions": [],
+    "title": "Landsat-8 L1 Collection-1",
+    "keywords": ["landsat", "earth observation", "usgs"],
+    "providers": [
+        {
+            "name": "USGS",
+            "roles": ["producer"],
+            "url": "https://landsat.usgs.gov/"
+        },
+        {
+            "name": "Planet Labs",
+            "roles": ["processor"],
+            "url": "https://github.com/landsat-pds/landsat_ingestor"
+        },
+        {
+            "name": "AWS",
+            "roles": ["host"],
+            "url": "https://landsatonaws.com/"
+        },
+        {
+            "name": "Element 84",
+            "roles": ["processor"],
+            "url": "https://element84.com/"
+        }
+    ],
+    "summaries": {
+        "gsd": [30],
+        "platform": ["landsat-8"],
+        "instruments": ["oli", "tirs"]
+    },
+    "item_assets": {
+        "index": { "type": "text/html", "title": "HTML index page" },
+        "thumbnail": { "title": "Thumbnail image", "type": "image/jpeg" },
+        "ANG": { "title": "Angle coefficients file", "type": "text/plain" },
+        "MTL": { "title": "original metadata file", "type": "text/plain" },
+        "BQA": {
+            "title": "Band quality data",
+            "type": "image/tiff; application=geotiff"
+        },
+        "B1": {
+            "type": "image/tiff; application=geotiff",
+            "eo:bands": [
+                {
+                    "name": "B1",
+                    "common_name": "coastal",
+                    "gsd": 30,
+                    "center_wavelength": 0.44,
+                    "full_width_half_max": 0.02
+                }
+            ],
+            "title": "Band 1 (coastal)"
+        },
+        "B2": {
+            "type": "image/tiff; application=geotiff",
+            "eo:bands": [
+                {
+                    "name": "B2",
+                    "common_name": "blue",
+                    "gsd": 30,
+                    "center_wavelength": 0.48,
+                    "full_width_half_max": 0.06
+                }
+            ],
+            "title": "Band 2 (blue)"
+        },
+        "B3": {
+            "type": "image/tiff; application=geotiff",
+            "eo:bands": [
+                {
+                    "name": "B3",
+                    "common_name": "green",
+                    "gsd": 30,
+                    "center_wavelength": 0.56,
+                    "full_width_half_max": 0.06
+                }
+            ],
+            "title": "Band 3 (green)"
+        },
+        "B4": {
+            "type": "image/tiff; application=geotiff",
+            "eo:bands": [
+                {
+                    "name": "B4",
+                    "common_name": "red",
+                    "gsd": 30,
+                    "center_wavelength": 0.65,
+                    "full_width_half_max": 0.04
+                }
+            ],
+            "title": "Band 4 (red)"
+        },
+        "B5": {
+            "type": "image/tiff; application=geotiff",
+            "eo:bands": [
+                {
+                    "name": "B5",
+                    "common_name": "nir",
+                    "gsd": 30,
+                    "center_wavelength": 0.86,
+                    "full_width_half_max": 0.03
+                }
+            ],
+            "title": "Band 5 (nir)"
+        },
+        "B6": {
+            "type": "image/tiff; application=geotiff",
+            "eo:bands": [
+                {
+                    "name": "B6",
+                    "common_name": "swir16",
+                    "gsd": 30,
+                    "center_wavelength": 1.6,
+                    "full_width_half_max": 0.08
+                }
+            ],
+            "title": "Band 6 (swir16)"
+        },
+        "B7": {
+            "type": "image/tiff; application=geotiff",
+            "eo:bands": [
+                {
+                    "name": "B7",
+                    "common_name": "swir22",
+                    "gsd": 30,
+                    "center_wavelength": 2.2,
+                    "full_width_half_max": 0.2
+                }
+            ],
+            "title": "Band 7 (swir22)"
+        },
+        "B8": {
+            "type": "image/tiff; application=geotiff",
+            "eo:bands": [
+                {
+                    "name": "B8",
+                    "common_name": "pan",
+                    "gsd": 15,
+                    "center_wavelength": 0.59,
+                    "full_width_half_max": 0.18
+                }
+            ],
+            "title": "Band 8 (pan)"
+        },
+        "B9": {
+            "type": "image/tiff; application=geotiff",
+            "eo:bands": [
+                {
+                    "name": "B9",
+                    "common_name": "cirrus",
+                    "gsd": 30,
+                    "center_wavelength": 1.37,
+                    "full_width_half_max": 0.02
+                }
+            ],
+            "title": "Band 9 (cirrus)"
+        },
+        "B10": {
+            "type": "image/tiff; application=geotiff",
+            "eo:bands": [
+                {
+                    "name": "B10",
+                    "common_name": "lwir11",
+                    "gsd": 100,
+                    "center_wavelength": 10.9,
+                    "full_width_half_max": 0.8
+                }
+            ],
+            "title": "Band 10 (lwir)"
+        },
+        "B11": {
+            "type": "image/tiff; application=geotiff",
+            "eo:bands": [
+                {
+                    "name": "B11",
+                    "common_name": "lwir12",
+                    "gsd": 100,
+                    "center_wavelength": 12,
+                    "full_width_half_max": 1
+                }
+            ],
+            "title": "Band 11 (lwir)"
+        }
+    },
+    "extent": {
+        "spatial": { "bbox": [[-180, -90, 180, 90]] },
+        "temporal": { "interval": [["2013-06-01T00:00:00Z", null]] }
+    },
+    "license": "PDDL-1.0"
+}

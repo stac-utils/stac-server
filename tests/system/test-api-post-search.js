@@ -9,7 +9,6 @@ const { deleteAllIndices, refreshIndices } = require('../helpers/es')
 const { randomId } = require('../helpers/utils')
 const ingest = require('../../src/lib/ingest')
 const intersectsGeometry = require('../fixtures/stac/intersectsGeometry.json')
-const stream = require('../../src/lib/esStream')
 const systemTests = require('../helpers/system-tests')
 
 /**
@@ -61,7 +60,7 @@ test.before(async (t) => {
 
   const items = await Promise.all(fixtureFiles.map((x) => loadJson(x)))
 
-  await ingest.ingestItems(items, stream)
+  await ingest(items)
 
   await refreshIndices()
 })

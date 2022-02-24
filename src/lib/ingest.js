@@ -1,5 +1,5 @@
 const esClient = require('./esClient')
-const IngestItemError = require('./IngestItemError')
+const stacUtils = require('./stac-utils')
 const { addCollectionLinks, addItemLinks } = require('./api')
 const logger = console
 
@@ -78,14 +78,6 @@ class ElasticSearchIngestClient {
     return H_LINK_KEYS
   }
 
-  isCollection(item) {
-    return item && item.hasOwnProperty('extent')
-  }
-
-  isItem(item) {
-    return item && item.hasOwnProperty('geometry')
-  }
-
   _toEs(item) {
     // remove any hierarchy links in a non-mutating way
     const hlinks = ElasticSearchIngestClient.hLinkKeys
@@ -102,7 +94,7 @@ class ElasticSearchIngestClient {
   }
 
   collectionToEs(collection) {
-    logger.debug(`Item: ${JSON.stringify(collection)}`)
+    logger.debug(`Collection: ${JSON.stringify(collection)}`)
     return {
       doc: this._toEs(collection),
       doc_as_upsert: true
@@ -113,7 +105,7 @@ class ElasticSearchIngestClient {
     logger.debug(`Item: ${JSON.stringify(item)}`)
     const index = item.collection
     if (!this.collections.has(index)) {
-      throw new IngestItemError(
+      throw new Error(
         `Index ${index} does not exist, add before ingesting items`
       )
     }
@@ -140,28 +132,34 @@ class ElasticSearchIngestClient {
       try {
         await this.config.successHandler(item)
       } catch (err) {
-        logger.error(`Ingest success hander failed: ${JSON.stringify(err)}`)
+        logger.error(`Ingest success hander failed: ${err}`)
       }
     }
   }
 
   async errorHandler(item, error) {
-    logger.error(`Error ingesting ${item.id}: ${JSON.stringify(error)}`)
+    if (error instanceof Error) {
+      error = error.toString()
+    } else if (error instanceof String) {
+      // pass
+    } else {
+      error = JSON.stringify(error)
+    }
+    logger.error(`Error ingesting ${item.id}: ${error}`)
     if (this.config.errorHandler) {
       try {
         await this.config.errorHandler(item, error)
       } catch (err) {
-        logger.error(`Ingest error hander failed: ${JSON.stringify(err)}`)
+        logger.error(`Ingest error hander failed: ${err}`)
       }
     }
   }
 
   async ingestCollection(collection) {
-    const index = COLLECTIONS_INDEX
-    const id = collection.id
-    const body = this.collectionToEs(collection)
-
     try {
+      const index = COLLECTIONS_INDEX
+      const id = collection.id
+      const body = this.collectionToEs(collection)
       await this.client.update({
         index,
         type: '_doc',
@@ -173,10 +171,10 @@ class ElasticSearchIngestClient {
       await esClient.createIndex(id)
       logger.info(`Index created for collection ${id}`)
       this.collections.add(id)
+      await this.successHandler(this.addLinks(collection, body.doc))
     } catch (error) {
       await this.errorHandler(collection, error)
     }
-    await this.successHandler(this.addLinks(collection, body.doc))
   }
 
   async ingestItems(items) {
@@ -195,11 +193,7 @@ class ElasticSearchIngestClient {
         operations.push(operation)
         operations.push(body)
       } catch (err) {
-        if (err instanceof IngestItemError) {
-          promises.push(this.errorHandler(item, err.message))
-        } else {
-          throw err
-        }
+        promises.push(this.errorHandler(item, err))
       }
     })
 
@@ -232,40 +226,39 @@ class ElasticSearchIngestClient {
     })
   }
 
-  async ingest(items) {
-    const _items = []
+  async ingest(records) {
+    const items = []
     const promises = []
     const collectionPromises = []
-    items.forEach((item) => {
-      if (this.isItem(item)) {
-        _items.push(item)
-      } else if (this.isCollection(item)) {
+    records.forEach((record) => {
+      if (stacUtils.isItem(record)) {
+        items.push(record)
+      } else if (stacUtils.isCollection(record)) {
         // collections we ingest one-by-one because they
         // are limited in quantity and successive items
         // might be dependent on them
-        collectionPromises.push(this.ingestCollection(item))
+        collectionPromises.push(this.ingestCollection(record))
       } else {
         promises.push(this.errorHandler(
-          item,
-          'Unable to determine item type'
+          record,
+          'Unable to determine record type'
         ))
       }
     })
 
-    await Promise.allSettled(collectionPromises).then(async () => {
-      if (_items) {
-        await this.ingestItems(_items)
-      }
-    })
+    await Promise.allSettled(collectionPromises)
+    if (items.length > 0) {
+      promises.push(this.ingestItems(items))
+    }
     await Promise.allSettled(promises)
   }
 }
 
-const ingest = async function (items, ingestOptions) {
+const ingest = async function (records, ingestOptions) {
   const ingestClient = await ElasticSearchIngestClient.newClient(
     ingestOptions
   )
-  return ingestClient.ingest(items)
+  return ingestClient.ingest(records)
 }
 
 module.exports = ingest

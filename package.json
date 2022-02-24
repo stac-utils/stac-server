@@ -16,7 +16,7 @@
     "test:unit": "ava tests/unit/*.js",
     "typecheck": "tsc",
     "deploy": "sls deploy",
-    "serve": "nodemon ./src/lambdas/api/local.js",
+    "serve": "STAC_API_URL=http://localhost:3000 nodemon ./src/lambdas/api/local.js",
     "build-api-docs": "npm run widdershins --search false --language_tabs 'nodejs:NodeJS' 'python:Python' --summary ./packages/api-lib/api-spec.yaml -o ./docs/api.md & npm run shins --inline --logo ./docs/images/logo.png -o ./docs/index.html ./docs/api.md"
   },
   "ava": {

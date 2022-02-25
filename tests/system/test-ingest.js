@@ -1,5 +1,3 @@
-// @ts-check
-
 const { default: anyTest } = require('ava')
 const nock = require('nock')
 const { DateTime } = require('luxon')

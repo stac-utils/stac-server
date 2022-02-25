@@ -138,7 +138,7 @@ test('The ingest lambda supports ingesting a collection sourced from http', asyn
   t.true(collectionIds.includes(collection.id))
 })
 
-test('Reingesting an item maintains the `created` value', async (t) => {
+test('Reingesting an item maintains the `created` value and updates `updated`', async (t) => {
   const { ingestQueueUrl, ingestTopicArn } = t.context
   if (ingestQueueUrl === undefined) throw new Error('ingestQueueUrl undefined')
   if (ingestTopicArn === undefined) throw new Error('ingestTopicArn undefined')
@@ -171,51 +171,6 @@ test('Reingesting an item maintains the `created` value', async (t) => {
   const originalItem = await getItem(collection.id, item.id)
   // @ts-expect-error Need to validate these responses
   const originalCreated = DateTime.fromISO(originalItem.properties.created)
-
-  await ingestItem({
-    ingestQueueUrl,
-    ingestTopicArn,
-    item
-  })
-
-  const updatedItem = await getItem(collection.id, item.id)
-  // @ts-expect-error Need to validate these responses
-  const updatedCreated = DateTime.fromISO(updatedItem.properties.created)
-
-  t.is(updatedCreated.toISO(), originalCreated.toISO())
-})
-
-test('Reingesting an item updates the `updated` value', async (t) => {
-  const { ingestQueueUrl, ingestTopicArn } = t.context
-  if (ingestQueueUrl === undefined) throw new Error('ingestQueueUrl undefined')
-  if (ingestTopicArn === undefined) throw new Error('ingestTopicArn undefined')
-
-  const collection = await loadFixture(
-    'landsat-8-l1-collection.json',
-    { id: randomId('collection') }
-  )
-
-  await ingestItem({
-    ingestTopicArn,
-    ingestQueueUrl,
-    item: collection
-  })
-
-  const item = await loadFixture(
-    'stac/LC80100102015082LGN00.json',
-    {
-      id: randomId('item'),
-      collection: collection.id
-    }
-  )
-
-  await ingestItem({
-    ingestQueueUrl,
-    ingestTopicArn,
-    item
-  })
-
-  const originalItem = await getItem(collection.id, item.id)
   // @ts-expect-error Need to validate these responses
   const originalUpdated = DateTime.fromISO(originalItem.properties.updated)
 
@@ -227,7 +182,10 @@ test('Reingesting an item updates the `updated` value', async (t) => {
 
   const updatedItem = await getItem(collection.id, item.id)
   // @ts-expect-error Need to validate these responses
+  const updatedCreated = DateTime.fromISO(updatedItem.properties.created)
+  // @ts-expect-error Need to validate these responses
   const updatedUpdated = DateTime.fromISO(updatedItem.properties.updated)
 
-  t.true(updatedUpdated.toISO() > originalUpdated.toISO())
+  t.is(updatedCreated.toISO(), originalCreated.toISO())
+  t.is(updatedUpdated.toISO(), originalUpdated.toISO())
 })

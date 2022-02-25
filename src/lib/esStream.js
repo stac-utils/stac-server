@@ -47,11 +47,13 @@ class ElasticSearchWritableStream extends _stream.Writable {
         // if this isn't a collection check if index exists
         const exists = await this.client.indices.exists({ index })
         if (!exists.body) {
-          throw new Error(`Index ${index} does not exist, add before ingesting items`)
+          return next(
+            new Error(`Index ${index} does not exist, add before ingesting items`)
+          )
         }
       }
 
-      await this.client.update({
+      await this.client.index({
         index,
         type: '_doc',
         id,
@@ -65,10 +67,10 @@ class ElasticSearchWritableStream extends _stream.Writable {
         await esClient.createIndex(id)
       }
 
-      next()
+      return next()
     } catch (err) {
       logger.error(err)
-      next()
+      return next(err)
     }
   }
 
@@ -87,7 +89,7 @@ class ElasticSearchWritableStream extends _stream.Writable {
       next()
     } catch (err) {
       logger.error(err)
-      next()
+      next(err)
     }
   }
 }
@@ -128,12 +130,9 @@ async function stream() {
       const record = {
         index,
         id: esDataObject.id,
-        action: 'update',
+        action: 'index',
         _retry_on_conflict: 3,
-        body: {
-          doc: esDataObject,
-          doc_as_upsert: true
-        }
+        body: esDataObject
       }
 
       next(null, record)

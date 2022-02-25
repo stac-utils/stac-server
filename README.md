@@ -163,6 +163,8 @@ STAC Collections and Items are ingested by the `ingest` Lambda function, however
 
 STAC Collections should be ingested before Items that belong to that Collection. Items should have the `collection` field populated with the ID of an existing Collection.
 
+If a collection or item is ingested, and an item with that id already exists in STAC, the new item will completely replace the old item.
+
 ### Ingesting large items
 
 There is a 256 KB limit on the size of SQS messages. Larger items can by publishing a message to the `stac-server-<stage>-ingest` SNS topic in with the format:

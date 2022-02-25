@@ -1,5 +1,3 @@
-// @ts-check
-
 const { default: anyTest } = require('ava')
 const nock = require('nock')
 const { DateTime } = require('luxon')
@@ -11,7 +9,7 @@ const { refreshIndices, deleteAllIndices } = require('../helpers/es')
 const { sqsTriggerLambda, purgeQueue } = require('../helpers/sqs')
 const awsClients = require('../../src/lib/aws-clients')
 const systemTests = require('../helpers/system-tests')
-const { ingestItem } = require('../helpers/ingest')
+const ingestHelpers = require('../helpers/ingest')
 
 /**
  * @template T
@@ -22,16 +20,25 @@ const { ingestItem } = require('../helpers/ingest')
  * @typedef {Object} TestContext
  * @property {string} [ingestQueueUrl]
  * @property {string} [ingestTopicArn]
+ * @property {(filename: string, overrides?: Object) => Promise<unknown>} ingestFixture
+ * @property {(item: unknown) => Promise<void>} ingestItem
  */
 
 const test = /** @type {TestFn<TestContext>} */ (anyTest)
 
 test.before(async (t) => {
   await deleteAllIndices()
-  const standUpResult = await systemTests.setup()
+  const { ingestTopicArn, ingestQueueUrl } = await systemTests.setup()
 
-  t.context.ingestQueueUrl = standUpResult.ingestQueueUrl
-  t.context.ingestTopicArn = standUpResult.ingestTopicArn
+  const ingestItem = ingestHelpers.ingestItemC(ingestTopicArn, ingestQueueUrl)
+  const ingestFixture = ingestHelpers.ingestFixtureC(ingestTopicArn, ingestQueueUrl)
+
+  t.context = {
+    ingestTopicArn,
+    ingestQueueUrl,
+    ingestFixture,
+    ingestItem
+  }
 })
 
 test.beforeEach(async (t) => {
@@ -139,22 +146,14 @@ test('The ingest lambda supports ingesting a collection sourced from http', asyn
 })
 
 test('Reingesting an item maintains the `created` value and updates `updated`', async (t) => {
-  const { ingestQueueUrl, ingestTopicArn } = t.context
-  if (ingestQueueUrl === undefined) throw new Error('ingestQueueUrl undefined')
-  if (ingestTopicArn === undefined) throw new Error('ingestTopicArn undefined')
+  const { ingestFixture, ingestItem } = t.context
 
-  const collection = await loadFixture(
+  const collection = await ingestFixture(
     'landsat-8-l1-collection.json',
     { id: randomId('collection') }
   )
 
-  await ingestItem({
-    ingestTopicArn,
-    ingestQueueUrl,
-    item: collection
-  })
-
-  const item = await loadFixture(
+  const item = await ingestFixture(
     'stac/LC80100102015082LGN00.json',
     {
       id: randomId('item'),
@@ -162,30 +161,59 @@ test('Reingesting an item maintains the `created` value and updates `updated`', 
     }
   )
 
-  await ingestItem({
-    ingestQueueUrl,
-    ingestTopicArn,
-    item
-  })
-
   const originalItem = await getItem(collection.id, item.id)
-  // @ts-expect-error Need to validate these responses
   const originalCreated = DateTime.fromISO(originalItem.properties.created)
-  // @ts-expect-error Need to validate these responses
   const originalUpdated = DateTime.fromISO(originalItem.properties.updated)
 
-  await ingestItem({
-    ingestQueueUrl,
-    ingestTopicArn,
-    item
-  })
+  await ingestItem(item)
 
   const updatedItem = await getItem(collection.id, item.id)
-  // @ts-expect-error Need to validate these responses
   const updatedCreated = DateTime.fromISO(updatedItem.properties.created)
-  // @ts-expect-error Need to validate these responses
   const updatedUpdated = DateTime.fromISO(updatedItem.properties.updated)
 
   t.is(updatedCreated.toISO(), originalCreated.toISO())
   t.true(updatedUpdated.toISO() > originalUpdated.toISO())
+})
+
+test('Reingesting an item removes extra fields', async (t) => {
+  const { ingestFixture, ingestItem } = t.context
+
+  const collection = await ingestFixture(
+    'landsat-8-l1-collection.json',
+    { id: randomId('collection') }
+  )
+
+  const { properties, ...item } = await loadFixture(
+    'stac/LC80100102015082LGN00.json',
+    {
+      id: randomId('item'),
+      collection: collection.id
+    }
+  )
+
+  const originalItem = {
+    ...item,
+    properties: {
+      ...properties,
+      extra: 'hello'
+    }
+  }
+
+  await ingestItem(originalItem)
+
+  const originalFetchedItem = await getItem(collection.id, item.id)
+
+  t.is(originalFetchedItem.properties.extra, 'hello')
+
+  // The new item is the same as the old, except that it does not have properties.extra
+  const updatedItem = {
+    ...item,
+    properties
+  }
+
+  await ingestItem(updatedItem)
+
+  const updatedFetchedItem = await getItem(collection.id, item.id)
+
+  t.false('extra' in updatedFetchedItem.properties)
 })

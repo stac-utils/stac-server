@@ -109,7 +109,7 @@
       }
     ],
     "max-len": [
-      2,
+      "error",
       {
         "code": 100,
         "ignorePattern": "(https?:|JSON\\.parse|[Uu]rl =)"
@@ -135,6 +135,8 @@
         "max-len": [
           "error",
           {
+            "code": 100,
+            "ignorePattern": "(https?:|JSON\\.parse|[Uu]rl =)",
             "ignoreStrings": true
           }
         ]

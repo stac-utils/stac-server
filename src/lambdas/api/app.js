@@ -9,6 +9,7 @@ const path = require('path')
 const satlib = require('../../lib')
 const api = require('../../lib/api')
 const { readYaml } = require('../../lib/fs')
+const { addEndpoint } = require('./middleware/add-endpoint')
 
 /**
  * @typedef {import('express').Request} Request
@@ -17,34 +18,7 @@ const { readYaml } = require('../../lib/fs')
  * @typedef {import('express').ErrorRequestHandler} ErrorRequestHandler
  */
 
-/**
- * @param {Request} req
- * @returns {string}
- */
-const determineEndpoint = (req) => {
-  if (process.env['STAC_API_URL']) return process.env['STAC_API_URL']
-
-  if (req.get('X-Forwarded-Host')) {
-    return `${req.get('X-Forwarded-Proto')}://${req.get('X-Forwarded-Host')}`
-  }
-
-  return req.event && req.event.requestContext && req.event.requestContext.stage
-    ? `${req.get('X-Forwarded-Proto')}://${req.get('Host')}/${req.event.requestContext.stage}`
-    : `${req.get('X-Forwarded-Proto')}://${req.get('Host')}`
-}
-
 const txnEnabled = process.env['ENABLE_TRANSACTIONS_EXTENSION'] === 'true'
-
-/**
- * @param {Request} req
- * @param {Response} _res
- * @param {NextFunction} next
- * @returns {void}
- */
-const addEndpointToRequest = (req, _res, next) => {
-  req.endpoint = determineEndpoint(req)
-  next()
-}
 
 const app = express()
 
@@ -52,7 +26,7 @@ app.use(logger('dev'))
 app.use(cors())
 app.use(express.json())
 app.use(compression())
-app.use(addEndpointToRequest)
+app.use(addEndpoint)
 
 app.get('/', async (req, res, next) => {
   try {

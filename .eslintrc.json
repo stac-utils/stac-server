@@ -10,6 +10,7 @@
   },
   "rules": {
     "dot-notation": "off",
+    "implicit-arrow-linebreak": "off",
     "no-restricted-syntax": [
       "off",
       "BinaryExpression[operator='of']"

@@ -1,5 +1,3 @@
-// @ts-check
-
 const { default: anyTest } = require('ava')
 const { apiClient } = require('../helpers/api-client')
 const { deleteAllIndices } = require('../helpers/es')

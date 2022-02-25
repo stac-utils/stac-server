@@ -360,9 +360,27 @@ async function search(parameters, page = 1, limit = 10) {
   return response
 }
 
+const getItem = async (collectionId, itemId) => {
+  const searchResponse = await search({
+    collections: [collectionId],
+    id: itemId
+  })
+
+  return searchResponse.results[0]
+}
+
+const getItemCreated = async (collectionId, itemId) => {
+  const item = await getItem(collectionId, itemId)
+  if (!item) return undefined
+  if (!item.properties) return undefined
+  return item.properties.created
+}
+
 module.exports = {
   getCollection,
   getCollections,
+  getItem,
+  getItemCreated,
   isIndexNotFoundError,
   search,
   editPartialItem,

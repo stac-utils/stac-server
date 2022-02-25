@@ -1,5 +1,3 @@
-// @ts-check
-
 const { default: anyTest } = require('ava')
 const { apiClient } = require('../helpers/api-client')
 const { deleteAllIndices } = require('../helpers/es')
@@ -49,6 +47,7 @@ test('GET /collections/:collectionId returns a collection', async (t) => {
 
   const response = await apiClient.get(`collections/${collectionId}`)
 
+  // @ts-expect-error We need to validate these responses
   t.is(response.id, collectionId)
 })
 

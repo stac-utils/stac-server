@@ -1,29 +1,20 @@
-const { default: anyTest } = require('ava')
-const { apiClient } = require('../helpers/api-client')
+const test = require('ava')
 const { deleteAllIndices } = require('../helpers/es')
 const systemTests = require('../helpers/system-tests')
-
-/**
- * @template T
- * @typedef {import('ava').TestFn<T>} TestFn<T>
- */
-
-/**
- * @typedef {import('../helpers/types').SystemTestContext} SystemTestContext
- */
-
-const test = /** @type {TestFn<SystemTestContext>} */ (anyTest)
 
 test.before(async (t) => {
   await deleteAllIndices()
   const standUpResult = await systemTests.setup()
 
-  t.context.ingestQueueUrl = standUpResult.ingestQueueUrl
-  t.context.ingestTopicArn = standUpResult.ingestTopicArn
+  t.context = standUpResult
+})
+
+test.after.always(async (t) => {
+  if (t.context.api) await t.context.api.close()
 })
 
 test('GET / includes the default links', async (t) => {
-  const response = await apiClient.get('')
+  const response = await t.context.api.client.get('')
 
   t.true(Array.isArray(response.links))
 
@@ -46,7 +37,7 @@ test('GET / includes the default links', async (t) => {
 })
 
 test('GET / returns a compressed response', async (t) => {
-  const response = await apiClient.get('', { resolveBodyOnly: false })
+  const response = await t.context.api.client.get('', { resolveBodyOnly: false })
 
   t.is(response.headers['content-encoding'], 'gzip')
 })

@@ -1,32 +1,14 @@
-const { default: anyTest } = require('ava')
-const { apiClient } = require('../helpers/api-client')
+const test = require('ava')
 const { deleteAllIndices } = require('../helpers/es')
 const { ingestItem } = require('../helpers/ingest')
 const { randomId, loadFixture } = require('../helpers/utils')
 const systemTests = require('../helpers/system-tests')
 
-/**
- * @template T
- * @typedef {import('ava').TestFn<T>} TestFn<T>
- */
-
-/**
- * @typedef {import('../helpers/types').SystemTestContext} SystemTestContext
- */
-
-/**
- * @typedef {Object} TestContext
- * @property {string} collectionId
- */
-
-const test = /** @type {TestFn<TestContext & SystemTestContext>} */ (anyTest)
-
 test.before(async (t) => {
   await deleteAllIndices()
   const standUpResult = await systemTests.setup()
 
-  t.context.ingestQueueUrl = standUpResult.ingestQueueUrl
-  t.context.ingestTopicArn = standUpResult.ingestTopicArn
+  t.context = standUpResult
 
   t.context.collectionId = randomId('collection')
 
@@ -42,10 +24,14 @@ test.before(async (t) => {
   })
 })
 
+test.after.always(async (t) => {
+  if (t.context.api) await t.context.api.close()
+})
+
 test('GET /collections/:collectionId returns a collection', async (t) => {
   const { collectionId } = t.context
 
-  const response = await apiClient.get(`collections/${collectionId}`)
+  const response = await t.context.api.client.get(`collections/${collectionId}`)
 
   // @ts-expect-error We need to validate these responses
   t.is(response.id, collectionId)
@@ -54,7 +40,7 @@ test('GET /collections/:collectionId returns a collection', async (t) => {
 test('GET /collection/:collectionId has a content type of "application/json', async (t) => {
   const { collectionId } = t.context
 
-  const response = await apiClient.get(
+  const response = await t.context.api.client.get(
     `collections/${collectionId}`,
     { resolveBodyOnly: false }
   )

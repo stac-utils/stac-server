@@ -11,9 +11,12 @@
  * @returns {string}
  */
 const determineEndpoint = (req) => {
+  const xStacEndpoint = req.get('X-STAC-Endpoint')
+  if (xStacEndpoint) return xStacEndpoint
+
   if (process.env['STAC_API_URL']) return process.env['STAC_API_URL']
 
-  if (req.get('X-Forwarded-Host')) {
+  if (req.get('X-Forwarded-Proto') && req.get('X-Forwarded-Host')) {
     return `${req.get('X-Forwarded-Proto')}://${req.get('X-Forwarded-Host')}`
   }
 

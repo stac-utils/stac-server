@@ -187,5 +187,5 @@ test('Reingesting an item maintains the `created` value and updates `updated`', 
   const updatedUpdated = DateTime.fromISO(updatedItem.properties.updated)
 
   t.is(updatedCreated.toISO(), originalCreated.toISO())
-  t.is(updatedUpdated.toISO(), originalUpdated.toISO())
+  t.true(updatedUpdated.toISO() > originalUpdated.toISO())
 })

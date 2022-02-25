@@ -1,7 +1,7 @@
-const { default: anyTest } = require('ava')
+const test = require('ava')
 const nock = require('nock')
 const { DateTime } = require('luxon')
-const { getCollectionIds, getItem } = require('../helpers/api-client')
+const { getCollectionIds, getItem } = require('../helpers/api')
 const { handler } = require('../../src/lambdas/ingest')
 const { loadFixture, randomId } = require('../helpers/utils')
 const { nullLoggerContext } = require('../helpers/context')
@@ -11,34 +11,20 @@ const awsClients = require('../../src/lib/aws-clients')
 const systemTests = require('../helpers/system-tests')
 const ingestHelpers = require('../helpers/ingest')
 
-/**
- * @template T
- * @typedef {import('ava').TestFn<T>} TestFn<T>
- */
-
-/**
- * @typedef {Object} TestContext
- * @property {string} [ingestQueueUrl]
- * @property {string} [ingestTopicArn]
- * @property {(filename: string, overrides?: Object) => Promise<unknown>} ingestFixture
- * @property {(item: unknown) => Promise<void>} ingestItem
- */
-
-const test = /** @type {TestFn<TestContext>} */ (anyTest)
-
 test.before(async (t) => {
   await deleteAllIndices()
-  const { ingestTopicArn, ingestQueueUrl } = await systemTests.setup()
+  const standUpResult = await systemTests.setup()
 
-  const ingestItem = ingestHelpers.ingestItemC(ingestTopicArn, ingestQueueUrl)
-  const ingestFixture = ingestHelpers.ingestFixtureC(ingestTopicArn, ingestQueueUrl)
+  t.context = standUpResult
 
-  t.context = {
-    ingestTopicArn,
-    ingestQueueUrl,
-    ingestFixture,
-    ingestItem
-  }
+  t.context.ingestItem = ingestHelpers.ingestItemC(
+    standUpResult.ingestTopicArn,
+    standUpResult.ingestQueueUrl
+  )
+  t.context.ingestFixture = ingestHelpers.ingestFixtureC(
+    standUpResult.ingestTopicArn,
+    standUpResult.ingestQueueUrl
+  )
 })
 
 test.beforeEach(async (t) => {
@@ -72,7 +58,7 @@ test('The ingest lambda supports ingesting a collection published to SNS', async
 
   await refreshIndices()
 
-  const collectionIds = await getCollectionIds()
+  const collectionIds = await getCollectionIds(t.context.api.client)
 
   t.true(collectionIds.includes(collection.id))
 })
@@ -113,7 +99,7 @@ test('The ingest lambda supports ingesting a collection sourced from S3', async 
 
   await refreshIndices()
 
-  const collectionIds = await getCollectionIds()
+  const collectionIds = await getCollectionIds(t.context.api.client)
 
   t.true(collectionIds.includes(collection.id))
 })
@@ -140,7 +126,7 @@ test('The ingest lambda supports ingesting a collection sourced from http', asyn
 
   await refreshIndices()
 
-  const collectionIds = await getCollectionIds()
+  const collectionIds = await getCollectionIds(t.context.api.client)
 
   t.true(collectionIds.includes(collection.id))
 })
@@ -161,13 +147,13 @@ test('Reingesting an item maintains the `created` value and updates `updated`', 
     }
   )
 
-  const originalItem = await getItem(collection.id, item.id)
+  const originalItem = await getItem(t.context.api.client, collection.id, item.id)
   const originalCreated = DateTime.fromISO(originalItem.properties.created)
   const originalUpdated = DateTime.fromISO(originalItem.properties.updated)
 
   await ingestItem(item)
 
-  const updatedItem = await getItem(collection.id, item.id)
+  const updatedItem = await getItem(t.context.api.client, collection.id, item.id)
   const updatedCreated = DateTime.fromISO(updatedItem.properties.created)
   const updatedUpdated = DateTime.fromISO(updatedItem.properties.updated)
 
@@ -201,7 +187,7 @@ test('Reingesting an item removes extra fields', async (t) => {
 
   await ingestItem(originalItem)
 
-  const originalFetchedItem = await getItem(collection.id, item.id)
+  const originalFetchedItem = await getItem(t.context.api.client, collection.id, item.id)
 
   t.is(originalFetchedItem.properties.extra, 'hello')
 
@@ -213,7 +199,7 @@ test('Reingesting an item removes extra fields', async (t) => {
 
   await ingestItem(updatedItem)
 
-  const updatedFetchedItem = await getItem(collection.id, item.id)
+  const updatedFetchedItem = await getItem(t.context.api.client, collection.id, item.id)
 
   t.false('extra' in updatedFetchedItem.properties)
 })

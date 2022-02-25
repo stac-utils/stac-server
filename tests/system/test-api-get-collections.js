@@ -1,32 +1,14 @@
-const { default: anyTest } = require('ava')
-const { apiClient } = require('../helpers/api-client')
+const test = require('ava')
 const { ingestItem } = require('../helpers/ingest')
 const { randomId, loadFixture } = require('../helpers/utils')
 const { refreshIndices, deleteAllIndices } = require('../helpers/es')
 const systemTests = require('../helpers/system-tests')
 
-/**
- * @template T
- * @typedef {import('ava').TestFn<T>} TestFn<T>
- */
-
-/**
- * @typedef {import('../helpers/types').SystemTestContext} SystemTestContext
- */
-
-/**
- * @typedef {Object} TestContext
- * @property {string} collectionId
- */
-
-const test = /** @type {TestFn<TestContext & SystemTestContext>} */ (anyTest)
-
 test.before(async (t) => {
   await deleteAllIndices()
   const standUpResult = await systemTests.setup()
 
-  t.context.ingestQueueUrl = standUpResult.ingestQueueUrl
-  t.context.ingestTopicArn = standUpResult.ingestTopicArn
+  t.context = standUpResult
 
   const collectionId = randomId('collection')
 
@@ -45,7 +27,7 @@ test.before(async (t) => {
 test('GET /collections', async (t) => {
   await refreshIndices()
 
-  const response = await apiClient.get('collections')
+  const response = await t.context.api.client.get('collections')
 
   t.true(Array.isArray(response.collections))
   t.true(response.collections.length > 0)
@@ -54,7 +36,7 @@ test('GET /collections', async (t) => {
 })
 
 test('GET /collections has a content type of "application/json', async (t) => {
-  const response = await apiClient.get('collections', { resolveBodyOnly: false })
+  const response = await t.context.api.client.get('collections', { resolveBodyOnly: false })
 
   t.is(response.headers['content-type'], 'application/json; charset=utf-8')
 })

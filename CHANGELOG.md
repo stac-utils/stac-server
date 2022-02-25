@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   were not advertised in the landing page conformsTo attribute or the /conformance endpoint.
 - Items larger than 256 KB can now be ingested by writing their contents to S3
 - API responses are now compressed
+- If a request includes the `X-STAC-Endpoint` header, that endpoint will be used when generating link hrefs
 
 ### Fixed
 

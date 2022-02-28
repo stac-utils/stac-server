@@ -204,9 +204,10 @@ test('Reingesting an item removes extra fields', async (t) => {
   t.false('extra' in updatedFetchedItem.properties)
 })
 
-const assertHasResultCountC = (t) => async (count, searchBody) => {
+const assertHasResultCountC = (t) => async (count, searchBody, message) => {
   const response = await t.context.api.client.post('search', { json: searchBody })
-  t.true(Array.isArray(response.features) && response.features.length === count)
+  t.true(Array.isArray(response.features), message)
+  t.is(response.features.length, count, message)
 }
 
 test('Mappings are correctly configured for non-default detected fields', async (t) => {
@@ -241,13 +242,11 @@ test('Mappings are correctly configured for non-default detected fields', async 
 
   const assertHasResultCount = assertHasResultCountC(t)
 
-  // datetime with Z instead of 00:00 should match
   await assertHasResultCount(1, {
     ids: item2.id,
     datetime: '2015-02-19T15:06:12.565047Z'
-  })
+  }, 'datetime with Z instead of 00:00 should match if field is datetime not string')
 
-  // decimal maintained (default)
   await assertHasResultCount(1, {
     ids: item2.id,
     query: {
@@ -255,7 +254,7 @@ test('Mappings are correctly configured for non-default detected fields', async 
         eq: 3.14
       }
     }
-  })
+  }, 'decimal type is maintained even if first value is integral (default)')
 
   await assertHasResultCount(1, {
     ids: item2.id,
@@ -264,9 +263,8 @@ test('Mappings are correctly configured for non-default detected fields', async 
         eq: 3.14
       }
     }
-  })
+  }, 'decimal type is maintained even if first value is integral (default)')
 
-  // explictly integers
   await assertHasResultCount(1, {
     ids: item2.id,
     query: {
@@ -274,7 +272,7 @@ test('Mappings are correctly configured for non-default detected fields', async 
         eq: 32622
       }
     }
-  })
+  }, 'integral type is used even if first value is decimal')
 
   await assertHasResultCount(0, {
     ids: item2.id,
@@ -283,7 +281,7 @@ test('Mappings are correctly configured for non-default detected fields', async 
         eq: 32622.1
       }
     }
-  })
+  }, 'integral type is used even if first value is decimal')
 
   await assertHasResultCount(1, {
     ids: item2.id,
@@ -292,7 +290,7 @@ test('Mappings are correctly configured for non-default detected fields', async 
         eq: 2
       }
     }
-  })
+  }, 'integral type is used even if first value is decimal')
 
   await assertHasResultCount(0, {
     ids: item2.id,
@@ -301,7 +299,7 @@ test('Mappings are correctly configured for non-default detected fields', async 
         eq: 2.1
       }
     }
-  })
+  }, 'integral type is used even if first value is decimal')
 
   await assertHasResultCount(1, {
     ids: item2.id,
@@ -310,7 +308,7 @@ test('Mappings are correctly configured for non-default detected fields', async 
         eq: 3
       }
     }
-  })
+  }, 'integral type is used even if first value is decimal')
 
   await assertHasResultCount(0, {
     ids: item2.id,
@@ -319,9 +317,9 @@ test('Mappings are correctly configured for non-default detected fields', async 
         eq: 3.1
       }
     }
-  })
+  }, 'integral type is used even if first value is decimal')
 
-  // this would fail if wrs_path was a numeric field
+  //
   await assertHasResultCount(1, {
     ids: item2.id,
     query: {
@@ -329,7 +327,7 @@ test('Mappings are correctly configured for non-default detected fields', async 
         eq: 'foo'
       }
     }
-  })
+  }, 'numeric string value is not mapped to numeric type')
 
   // projjson was failing when indexed was not set to false
   t.deepEqual(item2.properties['proj:projjson'], ingestedItem2.properties['proj:projjson'])

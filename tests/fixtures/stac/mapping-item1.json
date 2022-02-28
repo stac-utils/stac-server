@@ -66,9 +66,9 @@
         "gsd": 1,
         "eo:cloud_cover": 1,
         "platform": "landsat-8",
-        "proj:epsg": 32622,
-        "sat:absolute_orbit": 2,
-        "sat:relative_orbit": 3,
+        "proj:epsg": 32622.1,
+        "sat:absolute_orbit": 2.1,
+        "sat:relative_orbit": 3.1,
         "landsat:wrs_path": "10",
         "proj:projjson": {
             "$schema": "https://proj.org/schemas/v0.2/projjson.schema.json",

@@ -1,32 +1,13 @@
-const { default: anyTest } = require('ava')
+const test = require('ava')
 const { promisify } = require('util')
 const fs = require('fs')
 const path = require('path')
-const { apiClient } = require('../helpers/api-client')
 const { deleteAllIndices, refreshIndices } = require('../helpers/es')
 const { randomId } = require('../helpers/utils')
 const ingest = require('../../src/lib/ingest')
 const intersectsGeometry = require('../fixtures/stac/intersectsGeometry.json')
 const stream = require('../../src/lib/esStream')
 const systemTests = require('../helpers/system-tests')
-
-/**
- * @template T
- * @typedef {import('ava').TestFn<T>} TestFn<T>
- */
-
-/**
- * @typedef {import('../helpers/types').SystemTestContext} SystemTestContext
- */
-
-/**
- * @typedef {Object} TestContext
- * @property {string} collectionId
- * @property {string} itemId1
- * @property {string} itemId2
- */
-
-const test = /** @type {TestFn<TestContext & SystemTestContext>} */ (anyTest)
 
 const readFile = promisify(fs.readFile)
 
@@ -45,8 +26,7 @@ test.before(async (t) => {
   await deleteAllIndices()
   const standUpResult = await systemTests.setup()
 
-  t.context.ingestQueueUrl = standUpResult.ingestQueueUrl
-  t.context.ingestTopicArn = standUpResult.ingestTopicArn
+  t.context = standUpResult
 
   const fixtureFiles = [
     'catalog.json',
@@ -64,8 +44,12 @@ test.before(async (t) => {
   await refreshIndices()
 })
 
+test.after.always(async (t) => {
+  if (t.context.api) await t.context.api.close()
+})
+
 test('POST /search returns an empty list of results for a collection that does not exist', async (t) => {
-  const response = await apiClient.post('search', {
+  const response = await t.context.api.client.post('search', {
     json: {
       collections: [randomId('collection')]
     },
@@ -79,7 +63,7 @@ test('POST /search returns an empty list of results for a collection that does n
 })
 
 test("POST /search returns results when one collection exists and another doesn't", async (t) => {
-  const response = await apiClient.post('search', {
+  const response = await t.context.api.client.post('search', {
     json: {
       collections: [
         'collection2',
@@ -96,7 +80,7 @@ test("POST /search returns results when one collection exists and another doesn'
 })
 
 test.skip('/search bbox', async (t) => {
-  let response = await apiClient.post('search', {
+  let response = await t.context.api.client.post('search', {
     json: {
       bbox: [-180, -90, 180, 90]
     }
@@ -108,7 +92,7 @@ test.skip('/search bbox', async (t) => {
   t.truthy(ids.indexOf('LC80100102015082LGN00') > -1)
   t.truthy(ids.indexOf('collection2_item') > -1)
 
-  response = await apiClient.post('search', {
+  response = await t.context.api.client.post('search', {
     json: {
       bbox: [-5, -5, 5, 5]
     }
@@ -117,7 +101,7 @@ test.skip('/search bbox', async (t) => {
 })
 
 test('POST /search has a content type of "application/geo+json; charset=utf-8', async (t) => {
-  const response = await apiClient.post('search', {
+  const response = await t.context.api.client.post('search', {
     json: {},
     resolveBodyOnly: false
   })
@@ -126,12 +110,12 @@ test('POST /search has a content type of "application/geo+json; charset=utf-8', 
 })
 
 test('/search default sort', async (t) => {
-  const response = await apiClient.post('search', { json: {} })
+  const response = await t.context.api.client.post('search', { json: {} })
   t.is(response.features[0].id, 'LC80100102015082LGN00')
 })
 
 test('/search sort', async (t) => {
-  let response = await apiClient.post('search', {
+  let response = await t.context.api.client.post('search', {
     json: {
       sort: [{
         field: 'eo:cloud_cover',
@@ -141,7 +125,7 @@ test('/search sort', async (t) => {
   })
   t.is(response.features[0].id, 'LC80100102015082LGN00')
 
-  response = await apiClient.post('search', {
+  response = await t.context.api.client.post('search', {
     json: {
       sort: '[{ "field": "eo:cloud_cover", "direction": "desc" }]'
     }
@@ -150,7 +134,7 @@ test('/search sort', async (t) => {
 })
 
 test('/search flattened collection properties', async (t) => {
-  let response = await apiClient.post('search', {
+  let response = await t.context.api.client.post('search', {
     json: {
       query: {
         'platform': {
@@ -161,7 +145,7 @@ test('/search flattened collection properties', async (t) => {
   })
   t.is(response.features[0].id, 'collection2_item')
 
-  response = await apiClient.post('search', {
+  response = await t.context.api.client.post('search', {
     json: {
       query: {
         'platform': {
@@ -182,7 +166,7 @@ test('/search flattened collection properties', async (t) => {
 })
 
 test('/search fields filter', async (t) => {
-  let response = await apiClient.post('search', {
+  let response = await t.context.api.client.post('search', {
     json: {
       fields: {
       }
@@ -196,7 +180,7 @@ test('/search fields filter', async (t) => {
   t.truthy(response.features[0].links)
   t.truthy(response.features[0].assets)
 
-  response = await apiClient.post('search', {
+  response = await t.context.api.client.post('search', {
     json: {
       fields: {
         exclude: ['collection']
@@ -205,7 +189,7 @@ test('/search fields filter', async (t) => {
   })
   t.falsy(response.features[0].collection)
 
-  response = await apiClient.post('search', {
+  response = await t.context.api.client.post('search', {
     json: {
       fields: {
         exclude: ['geometry']
@@ -214,7 +198,7 @@ test('/search fields filter', async (t) => {
   })
   t.falsy(response.features[0].geometry)
 
-  response = await apiClient.post('search', {
+  response = await t.context.api.client.post('search', {
     json: {
       fields: {
         include: ['properties'],
@@ -224,10 +208,10 @@ test('/search fields filter', async (t) => {
   })
   t.falsy(response.features[0].properties.datetime)
 
-  response = await apiClient.post('search', { json: {} })
+  response = await t.context.api.client.post('search', { json: {} })
   t.truthy(response.features[0].geometry)
 
-  response = await apiClient.post('search', {
+  response = await t.context.api.client.post('search', {
     json: {
       fields: {
         include: ['collection', 'properties.eo:epsg']
@@ -238,7 +222,7 @@ test('/search fields filter', async (t) => {
   t.truthy(response.features[0].properties['eo:epsg'])
   t.falsy(response.features[0].properties['eo:cloud_cover'])
 
-  response = await apiClient.post('search', {
+  response = await t.context.api.client.post('search', {
     json: {
       fields: {
         exclude: ['id', 'links']
@@ -249,7 +233,7 @@ test('/search fields filter', async (t) => {
 })
 
 test('/search created and updated', async (t) => {
-  const response = await apiClient.post('search', {
+  const response = await t.context.api.client.post('search', {
     json: {
       query: {
         'platform': {
@@ -266,7 +250,7 @@ test('/search created and updated', async (t) => {
 })
 
 test('/search in query', async (t) => {
-  const response = await apiClient.post('search', {
+  const response = await t.context.api.client.post('search', {
     json: {
       query: {
         'landsat:wrs_path': {
@@ -279,7 +263,7 @@ test('/search in query', async (t) => {
 })
 
 test('/search limit next query', async (t) => {
-  let response = await apiClient.post('search', {
+  let response = await t.context.api.client.post('search', {
     json: {
       query: {
         'landsat:wrs_path': {
@@ -291,7 +275,7 @@ test('/search limit next query', async (t) => {
   })
   t.is(response.features.length, 2)
 
-  response = await apiClient.post('search', {
+  response = await t.context.api.client.post('search', {
     json: {
       query: {
         'landsat:wrs_path': {
@@ -307,7 +291,7 @@ test('/search limit next query', async (t) => {
 })
 
 test('/search ids', async (t) => {
-  const response = await apiClient.post('search', {
+  const response = await t.context.api.client.post('search', {
     json: {
       ids: ['collection2_item', 'LC80100102015050LGN00']
     }
@@ -324,7 +308,7 @@ test('/search collections', async (t) => {
   let query = {
     collections: ['collection2']
   }
-  let response = await apiClient.post('search', { json: query })
+  let response = await t.context.api.client.post('search', { json: query })
   t.is(response.features.length, 1)
   t.is(response.features[0].id, 'collection2_item')
 
@@ -332,7 +316,7 @@ test('/search collections', async (t) => {
     collections: ['landsat-8-l1']
   }
 
-  response = await apiClient.post('search', { json: query })
+  response = await t.context.api.client.post('search', { json: query })
 
   t.is(response.features.length, 2)
   t.is(response.features[0].id, 'LC80100102015082LGN00')
@@ -342,12 +326,12 @@ test('/search collections', async (t) => {
     collections: ['collection2', 'landsat-8-l1']
   }
 
-  response = await apiClient.post('search', { json: query })
+  response = await t.context.api.client.post('search', { json: query })
   t.is(response.features.length, 3)
 })
 
 test.skip('/search preserve geometry in page GET links', async (t) => {
-  let response = await apiClient.post('search', {
+  let response = await t.context.api.client.post('search', {
     json: {
       intersects: intersectsGeometry,
       limit: 2
@@ -355,7 +339,7 @@ test.skip('/search preserve geometry in page GET links', async (t) => {
   })
   t.is(response.features.length, 2)
 
-  response = await apiClient.post('search', {
+  response = await t.context.api.client.post('search', {
     json: {
       intersects: intersectsGeometry,
       limit: 2,
@@ -363,7 +347,7 @@ test.skip('/search preserve geometry in page GET links', async (t) => {
     }
   })
 
-  response = await apiClient.post('search', {
+  response = await t.context.api.client.post('search', {
     json: {
       intersects: encodeURIComponent(JSON.stringify(intersectsGeometry)),
       limit: 2,
@@ -374,7 +358,7 @@ test.skip('/search preserve geometry in page GET links', async (t) => {
   t.is(response.features.length, 1)
 
   const datetime = '2015-02-19/2015-02-20'
-  response = await apiClient.post('search', {
+  response = await t.context.api.client.post('search', {
     json: {
       intersects: intersectsGeometry,
       datetime: datetime,

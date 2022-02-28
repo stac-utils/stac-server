@@ -44,6 +44,8 @@ jobs:
         run: npm audit --omit dev
       - name: Unit tests
         run: npm run test:coverage
+      - name: Wait for Elasticsearch
+        run: ./bin/wait-for-elasticsearch/run.sh
       - name: System tests
         run: npm run test:system
       - name: Run build

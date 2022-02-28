@@ -81,7 +81,7 @@
                     "name": "unknown",
                     "ellipsoid": {
                         "name": "unknown",
-                        "radius": 3396000
+                        "radius": 1560800
                     },
                     "prime_meridian": {
                         "name": "Reference meridian",
@@ -109,16 +109,25 @@
             "conversion": {
                 "name": "unknown",
                 "method": {
-                    "name": "Orthographic",
+                    "name": "Equidistant Cylindrical (Spherical)",
                     "id": {
                         "authority": "EPSG",
-                        "code": 9840
+                        "code": 1029
                     }
                 },
                 "parameters": [
                     {
+                        "name": "Latitude of 1st standard parallel",
+                        "value": 0,
+                        "unit": "degree",
+                        "id": {
+                            "authority": "EPSG",
+                            "code": 8823
+                        }
+                    },
+                    {
                         "name": "Latitude of natural origin",
-                        "value": 1.1511,
+                        "value": 0,
                         "unit": "degree",
                         "id": {
                             "authority": "EPSG",
@@ -127,7 +136,7 @@
                     },
                     {
                         "name": "Longitude of natural origin",
-                        "value": 138.267,
+                        "value": 180,
                         "unit": "degree",
                         "id": {
                             "authority": "EPSG",

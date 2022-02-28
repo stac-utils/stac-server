@@ -137,7 +137,7 @@ test('/search flattened collection properties', async (t) => {
   let response = await t.context.api.client.post('search', {
     json: {
       query: {
-        'platform': {
+        platform: {
           eq: 'platform2'
         }
       }
@@ -148,7 +148,7 @@ test('/search flattened collection properties', async (t) => {
   response = await t.context.api.client.post('search', {
     json: {
       query: {
-        'platform': {
+        platform: {
           eq: 'landsat-8'
         }
       },
@@ -236,7 +236,7 @@ test('/search created and updated', async (t) => {
   const response = await t.context.api.client.post('search', {
     json: {
       query: {
-        'platform': {
+        platform: {
           eq: 'landsat-8'
         }
       },

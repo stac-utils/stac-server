@@ -53,7 +53,7 @@ test.skip('search /', async (t) => {
 test.skip('search /search query parameters', async (t) => {
   const search = sinon.stub().resolves({ results: [], meta: {} })
   const backend = { search }
-  const query = { 'test': true }
+  const query = { test: true }
   const queryParams = {
     page: 1,
     limit: 2,

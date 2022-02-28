@@ -203,3 +203,136 @@ test('Reingesting an item removes extra fields', async (t) => {
 
   t.false('extra' in updatedFetchedItem.properties)
 })
+
+const assertHasResultCountC = (t) => async (count, searchBody) => {
+  const response = await t.context.api.client.post('search', { json: searchBody })
+  t.true(Array.isArray(response.features) && response.features.length === count)
+}
+
+test('Mappings are correctly configured for non-default detected fields', async (t) => {
+  const { ingestFixture, ingestItem } = t.context
+
+  const collection = await ingestFixture(
+    'landsat-8-l1-collection.json',
+    { id: randomId('collection') }
+  )
+
+  const ingestedItem1 = await loadFixture(
+    'stac/mapping-item1.json',
+    {
+      id: randomId('item'),
+      collection: collection.id
+    }
+  )
+
+  await ingestItem(ingestedItem1)
+
+  const ingestedItem2 = await loadFixture(
+    'stac/mapping-item2.json',
+    {
+      id: randomId('item'),
+      collection: collection.id
+    }
+  )
+
+  await ingestItem(ingestedItem2)
+
+  const item2 = await getItem(t.context.api.client, collection.id, ingestedItem2.id)
+
+  const assertHasResultCount = assertHasResultCountC(t)
+
+  // datetime with Z instead of 00:00 should match
+  await assertHasResultCount(1, {
+    ids: item2.id,
+    datetime: '2015-02-19T15:06:12.565047Z'
+  })
+
+  // decimal maintained (default)
+  await assertHasResultCount(1, {
+    ids: item2.id,
+    query: {
+      gsd: {
+        eq: 3.14
+      }
+    }
+  })
+
+  await assertHasResultCount(1, {
+    ids: item2.id,
+    query: {
+      'eo:cloud_cover': {
+        eq: 3.14
+      }
+    }
+  })
+
+  // explictly integers
+  await assertHasResultCount(1, {
+    ids: item2.id,
+    query: {
+      'proj:epsg': {
+        eq: 32622
+      }
+    }
+  })
+
+  await assertHasResultCount(0, {
+    ids: item2.id,
+    query: {
+      'proj:epsg': {
+        eq: 32622.1
+      }
+    }
+  })
+
+  await assertHasResultCount(1, {
+    ids: item2.id,
+    query: {
+      'sat:absolute_orbit': {
+        eq: 2
+      }
+    }
+  })
+
+  await assertHasResultCount(0, {
+    ids: item2.id,
+    query: {
+      'sat:absolute_orbit': {
+        eq: 2.1
+      }
+    }
+  })
+
+  await assertHasResultCount(1, {
+    ids: item2.id,
+    query: {
+      'sat:relative_orbit': {
+        eq: 3
+      }
+    }
+  })
+
+  await assertHasResultCount(0, {
+    ids: item2.id,
+    query: {
+      'sat:relative_orbit': {
+        eq: 3.1
+      }
+    }
+  })
+
+  // this would fail if wrs_path was a numeric field
+  await assertHasResultCount(1, {
+    ids: item2.id,
+    query: {
+      'landsat:wrs_path': {
+        eq: 'foo'
+      }
+    }
+  })
+
+  // projjson was failing when indexed was not set to false
+  t.deepEqual(item2.properties['proj:projjson'], ingestedItem2.properties['proj:projjson'])
+
+  t.deepEqual(item2.properties['proj:centroid'], ingestedItem2.properties['proj:centroid'])
+})

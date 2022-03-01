@@ -1,5 +1,4 @@
 // these are attributes that can appear in multiple places in a STAC entity
-// eslint-disable-next-line camelcase
 const templates = [
   // Common https://github.com/radiantearth/stac-spec/blob/master/item-spec/common-metadata.md
   {

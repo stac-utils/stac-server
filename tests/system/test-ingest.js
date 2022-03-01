@@ -218,7 +218,7 @@ test('Mappings are correctly configured for non-default detected fields', async 
     { id: randomId('collection') }
   )
 
-  const ingestedItem1 = await loadFixture(
+  await ingestFixture(
     'stac/mapping-item1.json',
     {
       id: randomId('item'),
@@ -226,9 +226,7 @@ test('Mappings are correctly configured for non-default detected fields', async 
     }
   )
 
-  await ingestItem(ingestedItem1)
-
-  const ingestedItem2 = await loadFixture(
+  const ingestedItem2 = await ingestFixture(
     'stac/mapping-item2.json',
     {
       id: randomId('item'),
@@ -236,7 +234,6 @@ test('Mappings are correctly configured for non-default detected fields', async 
     }
   )
 
-  await ingestItem(ingestedItem2)
 
   const item2 = await getItem(t.context.api.client, collection.id, ingestedItem2.id)
 

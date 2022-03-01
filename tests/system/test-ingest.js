@@ -211,7 +211,7 @@ const assertHasResultCountC = (t) => async (count, searchBody, message) => {
 }
 
 test('Mappings are correctly configured for non-default detected fields', async (t) => {
-  const { ingestFixture, ingestItem } = t.context
+  const { ingestFixture } = t.context
 
   const collection = await ingestFixture(
     'landsat-8-l1-collection.json',
@@ -233,7 +233,6 @@ test('Mappings are correctly configured for non-default detected fields', async 
       collection: collection.id
     }
   )
-
 
   const item2 = await getItem(t.context.api.client, collection.id, ingestedItem2.id)
 

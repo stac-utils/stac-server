@@ -60,10 +60,10 @@ test('GET /collections/:collectionId/items/:itemId', async (t) => {
 })
 
 test('GET /collections/:collectionId/items/:itemId for a non-existent id returns Not Found"', async (t) => {
-  const { collectionId, itemId } = t.context
+  const { collectionId } = t.context
 
   const response = await t.context.api.client.get(
-    `collections/${collectionId}/items/${itemId}DOES_NOT_EXIST`,
+    `collections/${collectionId}/items/DOES_NOT_EXIST`,
     { resolveBodyOnly: false, throwHttpErrors: false }
   )
 

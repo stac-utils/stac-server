@@ -58,10 +58,10 @@ test('DELETE /collections/:collectionId/items/:itemId', async (t) => {
 })
 
 test('DELETE /collections/:collectionId/items/:itemId for a non-existent id returns No Content"', async (t) => {
-  const { collectionId, itemId } = t.context
+  const { collectionId } = t.context
 
   const response = await t.context.api.client.delete(
-    `collections/${collectionId}/items/${itemId}DOES_NOT_EXIST`,
+    `collections/${collectionId}/items/DOES_NOT_EXIST`,
     { resolveBodyOnly: false, throwHttpErrors: false }
   )
 

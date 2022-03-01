@@ -92,19 +92,21 @@ app.get('/collections/:collectionId', async (req, res, next) => {
 })
 
 app.get('/collections/:collectionId/items', async (req, res, next) => {
-  const response = await api.getCollection(req.params.collectionId, satlib.es, req.endpoint)
-
-  if (response instanceof Error) next(createError(404))
-
   try {
-    res.type('application/geo+json')
-    res.json(await api.searchItems(
-      req.params.collectionId,
-      req.query,
-      satlib.es,
-      req.endpoint,
-      'GET'
-    ))
+    const response = await api.getCollection(req.params.collectionId, satlib.es, req.endpoint)
+
+    if (response instanceof Error) next(createError(404))
+    else {
+      const items = await api.searchItems(
+        req.params.collectionId,
+        req.query,
+        satlib.es,
+        req.endpoint,
+        'GET'
+      )
+      res.type('application/geo+json')
+      res.json(items)
+    }
   } catch (error) {
     next(error)
   }

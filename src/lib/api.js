@@ -531,6 +531,15 @@ const editPartialItem = async function (itemId, queryParameters, backend, endpoi
   return new Error(`Error editing item ${itemId}`)
 }
 
+const deleteItem = async function (collectionId, itemId, backend) {
+  const response = await backend.deleteItem(collectionId, itemId)
+  logger.debug(`Delete Item: ${response}`)
+  if (response) {
+    return response
+  }
+  return new Error(`Error editing item ${itemId}`)
+}
+
 module.exports = {
   getConformance,
   getCatalog,
@@ -541,5 +550,6 @@ module.exports = {
   parsePath,
   extractIntersects,
   extractBbox,
-  editPartialItem
+  editPartialItem,
+  deleteItem
 }

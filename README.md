@@ -98,14 +98,14 @@ This repository contains Node libraries for running the API, along with a [serve
 
 To create your own deployment of stac-server, first clone the repository:
 
-```sh
+```shell
 git clone https://github.com/stac-utils/stac-server.git
 cd stac-server
 ```
 
 Copy the [example serverless config file](serverless.yml.example) to a file named `serverless.yml`:
 
-```sh
+```shell
 cp serverless.yml.example serverless.yml
 ```
 
@@ -125,7 +125,7 @@ There are some settings that should be reviewed and updated as needeed in the se
 
 After reviewing the settings, build and deploy:
 
-```sh
+```shell
 npm install
 npm run build
 npm run deploy
@@ -133,7 +133,7 @@ npm run deploy
 
 This will create a CloudFormation stack in the `us-west-2` region called `stac-server-dev`. To change the region or the stage name (from `dev`) provide arguments to the deploy command (note the additional `--` in the command, required by `npm` to provide arguments):
 
-```sh
+```shell
 npm run deploy -- --stage mystage --region eu-central-1
 ```
 
@@ -147,7 +147,7 @@ Once deployed there is one final step - creating the indices and mappings in Ela
 
 This can be done with the AWS CLI with (the final `-` parameter pipes the output to stdout):
 
-```sh
+```shell
 aws lambda invoke \
   --function-name stac-server-dev-ingest \
   --cli-binary-format raw-in-base64-out \
@@ -222,13 +222,13 @@ npm run build-api-docs # TODO: this fails
 
 Before the API can be run, Elasticsearch and Localstack need to be running. There is a `docker-compose.yml` file to simplify running Elasticsearch locally:
 
-```sh
+```shell
 docker-compose up -d
 ```
 
 The API can then be run with:
 
-```sh
+```shell
 npm run serve
 ```
 
@@ -246,7 +246,7 @@ npm run serve
 
 stac-server uses [ava](https://github.com/avajs/ava) to execute tests.
 
-```sh
+```shell
 # alias to run unit tests
 npm test
 
@@ -275,7 +275,7 @@ When the system tests run, they:
 
 Before running the system tests, make sure to start Elasticsearch using:
 
-```sh
+```shell
 docker-compose up -d
 ```
 
@@ -284,13 +284,19 @@ this is probably already installed, and on macOS it can be installed with `brew 
 
 Once Elasticsearch has been started, run the system tests:
 
-```sh
+```shell
 npm run test:system
+```
+
+A subset of system tests may be run by providing a glob matching the test files to run:
+
+```shell
+npm run test:system test-api-item-*
 ```
 
 Run the integration tests (**Note**: currently none exist):
 
-```sh
+```shell
 npm run test:integration
 ```
 

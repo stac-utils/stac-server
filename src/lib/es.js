@@ -1,5 +1,3 @@
-'use strict'
-
 const esClient = require('./esClient')
 const logger = console //require('./logger')
 
@@ -259,6 +257,16 @@ async function editPartialItem(itemId, updateFields) {
   return response
 }
 
+async function deleteItem(collectionId, itemId) {
+  const client = await esClient.client()
+  if (client === undefined) throw new Error('Client is undefined')
+  return await client.delete_by_query({
+    index: collectionId,
+    body: buildIdQuery(itemId),
+    waitForCompletion: true
+  })
+}
+
 async function esQuery(parameters) {
   logger.info(`Elasticsearch query: ${JSON.stringify(parameters)}`)
   const client = await esClient.client()
@@ -381,6 +389,7 @@ module.exports = {
   getCollections,
   getItem,
   getItemCreated,
+  deleteItem,
   isIndexNotFoundError,
   search,
   editPartialItem,

@@ -562,7 +562,7 @@ components:
             max: '2019-07-10T13:44:56Z'
           'sci:citation':
             - 'Copernicus Sentinel data [Year]'
-          'eo:gsd':
+          'gsd':
             - 10
             - 30
             - 60
@@ -1477,7 +1477,7 @@ components:
             - cool_sensor_v1
           'eo:bands': []
           'view:sun_elevation': 33.4
-          'eo:gsd': 0.512
+          'gsd': 0.512
         collection: CS3
         links:
           - rel: self
@@ -1592,7 +1592,7 @@ components:
             - foo
             - bar
             - baz
-        'eo:gsd':
+        'gsd':
           in:
             - 10
             - 20

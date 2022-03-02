@@ -8,7 +8,7 @@
       "instruments": ["OLI", "TIRS"],
       "datetime": "2015-02-19T15:06:12.565047+00:00",
       "eo:cloud_cover": 0.54,
-      "eo:epsg": 32622,
+      "proj:epsg": 32622,
       "view:sun_azimuth": 174.10674048,
       "view:sun_elevation": 7.85803613,
       "landsat:wrs_path": "10",

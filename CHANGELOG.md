@@ -28,6 +28,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Elasticsearch version update 7.9 -> 7.10
 - Use Express for API routing
 - Item and collection ingest operations will full replace an item with the same ID. Previously, partial-updates were being performed.
+- Improvements to Elasticsearch field mappings
 
 ### Removed
 

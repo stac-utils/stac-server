@@ -1,0 +1,219 @@
+{
+    "type": "Feature",
+    "stac_extensions": [
+        "https://stac-extensions.github.io/eo/v1.0.0/schema.json",
+        "https://stac-extensions.github.io/projection/v1.0.0/schema.json",
+        "https://stac-extensions.github.io/view/v1.0.0/schema.json"
+    ],
+    "stac_version": "1.0.0",
+    "id": "item1",
+    "collection": "landsat-8-l1",
+    "assets": {
+        "ANG": {
+            "href": "https://s3-us-west-2.amazonaws.com/landsat-pds/L8/010/010/LC80100102015050LGN00/LC80100102015050LGN00_ANG.txt",
+            "title": "Angle coefficients file",
+            "type": "text/plain",
+            "roles": [
+                "metadata"
+            ]
+        }
+    },
+    "bbox": [
+        -52.68296,
+        69.68409,
+        -45.19691,
+        72.07674
+    ],
+    "geometry": {
+        "coordinates": [
+            [
+                [
+                    -52.68296,
+                    72.07674
+                ],
+                [
+                    -45.19691,
+                    71.99758
+                ],
+                [
+                    -45.83578,
+                    69.68409
+                ],
+                [
+                    -52.4967,
+                    69.75356
+                ],
+                [
+                    -52.68296,
+                    72.07674
+                ]
+            ]
+        ],
+        "type": "Polygon"
+    },
+    "links": [
+        {
+            "href": "LC80100102015050LGN00.json",
+            "rel": "self"
+        }
+    ],
+    "properties": {
+        "datetime": "2015-02-19T15:06:12.565047+00:00",
+        "start_datetime": "2015-02-19T15:06:12.565047Z",
+        "end_datetime": "2015-02-19T15:06:12Z",
+        "created": "2022-02-19T15:06:12Z",
+        "updated": "2022-02-19T15:06:12Z",
+        "gsd": 3.14,
+        "eo:cloud_cover": 3.14,
+        "platform": "landsat-8",
+        "proj:epsg": 32622,
+        "sat:absolute_orbit": 2,
+        "sat:relative_orbit": 3,
+        "landsat:wrs_path": "foo",
+        "proj:projjson": {
+            "$schema": "https://proj.org/schemas/v0.2/projjson.schema.json",
+            "type": "ProjectedCRS",
+            "name": "unknown",
+            "base_crs": {
+                "name": "unknown",
+                "datum": {
+                    "type": "GeodeticReferenceFrame",
+                    "name": "unknown",
+                    "ellipsoid": {
+                        "name": "unknown",
+                        "radius": 3396000
+                    },
+                    "prime_meridian": {
+                        "name": "Reference meridian",
+                        "longitude": 0
+                    }
+                },
+                "coordinate_system": {
+                    "subtype": "ellipsoidal",
+                    "axis": [
+                        {
+                            "name": "Longitude",
+                            "abbreviation": "lon",
+                            "direction": "east",
+                            "unit": "degree"
+                        },
+                        {
+                            "name": "Latitude",
+                            "abbreviation": "lat",
+                            "direction": "north",
+                            "unit": "degree"
+                        }
+                    ]
+                }
+            },
+            "conversion": {
+                "name": "unknown",
+                "method": {
+                    "name": "Orthographic",
+                    "id": {
+                        "authority": "EPSG",
+                        "code": 9840
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "Latitude of natural origin",
+                        "value": 1.1511,
+                        "unit": "degree",
+                        "id": {
+                            "authority": "EPSG",
+                            "code": 8801
+                        }
+                    },
+                    {
+                        "name": "Longitude of natural origin",
+                        "value": 138.267,
+                        "unit": "degree",
+                        "id": {
+                            "authority": "EPSG",
+                            "code": 8802
+                        }
+                    },
+                    {
+                        "name": "False easting",
+                        "value": 0,
+                        "unit": "metre",
+                        "id": {
+                            "authority": "EPSG",
+                            "code": 8806
+                        }
+                    },
+                    {
+                        "name": "False northing",
+                        "value": 0,
+                        "unit": "metre",
+                        "id": {
+                            "authority": "EPSG",
+                            "code": 8807
+                        }
+                    }
+                ]
+            },
+            "coordinate_system": {
+                "subtype": "Cartesian",
+                "axis": [
+                    {
+                        "name": "Easting",
+                        "abbreviation": "E",
+                        "direction": "east",
+                        "unit": "metre"
+                    },
+                    {
+                        "name": "Northing",
+                        "abbreviation": "N",
+                        "direction": "north",
+                        "unit": "metre"
+                    }
+                ]
+            }
+        },
+        "proj:centroid": {
+            "lat": 1.13142823375299,
+            "lon": 138.268087721479
+        },
+        "proj:shape": [
+            15535,
+            3243
+        ],
+        "proj:transform": [
+            -32290,
+            20,
+            0,
+            154230,
+            0,
+            -20
+        ],
+        "proj:geometry": {
+            "coordinates": [
+                [
+                    [
+                        -52.68296,
+                        72.07674
+                    ],
+                    [
+                        -45.19691,
+                        71.99758
+                    ],
+                    [
+                        -45.83578,
+                        69.68409
+                    ],
+                    [
+                        -52.4967,
+                        69.75356
+                    ],
+                    [
+                        -52.68296,
+                        72.07674
+                    ]
+                ]
+            ],
+            "type": "Polygon"
+        }
+    }
+}

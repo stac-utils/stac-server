@@ -1,13 +1,29 @@
-const common = require('./common')
+const dynamicTemplates = require('./dynamicTemplates')
 
 module.exports = {
   mappings: {
-    dynamic_templates: common.dynamic_templates,
+    numeric_detection: false,
+    dynamic_templates: dynamicTemplates.templates,
     properties: {
       geometry: { type: 'geo_shape' },
-      properties: common.properties,
       assets: { type: 'object', enabled: false },
       links: { type: 'object', enabled: false },
+      properties: {
+        type: 'object',
+        properties: {
+
+          // Common https://github.com/radiantearth/stac-spec/blob/master/item-spec/common-metadata.md
+          datetime: { type: 'date' },
+          start_datetime: { type: 'date' },
+          end_datetime: { type: 'date' },
+          created: { type: 'date' },
+          updated: { type: 'date' },
+
+          // Satellite Extension https://github.com/stac-extensions/sat
+          'sat:absolute_orbit': { type: 'integer' },
+          'sat:relative_orbit': { type: 'integer' }
+        }
+      }
     }
   }
 }

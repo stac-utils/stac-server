@@ -213,10 +213,10 @@
                 "id": "B11"
             }
         ],
-        "eo:gsd": 15,
-        "eo:instrument": "OLI_TIRS",
-        "eo:off_nadir": 0,
-        "eo:platform": "landsat-8"
+        "gsd": 15,
+        "instruments": ["OLI_TIRS"],
+        "view:off_nadir": 0,
+        "platform": "landsat-8"
     },
     "providers": [
         {

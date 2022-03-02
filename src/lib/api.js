@@ -525,13 +525,35 @@ const getItem = async function (collectionId, itemId, backend, endpoint = '') {
   return new Error('Item not found')
 }
 
-const editPartialItem = async function (itemId, queryParameters, backend, endpoint = '') {
-  const response = await backend.editPartialItem(itemId, queryParameters)
-  logger.debug(`Edit Item: ${response}`)
+const partialUpdateItem = async function (
+  collectionId, itemId, queryParameters, backend, endpoint = ''
+) {
+  const response = await backend.partialUpdateItem(collectionId, itemId, queryParameters)
+  logger.debug(`Partial Update Item: ${response}`)
   if (response) {
     return addItemLinks([response.get._source], endpoint)[0]
   }
-  return new Error(`Error editing item ${itemId}`)
+  return new Error(`Error partially updating item ${itemId}`)
+}
+
+const createItem = async function (item, backend) {
+  const response = await backend.indexItem(item)
+  logger.debug(`Create Item: ${JSON.stringify(response)}`)
+
+  if (response) {
+    return response
+  }
+  return new Error(`Error creating item in collection ${item.collection}`)
+}
+
+const updateItem = async function (item, backend) {
+  const response = await backend.updateItem(item)
+  logger.debug(`Update Item: ${JSON.stringify(response)}`)
+
+  if (response) {
+    return response
+  }
+  return new Error(`Error updating item ${item.id}`)
 }
 
 const deleteItem = async function (collectionId, itemId, backend) {
@@ -553,6 +575,8 @@ module.exports = {
   parsePath,
   extractIntersects,
   extractBbox,
-  editPartialItem,
-  deleteItem
+  createItem,
+  deleteItem,
+  updateItem,
+  partialUpdateItem,
 }

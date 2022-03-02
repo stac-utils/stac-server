@@ -112,10 +112,29 @@ app.get('/collections/:collectionId/items', async (req, res, next) => {
   }
 })
 
-app.post('/collections/:collectionId/items', async (_req, _res, next) => {
+app.post('/collections/:collectionId/items', async (req, res, next) => {
   if (txnEnabled) {
-    // todo: implement
-    next(createError(501))
+    const { collectionId } = req.params
+    const itemId = req.body.id
+
+    if (collectionId !== req.body.collection) {
+      next(createError(400, 'Collection resource URI must match collection in body'))
+    } else {
+      const collectionRes = await api.getCollection(collectionId, satlib.es, req.endpoint)
+      if (collectionRes instanceof Error) next(createError(404))
+      try {
+        await api.createItem(req.body, satlib.es)
+        res.location(`${req.endpoint}/collections/${collectionId}/items/${itemId}`)
+        res.sendStatus(201)
+      } catch (error) {
+        if (error.name === 'ResponseError'
+              && error.message.includes('version_conflict_engine_exception')) {
+          res.sendStatus(409)
+        } else {
+          next(error)
+        }
+      }
+    }
   } else {
     next(createError(404))
   }
@@ -145,10 +164,33 @@ app.get('/collections/:collectionId/items/:itemId', async (req, res, next) => {
   }
 })
 
-app.put('/collections/:collectionId/items/:itemId', async (_req, _res, next) => {
+app.put('/collections/:collectionId/items/:itemId', async (req, res, next) => {
   if (txnEnabled) {
-    // todo: implement
-    next(createError(501))
+    const { collectionId, itemId } = req.params
+
+    // If allowing PUT to move, get rid of this check
+    if (collectionId !== req.body.collection) {
+      next(createError(400, 'Collection resource URI must match collection in body'))
+    }
+
+    if (itemId !== req.body.id) {
+      next(createError(400, 'Item resource URI must match Item ID in body'))
+    }
+
+    const collectionRes = await api.getCollection(collectionId, satlib.es, req.endpoint)
+    if (collectionRes instanceof Error) next(createError(404))
+
+    try {
+      await api.updateItem(req.body, satlib.es)
+      res.sendStatus(204)
+    } catch (error) {
+      if (error.name === 'ResponseError'
+            && error.message.includes('version_conflict_engine_exception')) {
+        res.sendStatus(409)
+      } else {
+        next(error)
+      }
+    }
   } else {
     next(createError(404))
   }
@@ -156,10 +198,16 @@ app.put('/collections/:collectionId/items/:itemId', async (_req, _res, next) => 
 
 app.patch('/collections/:collectionId/items/:itemId', async (req, res, next) => {
   if (txnEnabled) {
-    try {
-      res.json(await api.editPartialItem(req.params.itemId, req.body, satlib.es, req.endpoint))
-    } catch (error) {
-      next(error)
+    const collectionRes = await api.getCollection(req.params.collectionId, satlib.es, req.endpoint)
+    if (collectionRes instanceof Error) next(createError(404))
+    else {
+      try {
+        res.json(await api.partialUpdateItem(
+          req.params.collectionId, req.params.itemId, req.body, satlib.es, req.endpoint
+        ))
+      } catch (error) {
+        next(error)
+      }
     }
   } else {
     next(createError(404))
@@ -195,12 +243,15 @@ app.use(
     res.type('application/json')
 
     switch (err.status) {
+    case 400:
+      res.json({ code: 'BadRequest', description: err.message })
+      break
     case 404:
-      res.json({ error: 'Not Found' })
+      res.json({ code: 'NotFound', description: 'Not Found' })
       break
     default:
       console.log(err)
-      res.json({ error: 'Internal Server Error' })
+      res.json({ code: 'InternalServerError', description: 'Internal Server Error' })
       break
     }
   })

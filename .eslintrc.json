@@ -20,7 +20,6 @@
       2,
       "never"
     ],
-    "quote-props": 0,
     "func-names": 0,
     "no-param-reassign": "off",
     "no-prototype-builtins": "off",

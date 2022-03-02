@@ -137,7 +137,7 @@ test('/search flattened collection properties', async (t) => {
   let response = await t.context.api.client.post('search', {
     json: {
       query: {
-        'platform': {
+        platform: {
           eq: 'platform2'
         }
       }
@@ -148,7 +148,7 @@ test('/search flattened collection properties', async (t) => {
   response = await t.context.api.client.post('search', {
     json: {
       query: {
-        'platform': {
+        platform: {
           eq: 'landsat-8'
         }
       },
@@ -214,12 +214,12 @@ test('/search fields filter', async (t) => {
   response = await t.context.api.client.post('search', {
     json: {
       fields: {
-        include: ['collection', 'properties.eo:epsg']
+        include: ['collection', 'properties.proj:epsg']
       }
     }
   })
   t.truthy(response.features[0].collection)
-  t.truthy(response.features[0].properties['eo:epsg'])
+  t.truthy(response.features[0].properties['proj:epsg'])
   t.falsy(response.features[0].properties['eo:cloud_cover'])
 
   response = await t.context.api.client.post('search', {
@@ -236,7 +236,7 @@ test('/search created and updated', async (t) => {
   const response = await t.context.api.client.post('search', {
     json: {
       query: {
-        'platform': {
+        platform: {
           eq: 'landsat-8'
         }
       },

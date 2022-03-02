@@ -203,3 +203,130 @@ test('Reingesting an item removes extra fields', async (t) => {
 
   t.false('extra' in updatedFetchedItem.properties)
 })
+
+const assertHasResultCountC = (t) => async (count, searchBody, message) => {
+  const response = await t.context.api.client.post('search', { json: searchBody })
+  t.true(Array.isArray(response.features), message)
+  t.is(response.features.length, count, message)
+}
+
+test('Mappings are correctly configured for non-default detected fields', async (t) => {
+  const { ingestFixture } = t.context
+
+  const collection = await ingestFixture(
+    'landsat-8-l1-collection.json',
+    { id: randomId('collection') }
+  )
+
+  await ingestFixture(
+    'stac/mapping-item1.json',
+    {
+      id: randomId('item'),
+      collection: collection.id
+    }
+  )
+
+  const ingestedItem2 = await ingestFixture(
+    'stac/mapping-item2.json',
+    {
+      id: randomId('item'),
+      collection: collection.id
+    }
+  )
+
+  const item2 = await getItem(t.context.api.client, collection.id, ingestedItem2.id)
+
+  const assertHasResultCount = assertHasResultCountC(t)
+
+  await assertHasResultCount(1, {
+    ids: item2.id,
+    datetime: '2015-02-19T15:06:12.565047Z'
+  }, 'datetime with Z instead of 00:00 should match if field is datetime not string')
+
+  await assertHasResultCount(1, {
+    ids: item2.id,
+    query: {
+      gsd: {
+        eq: 3.14
+      }
+    }
+  }, 'decimal type is maintained even if first value is integral (default)')
+
+  await assertHasResultCount(1, {
+    ids: item2.id,
+    query: {
+      'eo:cloud_cover': {
+        eq: 3.14
+      }
+    }
+  }, 'decimal type is maintained even if first value is integral (default)')
+
+  await assertHasResultCount(1, {
+    ids: item2.id,
+    query: {
+      'proj:epsg': {
+        eq: 32622
+      }
+    }
+  }, 'integral type is used even if first value is decimal')
+
+  await assertHasResultCount(0, {
+    ids: item2.id,
+    query: {
+      'proj:epsg': {
+        eq: 32622.1
+      }
+    }
+  }, 'integral type is used even if first value is decimal')
+
+  await assertHasResultCount(1, {
+    ids: item2.id,
+    query: {
+      'sat:absolute_orbit': {
+        eq: 2
+      }
+    }
+  }, 'integral type is used even if first value is decimal')
+
+  await assertHasResultCount(0, {
+    ids: item2.id,
+    query: {
+      'sat:absolute_orbit': {
+        eq: 2.1
+      }
+    }
+  }, 'integral type is used even if first value is decimal')
+
+  await assertHasResultCount(1, {
+    ids: item2.id,
+    query: {
+      'sat:relative_orbit': {
+        eq: 3
+      }
+    }
+  }, 'integral type is used even if first value is decimal')
+
+  await assertHasResultCount(0, {
+    ids: item2.id,
+    query: {
+      'sat:relative_orbit': {
+        eq: 3.1
+      }
+    }
+  }, 'integral type is used even if first value is decimal')
+
+  //
+  await assertHasResultCount(1, {
+    ids: item2.id,
+    query: {
+      'landsat:wrs_path': {
+        eq: 'foo'
+      }
+    }
+  }, 'numeric string value is not mapped to numeric type')
+
+  // projjson was failing when indexed was not set to false
+  t.deepEqual(item2.properties['proj:projjson'], ingestedItem2.properties['proj:projjson'])
+
+  t.deepEqual(item2.properties['proj:centroid'], ingestedItem2.properties['proj:centroid'])
+})

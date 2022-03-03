@@ -529,9 +529,9 @@ const partialUpdateItem = async function (
   collectionId, itemId, queryParameters, backend, endpoint = ''
 ) {
   const response = await backend.partialUpdateItem(collectionId, itemId, queryParameters)
-  logger.debug(`Partial Update Item: ${response}`)
+  logger.debug(`Partial Update Item: ${JSON.stringify(response)}`)
   if (response) {
-    return addItemLinks([response.get._source], endpoint)[0]
+    return addItemLinks([response.body.get._source], endpoint)[0]
   }
   return new Error(`Error partially updating item ${itemId}`)
 }

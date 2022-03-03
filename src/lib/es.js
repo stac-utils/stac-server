@@ -271,15 +271,11 @@ async function partialUpdateItem(collectionId, itemId, updateFields) {
   const response = await client.update({
     index: collectionId,
     id: itemId,
-    type: 'doc',
     _source: true,
     body: {
       doc: updateFields
     }
   })
-
-  // TODO: if the collectionId from the path doesn't match the
-  // collection value from the item, it needs to be moved
 
   return response
 }

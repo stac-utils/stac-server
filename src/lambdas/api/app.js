@@ -211,11 +211,16 @@ app.patch('/collections/:collectionId/items/:itemId', async (req, res, next) => 
     } else {
       const collectionRes = await api.getCollection(collectionId, satlib.es, req.endpoint)
       if (collectionRes instanceof Error) next(createError(404))
+      const itemRes = await api.getItem(collectionId, itemId, satlib.es, req.endpoint)
+      if (itemRes instanceof Error) next(createError(404))
+
       else {
         try {
-          res.json(await api.partialUpdateItem(
+          const item = await api.partialUpdateItem(
             collectionId, itemId, req.body, satlib.es, req.endpoint
-          ))
+          )
+          res.type('application/geo+json')
+          res.json(item)
         } catch (error) {
           next(error)
         }

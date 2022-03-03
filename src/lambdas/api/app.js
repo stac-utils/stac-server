@@ -81,8 +81,9 @@ app.get('/collections', async (req, res, next) => {
 })
 
 app.get('/collections/:collectionId', async (req, res, next) => {
+  const { collectionId } = req.params
   try {
-    const response = await api.getCollection(req.params.collectionId, satlib.es, req.endpoint)
+    const response = await api.getCollection(collectionId, satlib.es, req.endpoint)
 
     if (response instanceof Error) next(createError(404))
     else res.json(response)
@@ -92,13 +93,14 @@ app.get('/collections/:collectionId', async (req, res, next) => {
 })
 
 app.get('/collections/:collectionId/items', async (req, res, next) => {
+  const { collectionId } = req.params
   try {
-    const response = await api.getCollection(req.params.collectionId, satlib.es, req.endpoint)
+    const response = await api.getCollection(collectionId, satlib.es, req.endpoint)
 
     if (response instanceof Error) next(createError(404))
     else {
       const items = await api.searchItems(
-        req.params.collectionId,
+        collectionId,
         req.query,
         satlib.es,
         req.endpoint,
@@ -117,12 +119,13 @@ app.post('/collections/:collectionId/items', async (req, res, next) => {
     const { collectionId } = req.params
     const itemId = req.body.id
 
-    if (collectionId !== req.body.collection) {
+    if (req.body.collection && req.body.collection !== collectionId) {
       next(createError(400, 'Collection resource URI must match collection in body'))
     } else {
       const collectionRes = await api.getCollection(collectionId, satlib.es, req.endpoint)
       if (collectionRes instanceof Error) next(createError(404))
       try {
+        req.body.collection = collectionId
         await api.createItem(req.body, satlib.es)
         res.location(`${req.endpoint}/collections/${collectionId}/items/${itemId}`)
         res.sendStatus(201)
@@ -142,9 +145,11 @@ app.post('/collections/:collectionId/items', async (req, res, next) => {
 
 app.get('/collections/:collectionId/items/:itemId', async (req, res, next) => {
   try {
+    const { itemId, collectionId } = req.params
+
     const response = await api.getItem(
-      req.params.collectionId,
-      req.params.itemId,
+      collectionId,
+      itemId,
       satlib.es,
       req.endpoint
     )
@@ -168,27 +173,26 @@ app.put('/collections/:collectionId/items/:itemId', async (req, res, next) => {
   if (txnEnabled) {
     const { collectionId, itemId } = req.params
 
-    // If allowing PUT to move, get rid of this check
-    if (collectionId !== req.body.collection) {
-      next(createError(400, 'Collection resource URI must match collection in body'))
-    }
+    if (req.body.collection && req.body.collection !== collectionId) {
+      next(createError(400, 'Collection ID in resource URI must match collection in body'))
+    } else if (req.body.id && req.body.id !== itemId) {
+      next(createError(400, 'Item ID in resource URI must match id in body'))
+    } else {
+      const collectionRes = await api.getCollection(collectionId, satlib.es, req.endpoint)
+      if (collectionRes instanceof Error) next(createError(404))
 
-    if (itemId !== req.body.id) {
-      next(createError(400, 'Item resource URI must match Item ID in body'))
-    }
-
-    const collectionRes = await api.getCollection(collectionId, satlib.es, req.endpoint)
-    if (collectionRes instanceof Error) next(createError(404))
-
-    try {
-      await api.updateItem(req.body, satlib.es)
-      res.sendStatus(204)
-    } catch (error) {
-      if (error.name === 'ResponseError'
-            && error.message.includes('version_conflict_engine_exception')) {
-        res.sendStatus(409)
-      } else {
-        next(error)
+      req.body.collection = collectionId
+      req.body.id = itemId
+      try {
+        await api.updateItem(req.body, satlib.es)
+        res.sendStatus(204)
+      } catch (error) {
+        if (error.name === 'ResponseError'
+              && error.message.includes('version_conflict_engine_exception')) {
+          res.sendStatus(409)
+        } else {
+          next(error)
+        }
       }
     }
   } else {
@@ -198,15 +202,23 @@ app.put('/collections/:collectionId/items/:itemId', async (req, res, next) => {
 
 app.patch('/collections/:collectionId/items/:itemId', async (req, res, next) => {
   if (txnEnabled) {
-    const collectionRes = await api.getCollection(req.params.collectionId, satlib.es, req.endpoint)
-    if (collectionRes instanceof Error) next(createError(404))
-    else {
-      try {
-        res.json(await api.partialUpdateItem(
-          req.params.collectionId, req.params.itemId, req.body, satlib.es, req.endpoint
-        ))
-      } catch (error) {
-        next(error)
+    const { collectionId, itemId } = req.params
+
+    if (req.body.collection && req.body.collection !== collectionId) {
+      next(createError(400, 'Collection ID in resource URI must match collection in body'))
+    } else if (req.body.id && req.body.id !== itemId) {
+      next(createError(400, 'Item ID in resource URI must match id in body'))
+    } else {
+      const collectionRes = await api.getCollection(collectionId, satlib.es, req.endpoint)
+      if (collectionRes instanceof Error) next(createError(404))
+      else {
+        try {
+          res.json(await api.partialUpdateItem(
+            collectionId, itemId, req.body, satlib.es, req.endpoint
+          ))
+        } catch (error) {
+          next(error)
+        }
       }
     }
   } else {
@@ -216,8 +228,9 @@ app.patch('/collections/:collectionId/items/:itemId', async (req, res, next) => 
 
 app.delete('/collections/:collectionId/items/:itemId', async (req, res, next) => {
   if (txnEnabled) {
+    const { collectionId, itemId } = req.params
     try {
-      const response = await api.deleteItem(req.params.collectionId, req.params.itemId, satlib.es)
+      const response = await api.deleteItem(collectionId, itemId, satlib.es)
       if (response instanceof Error) next(createError(500))
       else {
         res.sendStatus(204)

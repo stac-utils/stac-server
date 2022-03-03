@@ -1703,7 +1703,7 @@ null
     ],
     "exclude": [
       [
-        "eo:sun_azimuth"
+        "view:sun_azimuth"
       ]
     ]
   }
@@ -1733,7 +1733,7 @@ null
   ],
   "exclude": [
     [
-      "eo:sun_azimuth"
+      "view:sun_azimuth"
     ]
   ]
 }

@@ -85,11 +85,11 @@ const extractSortby = function (params) {
       const sortbys = sortby.split(',')
       sortbys.forEach((sortbyRule) => {
         if (sortbyRule[0] === '-') {
-          sortbyRules.push({ 'field': sortbyRule.slice(1), 'direction': 'desc' })
+          sortbyRules.push({ field: sortbyRule.slice(1), direction: 'desc' })
         } else if (sortbyRule[0] === '+') {
-          sortbyRules.push({ 'field': sortbyRule.slice(1), 'direction': 'asc' })
+          sortbyRules.push({ field: sortbyRule.slice(1), direction: 'asc' })
         } else {
-          sortbyRules.push({ 'field': sortbyRule, 'direction': 'asc' })
+          sortbyRules.push({ field: sortbyRule, direction: 'asc' })
         }
       })
     } else {
@@ -288,11 +288,11 @@ const wrapResponseInFeatureCollection = function (
 ) {
   return {
     type: 'FeatureCollection',
-    'stac_version': process.env.STAC_VERSION,
-    'stac_extensions': [],
-    'context': meta,
-    'numberMatched': meta.matched,
-    'numberReturned': meta.returned,
+    stac_version: process.env.STAC_VERSION,
+    stac_extensions: [],
+    context: meta,
+    numberMatched: meta.matched,
+    numberReturned: meta.returned,
     features,
     links
   }
@@ -418,7 +418,7 @@ const searchItems = async function (collectionId, queryParameters, backend, endp
     }
   }
 
-  const { 'results': itemsResults, 'context': itemsMeta } = results
+  const { results: itemsResults, context: itemsMeta } = results
   const pageLinks = buildPageLinks(itemsMeta, searchParameters, newEndpoint, httpMethod)
   const items = addItemLinks(itemsResults, endpoint)
   const response = wrapResponseInFeatureCollection(itemsMeta, items, pageLinks)
@@ -554,6 +554,15 @@ const updateItem = async function (item, backend) {
     return response
   }
   return new Error(`Error updating item ${item.id}`)
+}
+
+const deleteItem = async function (collectionId, itemId, backend) {
+  const response = await backend.deleteItem(collectionId, itemId)
+  logger.debug(`Delete Item: ${response}`)
+  if (response) {
+    return response
+  }
+  return new Error(`Error deleting item ${collectionId}/${itemId}`)
 }
 
 const deleteItem = async function (collectionId, itemId, backend) {

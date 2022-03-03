@@ -250,7 +250,7 @@
         "datetime": "2014-07-04T23:56:54.593296+00:00",
         "eo:cloud_cover": 65,
         "landsat:wrs_path": "096",
-        "eo:epsg": 3261,
+        "proj:epsg": 3261,
         "landast:wrs_row": "008",
         "view:sun_azimuth": -178.92904262,
         "view:sun_elevation": 39.43839572,

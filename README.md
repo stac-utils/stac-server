@@ -257,7 +257,7 @@ npm run test:unit
 npm run test:coverage
 
 # run tests from a single test file whose titles match 'foobar*'
-npx ava tests/test_es.js --match='foobar*'
+npx ava tests/test-es.js --match='foobar*'
 ```
 
 ### System and Integration Tests
@@ -270,7 +270,7 @@ When the system tests run, they:
 1. Delete all indices from Elasticsearch
 1. Start an instance of the API. That API will be available at <http://localhost:3000/dev/>
 1. Wait for the API to be available
-1. Run the integration tests in `./tests/system/test_*.js`
+1. Run the system tests in `./tests/system/test-*.js`
 1. Stop the API
 
 Before running the system tests, make sure to start Elasticsearch using:

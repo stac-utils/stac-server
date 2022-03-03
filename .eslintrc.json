@@ -93,11 +93,9 @@
     "prefer-promise-reject-errors": "off",
     "no-underscore-dangle": "off",
     "comma-dangle": [
-      "warn",
-      "never"
+      "error",
+      "only-multiline"
     ],
-    "strict": "off",
-    "guard-for-in": "off",
     "object-shorthand": "off",
     "space-before-function-paren": [
       "error",

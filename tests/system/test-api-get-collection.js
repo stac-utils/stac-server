@@ -31,19 +31,20 @@ test.after.always(async (t) => {
 test('GET /collections/:collectionId returns a collection', async (t) => {
   const { collectionId } = t.context
 
-  const response = await t.context.api.client.get(`collections/${collectionId}`)
+  const response = await t.context.api.client.get(`collections/${collectionId}`,
+    { resolveBodyOnly: false })
 
+  t.is(response.statusCode, 200)
+  t.is(response.headers['content-type'], 'application/json; charset=utf-8')
   // @ts-expect-error We need to validate these responses
-  t.is(response.id, collectionId)
+  t.is(response.body.id, collectionId)
 })
 
-test('GET /collection/:collectionId has a content type of "application/json', async (t) => {
-  const { collectionId } = t.context
-
+test('GET /collection/:collectionId for non-existent collection returns Not Found', async (t) => {
   const response = await t.context.api.client.get(
-    `collections/${collectionId}`,
-    { resolveBodyOnly: false }
+    'collections/DOES_NOT_EXIST',
+    { resolveBodyOnly: false, throwHttpErrors: false }
   )
 
-  t.is(response.headers['content-type'], 'application/json; charset=utf-8')
+  t.is(response.statusCode, 404)
 })

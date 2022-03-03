@@ -44,24 +44,28 @@ test.after.always(async (t) => {
   if (t.context.api) await t.context.api.close()
 })
 
-test('GET /collections/:collectionId/items/:itemId', async (t) => {
+test('DELETE /collections/:collectionId/items/:itemId', async (t) => {
   const { collectionId, itemId } = t.context
 
-  const response = await t.context.api.client.get(
-    `collections/${collectionId}/items/${itemId}`
-  )
-
-  t.is(response.type, 'Feature')
-  t.is(response.id, itemId)
-})
-
-test('GET /collections/:collectionId/items/:itemId has a content type of "application/geo+json"', async (t) => {
-  const { collectionId, itemId } = t.context
-
-  const response = await t.context.api.client.get(
+  const response = await t.context.api.client.delete(
     `collections/${collectionId}/items/${itemId}`,
     { resolveBodyOnly: false }
   )
 
-  t.is(response.headers['content-type'], 'application/geo+json; charset=utf-8')
+  t.is(response.statusCode, 204)
+  t.is(response.headers['content-type'], undefined)
+  t.is(response.body, '')
+})
+
+test('DELETE /collections/:collectionId/items/:itemId for a non-existent id returns No Content"', async (t) => {
+  const { collectionId } = t.context
+
+  const response = await t.context.api.client.delete(
+    `collections/${collectionId}/items/DOES_NOT_EXIST`,
+    { resolveBodyOnly: false, throwHttpErrors: false }
+  )
+
+  t.is(response.statusCode, 204)
+  t.is(response.headers['content-type'], undefined)
+  t.is(response.body, '')
 })

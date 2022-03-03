@@ -1,5 +1,3 @@
-'use strict'
-
 const AWS = require('aws-sdk')
 const { createAWSConnection, awsCredsifyAll } = require('@acuris/aws-es-connection')
 const elasticsearch = require('@elastic/elasticsearch')

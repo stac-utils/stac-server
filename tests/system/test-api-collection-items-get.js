@@ -63,23 +63,29 @@ test.after.always(async (t) => {
 test('GET /collections/:collectionId/items', async (t) => {
   const { collectionId, itemId1, itemId2 } = t.context
 
-  const response = await t.context.api.client.get(`collections/${collectionId}/items`)
-
-  t.is(response.type, 'FeatureCollection')
-
-  t.is(response.features.length, 2)
-
-  t.is(response.features[0].id, itemId1)
-  t.is(response.features[1].id, itemId2)
-})
-
-test('GET /collections/:collectionId/items has a content type of "application/geo+json"', async (t) => {
-  const { collectionId } = t.context
-
   const response = await t.context.api.client.get(
     `collections/${collectionId}/items`,
     { resolveBodyOnly: false }
   )
 
+  t.is(response.statusCode, 200)
   t.is(response.headers['content-type'], 'application/geo+json; charset=utf-8')
+
+  t.is(response.body.type, 'FeatureCollection')
+
+  t.is(response.body.features.length, 2)
+
+  t.is(response.body.features[0].id, itemId1)
+  t.is(response.body.features[1].id, itemId2)
+})
+
+test('GET /collections/:collectionId/items for non-existent collection returns 404', async (t) => {
+  const { collectionId } = t.context
+
+  const response = await t.context.api.client.get(
+    `collections/${collectionId}_DOES_NOT_EXIST/items`,
+    { resolveBodyOnly: false, throwHttpErrors: false }
+  )
+
+  t.is(response.statusCode, 404)
 })

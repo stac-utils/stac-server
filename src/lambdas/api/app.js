@@ -93,14 +93,20 @@ app.get('/collections/:collectionId', async (req, res, next) => {
 
 app.get('/collections/:collectionId/items', async (req, res, next) => {
   try {
-    res.type('application/geo+json')
-    res.json(await api.searchItems(
-      req.params.collectionId,
-      req.query,
-      satlib.es,
-      req.endpoint,
-      'GET'
-    ))
+    const response = await api.getCollection(req.params.collectionId, satlib.es, req.endpoint)
+
+    if (response instanceof Error) next(createError(404))
+    else {
+      const items = await api.searchItems(
+        req.params.collectionId,
+        req.query,
+        satlib.es,
+        req.endpoint,
+        'GET'
+      )
+      res.type('application/geo+json')
+      res.json(items)
+    }
   } catch (error) {
     next(error)
   }
@@ -117,13 +123,23 @@ app.post('/collections/:collectionId/items', async (_req, _res, next) => {
 
 app.get('/collections/:collectionId/items/:itemId', async (req, res, next) => {
   try {
-    res.type('application/geo+json')
-    res.json(await api.getItem(
+    const response = await api.getItem(
       req.params.collectionId,
       req.params.itemId,
       satlib.es,
       req.endpoint
-    ))
+    )
+
+    if (response instanceof Error) {
+      if (response.message === 'Item not found') {
+        next(createError(404))
+      } else {
+        next(createError(500))
+      }
+    } else {
+      res.type('application/geo+json')
+      res.json(response)
+    }
   } catch (error) {
     next(error)
   }
@@ -150,10 +166,17 @@ app.patch('/collections/:collectionId/items/:itemId', async (req, res, next) => 
   }
 })
 
-app.delete('/collections/:collectionId/items/:itemId', async (_req, _res, next) => {
+app.delete('/collections/:collectionId/items/:itemId', async (req, res, next) => {
   if (txnEnabled) {
-    // todo: implement
-    next(createError(501))
+    try {
+      const response = await api.deleteItem(req.params.collectionId, req.params.itemId, satlib.es)
+      if (response instanceof Error) next(createError(500))
+      else {
+        res.sendStatus(204)
+      }
+    } catch (error) {
+      next(error)
+    }
   } else {
     next(createError(404))
   }

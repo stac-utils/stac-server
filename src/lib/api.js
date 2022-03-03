@@ -505,11 +505,14 @@ const getCollections = async function (backend, endpoint = '') {
 
 const getCollection = async function (collectionId, backend, endpoint = '') {
   const result = await backend.getCollection(collectionId)
+  if (result instanceof Error) {
+    return new Error('Collection not found')
+  }
   const col = addCollectionLinks([result], endpoint)
   if (col.length > 0) {
     return col[0]
   }
-  return new Error('Collection not found')
+  return new Error('Collection retrieval failed')
 }
 
 const getItem = async function (collectionId, itemId, backend, endpoint = '') {
@@ -531,6 +534,15 @@ const editPartialItem = async function (itemId, queryParameters, backend, endpoi
   return new Error(`Error editing item ${itemId}`)
 }
 
+const deleteItem = async function (collectionId, itemId, backend) {
+  const response = await backend.deleteItem(collectionId, itemId)
+  logger.debug(`Delete Item: ${response}`)
+  if (response) {
+    return response
+  }
+  return new Error(`Error deleting item ${collectionId}/${itemId}`)
+}
+
 module.exports = {
   getConformance,
   getCatalog,
@@ -541,5 +553,6 @@ module.exports = {
   parsePath,
   extractIntersects,
   extractBbox,
-  editPartialItem
+  editPartialItem,
+  deleteItem
 }

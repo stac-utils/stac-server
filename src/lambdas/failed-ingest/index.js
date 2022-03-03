@@ -1,5 +1,3 @@
-'use strict'
-
 const logger = console
 
 module.exports.handler = async function handler(event) {

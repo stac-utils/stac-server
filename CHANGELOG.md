@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   were not advertised in the landing page conformsTo attribute or the /conformance endpoint.
 - Items larger than 256 KB can now be ingested by writing their contents to S3
 - API responses are now compressed
+- Transaction Extension is now implemented
 
 ### Fixed
 
@@ -29,6 +30,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Use Express for API routing
 - Item and collection ingest operations will full replace an item with the same ID. Previously, partial-updates were being performed.
 - Improvements to Elasticsearch field mappings
+- PATCH /collections/:collectionId/items/:itemId now returns 204 No Content as succcess instead
+  of 200 and the updated Item
 
 ### Removed
 

@@ -425,28 +425,32 @@ const searchItems = async function (collectionId, queryParameters, backend, endp
   return response
 }
 
-const getConformance = async function () {
-  const conformance = {
-    conformsTo: [
-      'https://api.stacspec.org/v1.0.0-beta.5/core',
-      'https://api.stacspec.org/v1.0.0-beta.5/collections',
-      'https://api.stacspec.org/v1.0.0-beta.5/ogcapi-features',
-      'https://api.stacspec.org/v1.0.0-beta.5/ogcapi-features#fields',
-      'https://api.stacspec.org/v1.0.0-beta.5/ogcapi-features#sort',
-      'https://api.stacspec.org/v1.0.0-beta.5/ogcapi-features#query',
-      'https://api.stacspec.org/v1.0.0-beta.5/item-search',
-      'https://api.stacspec.org/v1.0.0-beta.5/item-search#fields',
-      'https://api.stacspec.org/v1.0.0-beta.5/item-search#sort',
-      'https://api.stacspec.org/v1.0.0-beta.5/item-search#query',
-      'http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/core',
-      'http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/oas30',
-      'http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/geojson'
-    ]
+const getConformance = async function (txnEnabled) {
+  const prefix = 'https://api.stacspec.org/v1.0.0-beta.5'
+  const conformsTo = [
+    `${prefix}/core`,
+    `${prefix}/collections`,
+    `${prefix}/ogcapi-features`,
+    `${prefix}/ogcapi-features#fields`,
+    `${prefix}/ogcapi-features#sort`,
+    `${prefix}/ogcapi-features#query`,
+    `${prefix}/item-search`,
+    `${prefix}/item-search#fields`,
+    `${prefix}/item-search#sort`,
+    `${prefix}/item-search#query`,
+    'http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/core',
+    'http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/oas30',
+    'http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/geojson'
+  ]
+
+  if (txnEnabled) {
+    conformsTo.push(`${prefix}/ogcapi-features/extensions/transaction`)
   }
-  return conformance
+
+  return { conformsTo }
 }
 
-const getCatalog = async function (backend, endpoint = '') {
+const getCatalog = async function (txnEnabled, backend, endpoint = '') {
   const collections = await backend.getCollections(1, COLLECTION_LIMIT)
   let catalog = collectionsToCatalogLinks(collections, endpoint)
   catalog.links.push({
@@ -481,7 +485,7 @@ const getCatalog = async function (backend, endpoint = '') {
       href: process.env.STAC_DOCS_URL
     })
   }
-  catalog = Object.assign(catalog, await getConformance())
+  catalog = Object.assign(catalog, await getConformance(txnEnabled))
   return catalog
 }
 

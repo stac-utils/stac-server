@@ -58,10 +58,10 @@ test('PATCH /collections/:collectionId/items/:itemId', async (t) => {
       resolveBodyOnly: false }
   )
 
-  t.is(patchResponse.statusCode, 200)
-  t.is(patchResponse.headers['content-type'], 'application/geo+json; charset=utf-8')
-  t.is(patchResponse.body.id, itemId)
-  t.is(patchResponse.body.properties.foo, 'bar')
+  t.is(patchResponse.statusCode, 204)
+  t.falsy(patchResponse.headers['content-type'])
+  // t.is(patchResponse.body.id, itemId)
+  // t.is(patchResponse.body.properties.foo, 'bar')
 
   // ES needs a second to process the patch request
   // eslint-disable-next-line no-promise-executor-return

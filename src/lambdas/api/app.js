@@ -218,11 +218,13 @@ app.patch('/collections/:collectionId/items/:itemId', async (req, res, next) => 
 
       else {
         try {
-          const item = await api.partialUpdateItem(
+          //const item =
+          await api.partialUpdateItem(
             collectionId, itemId, req.body, satlib.es, req.endpoint
           )
-          res.type('application/geo+json')
-          res.json(item)
+          // res.type('application/geo+json')
+          // res.json(item)
+          res.sendStatus(204)
         } catch (error) {
           next(error)
         }

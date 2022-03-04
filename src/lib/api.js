@@ -565,15 +565,6 @@ const deleteItem = async function (collectionId, itemId, backend) {
   return new Error(`Error deleting item ${collectionId}/${itemId}`)
 }
 
-const deleteItem = async function (collectionId, itemId, backend) {
-  const response = await backend.deleteItem(collectionId, itemId)
-  logger.debug(`Delete Item: ${response}`)
-  if (response) {
-    return response
-  }
-  return new Error(`Error deleting item ${collectionId}/${itemId}`)
-}
-
 module.exports = {
   getConformance,
   getCatalog,

@@ -425,28 +425,32 @@ const searchItems = async function (collectionId, queryParameters, backend, endp
   return response
 }
 
-const getConformance = async function () {
-  const conformance = {
-    conformsTo: [
-      'https://api.stacspec.org/v1.0.0-beta.5/core',
-      'https://api.stacspec.org/v1.0.0-beta.5/collections',
-      'https://api.stacspec.org/v1.0.0-beta.5/ogcapi-features',
-      'https://api.stacspec.org/v1.0.0-beta.5/ogcapi-features#fields',
-      'https://api.stacspec.org/v1.0.0-beta.5/ogcapi-features#sort',
-      'https://api.stacspec.org/v1.0.0-beta.5/ogcapi-features#query',
-      'https://api.stacspec.org/v1.0.0-beta.5/item-search',
-      'https://api.stacspec.org/v1.0.0-beta.5/item-search#fields',
-      'https://api.stacspec.org/v1.0.0-beta.5/item-search#sort',
-      'https://api.stacspec.org/v1.0.0-beta.5/item-search#query',
-      'http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/core',
-      'http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/oas30',
-      'http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/geojson'
-    ]
+const getConformance = async function (txnEnabled) {
+  const prefix = 'https://api.stacspec.org/v1.0.0-beta.5'
+  const conformsTo = [
+    `${prefix}/core`,
+    `${prefix}/collections`,
+    `${prefix}/ogcapi-features`,
+    `${prefix}/ogcapi-features#fields`,
+    `${prefix}/ogcapi-features#sort`,
+    `${prefix}/ogcapi-features#query`,
+    `${prefix}/item-search`,
+    `${prefix}/item-search#fields`,
+    `${prefix}/item-search#sort`,
+    `${prefix}/item-search#query`,
+    'http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/core',
+    'http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/oas30',
+    'http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/geojson'
+  ]
+
+  if (txnEnabled) {
+    conformsTo.push(`${prefix}/ogcapi-features/extensions/transaction`)
   }
-  return conformance
+
+  return { conformsTo }
 }
 
-const getCatalog = async function (backend, endpoint = '') {
+const getCatalog = async function (txnEnabled, backend, endpoint = '') {
   const collections = await backend.getCollections(1, COLLECTION_LIMIT)
   let catalog = collectionsToCatalogLinks(collections, endpoint)
   catalog.links.push({
@@ -481,7 +485,7 @@ const getCatalog = async function (backend, endpoint = '') {
       href: process.env.STAC_DOCS_URL
     })
   }
-  catalog = Object.assign(catalog, await getConformance())
+  catalog = Object.assign(catalog, await getConformance(txnEnabled))
   return catalog
 }
 
@@ -525,13 +529,35 @@ const getItem = async function (collectionId, itemId, backend, endpoint = '') {
   return new Error('Item not found')
 }
 
-const editPartialItem = async function (itemId, queryParameters, backend, endpoint = '') {
-  const response = await backend.editPartialItem(itemId, queryParameters)
-  logger.debug(`Edit Item: ${response}`)
+const partialUpdateItem = async function (
+  collectionId, itemId, queryParameters, backend, endpoint = ''
+) {
+  const response = await backend.partialUpdateItem(collectionId, itemId, queryParameters)
+  logger.debug(`Partial Update Item: ${JSON.stringify(response)}`)
   if (response) {
-    return addItemLinks([response.get._source], endpoint)[0]
+    return addItemLinks([response.body.get._source], endpoint)[0]
   }
-  return new Error(`Error editing item ${itemId}`)
+  return new Error(`Error partially updating item ${itemId}`)
+}
+
+const createItem = async function (item, backend) {
+  const response = await backend.indexItem(item)
+  logger.debug(`Create Item: ${JSON.stringify(response)}`)
+
+  if (response) {
+    return response
+  }
+  return new Error(`Error creating item in collection ${item.collection}`)
+}
+
+const updateItem = async function (item, backend) {
+  const response = await backend.updateItem(item)
+  logger.debug(`Update Item: ${JSON.stringify(response)}`)
+
+  if (response) {
+    return response
+  }
+  return new Error(`Error updating item ${item.id}`)
 }
 
 const deleteItem = async function (collectionId, itemId, backend) {
@@ -553,6 +579,8 @@ module.exports = {
   parsePath,
   extractIntersects,
   extractBbox,
-  editPartialItem,
-  deleteItem
+  createItem,
+  deleteItem,
+  updateItem,
+  partialUpdateItem,
 }

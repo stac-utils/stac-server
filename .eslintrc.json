@@ -8,6 +8,11 @@
     "node": true,
     "mocha": true
   },
+  "settings": {
+    "react": {
+      "version": "999.999.999"
+    }
+  },
   "rules": {
     "dot-notation": "off",
     "implicit-arrow-linebreak": "off",

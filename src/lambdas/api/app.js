@@ -6,7 +6,7 @@ const createError = require('http-errors')
 const express = require('express')
 const logger = require('morgan')
 const path = require('path')
-const satlib = require('../../lib')
+const es = require('../../lib/es')
 const api = require('../../lib/api')
 const { readYaml } = require('../../lib/fs')
 const { addEndpoint } = require('./middleware/add-endpoint')
@@ -30,7 +30,7 @@ app.use(addEndpoint)
 
 app.get('/', async (req, res, next) => {
   try {
-    res.json(await api.getCatalog(satlib.es, req.endpoint))
+    res.json(await api.getCatalog(txnEnabled, es, req.endpoint))
   } catch (error) {
     next(error)
   }
@@ -48,7 +48,7 @@ app.get('/api', async (_req, res, next) => {
 
 app.get('/conformance', async (_req, res, next) => {
   try {
-    res.json(await api.getConformance())
+    res.json(await api.getConformance(txnEnabled))
   } catch (error) {
     next(error)
   }
@@ -57,7 +57,7 @@ app.get('/conformance', async (_req, res, next) => {
 app.get('/search', async (req, res, next) => {
   try {
     res.type('application/geo+json')
-    res.json(await api.searchItems(null, req.query, satlib.es, req.endpoint, 'GET'))
+    res.json(await api.searchItems(null, req.query, es, req.endpoint, 'GET'))
   } catch (error) {
     next(error)
   }
@@ -66,7 +66,7 @@ app.get('/search', async (req, res, next) => {
 app.post('/search', async (req, res, next) => {
   try {
     res.type('application/geo+json')
-    res.json(await api.searchItems(null, req.body, satlib.es, req.endpoint, 'POST'))
+    res.json(await api.searchItems(null, req.body, es, req.endpoint, 'POST'))
   } catch (error) {
     next(error)
   }
@@ -74,15 +74,16 @@ app.post('/search', async (req, res, next) => {
 
 app.get('/collections', async (req, res, next) => {
   try {
-    res.json(await api.getCollections(satlib.es, req.endpoint))
+    res.json(await api.getCollections(es, req.endpoint))
   } catch (error) {
     next(error)
   }
 })
 
 app.get('/collections/:collectionId', async (req, res, next) => {
+  const { collectionId } = req.params
   try {
-    const response = await api.getCollection(req.params.collectionId, satlib.es, req.endpoint)
+    const response = await api.getCollection(collectionId, es, req.endpoint)
 
     if (response instanceof Error) next(createError(404))
     else res.json(response)
@@ -92,15 +93,16 @@ app.get('/collections/:collectionId', async (req, res, next) => {
 })
 
 app.get('/collections/:collectionId/items', async (req, res, next) => {
+  const { collectionId } = req.params
   try {
-    const response = await api.getCollection(req.params.collectionId, satlib.es, req.endpoint)
+    const response = await api.getCollection(collectionId, es, req.endpoint)
 
     if (response instanceof Error) next(createError(404))
     else {
       const items = await api.searchItems(
-        req.params.collectionId,
+        collectionId,
         req.query,
-        satlib.es,
+        es,
         req.endpoint,
         'GET'
       )
@@ -112,10 +114,31 @@ app.get('/collections/:collectionId/items', async (req, res, next) => {
   }
 })
 
-app.post('/collections/:collectionId/items', async (_req, _res, next) => {
+app.post('/collections/:collectionId/items', async (req, res, next) => {
   if (txnEnabled) {
-    // todo: implement
-    next(createError(501))
+    const { collectionId } = req.params
+    const itemId = req.body.id
+
+    if (req.body.collection && req.body.collection !== collectionId) {
+      next(createError(400, 'Collection resource URI must match collection in body'))
+    } else {
+      const collectionRes = await api.getCollection(collectionId, es, req.endpoint)
+      if (collectionRes instanceof Error) next(createError(404))
+      try {
+        req.body.collection = collectionId
+        await api.createItem(req.body, es)
+        res.location(`${req.endpoint}/collections/${collectionId}/items/${itemId}`)
+        res.sendStatus(201)
+      } catch (error) {
+        if (error instanceof Error
+              && error.name === 'ResponseError'
+              && error.message.includes('version_conflict_engine_exception')) {
+          res.sendStatus(409)
+        } else {
+          next(error)
+        }
+      }
+    }
   } else {
     next(createError(404))
   }
@@ -123,10 +146,12 @@ app.post('/collections/:collectionId/items', async (_req, _res, next) => {
 
 app.get('/collections/:collectionId/items/:itemId', async (req, res, next) => {
   try {
+    const { itemId, collectionId } = req.params
+
     const response = await api.getItem(
-      req.params.collectionId,
-      req.params.itemId,
-      satlib.es,
+      collectionId,
+      itemId,
+      es,
       req.endpoint
     )
 
@@ -145,10 +170,33 @@ app.get('/collections/:collectionId/items/:itemId', async (req, res, next) => {
   }
 })
 
-app.put('/collections/:collectionId/items/:itemId', async (_req, _res, next) => {
+app.put('/collections/:collectionId/items/:itemId', async (req, res, next) => {
   if (txnEnabled) {
-    // todo: implement
-    next(createError(501))
+    const { collectionId, itemId } = req.params
+
+    if (req.body.collection && req.body.collection !== collectionId) {
+      next(createError(400, 'Collection ID in resource URI must match collection in body'))
+    } else if (req.body.id && req.body.id !== itemId) {
+      next(createError(400, 'Item ID in resource URI must match id in body'))
+    } else {
+      const collectionRes = await api.getCollection(collectionId, es, req.endpoint)
+      if (collectionRes instanceof Error) next(createError(404))
+
+      req.body.collection = collectionId
+      req.body.id = itemId
+      try {
+        await api.updateItem(req.body, es)
+        res.sendStatus(204)
+      } catch (error) {
+        if (error instanceof Error
+              && error.name === 'ResponseError'
+              && error.message.includes('version_conflict_engine_exception')) {
+          res.sendStatus(409)
+        } else {
+          next(error)
+        }
+      }
+    }
   } else {
     next(createError(404))
   }
@@ -156,10 +204,31 @@ app.put('/collections/:collectionId/items/:itemId', async (_req, _res, next) => 
 
 app.patch('/collections/:collectionId/items/:itemId', async (req, res, next) => {
   if (txnEnabled) {
-    try {
-      res.json(await api.editPartialItem(req.params.itemId, req.body, satlib.es, req.endpoint))
-    } catch (error) {
-      next(error)
+    const { collectionId, itemId } = req.params
+
+    if (req.body.collection && req.body.collection !== collectionId) {
+      next(createError(400, 'Collection ID in resource URI must match collection in body'))
+    } else if (req.body.id && req.body.id !== itemId) {
+      next(createError(400, 'Item ID in resource URI must match id in body'))
+    } else {
+      const collectionRes = await api.getCollection(collectionId, es, req.endpoint)
+      if (collectionRes instanceof Error) next(createError(404))
+      const itemRes = await api.getItem(collectionId, itemId, es, req.endpoint)
+      if (itemRes instanceof Error) next(createError(404))
+
+      else {
+        try {
+          //const item =
+          await api.partialUpdateItem(
+            collectionId, itemId, req.body, es, req.endpoint
+          )
+          // res.type('application/geo+json')
+          // res.json(item)
+          res.sendStatus(204)
+        } catch (error) {
+          next(error)
+        }
+      }
     }
   } else {
     next(createError(404))
@@ -168,8 +237,9 @@ app.patch('/collections/:collectionId/items/:itemId', async (req, res, next) => 
 
 app.delete('/collections/:collectionId/items/:itemId', async (req, res, next) => {
   if (txnEnabled) {
+    const { collectionId, itemId } = req.params
     try {
-      const response = await api.deleteItem(req.params.collectionId, req.params.itemId, satlib.es)
+      const response = await api.deleteItem(collectionId, itemId, es)
       if (response instanceof Error) next(createError(500))
       else {
         res.sendStatus(204)
@@ -195,12 +265,15 @@ app.use(
     res.type('application/json')
 
     switch (err.status) {
+    case 400:
+      res.json({ code: 'BadRequest', description: err.message })
+      break
     case 404:
-      res.json({ error: 'Not Found' })
+      res.json({ code: 'NotFound', description: 'Not Found' })
       break
     default:
       console.log(err)
-      res.json({ error: 'Internal Server Error' })
+      res.json({ code: 'InternalServerError', description: 'Internal Server Error' })
       break
     }
   })

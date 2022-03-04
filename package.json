@@ -15,9 +15,21 @@
     "test:system": "./bin/system-tests.sh",
     "test:unit": "ava tests/unit/*.js",
     "typecheck": "tsc",
+    "audit-prod": "npm audit --omit dev",
     "deploy": "sls deploy",
     "serve": "STAC_API_URL=http://localhost:3000 nodemon ./src/lambdas/api/local.js",
     "build-api-docs": "npm run widdershins --search false --language_tabs 'nodejs:NodeJS' 'python:Python' --summary ./packages/api-lib/api-spec.yaml -o ./docs/api.md & npm run shins --inline --logo ./docs/images/logo.png -o ./docs/index.html ./docs/api.md"
+  },
+  "pre-commit": {
+    "silent": false,
+    "run": [
+      "lint",
+      "typecheck",
+      "audit-prod",
+      "test",
+      "test:system",
+      "build"
+    ]
   },
   "ava": {
     "verbose": true,
@@ -75,6 +87,7 @@
     "luxon": "^2.3.1",
     "nock": "^12.0.3",
     "nodemon": "^2.0.15",
+    "pre-commit": "^1.2.2",
     "prettier": "^2.0.5",
     "prettier-eslint": "^11.0.0",
     "prettier-eslint-cli": "^5.0.0",

@@ -2,7 +2,6 @@ const esClient = require('./esClient')
 const logger = console //require('./logger')
 
 const COLLECTIONS_INDEX = process.env.COLLECTIONS_INDEX || 'collections'
-const ITEMS_INDEX = process.env.ITEMS_INDEX || 'items'
 
 const isIndexNotFoundError = (e) => (
   e instanceof Error
@@ -150,13 +149,12 @@ function buildQuery(parameters) {
 }
 
 function buildIdQuery(id) {
-  // TODO: Figure out why term: {id} does not work but {_id} does
   return {
     query: {
-      constant_score: {
+      bool: {
         filter: {
           term: {
-            _id: id
+            id: id
           }
         }
       }
@@ -222,14 +220,40 @@ function buildFieldsFilter(parameters) {
 }
 
 /*
- * Part of the Transaction extension https://github.com/radiantearth/stac-api-spec/tree/master/extensions/transaction
+ * Create a new Item in an index corresponding to the Collection
+ *
+ */
+async function indexItem(item) {
+  const client = await esClient.client()
+
+  const exists = await client.indices.exists({ index: item.collection })
+  if (!exists.body) {
+    return new Error(`Index ${item.collection} does not exist, add before creating items`)
+  }
+
+  const now = new Date().toISOString()
+  Object.assign(item.properties, {
+    created: now,
+    updated: now
+  })
+
+  const response = await client.index({
+    index: item.collection,
+    id: item.id,
+    body: item,
+    opType: 'create'
+  })
+
+  return response
+}
+
+/*
  *
  * This conforms to a PATCH request and updates an existing item by ID
  * using a partial item description, compliant with RFC 7386.
  *
- * PUT should be implemented separately and is TODO.
  */
-async function editPartialItem(itemId, updateFields) {
+async function partialUpdateItem(collectionId, itemId, updateFields) {
   const client = await esClient.client()
 
   // Handle inserting required default properties to `updateFields`
@@ -238,22 +262,21 @@ async function editPartialItem(itemId, updateFields) {
   }
 
   if (updateFields.properties) {
-    // If there are properties incoming, merge and overwrite
-    // our required ones.
+    // If there are properties incoming, merge and overwrite our required ones.
     Object.assign(updateFields.properties, requiredProperties)
   } else {
     updateFields.properties = requiredProperties
   }
 
   const response = await client.update({
-    index: ITEMS_INDEX,
+    index: collectionId,
     id: itemId,
-    type: 'doc',
     _source: true,
     body: {
       doc: updateFields
     }
   })
+
   return response
 }
 
@@ -385,15 +408,47 @@ const getItemCreated = async (collectionId, itemId) => {
   return item.properties.created
 }
 
+/*
+ *  Update an existing Item in an index corresponding to the Collection
+ *
+ */
+async function updateItem(item) {
+  const client = await esClient.client()
+
+  const exists = await client.indices.exists({ index: item.collection })
+  if (!exists.body) {
+    return new Error(`Index ${item.collection} does not exist, add before creating items`)
+  }
+
+  const now = new Date().toISOString()
+  const created = (await getItemCreated(item.collection, item.id)) || now
+
+  Object.assign(item.properties, {
+    created: created,
+    updated: now
+  })
+
+  const response = await client.index({
+    index: item.collection,
+    id: item.id,
+    body: item,
+    opType: 'index'
+  })
+
+  return response
+}
+
 module.exports = {
   getCollection,
   getCollections,
   getItem,
   getItemCreated,
+  indexItem,
+  updateItem,
   deleteItem,
+  partialUpdateItem,
   isIndexNotFoundError,
   search,
-  editPartialItem,
   constructSearchParams,
   buildDatetimeQuery
 }

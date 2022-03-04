@@ -22,7 +22,27 @@ test.before(async (t) => {
     ingestTopicArn: t.context.ingestTopicArn,
     item: collection
   })
+})
 
+test.after.always(async (t) => {
+  if (t.context.api) await t.context.api.close()
+})
+
+test('POST /collections/:collectionId for a non-existent collection returns 404"', async (t) => {
+  const response = await t.context.api.client.post(
+    'collections/DOES_NOT_EXIST',
+    { json: {}, resolveBodyOnly: false, throwHttpErrors: false }
+  )
+
+  t.is(response.statusCode, 404)
+  t.is(response.headers['content-type'], 'application/json; charset=utf-8')
+  t.deepEqual(response.body, {
+    code: 'NotFound',
+    description: 'Not Found',
+  })
+})
+
+test('POST /collections/:collectionId/items', async (t) => {
   t.context.itemId = randomId('item')
 
   const item = await loadFixture(
@@ -33,39 +53,62 @@ test.before(async (t) => {
     }
   )
 
-  await ingestItem({
-    ingestQueueUrl: t.context.ingestQueueUrl,
-    ingestTopicArn: t.context.ingestTopicArn,
-    item
-  })
-})
+  delete item.collection
 
-test.after.always(async (t) => {
-  if (t.context.api) await t.context.api.close()
-})
-
-test('DELETE /collections/:collectionId/items/:itemId', async (t) => {
   const { collectionId, itemId } = t.context
 
-  const response = await t.context.api.client.delete(
+  const response = await t.context.api.client.post(
+    `collections/${collectionId}/items`,
+    { json: item, resolveBodyOnly: false, responseType: 'text' }
+  )
+
+  t.is(response.statusCode, 201)
+  t.is(response.headers['content-type'], 'text/plain; charset=utf-8')
+  t.assert(response.headers['location'].endsWith(`/collections/${collectionId}/items/${itemId}`))
+  t.is(response.body, 'Created')
+
+  // now test mismatched collection ids, while we wait a second for our item propagate
+
+  item.collection = 'DOES_NOT_EXIST'
+
+  const badResponse = await t.context.api.client.post(
+    `collections/${collectionId}/items`,
+    { throwHttpErrors: false, resolveBodyOnly: false, json: item }
+  )
+
+  t.is(badResponse.statusCode, 400)
+
+  // ES needs a second to process the patch request
+  // eslint-disable-next-line no-promise-executor-return
+  await new Promise((r) => setTimeout(r, 1000))
+
+  const getResponse = await t.context.api.client.get(
     `collections/${collectionId}/items/${itemId}`,
     { resolveBodyOnly: false }
   )
 
-  t.is(response.statusCode, 204)
-  t.is(response.headers['content-type'], undefined)
-  t.is(response.body, '')
+  t.is(getResponse.body.collection, collectionId)
 })
 
-test('DELETE /collections/:collectionId/items/:itemId for a non-existent id returns No Content"', async (t) => {
-  const { collectionId } = t.context
+test('POST /collections/:collectionId/items with mismatched collection id', async (t) => {
+  t.context.itemId = randomId('item')
 
-  const response = await t.context.api.client.delete(
-    `collections/${collectionId}/items/DOES_NOT_EXIST`,
-    { resolveBodyOnly: false, throwHttpErrors: false }
+  const item = await loadFixture(
+    'stac/LC80100102015082LGN00.json',
+    {
+      id: t.context.itemId,
+      collection: t.context.collectionId
+    }
   )
 
-  t.is(response.statusCode, 204)
-  t.is(response.headers['content-type'], undefined)
-  t.is(response.body, '')
+  const { collectionId } = t.context
+
+  item.collection = 'DOES_NOT_EXIST'
+
+  const badResponse = await t.context.api.client.post(
+    `collections/${collectionId}/items`,
+    { throwHttpErrors: false, resolveBodyOnly: false, json: item }
+  )
+
+  t.is(badResponse.statusCode, 400)
 })

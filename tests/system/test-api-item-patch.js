@@ -49,12 +49,13 @@ test('PATCH /collections/:collectionId/items/:itemId', async (t) => {
 
   const patchResponse = await t.context.api.client.patch(
     `collections/${collectionId}/items/${itemId}`,
-    { json: {
-      properties: {
-        foo: 'bar'
-      }
-    },
-    resolveBodyOnly: false }
+    {
+      json: {
+        properties: {
+          foo: 'bar'
+        }
+      },
+      resolveBodyOnly: false }
   )
 
   t.is(patchResponse.statusCode, 200)

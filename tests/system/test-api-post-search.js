@@ -52,9 +52,6 @@ test('POST /search returns an empty list of results for a collection that does n
   const response = await t.context.api.client.post('search', {
     json: {
       collections: [randomId('collection')]
-    },
-    searchParams: {
-      collections: randomId('collection')
     }
   })
 
@@ -68,6 +65,19 @@ test("POST /search returns results when one collection exists and another doesn'
       collections: [
         'collection2',
         randomId('collection')
+      ]
+    }
+  })
+
+  t.true(Array.isArray(response.features))
+  t.true(response.features.length > 0)
+})
+
+test('POST /search ignores query parameter collections', async (t) => {
+  const response = await t.context.api.client.post('search', {
+    json: {
+      collections: [
+        'collection2'
       ]
     },
     searchParams: {
@@ -330,6 +340,7 @@ test('/search collections', async (t) => {
   t.is(response.features.length, 3)
 })
 
+// https://github.com/stac-utils/stac-server/issues/99
 test.skip('/search preserve geometry in page GET links', async (t) => {
   let response = await t.context.api.client.post('search', {
     json: {

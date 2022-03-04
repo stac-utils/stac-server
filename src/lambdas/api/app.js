@@ -181,19 +181,24 @@ app.put('/collections/:collectionId/items/:itemId', async (req, res, next) => {
     } else {
       const collectionRes = await api.getCollection(collectionId, es, req.endpoint)
       if (collectionRes instanceof Error) next(createError(404))
-
-      req.body.collection = collectionId
-      req.body.id = itemId
-      try {
-        await api.updateItem(req.body, es)
-        res.sendStatus(204)
-      } catch (error) {
-        if (error instanceof Error
-              && error.name === 'ResponseError'
-              && error.message.includes('version_conflict_engine_exception')) {
-          res.sendStatus(409)
-        } else {
-          next(error)
+      else {
+        const itemRes = await api.getItem(collectionId, itemId, es, req.endpoint)
+        if (itemRes instanceof Error) next(createError(404))
+        else {
+          req.body.collection = collectionId
+          req.body.id = itemId
+          try {
+            await api.updateItem(req.body, es)
+            res.sendStatus(204)
+          } catch (error) {
+            if (error instanceof Error
+                  && error.name === 'ResponseError'
+                  && error.message.includes('version_conflict_engine_exception')) {
+              res.sendStatus(409)
+            } else {
+              next(error)
+            }
+          }
         }
       }
     }
@@ -213,20 +218,21 @@ app.patch('/collections/:collectionId/items/:itemId', async (req, res, next) => 
     } else {
       const collectionRes = await api.getCollection(collectionId, es, req.endpoint)
       if (collectionRes instanceof Error) next(createError(404))
-      const itemRes = await api.getItem(collectionId, itemId, es, req.endpoint)
-      if (itemRes instanceof Error) next(createError(404))
-
       else {
-        try {
-          //const item =
-          await api.partialUpdateItem(
-            collectionId, itemId, req.body, es, req.endpoint
-          )
-          // res.type('application/geo+json')
-          // res.json(item)
-          res.sendStatus(204)
-        } catch (error) {
-          next(error)
+        const itemRes = await api.getItem(collectionId, itemId, es, req.endpoint)
+        if (itemRes instanceof Error) next(createError(404))
+        else {
+          try {
+            //const item =
+            await api.partialUpdateItem(
+              collectionId, itemId, req.body, es, req.endpoint
+            )
+            // res.type('application/geo+json')
+            // res.json(item)
+            res.sendStatus(204)
+          } catch (error) {
+            next(error)
+          }
         }
       }
     }

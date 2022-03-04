@@ -67,17 +67,6 @@ test('POST /collections/:collectionId/items', async (t) => {
   t.assert(response.headers['location'].endsWith(`/collections/${collectionId}/items/${itemId}`))
   t.is(response.body, 'Created')
 
-  // now test mismatched collection ids, while we wait a second for our item propagate
-
-  item.collection = 'DOES_NOT_EXIST'
-
-  const badResponse = await t.context.api.client.post(
-    `collections/${collectionId}/items`,
-    { throwHttpErrors: false, resolveBodyOnly: false, json: item }
-  )
-
-  t.is(badResponse.statusCode, 400)
-
   // ES needs a second to process the patch request
   // eslint-disable-next-line no-promise-executor-return
   await new Promise((r) => setTimeout(r, 1000))

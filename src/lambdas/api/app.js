@@ -130,7 +130,8 @@ app.post('/collections/:collectionId/items', async (req, res, next) => {
         res.location(`${req.endpoint}/collections/${collectionId}/items/${itemId}`)
         res.sendStatus(201)
       } catch (error) {
-        if (error.name === 'ResponseError'
+        if (error instanceof Error
+              && error.name === 'ResponseError'
               && error.message.includes('version_conflict_engine_exception')) {
           res.sendStatus(409)
         } else {
@@ -187,7 +188,8 @@ app.put('/collections/:collectionId/items/:itemId', async (req, res, next) => {
         await api.updateItem(req.body, satlib.es)
         res.sendStatus(204)
       } catch (error) {
-        if (error.name === 'ResponseError'
+        if (error instanceof Error
+              && error.name === 'ResponseError'
               && error.message.includes('version_conflict_engine_exception')) {
           res.sendStatus(409)
         } else {

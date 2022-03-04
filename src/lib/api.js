@@ -9,10 +9,6 @@ const COLLECTION_LIMIT = process.env.STAC_SERVER_COLLECTION_LIMIT || 100
 
 const extractIntersects = function (params) {
   let intersectsGeometry
-  const geojsonError = new Error('Invalid GeoJSON geometry')
-  const geojsonFeatureError = new Error(
-    'Expected GeoJSON geometry, not Feature or FeatureCollection'
-  )
   const { intersects } = params
   if (intersects) {
     let geojson
@@ -21,21 +17,21 @@ const extractIntersects = function (params) {
       try {
         geojson = JSON.parse(intersects)
       } catch (e) {
-        throw geojsonError
+        throw new Error('Invalid GeoJSON geometry')
       }
     } else {
       geojson = { ...intersects }
     }
 
     if (gjv.valid(geojson)) {
-      if (geojson.type === 'FeatureCollection') {
-        throw geojsonFeatureError
-      } else if (geojson.type === 'Feature') {
-        throw geojsonFeatureError
+      if (geojson.type === 'FeatureCollection' || geojson.type === 'Feature') {
+        throw new Error(
+          'Expected GeoJSON geometry, not Feature or FeatureCollection'
+        )
       }
       intersectsGeometry = geojson
     } else {
-      throw geojsonError
+      throw new Error('Invalid GeoJSON geometry')
     }
   }
   return intersectsGeometry

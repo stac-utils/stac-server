@@ -89,7 +89,7 @@ test('POST /search ignores query parameter collections', async (t) => {
   t.true(response.features.length > 0)
 })
 
-test.skip('/search bbox', async (t) => {
+test('/search bbox', async (t) => {
   let response = await t.context.api.client.post('search', {
     json: {
       bbox: [-180, -90, 180, 90]
@@ -99,8 +99,9 @@ test.skip('/search bbox', async (t) => {
 
   // @ts-expect-error We need to type this response
   const ids = response.features.map((item) => item.id)
-  t.truthy(ids.indexOf('LC80100102015082LGN00') > -1)
-  t.truthy(ids.indexOf('collection2_item') > -1)
+
+  t.truthy(ids.includes('LC80100102015082LGN00'))
+  t.truthy(ids.includes('LC80100102015050LGN00'))
 
   response = await t.context.api.client.post('search', {
     json: {
@@ -340,8 +341,7 @@ test('/search collections', async (t) => {
   t.is(response.features.length, 3)
 })
 
-// https://github.com/stac-utils/stac-server/issues/99
-test.skip('/search preserve geometry in page GET links', async (t) => {
+test('/search preserve geometry in page GET links', async (t) => {
   let response = await t.context.api.client.post('search', {
     json: {
       intersects: intersectsGeometry,
@@ -349,6 +349,7 @@ test.skip('/search preserve geometry in page GET links', async (t) => {
     }
   })
   t.is(response.features.length, 2)
+  t.is(response.links.length, 0)
 
   response = await t.context.api.client.post('search', {
     json: {
@@ -358,17 +359,9 @@ test.skip('/search preserve geometry in page GET links', async (t) => {
     }
   })
 
-  response = await t.context.api.client.post('search', {
-    json: {
-      intersects: encodeURIComponent(JSON.stringify(intersectsGeometry)),
-      limit: 2,
-      page: 2
-    }
-  })
+  t.is(response.features.length, 0)
 
-  t.is(response.features.length, 1)
-
-  const datetime = '2015-02-19/2015-02-20'
+  const datetime = '2015-02-19T00:00:00Z/2021-02-19T00:00:00Z'
   response = await t.context.api.client.post('search', {
     json: {
       intersects: intersectsGeometry,
@@ -376,9 +369,8 @@ test.skip('/search preserve geometry in page GET links', async (t) => {
       limit: 1
     }
   })
+
   t.is(response.features.length, 1)
-
-  const url = new URL(response.links[0].href)
-
-  t.is(url.searchParams.get('datetime'), datetime)
+  t.is(response.links.length, 1)
+  t.is(response.links[0].body.datetime, datetime)
 })

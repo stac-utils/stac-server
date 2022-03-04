@@ -59,7 +59,11 @@ app.get('/search', async (req, res, next) => {
     res.type('application/geo+json')
     res.json(await api.searchItems(null, req.query, es, req.endpoint, 'GET'))
   } catch (error) {
-    next(error)
+    if (error instanceof api.ValidationError) {
+      next(createError(400, error.message))
+    } else {
+      next(error)
+    }
   }
 })
 
@@ -68,7 +72,11 @@ app.post('/search', async (req, res, next) => {
     res.type('application/geo+json')
     res.json(await api.searchItems(null, req.body, es, req.endpoint, 'POST'))
   } catch (error) {
-    next(error)
+    if (error instanceof api.ValidationError) {
+      next(createError(400, error.message))
+    } else {
+      next(error)
+    }
   }
 })
 
@@ -110,7 +118,11 @@ app.get('/collections/:collectionId/items', async (req, res, next) => {
       res.json(items)
     }
   } catch (error) {
-    next(error)
+    if (error instanceof api.ValidationError) {
+      next(createError(400, error.message))
+    } else {
+      next(error)
+    }
   }
 })
 

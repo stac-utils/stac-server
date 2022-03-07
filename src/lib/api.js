@@ -45,7 +45,6 @@ const extractIntersects = function (params) {
 }
 
 const extractBbox = function (params) {
-  let intersectsGeometry
   const { bbox } = params
   if (bbox) {
     let bboxArray
@@ -53,15 +52,28 @@ const extractBbox = function (params) {
       try {
         bboxArray = JSON.parse(bbox)
       } catch (e) {
-        bboxArray = bbox.split(',').map(parseFloat)
+        try {
+          bboxArray = bbox.split(',').map(parseFloat)
+        } catch (e2) {
+          throw new ValidationError('Invalid bbox')
+        }
       }
     } else {
       bboxArray = bbox
     }
-    const boundingBox = extent(bboxArray)
-    intersectsGeometry = boundingBox.polygon()
+
+    if (bboxArray.length !== 4 && bboxArray.length !== 6) {
+      throw new ValidationError('Invalid bbox, must have 4 or 6 points')
+    }
+
+    if ((bboxArray.length === 4 && bboxArray[1] > bboxArray[3])
+        || (bboxArray.length === 6 && bboxArray[1] > bboxArray[4])) {
+      throw new ValidationError('Invalid bbox, SW latitude must be less than NE latitude')
+    }
+
+    return extent(bboxArray).polygon()
   }
-  return intersectsGeometry
+  return undefined
 }
 
 const extractStacQuery = function (params) {

@@ -1,6 +1,7 @@
 const { pickBy, assign } = require('lodash')
 const gjv = require('geojson-validation')
 const extent = require('@mapbox/extent')
+const { DateTime } = require('luxon')
 const { isIndexNotFoundError } = require('./es')
 const logger = console
 
@@ -93,6 +94,58 @@ const extractLimit = function (params) {
       )
     }
     return limit
+  }
+  return undefined
+}
+
+// eslint-disable-next-line max-len
+const RFC3339_REGEX = /^(\d\d\d\d)\-(\d\d)\-(\d\d)T(\d\d):(\d\d):(\d\d)([.]\d+)?(Z|([-+])(\d\d):(\d\d))$/
+
+const rfc3339ToDateTime = function (s) {
+  if (!RFC3339_REGEX.test(s)) {
+    throw new ValidationError('datetime value is invalid, does not match RFC3339 format')
+  }
+  const dt = DateTime.fromISO(s)
+  if (dt.isValid) {
+    return dt
+  }
+  throw new ValidationError(
+    `datetime value is invalid, ${dt.invalidReason} ${dt.invalidExplanation}'`
+  )
+}
+
+const validateStartAndEndDatetimes = function (startDateTime, endDateTime) {
+  if (startDateTime && endDateTime && endDateTime < startDateTime) {
+    throw new ValidationError(
+      'datetime value is invalid, start datetime must be before end datetime with interval'
+    )
+  }
+}
+
+const extractDatetime = function (params) {
+  const { datetime } = params
+
+  if (datetime) {
+    const datetimeUpperCase = datetime.toUpperCase()
+    const [start, end, ...rest] = datetimeUpperCase.split('/')
+    if (rest.length) {
+      throw new ValidationError(
+        'datetime value is invalid, too many forward slashes for an interval'
+      )
+    } else if ((!start && !end)
+        || (start === '..' && end === '..')
+        || (!start && end === '..')
+        || (start === '..' && !end)
+    ) {
+      throw new ValidationError(
+        'datetime value is invalid, at least one end of the interval must be closed'
+      )
+    } else {
+      const startDateTime = (start && start !== '..') ? rfc3339ToDateTime(start) : undefined
+      const endDateTime = (end && end !== '..') ? rfc3339ToDateTime(end) : undefined
+      validateStartAndEndDatetimes(startDateTime, endDateTime)
+    }
+    return datetimeUpperCase
   }
   return undefined
 }
@@ -398,13 +451,13 @@ const searchItems = async function (collectionId, queryParameters, backend, endp
   logger.debug(`Query parameters: ${JSON.stringify(queryParameters)}`)
   const {
     page,
-    datetime,
     bbox,
     intersects
   } = queryParameters
   if (bbox && intersects) {
     throw new ValidationError('Expected bbox OR intersects, not both')
   }
+  const datetime = extractDatetime(queryParameters)
   const bboxGeometry = extractBbox(queryParameters)
   const intersectsGeometry = extractIntersects(queryParameters)
   const geometry = intersectsGeometry || bboxGeometry
@@ -423,7 +476,8 @@ const searchItems = async function (collectionId, queryParameters, backend, endp
     sortby,
     fields,
     ids,
-    collections
+    collections,
+    limit
   })
 
   let newEndpoint = `${endpoint}/search`
@@ -621,5 +675,6 @@ module.exports = {
   updateItem,
   partialUpdateItem,
   ValidationError,
-  extractLimit
+  extractLimit,
+  extractDatetime
 }

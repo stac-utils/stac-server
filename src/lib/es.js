@@ -41,32 +41,26 @@ function buildRangeQuery(property, operators, operatorsObject) {
   return rangeQuery
 }
 
+// assumes a valid RFC3339 datetime or interval
+// validation was previously done by api.extractDatetime
 function buildDatetimeQuery(parameters) {
   let dateQuery
   const { datetime } = parameters
   if (datetime) {
-    if (!datetime.includes('/')) {
+    if (datetime.includes('/')) {
+      const [start, end] = datetime.split('/')
+      const datetimeRange = {}
+      if (start && start !== '..') datetimeRange.gte = start
+      if (end && end !== '..') datetimeRange.lte = end
       dateQuery = {
-        term: {
-          'properties.datetime': datetime
+        range: {
+          'properties.datetime': datetimeRange
         }
       }
     } else {
-      const [start, end, ...rest] = datetime.split('/')
-      if (rest.length) {
-        dateQuery = new Error('datetime value is invalid, contains more than one forward slash')
-      } else if ((!start && !end) || (start === '..' && start === end)) {
-        dateQuery = new Error(
-          'datetime value is invalid, at least one end of the interval must be closed'
-        )
-      } else {
-        const datetimeRange = {}
-        if (start && start !== '..') datetimeRange.gte = start
-        if (end && end !== '..') datetimeRange.lte = end
-        dateQuery = {
-          range: {
-            'properties.datetime': datetimeRange
-          }
+      dateQuery = {
+        term: {
+          'properties.datetime': datetime
         }
       }
     }

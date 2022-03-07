@@ -22,17 +22,6 @@ test('search id parameter doesnt override other parameters', async (t) => {
   )
 })
 
-test('invalid search datetime parameter intervals fail', async (t) => {
-  const invalidDatetimeIntervals = [
-    '1985-04-12T23:20:50.52-01:00/1986-04-12T23:20:50.52-01:00/'
-  ]
-
-  await invalidDatetimeIntervals.map(async (datetime) => {
-    const dtQuery = await es.buildDatetimeQuery({ datetime: datetime })
-    t.assert(dtQuery instanceof Error, 'invalid datetime interval should fail')
-  })
-})
-
 /* eslint max-len: 0 */
 test('search datetime parameter intervals are correctly parsed', async (t) => {
   const datetimes = [

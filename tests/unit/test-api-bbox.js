@@ -28,3 +28,25 @@ test('extractBbox comma-separated value with whitespace', (t) => {
   t.is(intersectsGeometry.coordinates[0].length, 5)
   t.is(intersectsGeometry.coordinates[0][0][0], 0)
 })
+
+test('extractBbox invalid bbox values', (t) => {
+  const invalidBboxes = [
+    [0.0, 1.0, 1.0, 0.0], // sw lat > ne lat, 2d
+    [0.0, 1.0, 0.0, 1.0, 0.0, 1.0], // sw lat > ne lat, 3d
+    [1],
+    [1, 2],
+    [1, 2, 3],
+    [1, 2, 3, 4, 5],
+    [1, 2, 3, 4, 5, 6, 7],
+  ]
+
+  for (const bbox of invalidBboxes) {
+    t.throws(() => {
+      api.extractBbox({ bbox })
+    }, { instanceOf: api.ValidationError })
+
+    t.throws(() => {
+      api.extractBbox({ bbox: bbox.join(',') })
+    }, { instanceOf: api.ValidationError })
+  }
+})

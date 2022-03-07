@@ -1,6 +1,9 @@
 // @ts-check
 
 const nock = require('nock')
+const { promisify } = require('util')
+const fs = require('fs')
+const path = require('path')
 const { startApi } = require('./api')
 const { createCollectionsIndex, refreshIndices } = require('./es')
 const { createTopic, addSnsToSqsSubscription } = require('./sns')
@@ -51,6 +54,20 @@ const setup = async () => {
   }
 }
 
+const readFile = promisify(fs.readFile)
+
+/**
+ * @param {string} filename
+ * @returns {Promise<unknown>}
+ */
+const loadJson = async (filename) => {
+  const filePath = path.join(__dirname, '..', 'fixtures', 'stac', filename)
+
+  const data = await readFile(filePath, 'utf8')
+  return JSON.parse(data)
+}
+
 module.exports = {
-  setup
+  setup,
+  loadJson
 }

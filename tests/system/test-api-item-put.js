@@ -62,7 +62,7 @@ test('PUT /collections/:collectionId/items/:itemId', async (t) => {
   t.falsy(putResponse.headers['content-type'])
   t.is(putResponse.body, '')
 
-  // ES needs a second to process the patch request
+  // ES needs a second to process the put request
   // eslint-disable-next-line no-promise-executor-return
   await new Promise((r) => setTimeout(r, 1000))
 
@@ -77,12 +77,12 @@ test('PUT /collections/:collectionId/items/:itemId', async (t) => {
 test('PUT /collections/:collectionId/items/:itemId for a non-existent collection or id returns 404"', async (t) => {
   const { collectionId } = t.context
 
-  t.is((await t.context.api.client.patch(
+  t.is((await t.context.api.client.put(
     `collections/${collectionId}/items/DOES_NOT_EXIST`,
     { json: {}, resolveBodyOnly: false, throwHttpErrors: false }
   )).statusCode, 404)
 
-  t.is((await t.context.api.client.patch(
+  t.is((await t.context.api.client.put(
     'collections/DOES_NOT_EXIST/items/DOES_NOT_EXIST',
     { json: {}, resolveBodyOnly: false, throwHttpErrors: false }
   )).statusCode, 404)
@@ -135,7 +135,7 @@ test('PUT /collections/:collectionId/items with missing collection id populate i
     `collections/${collectionId}/items/${itemId}`,
     { json: item }
   )
-  // ES needs a second to process the patch request
+  // ES needs a second to process the put request
   // eslint-disable-next-line no-promise-executor-return
   await new Promise((r) => setTimeout(r, 1000))
 

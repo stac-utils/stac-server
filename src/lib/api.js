@@ -1,4 +1,4 @@
-const { pickBy } = require('lodash')
+const { pickBy, assign } = require('lodash')
 const gjv = require('geojson-validation')
 const extent = require('@mapbox/extent')
 const { isIndexNotFoundError } = require('./es')
@@ -7,12 +7,15 @@ const logger = console
 // max number of collections to retrieve
 const COLLECTION_LIMIT = process.env.STAC_SERVER_COLLECTION_LIMIT || 100
 
+class ValidationError extends Error {
+  constructor(message) {
+    super(message)
+    this.name = 'ValidationError'
+  }
+}
+
 const extractIntersects = function (params) {
   let intersectsGeometry
-  const geojsonError = new Error('Invalid GeoJSON geometry')
-  const geojsonFeatureError = new Error(
-    'Expected GeoJSON geometry, not Feature or FeatureCollection'
-  )
   const { intersects } = params
   if (intersects) {
     let geojson
@@ -21,28 +24,27 @@ const extractIntersects = function (params) {
       try {
         geojson = JSON.parse(intersects)
       } catch (e) {
-        throw geojsonError
+        throw new ValidationError('Invalid GeoJSON geometry')
       }
     } else {
       geojson = { ...intersects }
     }
 
     if (gjv.valid(geojson)) {
-      if (geojson.type === 'FeatureCollection') {
-        throw geojsonFeatureError
-      } else if (geojson.type === 'Feature') {
-        throw geojsonFeatureError
+      if (geojson.type === 'FeatureCollection' || geojson.type === 'Feature') {
+        throw new Error(
+          'Expected GeoJSON geometry, not Feature or FeatureCollection'
+        )
       }
       intersectsGeometry = geojson
     } else {
-      throw geojsonError
+      throw new ValidationError('Invalid GeoJSON geometry')
     }
   }
   return intersectsGeometry
 }
 
 const extractBbox = function (params) {
-  let intersectsGeometry
   const { bbox } = params
   if (bbox) {
     let bboxArray
@@ -50,15 +52,28 @@ const extractBbox = function (params) {
       try {
         bboxArray = JSON.parse(bbox)
       } catch (e) {
-        bboxArray = bbox.split(',').map(parseFloat)
+        try {
+          bboxArray = bbox.split(',').map(parseFloat)
+        } catch (e2) {
+          throw new ValidationError('Invalid bbox')
+        }
       }
     } else {
       bboxArray = bbox
     }
-    const boundingBox = extent(bboxArray)
-    intersectsGeometry = boundingBox.polygon()
+
+    if (bboxArray.length !== 4 && bboxArray.length !== 6) {
+      throw new ValidationError('Invalid bbox, must have 4 or 6 points')
+    }
+
+    if ((bboxArray.length === 4 && bboxArray[1] > bboxArray[3])
+        || (bboxArray.length === 6 && bboxArray[1] > bboxArray[4])) {
+      throw new ValidationError('Invalid bbox, SW latitude must be less than NE latitude')
+    }
+
+    return extent(bboxArray).polygon()
   }
-  return intersectsGeometry
+  return undefined
 }
 
 const extractStacQuery = function (params) {
@@ -298,7 +313,7 @@ const wrapResponseInFeatureCollection = function (
   }
 }
 
-const buildPageLinks = function (meta, parameters, endpoint, httpMethod) {
+const buildPageLinks = function (meta, parameters, bbox, intersects, endpoint, httpMethod) {
   const pageLinks = []
 
   const dictToURI = (dict) => (
@@ -318,11 +333,11 @@ const buildPageLinks = function (meta, parameters, endpoint, httpMethod) {
     ).join('&')
   )
   const { matched, page, limit } = meta
-  let newParams
-  let link
+  const linkParams = pickBy(assign(parameters, { bbox, intersects, limit }))
+
   if ((page * limit) < matched) {
-    newParams = { ...parameters, page: page + 1, limit }
-    link = {
+    const newParams = { ...linkParams, page: page + 1 }
+    const link = {
       rel: 'next',
       title: 'Next page of results',
       method: httpMethod
@@ -338,8 +353,8 @@ const buildPageLinks = function (meta, parameters, endpoint, httpMethod) {
     pageLinks.push(link)
   }
   if (page > 1) {
-    newParams = { ...parameters, page: page - 1, limit }
-    link = {
+    const newParams = { ...linkParams, page: page - 1 }
+    const link = {
       rel: 'prev',
       title: 'Previous page of results',
       method: httpMethod
@@ -363,45 +378,44 @@ const searchItems = async function (collectionId, queryParameters, backend, endp
   const {
     limit,
     page,
-    datetime
+    datetime,
+    bbox,
+    intersects
   } = queryParameters
-  const bbox = extractBbox(queryParameters)
-  const hasIntersects = extractIntersects(queryParameters)
-  // TODO: Figure out, why is this not allowed?
-  // if (bbox && hasIntersects) {
-  //   throw new Error('Expected bbox OR intersects, not both')
-  // }
+  if (bbox && intersects) {
+    throw new ValidationError('Expected bbox OR intersects, not both')
+  }
+  const bboxGeometry = extractBbox(queryParameters)
+  const intersectsGeometry = extractIntersects(queryParameters)
+  const geometry = intersectsGeometry || bboxGeometry
+
   const sortby = extractSortby(queryParameters)
-  // Prefer intersects
-  const intersects = hasIntersects || bbox
   const query = extractStacQuery(queryParameters)
   const fields = extractFields(queryParameters)
   const ids = extractIds(queryParameters)
   const collections = extractCollectionIds(queryParameters)
 
-  const parameters = {
+  const searchParams = pickBy({
     datetime,
-    intersects,
+    intersects: geometry,
     query,
     sortby,
     fields,
     ids,
     collections
-  }
-
-  // Keep only existing parameters
-  const searchParameters = pickBy(parameters)
+  })
 
   let newEndpoint = `${endpoint}/search`
   if (collectionId) {
-    searchParameters.collections = [collectionId]
+    searchParams.collections = [collectionId]
     newEndpoint = `${endpoint}/collections/${collectionId}/items`
   }
-  logger.debug(`Search parameters: ${JSON.stringify(searchParameters)}`)
+
+  logger.debug(`Search parameters: ${JSON.stringify(searchParams)}`)
 
   let results
   try {
-    results = await backend.search(searchParameters, page, limit)
+    results = await backend.search(searchParams, page, limit)
   } catch (error) {
     if (isIndexNotFoundError(error)) {
       results = {
@@ -419,7 +433,9 @@ const searchItems = async function (collectionId, queryParameters, backend, endp
   }
 
   const { results: itemsResults, context: itemsMeta } = results
-  const pageLinks = buildPageLinks(itemsMeta, searchParameters, newEndpoint, httpMethod)
+  const pageLinks = buildPageLinks(
+    itemsMeta, searchParams, bbox, intersects, newEndpoint, httpMethod
+  )
   const items = addItemLinks(itemsResults, endpoint)
   const response = wrapResponseInFeatureCollection(itemsMeta, items, pageLinks)
   return response
@@ -583,4 +599,5 @@ module.exports = {
   deleteItem,
   updateItem,
   partialUpdateItem,
+  ValidationError
 }

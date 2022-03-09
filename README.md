@@ -7,8 +7,14 @@
   - [Architecture](#architecture)
   - [Migration](#migration)
     - [0.3 -> 0.4](#03---04)
+      - [Elasticsearch upgrade from 7.9 to 7.10](#elasticsearch-upgrade-from-79-to-710)
+      - [Disable automatic index creation](#disable-automatic-index-creation)
+      - [Validate index mappings](#validate-index-mappings)
   - [Usage](#usage)
   - [Deployment](#deployment)
+    - [Elasticsearch Configuration](#elasticsearch-configuration)
+      - [Disable automatic index creation](#disable-automatic-index-creation-1)
+      - [Create collection index](#create-collection-index)
   - [Ingesting Data](#ingesting-data)
     - [Ingesting large items](#ingesting-large-items)
     - [Subscribing to SNS Topics](#subscribing-to-sns-topics)
@@ -32,11 +38,10 @@ Stac-server is an implementation of the [STAC API specification](https://github.
 
 The following APIs are deployed instances of stac-server:
 
-| Name                                                       | STAC Version | STAC API Version | Description                         |
-| ---------------------------------------------------------- | ------------ | ---------------- |
-| [Earth Search](https://earth-search.aws.element84.com/v0/) | 1.0.0-beta.2 | 0.9.0            | Catalog of some AWS Public Datasets |
-| [Landsat Look](https://landsatlook.usgs.gov/stac-server)   | 1.0.0        | 0.9.0            |                                     |
-| [USGS Planetary Catalog](https://asc-stacbrowser.s3.us-west-2.amazonaws.com/catalog.json) | 1.0.0 |  | USGS Astrogeology hosted Analysis Ready Data (ARD) |
+| Name                                                                                      | STAC Version | STAC API Version | Description                                        |
+| ----------------------------------------------------------------------------------------- | ------------ | ---------------- |
+| [Earth Search](https://earth-search.aws.element84.com/v0/)                                | 1.0.0-beta.2 | 0.9.0            | Catalog of some AWS Public Datasets                |
+| [Landsat Look](https://landsatlook.usgs.gov/stac-server)                                  | 1.0.0        | 0.9.0            |                                                    |
 
 ## Architecture
 
@@ -84,7 +89,78 @@ apiLambda --> elasticsearch
 
 ### 0.3 -> 0.4
 
+Create a new deployment, copy the elasticsearch database, rename indexes,
+
+#### Elasticsearch upgrade from 7.9 to 7.10
+
 The Serverless Framework supports provisioning AWS resources, but it does not support updating existing resources. In 0.4, the default Elasticsearch version has been updated from 7.9 to 7.10. Continuing to use 7.9 should not cause any problems, but it recommended that you manually upgrade to 7.10 by going to [AWS Console - Amazon OpenSearch Service](https://console.aws.amazon.com/esv3/home), choosing the Elasticsearch domain used by your stac-server deployment (e.g., stac-server-{stage}-es), choose Upgrade from the Actions menu, and then upgrade to Elasticsearch 7.10.
+
+#### Disable automatic index creation
+
+It is now recommended to [disable automatic index creation](#disable-automatic-index-creation-1).
+
+#### Validate index mappings
+
+Elasticsearch indices each have a mapping applied that determines how the data is indexed and searched over.
+These mappings do not change the document data, but can change search behavior. One relevant mapping
+behavior is that by default, string fields are analyzed for full-text search. In most cases with STAC Items,
+values such as those in the `id` and `collection` fields should not be analyzed and should instead be searchable only
+by exact matches. In Elasticsearch, this is known as a `keyword` field type. Importantly, sorting may only be done over `keyword` typed fields. As of 0.4.0, the default sort is now by `properties.datetime`, then `id`, then `collection`, and results will not be returnd if any indicies have the `id` or `collection` fields mapped as `text` instead of `keyword`.
+
+For each index (other than `collections`), use GET to retrieve the endpoint `GET /{collectionId}/_mapping`, and
+validate that `properties.datetime` type is `date`, and `id` and `collection` mappings are `keyword` (not `text` with a `keyword` subfield). For an AWS Opensearch Service instance, this can be done with a script similar to the one [here](#disable-automatic-index-creation-1).
+
+The results should look simliar to this:
+
+```
+{
+  "my_collection_name": {
+    "mappings": {
+      "dynamic_templates": [
+        ...
+        {
+          "strings": {
+            "match_mapping_type": "string",
+            "mapping": {
+              "type": "keyword"
+            }
+          }
+        },
+        ...
+      ],
+      "properties": {
+        ....
+        "id": {
+          "type": "keyword"
+        },
+        "collection": {
+          "type": "keyword"
+        },
+        ....
+        "properties": {
+          "properties": {
+            ...
+            "datetime": {
+              "type": "date"
+            },
+            ...
+          }
+        },
+        ...
+      }
+    }
+  }
+}
+```
+
+If this is not the case, the easiest solution to fix it is to:
+
+1. Deploy a 0.4.0 instance.
+2. Backup and restore the 0.3.0 instance's Elasticsearch indicies to the 0.4.0 instances's
+   Elasticsearch database.
+3. Create a collection via ingest with a new collection name similar to the existing one (e.g., if index foo exists, create foo_new).
+4. Reindex from the the existing index (foo) to the the new one (foo_new).
+5. Delete the exiting index and rename the new one to the name of the formerly-existing one (e.g. foo_new -> foo).
 
 ## Usage
 
@@ -111,16 +187,16 @@ cp serverless.yml.example serverless.yml
 
 There are some settings that should be reviewed and updated as needeed in the serverless config file, under provider->environment:
 
-| Name                          | Description                                                                                                                                             | Default Value                                                                        |
-| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
-| STAC_VERSION                  | STAC Version of this STAC API                                                                                                                           | 1.0.0                                                                                |
-| STAC_ID                       | ID of this catalog                                                                                                                                      | stac-server                                                                          |
-| STAC_TITLE                    | Title of this catalog                                                                                                                                   | STAC API                                                                             |
-| STAC_DESCRIPTION              | Description of this catalog                                                                                                                             | A STAC API                                                                           |
-| STAC_DOCS_URL                 | URL to documentation                                                                                                                                    | [https://stac-utils.github.io/stac-server](https://stac-utils.github.io/stac-server) |
-| ES_BATCH_SIZE                 | Number of records to ingest in single batch                                                                                                             | 500                                                                                  |
-| LOG_LEVEL                     | Level for logging (CRITICAL, ERROR, WARNING, INFO, DEBUG)                                                                                               | INFO                                                                                 |
-| STAC_API_URL                  | The root endpoint of this API                                                                                                                           | Inferred from request                                                                |
+| Name                          | Description                                                                                                                                                             | Default Value                                                                        |
+| ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| STAC_VERSION                  | STAC Version of this STAC API                                                                                                                                           | 1.0.0                                                                                |
+| STAC_ID                       | ID of this catalog                                                                                                                                                      | stac-server                                                                          |
+| STAC_TITLE                    | Title of this catalog                                                                                                                                                   | STAC API                                                                             |
+| STAC_DESCRIPTION              | Description of this catalog                                                                                                                                             | A STAC API                                                                           |
+| STAC_DOCS_URL                 | URL to documentation                                                                                                                                                    | [https://stac-utils.github.io/stac-server](https://stac-utils.github.io/stac-server) |
+| ES_BATCH_SIZE                 | Number of records to ingest in single batch                                                                                                                             | 500                                                                                  |
+| LOG_LEVEL                     | Level for logging (CRITICAL, ERROR, WARNING, INFO, DEBUG)                                                                                                               | INFO                                                                                 |
+| STAC_API_URL                  | The root endpoint of this API                                                                                                                                           | Inferred from request                                                                |
 | ENABLE_TRANSACTIONS_EXTENSION | Boolean specifying if the [Transaction Extension](https://github.com/radiantearth/stac-api-spec/tree/master/ogcapi-features/extensions/transaction) should be activated | false                                                                                |
 
 After reviewing the settings, build and deploy:
@@ -131,13 +207,62 @@ npm run build
 npm run deploy
 ```
 
-This will create a CloudFormation stack in the `us-west-2` region called `stac-server-dev`. To change the region or the stage name (from `dev`) provide arguments to the deploy command (note the additional `--` in the command, required by `npm` to provide arguments):
+This will create a CloudFormation stack in the `us-west-2` region called `stac-server-dev`.
+To change the region or the stage name (from `dev`) provide arguments to the deploy command
+(note the additional `--` in the command, required by `npm` to provide arguments):
 
 ```shell
 npm run deploy -- --stage mystage --region eu-central-1
 ```
 
-Once deployed there is one final step - creating the indices and mappings in Elasticsearch. Invoke the `stac-server-<stage>-ingest` Lambda function with a payload of:
+Once deployed, there are a few steps to configure Elasticsearch.
+
+### Elasticsearch Configuration
+
+#### Disable automatic index creation
+
+It is recommended to disable the automatic index creation. This prevents the situation where
+a group of Items are bulk indexed before the Collection in which they are contained has
+been created, and an Elasticsearch index is created without the appropriate mappings.
+
+This requires installing the requests, requests_aws4auth, and boto3 python libraries, for example, with:
+
+```shell
+pip install requests requests_aws4auth boto3
+```
+
+Then putting this code into a python file an running it:
+
+```python
+from requests_aws4auth import AWS4Auth
+import boto3
+import requests
+
+host = 'https://my-test-domain.us-east-1.es.amazonaws.com'
+path = '/_cluster/settings'
+region = 'us-west-2'
+
+credentials = boto3.Session().get_credentials()
+awsauth = AWS4Auth(credentials.access_key, credentials.secret_key, region, 'es', session_token=credentials.token)
+
+
+r = requests.put(
+  f'{host}{path}',
+  auth=awsauth,
+  json={
+    "persistent": {
+      "action.auto_create_index": "false"
+    }
+  })
+
+print(r.status_code)
+print(r.text)
+```
+
+#### Create collection index
+
+The `collection` index must be created, which stores the metadata about each Collection.
+Invoke the `stac-server-<stage>-ingest` Lambda function with a payload of:
 
 ```json
 {
@@ -161,7 +286,8 @@ Stac-server is now ready to ingest data!
 
 STAC Collections and Items are ingested by the `ingest` Lambda function, however this Lambda is not invoked directly by a user, it consumes records from the `stac-server-<stage>-queue` SQS. To add STAC Items or Collections to the queue, publish them to the SNS Topic `stac-server-<stage>-ingest`.
 
-STAC Collections should be ingested before Items that belong to that Collection. Items should have the `collection` field populated with the ID of an existing Collection.
+**STAC Collections must be ingested before Items that belong to that Collection.** Items should have the `collection` field populated with the ID of an existing Collection. If an Item is ingested before ingestion of the Collection it contains,
+ingestion will either fail (in the case of a single Item ingest) or if auto-creation of indexes is enabled (default) and multiple Items are ingested in bulk, the auto-created index will have incorrect mappings.
 
 If a collection or item is ingested, and an item with that id already exists in STAC, the new item will completely replace the old item.
 

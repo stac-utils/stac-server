@@ -8,7 +8,7 @@ test('search id parameter doesnt override other parameters', async (t) => {
     ids: ids,
     datetime: range
   }
-  const searchBody = await es.constructSearchParams(queryParams, 1, 1)
+  const searchBody = await es.constructSearchParams(queryParams, 1)
 
   // TODO: the ordering here is fragile. helper methods needed to ensure the queries are correct
   t.is(

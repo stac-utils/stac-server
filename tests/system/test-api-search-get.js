@@ -1,4 +1,5 @@
 const test = require('ava')
+const { default: got } = require('got')
 const { deleteAllIndices, refreshIndices } = require('../helpers/es')
 const { randomId } = require('../helpers/utils')
 const ingest = require('../../src/lib/ingest')
@@ -34,7 +35,7 @@ test('GET /search has a content type of "application/geo+json; charset=utf-8', a
   t.is(response.headers['content-type'], 'application/geo+json; charset=utf-8')
 })
 
-test('/search preserve bbox in prev and next links', async (t) => {
+test('/search preserve bbox in next links', async (t) => {
   const fixtureFiles = [
     'catalog.json',
     'collection.json',
@@ -47,22 +48,46 @@ test('/search preserve bbox in prev and next links', async (t) => {
 
   const bbox = '-180,-90,180,90'
 
-  let response = await t.context.api.client.get('search', {
-
+  const response = await t.context.api.client.get('search', {
     searchParams: new URLSearchParams({
       bbox,
       limit: 2,
-      page: 2
-    }) })
+    })
+  })
 
-  t.is(response.features.length, 0)
-  t.is(response.links.length, 1)
+  t.is(response.features.length, 2)
+  const nextLink = response.links.find((x) => x.rel === 'next')
+  const nextUrl = new URL(nextLink.href)
+  t.deepEqual(nextUrl.searchParams.get('bbox'), bbox)
 
-  const prevLink = response.links.find((x) => x.rel === 'prev')
-  t.deepEqual(new URL(prevLink.href).searchParams.get('bbox'), bbox)
+  t.deepEqual(nextUrl.searchParams.get('next'),
+    [
+      response.features[1].properties.datetime,
+      response.features[1].id,
+      response.features[1].collection
+    ].join(','))
 
+  console.log(`nexturl ${nextUrl}`)
+
+  const nextResponse = await got.get(nextUrl).json()
+  t.is(nextResponse.features.length, 0)
+  t.falsy(nextResponse.links.find((x) => x.rel === 'next'))
+})
+
+test('/search preserve bbox and datetime in next links', async (t) => {
+  const fixtureFiles = [
+    'catalog.json',
+    'collection.json',
+    'LC80100102015050LGN00.json',
+    'LC80100102015082LGN00.json'
+  ]
+  const items = await Promise.all(fixtureFiles.map((x) => systemTests.loadJson(x)))
+  await ingest.ingestItems(items, stream)
+  await refreshIndices()
+
+  const bbox = '-180,-90,180,90'
   const datetime = '2015-02-19T00:00:00Z/2021-02-19T00:00:00Z'
-  response = await t.context.api.client.get('search', {
+  const response = await t.context.api.client.get('search', {
     searchParams: new URLSearchParams({
       bbox,
       datetime: datetime,
@@ -75,6 +100,12 @@ test('/search preserve bbox in prev and next links', async (t) => {
 
   const nextLink = response.links.find((x) => x.rel === 'next')
   const nextUrl = new URL(nextLink.href)
+  t.deepEqual(nextUrl.searchParams.get('next'),
+    [
+      response.features[0].properties.datetime,
+      response.features[0].id,
+      response.features[0].collection
+    ].join(','))
   t.deepEqual(nextUrl.searchParams.get('bbox'), bbox)
   t.deepEqual(nextUrl.searchParams.get('datetime'), datetime)
 })

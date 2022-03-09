@@ -37,6 +37,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   of 200 and the updated Item
 - Default sortby is now guaranteed to be stable. Previously, it was only by `properties.datetime`, not it is
   by `properties.datetime`, `id`, and `collection`.
+- ItemCollection results no longer have a `prev` link relation. This is a by-product of changing
+  pagination to use Elasticsearch's more performant `search_after` mechanism rather than `page`
+- Pagination works past 10,000 items now
 
 ### Removed
 

@@ -177,6 +177,14 @@ function buildSort(parameters) {
   return DEFAULT_SORTING
 }
 
+function buildSearchAfter(parameters) {
+  const { next } = parameters
+  if (next) {
+    return next.split(',')
+  }
+  return undefined
+}
+
 function buildFieldsFilter(parameters) {
   const { fields } = parameters
   let _sourceIncludes = []
@@ -316,31 +324,23 @@ async function getCollections(page = 1, limit = 100) {
   return results
 }
 
-async function constructSearchParams(parameters, page, limit) {
-  const { id } = parameters
+async function constructSearchParams(parameters, limit) {
+  const { id, collections } = parameters
 
   let body
   if (id) {
     body = buildIdQuery(id)
   } else {
     body = buildQuery(parameters)
-    body.sort = buildSort(parameters) // sort applied to the id query causes hang???
-  }
-
-  let index
-  // determine the right indices
-  if (parameters.hasOwnProperty('collections')) {
-    index = parameters.collections
-  } else {
-    index = '*,-*kibana*,-collections'
+    body.sort = buildSort(parameters)
+    body.search_after = buildSearchAfter(parameters)
   }
 
   // Specifying the scroll parameter makes the total work
   const searchParams = {
-    index,
+    index: collections || '*,-*kibana*,-collections',
     body,
     size: limit,
-    from: (page - 1) * limit,
     track_total_hits: true
   }
 
@@ -356,8 +356,8 @@ async function constructSearchParams(parameters, page, limit) {
   return searchParams
 }
 
-async function search(parameters, page = 1, limit = 10) {
-  const searchParams = await constructSearchParams(parameters, page, limit)
+async function search(parameters, limit = 10) {
+  const searchParams = await constructSearchParams(parameters, limit)
   const esResponse = await esQuery({
     ignore_unavailable: true,
     allow_no_indices: true,
@@ -368,20 +368,10 @@ async function search(parameters, page = 1, limit = 10) {
   const response = {
     results,
     context: {
-      page: Number(page),
       limit: Number(limit),
       matched: esResponse.body.hits.total.value,
       returned: results.length
-    },
-    links: []
-  }
-  const nextlink = (((page * limit) < esResponse.body.hits.total.value) ? page + 1 : null)
-  if (nextlink) {
-    response.links.push({
-      title: 'next',
-      type: 'application/json',
-      href: nextlink
-    })
+    }
   }
   return response
 }

@@ -76,6 +76,27 @@ const extractBbox = function (params) {
   return undefined
 }
 
+const extractLimit = function (params) {
+  const { limit: limitStr } = params
+
+  if (limitStr !== undefined) {
+    let limit
+    try {
+      limit = parseInt(limitStr)
+    } catch (e) {
+      throw new ValidationError('Invalid limit value')
+    }
+
+    if (Number.isNaN(limit) || limit <= 0 || limit > 10000) {
+      throw new ValidationError(
+        'Invalid limit value, must be a number between 1 and 10000 inclusive'
+      )
+    }
+    return limit
+  }
+  return undefined
+}
+
 const extractStacQuery = function (params) {
   let stacQuery
   const { query } = params
@@ -376,7 +397,6 @@ const buildPageLinks = function (meta, parameters, bbox, intersects, endpoint, h
 const searchItems = async function (collectionId, queryParameters, backend, endpoint, httpMethod) {
   logger.debug(`Query parameters: ${JSON.stringify(queryParameters)}`)
   const {
-    limit,
     page,
     datetime,
     bbox,
@@ -394,6 +414,7 @@ const searchItems = async function (collectionId, queryParameters, backend, endp
   const fields = extractFields(queryParameters)
   const ids = extractIds(queryParameters)
   const collections = extractCollectionIds(queryParameters)
+  const limit = extractLimit(queryParameters)
 
   const searchParams = pickBy({
     datetime,
@@ -599,5 +620,6 @@ module.exports = {
   deleteItem,
   updateItem,
   partialUpdateItem,
-  ValidationError
+  ValidationError,
+  extractLimit
 }

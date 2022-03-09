@@ -47,8 +47,10 @@ class ElasticSearchWritableStream extends _stream.Writable {
         // if this isn't a collection check if index exists
         const exists = await this.client.indices.exists({ index })
         if (!exists.body) {
+          const msg = `Index ${index} does not exist, add before ingesting items`
+          logger.debug(msg)
           return next(
-            new Error(`Index ${index} does not exist, add before ingesting items`)
+            new Error(msg)
           )
         }
       }
@@ -80,9 +82,9 @@ class ElasticSearchWritableStream extends _stream.Writable {
     try {
       const result = await this.client.bulk({ body })
       logger.debug(`Result: ${JSON.stringify(result, undefined, 2)}`)
-      const { errors, items } = result.body
+      const { errors } = result.body
       if (errors) {
-        logger.error(items)
+        logger.error(`Batch write had errors: ${JSON.stringify(errors)}`)
       } else {
         logger.debug(`Wrote batch of documents size ${body.length / 2}`)
       }

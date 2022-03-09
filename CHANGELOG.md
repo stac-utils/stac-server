@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Fixes the responses from `/collections/{collectionId}`, `/collections/{collectionId}/items`, and `/collection/{collectionId}/items/{itemId}`.
 - Search limit parameter is now validated to be between 1 and 10000 inclusive
 - Search datetime parameter is now strictly validated as a RFC 3339 datetime or interval of two datetimes
+- Added `root` link relation to Landing Page (`/`)
 
 ### Changed
 

@@ -17,7 +17,7 @@
     "typecheck": "tsc",
     "audit-prod": "npm audit --omit dev",
     "deploy": "sls deploy",
-    "serve": "STAC_API_URL=http://localhost:3000 nodemon ./src/lambdas/api/local.js",
+    "serve": "STAC_API_URL=http://localhost:3000 ENABLE_TRANSACTIONS_EXTENSION=true nodemon ./src/lambdas/api/local.js",
     "build-api-docs": "npm run widdershins --search false --language_tabs 'nodejs:NodeJS' 'python:Python' --summary ./packages/api-lib/api-spec.yaml -o ./docs/api.md & npm run shins --inline --logo ./docs/images/logo.png -o ./docs/index.html ./docs/api.md"
   },
   "pre-commit": {

@@ -156,11 +156,16 @@ function buildIdQuery(id) {
   }
 }
 
+const DEFAULT_SORTING = [
+  { 'properties.datetime': { order: 'desc' } },
+  { id: { order: 'desc' } },
+  { collection: { order: 'desc' } }
+]
+
 function buildSort(parameters) {
   const { sortby } = parameters
-  let sorting
-  if (sortby && sortby.length > 0) {
-    sorting = sortby.map((sortRule) => {
+  if (sortby && sortby.length) {
+    return sortby.map((sortRule) => {
       const { field, direction } = sortRule
       return {
         [field]: {
@@ -168,13 +173,8 @@ function buildSort(parameters) {
         }
       }
     })
-  } else {
-    // Default item sorting
-    sorting = [
-      { 'properties.datetime': { order: 'desc' } }
-    ]
   }
-  return sorting
+  return DEFAULT_SORTING
 }
 
 function buildFieldsFilter(parameters) {
@@ -317,15 +317,15 @@ async function getCollections(page = 1, limit = 100) {
 }
 
 async function constructSearchParams(parameters, page, limit) {
+  const { id } = parameters
+
   let body
-  if (parameters.id) {
-    const { id } = parameters
+  if (id) {
     body = buildIdQuery(id)
   } else {
     body = buildQuery(parameters)
+    body.sort = buildSort(parameters) // sort applied to the id query causes hang???
   }
-  const sort = buildSort(parameters)
-  body.sort = sort
 
   let index
   // determine the right indices
@@ -346,10 +346,10 @@ async function constructSearchParams(parameters, page, limit) {
 
   // disable fields filter for now
   const { _sourceIncludes, _sourceExcludes } = buildFieldsFilter(parameters)
-  if (_sourceExcludes.length > 0) {
+  if (_sourceExcludes.length) {
     searchParams._sourceExcludes = _sourceExcludes
   }
-  if (_sourceIncludes.length > 0) {
+  if (_sourceIncludes.length) {
     searchParams._sourceIncludes = _sourceIncludes
   }
 

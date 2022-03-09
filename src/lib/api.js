@@ -542,46 +542,53 @@ const getConformance = async function (txnEnabled) {
 }
 
 const getCatalog = async function (txnEnabled, backend, endpoint = '') {
-  const collections = await backend.getCollections(1, COLLECTION_LIMIT)
-  let catalog = collectionsToCatalogLinks(collections, endpoint)
-  catalog.links.push({
-    rel: 'self',
-    type: 'application/json',
-    href: `${endpoint}/`
-  })
-  catalog.links.push({
-    rel: 'root',
-    type: 'application/json',
-    href: `${endpoint}/`
-  })
-  catalog.links.push({
-    rel: 'conformance',
-    type: 'application/json',
-    href: `${endpoint}/conformance`
-  })
-  catalog.links.push({
-    rel: 'data',
-    type: 'application/json',
-    href: `${endpoint}/collections`
-  })
-  catalog.links.push({
-    rel: 'search',
-    type: 'application/geo+json',
-    href: `${endpoint}/search`
-  })
-  catalog.links.push({
-    rel: 'service-desc',
-    type: 'application/vnd.oai.openapi',
-    href: `${endpoint}/api`
-  })
-  const docsUrl = process.env.STAC_DOCS_URL || 'https://stac-utils.github.io/stac-api'
+  const links = [
+    {
+      rel: 'self',
+      type: 'application/json',
+      href: `${endpoint}/`
+    },
+    {
+      rel: 'root',
+      type: 'application/json',
+      href: `${endpoint}/`
+    },
+    {
+      rel: 'conformance',
+      type: 'application/json',
+      href: `${endpoint}/conformance`
+    },
+    {
+      rel: 'data',
+      type: 'application/json',
+      href: `${endpoint}/collections`
+    },
+    {
+      rel: 'search',
+      type: 'application/geo+json',
+      href: `${endpoint}/search`
+    },
+    {
+      rel: 'service-desc',
+      type: 'application/vnd.oai.openapi',
+      href: `${endpoint}/api`
+    }
+  ]
+
+  const docsUrl = process.env.STAC_DOCS_URL
   if (docsUrl) {
-    catalog.links.push({
+    links.push({
       rel: 'docs',
-      href: process.env.STAC_DOCS_URL
+      href: docsUrl,
+      type: 'text/html'
     })
   }
-  catalog = Object.assign(catalog, await getConformance(txnEnabled))
+
+  const collections = await backend.getCollections(1, COLLECTION_LIMIT)
+  const catalog = collectionsToCatalogLinks(collections, endpoint)
+  catalog.links = links.concat(catalog.links)
+  catalog.conformsTo = (await getConformance(txnEnabled)).conformsTo
+
   return catalog
 }
 

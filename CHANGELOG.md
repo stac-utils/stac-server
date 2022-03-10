@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Items larger than 256 KB can now be ingested by writing their contents to S3
 - API responses are now compressed
 - Transaction Extension is now implemented
+- Landing Page link relation service-doc now exists, and points to a Redoc instance
 
 ### Fixed
 

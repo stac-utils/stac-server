@@ -10,7 +10,7 @@ test('extractBboxNull', (t) => {
 
 test('extractBbox JSON array', (t) => {
   const params = { bbox: [0, 0, 1, 1] }
-  const intersectsGeometry = api.extractBbox(params)
+  const intersectsGeometry = api.extractBbox(params, 'POST')
   t.is(intersectsGeometry.coordinates[0].length, 5)
   t.is(intersectsGeometry.coordinates[0][0][0], 0)
 })
@@ -42,11 +42,11 @@ test('extractBbox invalid bbox values', (t) => {
 
   for (const bbox of invalidBboxes) {
     t.throws(() => {
-      api.extractBbox({ bbox })
+      api.extractBbox({ bbox }, 'POST')
     }, { instanceOf: api.ValidationError })
 
     t.throws(() => {
-      api.extractBbox({ bbox: bbox.join(',') })
+      api.extractBbox({ bbox: bbox.join(',') }, 'GET')
     }, { instanceOf: api.ValidationError })
   }
 })

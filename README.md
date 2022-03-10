@@ -21,8 +21,9 @@
     - [Ingest Errors](#ingest-errors)
   - [Development](#development)
     - [Running Locally](#running-locally)
-  - [Running Tests](#running-tests)
-    - [System and Integration Tests](#system-and-integration-tests)
+    - [Running Unit Tests](#running-unit-tests)
+    - [Running System and Integration Tests](#running-system-and-integration-tests)
+    - [Updating the OpenAPI specification](#updating-the-openapi-specification)
   - [About](#about)
 
 ## Overview
@@ -368,7 +369,7 @@ export ES_HOST='https://search-stac-server-dev-es-7awl6h344qlpvly.us-west-2.es.a
 npm run serve
 ```
 
-## Running Tests
+### Running Unit Tests
 
 stac-server uses [ava](https://github.com/avajs/ava) to execute tests.
 
@@ -386,7 +387,7 @@ npm run test:coverage
 npx ava tests/test-es.js --match='foobar*'
 ```
 
-### System and Integration Tests
+### Running System and Integration Tests
 
 The System and Integration tests use an Elasticsearch server running in Docker and a local instance of the API.
 
@@ -425,6 +426,36 @@ Run the integration tests (**Note**: currently none exist):
 ```shell
 npm run test:integration
 ```
+
+### Updating the OpenAPI specification
+
+The OpenAPI specification is served by the endpoint `/api`.
+
+This file is location in [src/lambdas/api/openapi.yaml](src/lambdas/api/openapi.yaml).
+
+When the API is updated to a new STAC API release, this file must be updated. To update it,
+first install [yq](https://github.com/mikefarah/yq), then run:
+
+```shell
+bin/build-openapi.sh
+```
+
+This script combines all of the STAC API OpenAPI definitions for each conformance class into one file.
+
+Next, edit that file to make it specific to this server. For example:
+
+- edit to change the title from `STAC API - Item Search` to just `STAC API`
+- remove all of the Filter Extension references
+- Fix each endpoint, especially the Landing Page defintion, which gets duplicated
+- Add definitions for each tag
+
+To validate the resulting OpenAPI file, run
+
+```
+npm run check-openapi
+```
+
+and fix any errors or warnings.
 
 ## About
 

@@ -33,9 +33,14 @@ module.exports = {
   plugins: [
     new CopyPlugin({
       patterns: [{
-        from: 'api.yaml',
-        to: 'api.yaml'
-      }]
+        from: 'openapi.yaml',
+        to: 'openapi.yaml'
+      },
+      {
+        from: 'redoc.html',
+        to: 'redoc.html'
+      }
+    ]
     }),
     new ZipPlugin({
       filename: 'api.zip'

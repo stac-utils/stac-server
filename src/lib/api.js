@@ -476,8 +476,7 @@ const searchItems = async function (collectionId, queryParameters, backend, endp
     sortby,
     fields,
     ids,
-    collections,
-    limit
+    collections
   })
 
   let newEndpoint = `${endpoint}/search`

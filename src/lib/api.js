@@ -463,7 +463,6 @@ const searchItems = async function (collectionId, queryParameters, backend, endp
     fields,
     ids,
     collections,
-    limit,
     next
   })
 

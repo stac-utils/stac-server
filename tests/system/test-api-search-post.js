@@ -7,30 +7,37 @@ const intersectsGeometry = require('../fixtures/stac/intersectsGeometry.json')
 const stream = require('../../src/lib/esStream')
 const systemTests = require('../helpers/system-tests')
 
+const ingestEntities = async (fixtures) => {
+  await ingest.ingestItems(
+    await Promise.all(fixtures.map((x) => systemTests.loadJson(x))), stream
+  )
+  await refreshIndices()
+}
+
 test.before(async (t) => {
   await deleteAllIndices()
 
   t.context = await systemTests.setup()
 
-  const fixtureFiles = [
-    'catalog.json',
+  // ingest collections before items so mappings are applied
+  await ingestEntities([
     'collection.json',
     'collection2.json',
+  ])
+
+  await ingestEntities([
     'collection2_item.json',
     'LC80100102015050LGN00.json',
     'LC80100102015082LGN00.json'
-  ]
-
-  const items = await Promise.all(fixtureFiles.map((x) => systemTests.loadJson(x)))
-
-  await ingest.ingestItems(items, stream)
-
-  await refreshIndices()
+  ])
 })
 
 test.after.always(async (t) => {
   if (t.context.api) await t.context.api.close()
 })
+
+const linkRel = (response, rel) =>
+  response.links.find((x) => x.rel === rel)
 
 test('POST /search returns an empty list of results for a collection that does not exist', async (t) => {
   const response = await t.context.api.client.post('search', {
@@ -295,8 +302,8 @@ test('/search ids', async (t) => {
 
   // @ts-expect-error We need to type this response
   const ids = response.features.map((item) => item.id)
-  t.truthy(ids.indexOf('LC80100102015050LGN00') > -1)
-  t.truthy(ids.indexOf('collection2_item') > -1)
+  t.truthy(ids.includes('LC80100102015050LGN00'))
+  t.truthy(ids.includes('collection2_item'))
 })
 
 test('/search collections', async (t) => {
@@ -329,10 +336,10 @@ test('/search preserve intersects geometry in next link', async (t) => {
   let response = await t.context.api.client.post('search', {
     json: {
       intersects: intersectsGeometry,
-      limit: 2
+      limit: 3
     }
   })
-  t.is(response.features.length, 2)
+  t.is(response.features.length, 3)
   t.is(response.links.length, 0)
 
   response = await t.context.api.client.post('search', {
@@ -343,8 +350,9 @@ test('/search preserve intersects geometry in next link', async (t) => {
     }
   })
 
-  t.is(response.features.length, 0)
-  t.deepEqual(response.links.find((x) => x.rel === 'prev').body.intersects, intersectsGeometry)
+  t.is(response.features.length, 1)
+  t.is(response.links.length, 1)
+  t.deepEqual(linkRel(response, 'prev').body.intersects, intersectsGeometry)
 
   const datetime = '2015-02-19T00:00:00Z/2021-02-19T00:00:00Z'
   response = await t.context.api.client.post('search', {
@@ -357,7 +365,7 @@ test('/search preserve intersects geometry in next link', async (t) => {
 
   t.is(response.features.length, 1)
   t.is(response.links.length, 1)
-  const nextLink = response.links.find((x) => x.rel === 'next')
+  const nextLink = linkRel(response, 'next')
   t.is(nextLink.body.datetime, datetime)
   t.deepEqual(nextLink.body.intersects, intersectsGeometry)
 })
@@ -373,10 +381,10 @@ test('/search preserve bbox in prev and next links', async (t) => {
     }
   })
 
-  t.is(response.features.length, 0)
+  t.is(response.features.length, 1)
+  console.log(`${JSON.stringify(response.links)}`)
   t.is(response.links.length, 1)
-  const prevLink = response.links.find((x) => x.rel === 'prev')
-  t.deepEqual(prevLink.body.bbox, bbox)
+  t.deepEqual(linkRel(response, 'prev').body.bbox, bbox)
 
   const datetime = '2015-02-19T00:00:00Z/2021-02-19T00:00:00Z'
   response = await t.context.api.client.post('search', {
@@ -389,7 +397,6 @@ test('/search preserve bbox in prev and next links', async (t) => {
 
   t.is(response.features.length, 1)
   t.is(response.links.length, 1)
-  const nextLink = response.links.find((x) => x.rel === 'next')
-  t.is(nextLink.body.datetime, datetime)
-  t.deepEqual(nextLink.body.bbox, bbox)
+  t.is(linkRel(response, 'next').body.datetime, datetime)
+  t.deepEqual(linkRel(response, 'next').body.bbox, bbox)
 })

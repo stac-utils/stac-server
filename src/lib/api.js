@@ -451,7 +451,6 @@ const searchItems = async function (collectionId, queryParameters, backend, endp
   logger.debug(`Query parameters: ${JSON.stringify(queryParameters)}`)
   const {
     page,
-    datetime,
     bbox,
     intersects
   } = queryParameters

@@ -5,7 +5,7 @@ on:
       - "feature/**"
   pull_request:
     branches:
-      - main
+      - '**'
 name: Push Event
 jobs:
   test:

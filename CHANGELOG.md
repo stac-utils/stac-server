@@ -38,6 +38,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Improvements to Elasticsearch field mappings
 - PATCH /collections/:collectionId/items/:itemId now returns 204 No Content as succcess instead
   of 200 and the updated Item
+- Default sortby is now guaranteed to be stable. Previously, it was only by `properties.datetime`, not it is
+  by `properties.datetime`, `id`, and `collection`.
 
 ### Removed
 

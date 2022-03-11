@@ -25,6 +25,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Search limit parameter is now validated to be between 1 and 10000 inclusive
 - Search datetime parameter is now strictly validated as a RFC 3339 datetime or interval of two datetimes
 - Added `root` link relation to Landing Page (`/`)
+- GET /search only accepts a bbox value of a comma-separated string and POST /search
+  only accepts a bbox array of numbers. Previously, both methods accepted both formats in
+  violation of the STAC API spec.
 
 ### Changed
 

@@ -570,6 +570,11 @@ const getCatalog = async function (txnEnabled, backend, endpoint = '') {
       rel: 'service-desc',
       type: 'application/vnd.oai.openapi',
       href: `${endpoint}/api`
+    },
+    {
+      rel: 'service-doc',
+      type: 'text/html',
+      href: `${endpoint}/api.html`
     }
   ]
 

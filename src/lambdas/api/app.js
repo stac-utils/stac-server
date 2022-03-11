@@ -8,7 +8,7 @@ const logger = require('morgan')
 const path = require('path')
 const es = require('../../lib/es')
 const api = require('../../lib/api')
-const { readYaml } = require('../../lib/fs')
+const { readFile } = require('../../lib/fs')
 const { addEndpoint } = require('./middleware/add-endpoint')
 
 /**
@@ -39,8 +39,16 @@ app.get('/', async (req, res, next) => {
 app.get('/api', async (_req, res, next) => {
   try {
     res.type('application/vnd.oai.openapi')
-    const spec = await readYaml(path.join(__dirname, 'api.yaml'))
-    res.json(spec)
+    res.download(path.join(__dirname, 'openapi.yaml'))
+  } catch (error) {
+    next(error)
+  }
+})
+
+app.get('/api.html', async (_req, res, next) => {
+  try {
+    res.type('text/html')
+    res.send(await readFile(path.join(__dirname, 'redoc.html'), 'utf8'))
   } catch (error) {
     next(error)
   }

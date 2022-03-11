@@ -1,0 +1,6 @@
+extends: "spectral:oas"
+rules:
+  oas3-api-servers: off
+  oas3-schema: warn
+  tag-description: false
+  oas3-parameter-description: true

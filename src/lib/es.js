@@ -332,7 +332,7 @@ async function constructSearchParams(parameters, limit) {
     body = buildIdQuery(id)
   } else {
     body = buildQuery(parameters)
-    body.sort = buildSort(parameters)
+    body.sort = buildSort(parameters) // sort applied to the id query causes hang???
     body.search_after = buildSearchAfter(parameters)
   }
 

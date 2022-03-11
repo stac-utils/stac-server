@@ -1,5 +1,6 @@
 {
     "id": "collection2",
+    "type": "Collection",
     "stac_version": "1.0.0",
     "description": "Landat-8 L1 Collection-1 imagery radiometrically calibrated and orthorectified using gound points and Digital Elevation Model (DEM) data to correct relief displacement.",
     "links": [

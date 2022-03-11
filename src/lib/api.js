@@ -1,4 +1,4 @@
-const { pickBy, assign } = require('lodash')
+const { pickBy, assign, get: getNested } = require('lodash')
 const gjv = require('geojson-validation')
 const extent = require('@mapbox/extent')
 const { DateTime } = require('luxon')
@@ -371,84 +371,70 @@ const collectionsToCatalogLinks = function (results, endpoint) {
 }
 
 const wrapResponseInFeatureCollection = function (
-  meta, features = [], links = []
+  context, features = [], links = []
 ) {
   return {
     type: 'FeatureCollection',
     stac_version: process.env.STAC_VERSION || '1.0.0',
     stac_extensions: [],
-    context: meta,
-    numberMatched: meta.matched,
-    numberReturned: meta.returned,
+    context,
+    numberMatched: context.matched,
+    numberReturned: context.returned,
     features,
     links
   }
 }
 
-const buildPageLinks = function (meta, parameters, bbox, intersects, endpoint, httpMethod) {
-  const pageLinks = []
-
-  const dictToURI = (dict) => (
-    Object.keys(dict).map(
-      (p) => {
+const buildPaginationLinks = function (limit, parameters, bbox, intersects, endpoint,
+  httpMethod, sortby, items) {
+  if (items.length) {
+    const dictToURI = (dict) => (
+      Object.keys(dict).map(
+        (p) => {
         // const query = encodeURIComponent(dict[p])
-        let value = dict[p]
-        if (typeof value === 'object' && value !== null) {
-          value = JSON.stringify(value)
+          let value = dict[p]
+          if (typeof value === 'object' && value !== null) {
+            value = JSON.stringify(value)
+          }
+          const query = encodeURIComponent(value)
+          if (p === 'collections') {
+            return `${encodeURIComponent(p)}[]=${query}`
+          }
+          return `${encodeURIComponent(p)}=${query}`
         }
-        const query = encodeURIComponent(value)
-        if (p === 'collections') {
-          return `${encodeURIComponent(p)}[]=${query}`
-        }
-        return `${encodeURIComponent(p)}=${query}`
-      }
-    ).join('&')
-  )
-  const { matched, page, limit } = meta
-  const linkParams = pickBy(assign(parameters, { bbox, intersects, limit }))
+      ).join('&')
+    )
 
-  if ((page * limit) < matched) {
-    const newParams = { ...linkParams, page: page + 1 }
+    const lastItem = items[items.length - 1]
+
+    const nextKeys = sortby ? Object.keys(sortby) : ['properties.datetime', 'id', 'collection']
+
+    const next = nextKeys.map((k) => getNested(lastItem, k)).join(',')
+
+    const nextParams = pickBy(assign(parameters, { bbox, intersects, limit, next }))
+
     const link = {
       rel: 'next',
-      title: 'Next page of results',
+      title: 'Next page of Items',
       method: httpMethod
     }
     if (httpMethod === 'GET') {
-      const nextQueryParameters = dictToURI(newParams)
+      const nextQueryParameters = dictToURI(nextParams)
       link.href = `${endpoint}?${nextQueryParameters}`
     } else if (httpMethod === 'POST') {
       link.href = endpoint
       link.merge = false
-      link.body = newParams
+      link.body = nextParams
     }
-    pageLinks.push(link)
+    return [link]
   }
-  if (page > 1) {
-    const newParams = { ...linkParams, page: page - 1 }
-    const link = {
-      rel: 'prev',
-      title: 'Previous page of results',
-      method: httpMethod
-    }
-    if (httpMethod === 'GET') {
-      const prevQueryParameters = dictToURI(newParams)
-      link.href = `${endpoint}?${prevQueryParameters}`
-    } else if (httpMethod === 'POST') {
-      link.href = endpoint
-      link.merge = false
-      link.body = newParams
-    }
-    pageLinks.push(link)
-  }
-
-  return pageLinks
+  return []
 }
 
 const searchItems = async function (collectionId, queryParameters, backend, endpoint, httpMethod) {
   logger.debug(`Query parameters: ${JSON.stringify(queryParameters)}`)
   const {
-    page,
+    next,
     bbox,
     intersects
   } = queryParameters
@@ -475,7 +461,7 @@ const searchItems = async function (collectionId, queryParameters, backend, endp
     fields,
     ids,
     collections,
-    limit
+    next
   })
 
   let newEndpoint = `${endpoint}/search`
@@ -486,16 +472,15 @@ const searchItems = async function (collectionId, queryParameters, backend, endp
 
   logger.debug(`Search parameters: ${JSON.stringify(searchParams)}`)
 
-  let results
+  let esResponse
   try {
-    results = await backend.search(searchParams, page, limit)
+    esResponse = await backend.search(searchParams, limit)
   } catch (error) {
     if (isIndexNotFoundError(error)) {
-      results = {
+      esResponse = {
         context: {
           matched: 0,
           returned: 0,
-          page,
           limit
         },
         results: []
@@ -505,12 +490,12 @@ const searchItems = async function (collectionId, queryParameters, backend, endp
     }
   }
 
-  const { results: itemsResults, context: itemsMeta } = results
-  const pageLinks = buildPageLinks(
-    itemsMeta, searchParams, bbox, intersects, newEndpoint, httpMethod
+  const { results: responseItems, context } = esResponse
+  const pageLinks = buildPaginationLinks(
+    limit, searchParams, bbox, intersects, newEndpoint, httpMethod, sortby, responseItems
   )
-  const items = addItemLinks(itemsResults, endpoint)
-  const response = wrapResponseInFeatureCollection(itemsMeta, items, pageLinks)
+  const items = addItemLinks(responseItems, endpoint)
+  const response = wrapResponseInFeatureCollection(context, items, pageLinks)
   return response
 }
 

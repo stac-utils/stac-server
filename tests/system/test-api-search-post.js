@@ -272,10 +272,12 @@ test('/search limit next query', async (t) => {
           in: ['10']
         }
       },
-      limit: 2
+      limit: 1
     }
   })
-  t.is(response.features.length, 2)
+  t.is(response.features.length, 1)
+
+  const nextLink = linkRel(response, 'next')
 
   response = await t.context.api.client.post('search', {
     json: {
@@ -284,8 +286,8 @@ test('/search limit next query', async (t) => {
           in: ['10']
         }
       },
-      limit: 2,
-      page: 2
+      limit: 1,
+      next: nextLink.body.next
     }
   })
 
@@ -336,23 +338,36 @@ test('/search preserve intersects geometry in next link', async (t) => {
   let response = await t.context.api.client.post('search', {
     json: {
       intersects: intersectsGeometry,
-      limit: 3
+      limit: 2
     }
   })
-  t.is(response.features.length, 3)
-  t.is(response.links.length, 0)
+  t.is(response.features.length, 2)
+  t.is(response.links.length, 1)
+  t.truthy(linkRel(response, 'next'))
 
   response = await t.context.api.client.post('search', {
     json: {
       intersects: intersectsGeometry,
-      limit: 2,
-      page: 2
+      limit: 1,
+      next: linkRel(response, 'next').body.next
     }
   })
 
   t.is(response.features.length, 1)
   t.is(response.links.length, 1)
-  t.deepEqual(linkRel(response, 'prev').body.intersects, intersectsGeometry)
+  t.truthy(linkRel(response, 'next'))
+
+  // next link is not included when there are 0 items in the results
+  response = await t.context.api.client.post('search', {
+    json: {
+      intersects: intersectsGeometry,
+      limit: 1,
+      next: linkRel(response, 'next').body.next
+    }
+  })
+
+  t.is(response.features.length, 0)
+  t.is(response.links.length, 0)
 
   const datetime = '2015-02-19T00:00:00Z/2021-02-19T00:00:00Z'
   response = await t.context.api.client.post('search', {
@@ -376,15 +391,14 @@ test('/search preserve bbox in prev and next links', async (t) => {
   let response = await t.context.api.client.post('search', {
     json: {
       bbox,
-      limit: 2,
-      page: 2
+      limit: 1,
     }
   })
 
   t.is(response.features.length, 1)
-  console.log(`${JSON.stringify(response.links)}`)
   t.is(response.links.length, 1)
-  t.deepEqual(linkRel(response, 'prev').body.bbox, bbox)
+  const prevLink = linkRel(response, 'next')
+  t.deepEqual(prevLink.body.bbox, bbox)
 
   const datetime = '2015-02-19T00:00:00Z/2021-02-19T00:00:00Z'
   response = await t.context.api.client.post('search', {

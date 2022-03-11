@@ -45,22 +45,20 @@ const extractIntersects = function (params) {
   return intersectsGeometry
 }
 
-const extractBbox = function (params) {
+const extractBbox = function (params, httpMethod = 'GET') {
   const { bbox } = params
   if (bbox) {
     let bboxArray
-    if (typeof bbox === 'string') {
+    if (httpMethod === 'GET' && typeof bbox === 'string') {
       try {
-        bboxArray = JSON.parse(bbox)
-      } catch (e) {
-        try {
-          bboxArray = bbox.split(',').map(parseFloat)
-        } catch (e2) {
-          throw new ValidationError('Invalid bbox')
-        }
+        bboxArray = bbox.split(',').map(parseFloat).filter((x) => !Number.isNaN(x))
+      } catch (e2) {
+        throw new ValidationError('Invalid bbox')
       }
-    } else {
+    } else if (httpMethod === 'POST' && Array.isArray(bbox)) {
       bboxArray = bbox
+    } else {
+      throw new ValidationError('Invalid bbox')
     }
 
     if (bboxArray.length !== 4 && bboxArray.length !== 6) {
@@ -350,7 +348,7 @@ const addItemLinks = function (results, endpoint) {
 }
 
 const collectionsToCatalogLinks = function (results, endpoint) {
-  const stacVersion = process.env.STAC_VERSION
+  const stacVersion = process.env.STAC_VERSION || '1.0.0'
   const catalogId = process.env.STAC_ID || 'stac-server'
   const catalogTitle = process.env.STAC_TITLE || 'A STAC API'
   const catalogDescription = process.env.STAC_DESCRIPTION || 'A STAC API running on stac-server'
@@ -377,7 +375,7 @@ const wrapResponseInFeatureCollection = function (
 ) {
   return {
     type: 'FeatureCollection',
-    stac_version: process.env.STAC_VERSION,
+    stac_version: process.env.STAC_VERSION || '1.0.0',
     stac_extensions: [],
     context: meta,
     numberMatched: meta.matched,
@@ -458,7 +456,7 @@ const searchItems = async function (collectionId, queryParameters, backend, endp
     throw new ValidationError('Expected bbox OR intersects, not both')
   }
   const datetime = extractDatetime(queryParameters)
-  const bboxGeometry = extractBbox(queryParameters)
+  const bboxGeometry = extractBbox(queryParameters, httpMethod)
   const intersectsGeometry = extractIntersects(queryParameters)
   const geometry = intersectsGeometry || bboxGeometry
 

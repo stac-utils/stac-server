@@ -44,6 +44,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - ItemCollection results no longer have a `prev` link relation. This is a by-product of changing
   pagination to use Elasticsearch's more performant `search_after` mechanism rather than `page`
 - Pagination works past 10,000 items now
+- An invalid search `intersects` parameter may sometimes return a 500 instead of a 400 status code.
 
 ### Removed
 

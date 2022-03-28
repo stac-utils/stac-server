@@ -72,11 +72,11 @@ function buildQuery(parameters) {
   const eq = 'eq'
   const inop = 'in'
   const { query, intersects, collections, ids } = parameters
-  let must = []
+  let filterQueries = []
   if (query) {
     // Using reduce rather than map as we don't currently support all
     // stac query operators.
-    must = Object.keys(query).reduce((accumulator, property) => {
+    filterQueries = Object.keys(query).reduce((accumulator, property) => {
       const operatorsObject = query[property]
       const operators = Object.keys(operatorsObject)
       if (operators.includes(eq)) {
@@ -99,11 +99,11 @@ function buildQuery(parameters) {
         accumulator.push(rangeQuery)
       }
       return accumulator
-    }, must)
+    }, filterQueries)
   }
 
   if (ids) {
-    must.push({
+    filterQueries.push({
       terms: {
         id: ids
       }
@@ -111,7 +111,7 @@ function buildQuery(parameters) {
   }
 
   if (collections) {
-    must.push({
+    filterQueries.push({
       terms: {
         collection: collections
       }
@@ -119,7 +119,7 @@ function buildQuery(parameters) {
   }
 
   if (intersects) {
-    must.push({
+    filterQueries.push({
       geo_shape: {
         geometry: { shape: intersects }
       }
@@ -132,14 +132,16 @@ function buildQuery(parameters) {
   }
 
   if (datetimeQuery) {
-    must.push(datetimeQuery)
+    filterQueries.push(datetimeQuery)
   }
 
-  const filter = { bool: { must } }
-  const queryBody = {
-    constant_score: { filter }
+  return {
+    query: {
+      bool: {
+        filter: filterQueries
+      }
+    }
   }
-  return { query: queryBody }
 }
 
 function buildIdQuery(id) {

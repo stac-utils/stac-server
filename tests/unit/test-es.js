@@ -12,12 +12,12 @@ test('search id parameter doesnt override other parameters', async (t) => {
 
   // TODO: the ordering here is fragile. helper methods needed to ensure the queries are correct
   t.is(
-    searchBody.body.query.constant_score.filter.bool.must[0].terms.id,
+    searchBody.body.query.bool.filter[0].terms.id,
     ids,
     'query contains id filter'
   )
   t.assert(
-    searchBody.body.query.constant_score.filter.bool.must[1].range['properties.datetime'],
+    searchBody.body.query.bool.filter[1].range['properties.datetime'],
     'query contains datetime filter'
   )
 })

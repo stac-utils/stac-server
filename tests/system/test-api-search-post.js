@@ -264,6 +264,15 @@ test('/search in query', async (t) => {
   t.is(response.features.length, 3)
 })
 
+test('/search limit only', async (t) => {
+  const response = await t.context.api.client.post('search', {
+    json: {
+      limit: 1
+    }
+  })
+  t.is(response.features.length, 1)
+})
+
 test('/search limit next query', async (t) => {
   let response = await t.context.api.client.post('search', {
     json: {

@@ -1,5 +1,4 @@
 const { pickBy, assign, get: getNested } = require('lodash')
-const gjv = require('geojson-validation')
 const extent = require('@mapbox/extent')
 const { DateTime } = require('luxon')
 const { isIndexNotFoundError } = require('./es')
@@ -31,16 +30,12 @@ const extractIntersects = function (params) {
       geojson = { ...intersects }
     }
 
-    if (gjv.valid(geojson)) {
-      if (geojson.type === 'FeatureCollection' || geojson.type === 'Feature') {
-        throw new Error(
-          'Expected GeoJSON geometry, not Feature or FeatureCollection'
-        )
-      }
-      intersectsGeometry = geojson
-    } else {
-      throw new ValidationError('Invalid GeoJSON geometry')
+    if (geojson.type === 'FeatureCollection' || geojson.type === 'Feature') {
+      throw new Error(
+        'Expected GeoJSON geometry, not Feature or FeatureCollection'
+      )
     }
+    intersectsGeometry = geojson
   }
   return intersectsGeometry
 }

@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - API responses are now compressed
 - Transaction Extension is now implemented
 - Landing Page link relation service-doc now exists, and points to a Redoc instance
+- If a request includes the `X-STAC-Endpoint` header, that endpoint will be used when generating link hrefs
 
 ### Fixed
 

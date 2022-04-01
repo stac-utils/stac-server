@@ -326,7 +326,7 @@ async function getCollections(page = 1, limit = 100) {
   return results
 }
 
-async function constructSearchParams(parameters, limit) {
+async function constructSearchParams(parameters, page, limit) {
   const { id, collections } = parameters
 
   let body
@@ -346,6 +346,10 @@ async function constructSearchParams(parameters, limit) {
     track_total_hits: true
   }
 
+  if (page !== undefined) {
+    searchParams.from = (page - 1) * limit
+  }
+
   // disable fields filter for now
   const { _sourceIncludes, _sourceExcludes } = buildFieldsFilter(parameters)
   if (_sourceExcludes.length) {
@@ -358,8 +362,8 @@ async function constructSearchParams(parameters, limit) {
   return searchParams
 }
 
-async function search(parameters, limit = 10) {
-  const searchParams = await constructSearchParams(parameters, limit)
+async function search(parameters, page, limit = 10) {
+  const searchParams = await constructSearchParams(parameters, page, limit)
   const esResponse = await esQuery({
     ignore_unavailable: true,
     allow_no_indices: true,

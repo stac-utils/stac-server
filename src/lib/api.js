@@ -91,6 +91,27 @@ const extractLimit = function (params) {
   return undefined
 }
 
+const extractPage = function (params) {
+  const { page: pageStr } = params
+
+  if (pageStr !== undefined) {
+    let page
+    try {
+      page = parseInt(pageStr)
+    } catch (e) {
+      throw new ValidationError('Invalid page value')
+    }
+
+    if (Number.isNaN(page) || page <= 0) {
+      throw new ValidationError(
+        'Invalid page value, must be a number greater than 1'
+      )
+    }
+    return page
+  }
+  return undefined
+}
+
 // eslint-disable-next-line max-len
 const RFC3339_REGEX = /^(\d\d\d\d)\-(\d\d)\-(\d\d)T(\d\d):(\d\d):(\d\d)([.]\d+)?(Z|([-+])(\d\d):(\d\d))$/
 
@@ -447,6 +468,7 @@ const searchItems = async function (collectionId, queryParameters, backend, endp
   const ids = extractIds(queryParameters)
   const collections = extractCollectionIds(queryParameters)
   const limit = extractLimit(queryParameters)
+  const page = extractPage(queryParameters)
 
   const searchParams = pickBy({
     datetime,
@@ -469,7 +491,7 @@ const searchItems = async function (collectionId, queryParameters, backend, endp
 
   let esResponse
   try {
-    esResponse = await backend.search(searchParams, limit)
+    esResponse = await backend.search(searchParams, page, limit)
   } catch (error) {
     if (isIndexNotFoundError(error)) {
       esResponse = {

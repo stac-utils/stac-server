@@ -273,6 +273,22 @@ test('/search limit only', async (t) => {
   t.is(response.features.length, 1)
 })
 
+test('/search limit and page', async (t) => {
+  const response1 = await t.context.api.client.post('search', {
+    json: {
+      limit: 1,
+      page: 1
+    }
+  })
+  const response2 = await t.context.api.client.post('search', {
+    json: {
+      limit: 1,
+      page: 2
+    }
+  })
+  t.true(response1.features[0].id !== response2.features[0].id)
+})
+
 test('/search limit next query', async (t) => {
   let response = await t.context.api.client.post('search', {
     json: {

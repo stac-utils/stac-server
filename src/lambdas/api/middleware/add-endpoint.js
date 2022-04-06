@@ -16,8 +16,7 @@ const determineEndpoint = (req) => {
 
   if (process.env['STAC_API_URL']) return process.env['STAC_API_URL']
 
-  process.env['STAC_API_ROOTPATH'] ?
-    rootPath = process.env['STAC_API_ROOTPATH'] : rootPath = ""
+  rootPath = process.env['STAC_API_ROOTPATH'] ? process.env['STAC_API_ROOTPATH'] : ""
 
   if (req.get('X-Forwarded-Proto') && req.get('X-Forwarded-Host')) {
     return `${req.get('X-Forwarded-Proto')}://${req.get('X-Forwarded-Host')}${rootPath}`

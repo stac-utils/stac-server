@@ -16,13 +16,15 @@ const determineEndpoint = (req) => {
 
   if (process.env['STAC_API_URL']) return process.env['STAC_API_URL']
 
+  const rootPath = process.env['STAC_API_ROOTPATH'] || ''
+
   if (req.get('X-Forwarded-Proto') && req.get('X-Forwarded-Host')) {
-    return `${req.get('X-Forwarded-Proto')}://${req.get('X-Forwarded-Host')}`
+    return `${req.get('X-Forwarded-Proto')}://${req.get('X-Forwarded-Host')}${rootPath}`
   }
 
   return req.event && req.event.requestContext && req.event.requestContext.stage
     ? `${req.get('X-Forwarded-Proto')}://${req.get('Host')}/${req.event.requestContext.stage}`
-    : `${req.get('X-Forwarded-Proto')}://${req.get('Host')}`
+    : `${req.get('X-Forwarded-Proto')}://${req.get('Host')}${rootPath}`
 }
 
 /**

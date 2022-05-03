@@ -283,6 +283,43 @@ aws lambda invoke \
 
 Stac-server is now ready to ingest data!
 
+### Proxying Stac-server through CloudFront
+The API Gateway URL associated with the deployed stac-server instance may not be the URL that you ultimately wish to expose to your API users. AWS CloudFront can be used to proxy to a more human readable URL. In order to accomplish this:
+
+1. Create a new CloudFront distribution (or use an existing distribution).
+2. Set the origin to the Gateway API URL (obtain in the stage view of the deployed stac-server). The URL is in the form `<##abcde>.execute-api.region.amazonaws.com`.
+3. Set the origin path to the deployed stage name prepended with a `/`, (e.g., /dev or /prod).
+4. Under behaviors, add a new behavior for the desired URL endpoint or subdomain (e.g., /api or /v0.4.0).
+5. Set the 'Origin and origin groups to the URL defined above ('`<##abcde>.execute-api.region.amazonaws.com`').
+6. Set Viewer to HTTPS only and Allowed HTTP Methods to 'GET, HEAD, OPTIONS, PUT, POST, PATCH, DELETE'.
+7. Set the Cache Policy to CachingDisabled
+8. Optionally, define a LambdaEdge to perform a URL rewrite. This is necessary if your API URL is appended to the root URL (e.g., mydomain.com/api). The lambda must rewrite the URL to remove the /api. For example:
+
+    ```python
+    from re import sub
+
+    def lambda_handler(event, context):
+        request = event['Records'][0]['cf']['request']
+        uri = request["uri"]
+
+        if uri in ["/", "/index.html"]:
+            response = {
+                "status": 302,
+                "statusDescription": "Found",
+                "headers": {
+                    "location": [{
+                        "key": "Location",
+                        "value": "/api/"
+                    }]
+                }
+            }
+            return response
+
+        request["uri"] = sub("^/api", "/", uri)
+        print(request)
+        return request
+    ```
+ 
 ## Ingesting Data
 
 STAC Collections and Items are ingested by the `ingest` Lambda function, however this Lambda is not invoked directly by a user, it consumes records from the `stac-server-<stage>-queue` SQS. To add STAC Items or Collections to the queue, publish them to the SNS Topic `stac-server-<stage>-ingest`.

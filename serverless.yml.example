@@ -60,17 +60,6 @@ functions:
       - sqs:
           arn:
             Fn::GetAtt: [ingestQueue, Arn]
-  failed-ingest:
-    description: stac-server Failed Ingest Lambda
-    handler: index.handler
-    memorySize: 128
-    timeout: 30
-    package:
-      artifact: dist/failed-ingest/failed-ingest.zip
-    events:
-      - sqs:
-          arn:
-            Fn::GetAtt: [deadLetterQueue, Arn]
 
 resources:
   Description: A STAC API running on stac-server

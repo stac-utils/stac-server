@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [0.5.0] - 2022-05-18
 
+### Added
+
+- Added STAC_API_VERSION as an environment variable to the serverless.yml file
+- Added STAC_API_VERSION to display on the API landing page within the api.js file
+under src/lib/api.js in the collectionsToCatalogLinks function
+
+### Changed
+
+- Changed the rel type to 'server' for the URL to the STAC API webpage inside the Links object
+
 ### Removed
 
 - Removed the failed-ingest Lambda function from the serverless.yml file since this function is no longer needed

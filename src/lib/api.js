@@ -365,11 +365,13 @@ const addItemLinks = function (results, endpoint) {
 
 const collectionsToCatalogLinks = function (results, endpoint) {
   const stacVersion = process.env.STAC_VERSION || '1.0.0'
+  const stacApiVersion = process.env.STAC_API_VERSION || '1.0.0-beta.5'
   const catalogId = process.env.STAC_ID || 'stac-server'
   const catalogTitle = process.env.STAC_TITLE || 'A STAC API'
   const catalogDescription = process.env.STAC_DESCRIPTION || 'A STAC API running on stac-server'
   const catalog = {
     stac_version: stacVersion,
+    stac_api_version: stacApiVersion,
     type: 'Catalog',
     id: catalogId,
     title: catalogTitle,
@@ -583,7 +585,7 @@ const getCatalog = async function (txnEnabled, backend, endpoint = '') {
   const docsUrl = process.env.STAC_DOCS_URL
   if (docsUrl) {
     links.push({
-      rel: 'docs',
+      rel: 'server',
       href: docsUrl,
       type: 'text/html'
     })

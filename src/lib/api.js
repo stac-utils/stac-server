@@ -188,12 +188,12 @@ const extractSortby = function (params) {
 
       sortbyRules = sortbys.map((sortbyRule) => {
         if (sortbyRule[0] === '-') {
-          return [{ field: sortbyRule.slice(1), direction: 'desc' }]
+          return { field: sortbyRule.slice(1), direction: 'desc' }
         }
         if (sortbyRule[0] === '+') {
-          return [{ field: sortbyRule.slice(1), direction: 'asc' }]
+          return { field: sortbyRule.slice(1), direction: 'asc' }
         }
-        return [{ field: sortbyRule, direction: 'asc' }]
+        return { field: sortbyRule, direction: 'asc' }
       })
     } else {
       // POST request

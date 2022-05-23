@@ -184,16 +184,16 @@ const extractSortby = function (params) {
   if (sortby) {
     if (typeof sortby === 'string') {
       // GET request - different syntax
-      sortbyRules = []
       const sortbys = sortby.split(',')
-      sortbys.forEach((sortbyRule) => {
+
+      sortbyRules = sortbys.map((sortbyRule) => {
         if (sortbyRule[0] === '-') {
-          sortbyRules.push({ field: sortbyRule.slice(1), direction: 'desc' })
-        } else if (sortbyRule[0] === '+') {
-          sortbyRules.push({ field: sortbyRule.slice(1), direction: 'asc' })
-        } else {
-          sortbyRules.push({ field: sortbyRule, direction: 'asc' })
+          return { field: sortbyRule.slice(1), direction: 'desc' }
         }
+        if (sortbyRule[0] === '+') {
+          return { field: sortbyRule.slice(1), direction: 'asc' }
+        }
+        return { field: sortbyRule, direction: 'asc' }
       })
     } else {
       // POST request

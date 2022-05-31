@@ -403,21 +403,21 @@ const wrapResponseInFeatureCollection = function (
   }
 }
 
-const buildPaginationLinks = function (limit, parameters, bbox, intersects, endpoint,
+const buildPaginationLinks = function (limit, page, parameters, bbox, intersects, endpoint,
   httpMethod, sortby, items) {
   if (items.length) {
     const dictToURI = (dict) => (
       Object.keys(dict).map(
         (p) => {
-        // const query = encodeURIComponent(dict[p])
           let value = dict[p]
           if (typeof value === 'object' && value !== null) {
-            value = JSON.stringify(value)
+            if (p === 'sortby') {
+              value = value[0]['field']
+            } else {
+              value = JSON.stringify(value)
+            }
           }
           const query = encodeURIComponent(value)
-          if (p === 'collections') {
-            return `${encodeURIComponent(p)}[]=${query}`
-          }
           return `${encodeURIComponent(p)}=${query}`
         }
       ).join('&')
@@ -429,13 +429,16 @@ const buildPaginationLinks = function (limit, parameters, bbox, intersects, endp
 
     const next = nextKeys.map((k) => getNested(lastItem, k)).join(',')
 
-    const nextParams = pickBy(assign(parameters, { bbox, intersects, limit, next }))
-
+    const nextParams = pickBy(assign(parameters, { bbox, intersects, limit, next, page }))
     const link = {
       rel: 'next',
       title: 'Next page of Items',
       method: httpMethod
     }
+
+    //Increment page parameter by 1 to get to next page
+    nextParams['page'] += 1
+
     if (httpMethod === 'GET') {
       const nextQueryParameters = dictToURI(nextParams)
       link.href = `${endpoint}?${nextQueryParameters}`
@@ -511,7 +514,7 @@ const searchItems = async function (collectionId, queryParameters, backend, endp
 
   const { results: responseItems, context } = esResponse
   const pageLinks = buildPaginationLinks(
-    limit, searchParams, bbox, intersects, newEndpoint, httpMethod, sortby, responseItems
+    limit, page, searchParams, bbox, intersects, newEndpoint, httpMethod, sortby, responseItems
   )
   const items = addItemLinks(responseItems, endpoint)
   const response = wrapResponseInFeatureCollection(context, items, pageLinks)

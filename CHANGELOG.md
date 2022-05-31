@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [0.5.0] - 2022-05-31
+
+### Changed
+
+- Modified api.js to generate proper next page link with the correct sortby parameter
+- The 'collections' parameter was also getting incorrectly generated in the next link, fixed that
+
+### Added
+
+- Added the 'page' parameter to the next link, for both GET and POST requests
+
 ## [0.5.0] - 2022-05-20
 
 ### Changed

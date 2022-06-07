@@ -7,25 +7,17 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
-- Add support for pre- and post-hooks
-
-## [0.5.0] - 2022-05-20
-
-### Changed
-
-- Used map instead of foreach/push in api.js file
-
-## [0.5.0] - 2022-05-18
-
 ### Added
 
 - Added STAC_API_VERSION as an environment variable to the serverless.yml file
-- Added STAC_API_VERSION to display on the API landing page within the api.js file
-under src/lib/api.js in the collectionsToCatalogLinks function
+- Added STAC_API_VERSION to display on the API landing page within the api.js file under src/lib/api.js in the collectionsToCatalogLinks function
+- Add support for pre- and post-hooks
 
 ### Changed
 
 - Changed the rel type to 'server' for the URL to the STAC API webpage inside the Links object
+- Modified sortby and collections parameters in nextlink
+- Used map instead of foreach/push in api.js file
 
 ### Removed
 

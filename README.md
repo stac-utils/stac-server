@@ -19,6 +19,7 @@
     - [Ingesting large items](#ingesting-large-items)
     - [Subscribing to SNS Topics](#subscribing-to-sns-topics)
     - [Ingest Errors](#ingest-errors)
+  - [Pre- and Post- Hooks]
   - [Development](#development)
     - [Running Locally](#running-locally)
     - [Running Unit Tests](#running-unit-tests)
@@ -313,6 +314,49 @@ Stac-server can also be subscribed to SNS Topics that publish complete STAC Item
 ### Ingest Errors
 
 Errors that occur during ingest will end up in the dead letter processing queue, where they are processed by the `stac-server-<stage>-failed-ingest` Lambda function. Currently all the failed-ingest Lambda does is log the error, see the CloudWatch log `/aws/lambda/stac-server-<stage>-failed-ingest` for errors.
+
+## Pre- and Post-Hooks
+
+Stac-server supports two hooks into the request process: a pre-hook and a post-hook. These are each lambda functions which, if configured, will be invoked by stac-server. It is assumed that the stac-server lambda has been granted permission to invoke these lambda functions, if configured.
+
+### Pre-Hook
+
+If the stac-server is deployed with the `PRE_HOOK` environment variable set to the name of a lambda function, then that function will be called as the pre-hook.
+
+The event passed into the pre-hook lambda will be an instance of an [API Gateway Proxy Event](https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-lambda-proxy-integrations.html#api-gateway-simple-proxy-for-lambda-input-format).
+
+If the return value from the pre-hook lambda is an instance of an [API Gateway Proxy Result](https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-lambda-proxy-integrations.html#api-gateway-simple-proxy-for-lambda-output-format), then that response will immediately be returned to the client.
+
+If the return value of the pre-hook lambda is an instance of an [API Gateway Proxy Event](https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-lambda-proxy-integrations.html#api-gateway-simple-proxy-for-lambda-input-format), then that event will be passed along to stac-server.
+
+If the pre-hook lambda throws an exception, an internal server error will be returned to the client.
+
+### Post-Hook
+
+If the stac-server is deployed with the `POST_HOOK` environment variable set to the name of a lambda function, then that function will be called as the post-hook.
+
+The event passed into the post-hook labmda will be the response from the stac-server, and will be an instance of an [API Gateway Proxy Result](https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-lambda-proxy-integrations.html#api-gateway-simple-proxy-for-lambda-output-format).
+
+The return value of the post-hook lambda must be an instance of an [API Gateway Proxy Result](https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-lambda-proxy-integrations.html#api-gateway-simple-proxy-for-lambda-output-format).
+
+If the post-hook lambda throws an exception, an internal server error will be returned to the client.
+
+### Request Flow
+
+```mermaid
+flowchart
+  client -- APIGatewayProxyEvent --> pre-hook
+  pre-hook[pre-hook lambda]
+  pre-hook -- APIGatewayProxyResult --> client
+  pre-hook -- APIGatewayProxyEvent --> stac-server
+  post-hook[post-hook lambda]
+  stac-server -- APIGatewayProxyResult --> post-hook
+  post-hook -- APIGatewayProxyResult --> client
+```
+
+### Validation
+
+The outputs of the pre- and post-hooks are validated and, if they don't comply with the defined schemas, an internal server error will be returned to the client. Information about the invalid event, as well as details about the parsing errors, will be logged to CloudWatch.
 
 ## Development
 

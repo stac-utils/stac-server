@@ -19,7 +19,7 @@
     - [Ingesting large items](#ingesting-large-items)
     - [Subscribing to SNS Topics](#subscribing-to-sns-topics)
     - [Ingest Errors](#ingest-errors)
-  - [Pre- and Post- Hooks]
+  - [Pre- and Post- Hooks](#pre--and-post-hooks)
   - [Development](#development)
     - [Running Locally](#running-locally)
     - [Running Unit Tests](#running-unit-tests)

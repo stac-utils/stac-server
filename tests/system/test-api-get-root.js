@@ -38,12 +38,6 @@ test('GET / includes the default links', async (t) => {
   }
 })
 
-test('GET / returns a compressed response', async (t) => {
-  const response = await t.context.api.client.get('', { resolveBodyOnly: false })
-
-  t.is(response.headers['content-encoding'], 'gzip')
-})
-
 test('GET / returns links with the correct endpoint when the API was started with STAC_API_URL set', async (t) => {
   const before = { ...process.env }
   let api

@@ -8,6 +8,8 @@ module.exports = {
       geometry: { type: 'geo_shape' },
       assets: { type: 'object', enabled: false },
       links: { type: 'object', enabled: false },
+      id: { type: 'keyword' },
+      collection: { type: 'keyword' },
       properties: {
         type: 'object',
         properties: {

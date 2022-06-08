@@ -421,6 +421,8 @@ const buildPaginationLinks = function (limit, parameters, bbox, intersects, endp
                 }
               }
               value = sortFields.join(',')
+            } else if (p === 'collections') {
+              value = value.toString()
             } else {
               value = JSON.stringify(value)
             }

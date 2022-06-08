@@ -5,35 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [0.5.0] - 2022-06-07
+## [Unreleased]
 
 ### Added
 
 - Added mappings for 'id' and 'collection' for default sort keys
-
-## [0.5.0] - 2022-06-01
+- Added STAC_API_VERSION as an environment variable to the serverless.yml file
+- Added STAC_API_VERSION to display on the API landing page within the api.js file under src/lib/api.js in the collectionsToCatalogLinks function
+- Add support for pre- and post-hooks
 
 ### Changed
 
 - Modified sortby and collections parameters in nextlink
-
-## [0.5.0] - 2022-05-20
-
-### Changed
-
 - Used map instead of foreach/push in api.js file
-
-## [0.5.0] - 2022-05-18
-
-### Added
-
-- Added STAC_API_VERSION as an environment variable to the serverless.yml file
-- Added STAC_API_VERSION to display on the API landing page within the api.js file
-under src/lib/api.js in the collectionsToCatalogLinks function
-
-### Changed
-
 - Changed the rel type to 'server' for the URL to the STAC API webpage inside the Links object
+- Modified sortby and collections parameters in nextlink
+- Used map instead of foreach/push in api.js file
+- Compression of responses is now handled by API Gateway and not Express. This means that the _uncompressed_ response from stac-server [must be less than 6 MB](https://docs.aws.amazon.com/lambda/latest/dg/gettingstarted-limits.html#function-configuration-deployment-and-execution).
 
 ### Removed
 

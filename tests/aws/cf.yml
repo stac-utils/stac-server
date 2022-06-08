@@ -1,0 +1,109 @@
+Resources:
+  Role:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - "sts:AssumeRole"
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      RoleName: app-stac-server-aws-tests
+  Lambda1:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code:
+        ZipFile: |
+          exports.handler = async (event) => {
+            const body = JSON.parse(event.body)
+            return {
+              ...event,
+              body: JSON.stringify({
+                ...body,
+                id: `${body.id}-xxx`
+              })
+            }
+          }
+      FunctionName: stac-server-aws-test-lambda-1
+      Handler: index.handler
+      Role: !GetAtt Role.Arn
+      Runtime: nodejs16.x
+  Lambda2:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code:
+        ZipFile: |
+          exports.handler = async (event) => {
+            throw new Error('Latifi crashes again')
+          }
+      FunctionName: stac-server-aws-test-lambda-2
+      Handler: index.handler
+      Role: !GetAtt Role.Arn
+      Runtime: nodejs16.x
+  Lambda3:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code:
+        ZipFile: |
+          exports.handler = async (event) => {
+            return { name: 'Lewis' }
+          }
+      FunctionName: stac-server-aws-test-lambda-3
+      Handler: index.handler
+      Role: !GetAtt Role.Arn
+      Runtime: nodejs16.x
+  Lambda4:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code:
+        ZipFile: |
+          exports.handler = async (event) => {
+            return 'Box, box, box'
+          }
+      FunctionName: stac-server-aws-test-lambda-4
+      Handler: index.handler
+      Role: !GetAtt Role.Arn
+      Runtime: nodejs16.x
+  Lambda5:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code:
+        ZipFile: |
+          exports.handler = async (event) => {
+            return {
+              statusCode: 418,
+              body: "I'm a teapot"
+            }
+          }
+      FunctionName: stac-server-aws-test-lambda-5
+      Handler: index.handler
+      Role: !GetAtt Role.Arn
+      Runtime: nodejs16.x
+  Lambda6:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code:
+        ZipFile: |
+          exports.handler = async (event) => {
+            return {
+              ...event,
+              path: '/api.html',
+              pathParameters: {
+                ...event.pathParameters,
+                proxy: 'api.html'
+              },
+              requestContext: {
+                ...event.requestContext,
+                path: '/prod/api.html'
+              }
+            }
+          }
+      FunctionName: stac-server-aws-test-lambda-6
+      Handler: index.handler
+      Role: !GetAtt Role.Arn
+      Runtime: nodejs16.x

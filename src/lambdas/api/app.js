@@ -1,6 +1,5 @@
 // @ts-check
 
-const compression = require('compression')
 const cors = require('cors')
 const createError = require('http-errors')
 const express = require('express')
@@ -25,7 +24,6 @@ const app = express()
 app.use(logger('dev'))
 app.use(cors())
 app.use(express.json())
-app.use(compression())
 app.use(addEndpoint)
 
 app.get('/', async (req, res, next) => {

@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Changed the rel type to 'server' for the URL to the STAC API webpage inside the Links object
 - Modified sortby and collections parameters in nextlink
 - Used map instead of foreach/push in api.js file
+- Compression of responses is now handled by API Gateway and not Express. This means that the _uncompressed_ response from stac-server [must be less than 6 MB](https://docs.aws.amazon.com/lambda/latest/dg/gettingstarted-limits.html#function-configuration-deployment-and-execution).
 
 ### Removed
 

@@ -19,6 +19,7 @@
     - [Ingesting large items](#ingesting-large-items)
     - [Subscribing to SNS Topics](#subscribing-to-sns-topics)
     - [Ingest Errors](#ingest-errors)
+  - [Pre- and Post- Hooks](#pre--and-post-hooks)
   - [Development](#development)
     - [Running Locally](#running-locally)
     - [Running Unit Tests](#running-unit-tests)
@@ -284,6 +285,7 @@ aws lambda invoke \
 Stac-server is now ready to ingest data!
 
 ### Proxying Stac-server through CloudFront
+
 The API Gateway URL associated with the deployed stac-server instance may not be the URL that you ultimately wish to expose to your API users. AWS CloudFront can be used to proxy to a more human readable URL. In order to accomplish this:
 
 1. Create a new CloudFront distribution (or use an existing distribution).
@@ -320,6 +322,73 @@ The API Gateway URL associated with the deployed stac-server instance may not be
         return request
     ```
  
+### Locking down transaction endpoints
+
+If you wanted to deploy STAC Server in a way which ensures certain endpoints have restricted access but others don't, you can deploy it into a VPC and add conditions that allow only certain IP addresses to access certain endpoints. Once you deploy STAC Server into a VPC, you can modify the Resource Policy of the API Gateway endpoint that gets deployed to restrict access to certain endpoints. Here is a hypothetical example. Assume that the account into which STAC Server is deployed is numbered 1234-5678-9123, the API ID is ab1c23def, and the region in which it is deployed is us-west-2. You might want to give the general public access to use any GET or POST endpoints with the API such as the "/search" endpoint, but lock down access to the transaction endpoints (see https://github.com/radiantearth/stac-api-spec/tree/master/ogcapi-features/extensions/transaction) to only allow certain IP addresses to access them. These IP addresses can be, for example: 94.61.192.106, 204.176.50.129, and 11.27.65.78. In order to do this, you can impose a condition on the API Gateway that only allows API transactions such as adding, updating, and deleting STAC items from the whitelisted endpoints. For example, here is a Resource Policy containing two statements that allow this to happen:
+```
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Principal": "*",
+            "Action": "execute-api:Invoke",
+            "Resource": [
+                "arn:aws:execute-api:us-west-2:123456789123:ab1c23def/v1/POST/search",
+                "arn:aws:execute-api:us-west-2:123456789123:ab1c23def/v1/POST/search/*",
+                "arn:aws:execute-api:us-west-2:123456789123:ab1c23def/v1/GET/search/*",
+                "arn:aws:execute-api:us-west-2:123456789123:ab1c23defi/v1/GET/*"
+            ]
+        },
+        {
+            "Effect": "Allow",
+            "Principal": "*",
+            "Action": "execute-api:Invoke",
+            "Resource": [
+                "arn:aws:execute-api:us-west-2:123456789123:ab1c23def/v1/POST/collections/*/items",
+                "arn:aws:execute-api:us-west-2:123456789123:ab1c23def/v1/PUT/collections/*/items/*",
+                "arn:aws:execute-api:us-west-2:123456789123:ab1c23def/v1/PATCH/collections/*/items/*",
+                "arn:aws:execute-api:us-west-2:123456789123:ab1c23def/v1/DELETE/collections/*/items/*"
+            ],
+            "Condition": {
+                "IpAddress": {
+                    "aws:sourceIp": [
+                        "94.61.192.106",
+                        "204.176.50.129",
+                        "11.27.65.78"
+                    ]
+                }
+            }
+        }
+    ]
+}
+```
+
+The first statement in the Resource Policy above grants access to STAC API endpoints for use in general operations like searching, and the second statement restricts access to the Transaction endpoints to a set of source IP addresses. According to this policy, POST, PUT, PATCH, and DELETE operations on items within collections are only allowed if the request originates from the IP addresses 94.61.192.106, 204.176.50.129, or 11.27.65.78. The second statement can also be written in another manner, denying access to the Transaction endpoints for all addresses that don’t match a set of source IP addresses. This is shown below.
+
+```
+    {
+        "Effect": "Deny",
+        "Principal": "*",
+        "Action": "execute-api:Invoke",
+        "Resource": [
+            "arn:aws:execute-api:us-west-2:123456789123:ab1c23def/v1/POST/collections/*/items",
+            "arn:aws:execute-api:us-west-2:123456789123:ab1c23def/v1/PUT/collections/*/items/*",
+            "arn:aws:execute-api:us-west-2:123456789123:ab1c23def/v1/PATCH/collections/*/items/*",
+            "arn:aws:execute-api:us-west-2:123456789123:ab1c23def/v1/DELETE/collections/*/items/*"
+        ],
+        "Condition": {
+            "NotIpAddress": {
+                "aws:sourceIp": [
+                    "94.61.192.106",
+                    "204.176.50.129",
+                    "11.27.65.78"
+                ]
+            }
+        }
+    }
+```
+
 ## Ingesting Data
 
 STAC Collections and Items are ingested by the `ingest` Lambda function, however this Lambda is not invoked directly by a user, it consumes records from the `stac-server-<stage>-queue` SQS. To add STAC Items or Collections to the queue, publish them to the SNS Topic `stac-server-<stage>-ingest`.
@@ -350,6 +419,51 @@ Stac-server can also be subscribed to SNS Topics that publish complete STAC Item
 ### Ingest Errors
 
 Errors that occur during ingest will end up in the dead letter processing queue, where they are processed by the `stac-server-<stage>-failed-ingest` Lambda function. Currently all the failed-ingest Lambda does is log the error, see the CloudWatch log `/aws/lambda/stac-server-<stage>-failed-ingest` for errors.
+
+## Pre- and Post-Hooks
+
+Stac-server supports two hooks into the request process: a pre-hook and a post-hook. These are each lambda functions which, if configured, will be invoked by stac-server. It is assumed that the stac-server lambda has been granted permission to invoke these lambda functions, if configured.
+
+### Pre-Hook
+
+If the stac-server is deployed with the `PRE_HOOK` environment variable set to the name of a lambda function, then that function will be called as the pre-hook.
+
+The event passed into the pre-hook lambda will be an instance of an [API Gateway Proxy Event](https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-lambda-proxy-integrations.html#api-gateway-simple-proxy-for-lambda-input-format).
+
+If the return value from the pre-hook lambda is an instance of an [API Gateway Proxy Result](https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-lambda-proxy-integrations.html#api-gateway-simple-proxy-for-lambda-output-format), then that response will immediately be returned to the client.
+
+If the return value of the pre-hook lambda is an instance of an [API Gateway Proxy Event](https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-lambda-proxy-integrations.html#api-gateway-simple-proxy-for-lambda-input-format), then that event will be passed along to stac-server.
+
+If the pre-hook lambda throws an exception, an internal server error will be returned to the client.
+
+### Post-Hook
+
+If the stac-server is deployed with the `POST_HOOK` environment variable set to the name of a lambda function, then that function will be called as the post-hook.
+
+The event passed into the post-hook labmda will be the response from the stac-server, and will be an instance of an [API Gateway Proxy Result](https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-lambda-proxy-integrations.html#api-gateway-simple-proxy-for-lambda-output-format).
+
+The return value of the post-hook lambda must be an instance of an [API Gateway Proxy Result](https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-lambda-proxy-integrations.html#api-gateway-simple-proxy-for-lambda-output-format).
+
+If the post-hook lambda throws an exception, an internal server error will be returned to the client.
+
+### Request Flow
+
+```mermaid
+flowchart
+  client -- APIGatewayProxyEvent --> pre-hook
+  pre-hook[pre-hook lambda]
+  pre-hook -- APIGatewayProxyResult --> client
+  pre-hook -- APIGatewayProxyEvent --> stac-server
+  post-hook[post-hook lambda]
+  stac-server -- APIGatewayProxyResult --> post-hook
+  post-hook -- APIGatewayProxyResult --> client
+```
+
+### Notes
+
+Lambda payloads and responses [must be less than 6 MB](https://docs.aws.amazon.com/lambda/latest/dg/gettingstarted-limits.html#function-configuration-deployment-and-execution). A larger payload will result in an internal server error being returned to the client.
+
+The outputs of the pre- and post-hooks are validated and, if they don't comply with the defined schemas, an internal server error will be returned to the client. Information about the invalid event, as well as details about the parsing errors, will be logged to CloudWatch.
 
 ## Development
 

@@ -409,15 +409,25 @@ const buildPaginationLinks = function (limit, parameters, bbox, intersects, endp
     const dictToURI = (dict) => (
       Object.keys(dict).map(
         (p) => {
-        // const query = encodeURIComponent(dict[p])
           let value = dict[p]
           if (typeof value === 'object' && value !== null) {
-            value = JSON.stringify(value)
+            if (p === 'sortby') {
+              const sortFields = []
+              for (let i = 0; i < value.length; i += 1) {
+                if (value[i]['direction'] === 'asc') {
+                  sortFields.push(value[i]['field'])
+                } else {
+                  sortFields.push('-'.concat(value[i]['field']))
+                }
+              }
+              value = sortFields.join(',')
+            } else if (p === 'collections') {
+              value = value.toString()
+            } else {
+              value = JSON.stringify(value)
+            }
           }
           const query = encodeURIComponent(value)
-          if (p === 'collections') {
-            return `${encodeURIComponent(p)}[]=${query}`
-          }
           return `${encodeURIComponent(p)}=${query}`
         }
       ).join('&')

@@ -284,6 +284,44 @@ aws lambda invoke \
 
 Stac-server is now ready to ingest data!
 
+### Proxying Stac-server through CloudFront
+
+The API Gateway URL associated with the deployed stac-server instance may not be the URL that you ultimately wish to expose to your API users. AWS CloudFront can be used to proxy to a more human readable URL. In order to accomplish this:
+
+1. Create a new CloudFront distribution (or use an existing distribution).
+2. Set the origin to the Gateway API URL (obtain in the stage view of the deployed stac-server). The URL is in the form `<##abcde>.execute-api.region.amazonaws.com`.
+3. Set the origin path to the deployed stage name prepended with a `/`, (e.g., /dev or /prod).
+4. Under behaviors, add a new behavior for the desired URL endpoint or subdomain (e.g., /api or /v0.4.0).
+5. Set the 'Origin and origin groups to the URL defined above ('`<##abcde>.execute-api.region.amazonaws.com`').
+6. Set Viewer to HTTPS only and Allowed HTTP Methods to 'GET, HEAD, OPTIONS, PUT, POST, PATCH, DELETE'.
+7. Set the Cache Policy to a custom policy that forwards query strings. If one simply disables caching, CloudFront strips the query strings.
+8. Optionally, define a LambdaEdge to perform a URL rewrite. This is necessary if your API URL is appended to the root URL (e.g., mydomain.com/api). The lambda must rewrite the URL to remove the /api. For example:
+
+    ```python
+    from re import sub
+
+    def lambda_handler(event, context):
+        request = event['Records'][0]['cf']['request']
+        uri = request["uri"]
+
+        if uri in ["/", "/index.html"]:
+            response = {
+                "status": 302,
+                "statusDescription": "Found",
+                "headers": {
+                    "location": [{
+                        "key": "Location",
+                        "value": "/api/"
+                    }]
+                }
+            }
+            return response
+
+        request["uri"] = sub("^/api", "/", uri)
+        print(request)
+        return request
+    ```
+ 
 ### Locking down transaction endpoints
 
 If you wanted to deploy STAC Server in a way which ensures certain endpoints have restricted access but others don't, you can deploy it into a VPC and add conditions that allow only certain IP addresses to access certain endpoints. Once you deploy STAC Server into a VPC, you can modify the Resource Policy of the API Gateway endpoint that gets deployed to restrict access to certain endpoints. Here is a hypothetical example. Assume that the account into which STAC Server is deployed is numbered 1234-5678-9123, the API ID is ab1c23def, and the region in which it is deployed is us-west-2. You might want to give the general public access to use any GET or POST endpoints with the API such as the "/search" endpoint, but lock down access to the transaction endpoints (see https://github.com/radiantearth/stac-api-spec/tree/master/ogcapi-features/extensions/transaction) to only allow certain IP addresses to access them. These IP addresses can be, for example: 94.61.192.106, 204.176.50.129, and 11.27.65.78. In order to do this, you can impose a condition on the API Gateway that only allows API transactions such as adding, updating, and deleting STAC items from the whitelisted endpoints. For example, here is a Resource Policy containing two statements that allow this to happen:

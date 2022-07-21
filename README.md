@@ -40,10 +40,10 @@ Stac-server is an implementation of the [STAC API specification](https://github.
 
 The following APIs are deployed instances of stac-server:
 
-| Name                                                                                      | STAC Version | STAC API Version | Description                                        |
-| ----------------------------------------------------------------------------------------- | ------------ | ---------------- |
-| [Earth Search](https://earth-search.aws.element84.com/v0/)                                | 1.0.0-beta.2 | 0.9.0            | Catalog of some AWS Public Datasets                |
-| [Landsat Look](https://landsatlook.usgs.gov/stac-server)                                  | 1.0.0        | 0.9.0            |                                                    |
+| Name                                                       | STAC Version | STAC API Version | Description                         |
+| ---------------------------------------------------------- | ------------ | ---------------- | ----------------------------------- |
+| [Earth Search](https://earth-search.aws.element84.com/v0/) | 1.0.0-beta.2 | 0.9.0            | Catalog of some AWS Public Datasets |
+| [Landsat Look](https://landsatlook.usgs.gov/stac-server)   | 1.0.0        | 0.9.0            |                                     |
 
 ## Architecture
 

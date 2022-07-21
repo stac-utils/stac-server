@@ -272,7 +272,7 @@ Invoke the `stac-server-<stage>-ingest` Lambda function with a payload of:
 }
 ```
 
-This can be done with the AWS CLI with (the final `-` parameter pipes the output to stdout):
+This can be done with the [AWS CLI Version 2](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html). (The final `-` parameter pipes the output to stdout).
 
 ```shell
 aws lambda invoke \

@@ -1,5 +1,15 @@
 service: stac-server
 
+plugins:
+  - serverless-pseudo-parameters
+  - serverless-offline
+  - serverless-deployment-bucket
+
+provider:
+  deploymentBucket:
+    name: "${self:service}-serverless-deploy"
+    blockPublicAccess: true
+
 provider:
   name: aws
   runtime: nodejs14.x
@@ -127,7 +137,3 @@ resources:
         Fn::GetAtt: [ElasticSearchInstance, DomainEndpoint]
       Export:
         Name: ${self:service}-${self:provider.stage}-es-endpoint
-
-plugins:
-  - serverless-pseudo-parameters
-  - serverless-offline

@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] - TBD
+
+### Added
+
+- Added pre-hook and post-hook Lambda examples
+
+### Changed
+
+- The serverless.yml.example file now has zone awareness enabled and an even number of
+  Elasticsearch nodes
+- Upgrade serverless to 3.x
+- Remove use of serverless-psuedo-parameters
+- Upgrade to Node 16
+
 ## [0.4.1] - 2022-07-11
 
 ### Added

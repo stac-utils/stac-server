@@ -309,7 +309,7 @@ The API Gateway URL associated with the deployed stac-server instance may not be
     ```python
     from re import sub
 
-    def Lambda_handler(event, context):
+    def lambda_handler(event, context):
         request = event['Records'][0]['cf']['request']
         uri = request["uri"]
 

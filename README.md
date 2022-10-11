@@ -15,11 +15,17 @@
     - [Elasticsearch Configuration](#elasticsearch-configuration)
       - [Disable automatic index creation](#disable-automatic-index-creation-1)
       - [Create collection index](#create-collection-index)
+    - [Proxying Stac-server through CloudFront](#proxying-stac-server-through-cloudfront)
+    - [Locking down transaction endpoints](#locking-down-transaction-endpoints)
   - [Ingesting Data](#ingesting-data)
     - [Ingesting large items](#ingesting-large-items)
     - [Subscribing to SNS Topics](#subscribing-to-sns-topics)
     - [Ingest Errors](#ingest-errors)
-  - [Pre- and Post- Hooks](#pre--and-post-hooks)
+  - [Pre- and Post-Hooks](#pre--and-post-hooks)
+    - [Pre-Hook](#pre-hook)
+    - [Post-Hook](#post-hook)
+    - [Request Flow](#request-flow)
+    - [Notes](#notes)
   - [Development](#development)
     - [Running Locally](#running-locally)
     - [Running Unit Tests](#running-unit-tests)
@@ -200,6 +206,9 @@ There are some settings that should be reviewed and updated as needeed in the se
 | LOG_LEVEL                     | Level for logging (CRITICAL, ERROR, WARNING, INFO, DEBUG)                                                                                                               | INFO                                                                                 |
 | STAC_API_URL                  | The root endpoint of this API                                                                                                                                           | Inferred from request                                                                |
 | ENABLE_TRANSACTIONS_EXTENSION | Boolean specifying if the [Transaction Extension](https://github.com/radiantearth/stac-api-spec/tree/master/ogcapi-features/extensions/transaction) should be activated | false                                                                                |
+| STAC_API_ROOTPATH | The path to append to URLs if this is not deployed at the server root. For example, if the server is deployed without a custom domain name, it will have the stage name (e.g., dev) in the path. | ""                                                                                |
+| PRE_HOOK                  | The name of a Lambda function to be called as the pre-hook.                                                                                                                                           | none                                            |
+| POST_HOOK                  | The name of a Lambda function to be called as the post-hook.                                                                                                                                           | none                                                                |
 
 After reviewing the settings, build and deploy:
 
@@ -295,7 +304,7 @@ The API Gateway URL associated with the deployed stac-server instance may not be
 5. Set the 'Origin and origin groups to the URL defined above ('`<##abcde>.execute-api.region.amazonaws.com`').
 6. Set Viewer to HTTPS only and Allowed HTTP Methods to 'GET, HEAD, OPTIONS, PUT, POST, PATCH, DELETE'.
 7. Set the Cache Policy to a custom policy that forwards query strings. If one simply disables caching, CloudFront strips the query strings.
-8. Optionally, define a LambdaEdge to perform a URL rewrite. This is necessary if your API URL is appended to the root URL (e.g., mydomain.com/api). The lambda must rewrite the URL to remove the /api. For example:
+8. Optionally, define a LambdaEdge to perform a URL rewrite. This is necessary if your API URL is appended to the root URL (e.g., mydomain.com/api). The Lambda must rewrite the URL to remove the /api. For example:
 
     ```python
     from re import sub
@@ -422,39 +431,66 @@ Errors that occur during ingest will end up in the dead letter processing queue,
 
 ## Pre- and Post-Hooks
 
-Stac-server supports two hooks into the request process: a pre-hook and a post-hook. These are each lambda functions which, if configured, will be invoked by stac-server. It is assumed that the stac-server lambda has been granted permission to invoke these lambda functions, if configured.
+Stac-server supports two hooks into the request process: a pre-hook and a post-hook. These are each Lambda functions which, if configured, will be invoked by stac-server. It is assumed that the stac-server Lambda has been granted permission to invoke these Lambda functions, if configured.
 
 ### Pre-Hook
 
-If the stac-server is deployed with the `PRE_HOOK` environment variable set to the name of a lambda function, then that function will be called as the pre-hook.
+If the stac-server is deployed with the `PRE_HOOK` environment variable set to the name of a Lambda function, then that function will be called as the pre-hook.
 
-The event passed into the pre-hook lambda will be an instance of an [API Gateway Proxy Event](https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-lambda-proxy-integrations.html#api-gateway-simple-proxy-for-lambda-input-format).
+The event passed into the pre-hook Lambda will be an instance of an [API Gateway Proxy Event](https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-lambda-proxy-integrations.html#api-gateway-simple-proxy-for-lambda-input-format).
 
-If the return value from the pre-hook lambda is an instance of an [API Gateway Proxy Result](https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-lambda-proxy-integrations.html#api-gateway-simple-proxy-for-lambda-output-format), then that response will immediately be returned to the client.
+If the return value from the pre-hook Lambda is an instance of an [API Gateway Proxy Result](https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-lambda-proxy-integrations.html#api-gateway-simple-proxy-for-lambda-output-format), then that response will immediately be returned to the client.
 
-If the return value of the pre-hook lambda is an instance of an [API Gateway Proxy Event](https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-lambda-proxy-integrations.html#api-gateway-simple-proxy-for-lambda-input-format), then that event will be passed along to stac-server.
+If the return value of the pre-hook Lambda is an instance of an [API Gateway Proxy Event](https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-lambda-proxy-integrations.html#api-gateway-simple-proxy-for-lambda-input-format), then that event will be passed along to stac-server.
 
-If the pre-hook lambda throws an exception, an internal server error will be returned to the client.
+If the pre-hook Lambda throws an exception, an internal server error will be returned to the client.
+
+The pre-hook Lambda configuration may reference any Lambda, not only one deployed as part
+of this stack. There is an example pre-hook Lambda that can be included with this stack,
+which provides an example rudimentary authorization mechanism via a hard-coded token.
+
+To enable this example pre-hook:
+
+- Modify bin/build.sh to not exclude the "pre-hook" package from being built.
+- In the serverless.yml file, uncomment the `preHook` function, the `preHook` IAM
+  permissions and the environment variables
+  `PRE_HOOK`, `PRE_HOOK_AUTH_TOKEN`, and `PRE_HOOK_AUTH_TOKEN_TXN`.
+- Build and deploy.
 
 ### Post-Hook
 
-If the stac-server is deployed with the `POST_HOOK` environment variable set to the name of a lambda function, then that function will be called as the post-hook.
+If the stac-server is deployed with the `POST_HOOK` environment variable set to the name of a Lambda function, then that function will be called as the post-hook.
 
 The event passed into the post-hook labmda will be the response from the stac-server, and will be an instance of an [API Gateway Proxy Result](https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-lambda-proxy-integrations.html#api-gateway-simple-proxy-for-lambda-output-format).
 
-The return value of the post-hook lambda must be an instance of an [API Gateway Proxy Result](https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-lambda-proxy-integrations.html#api-gateway-simple-proxy-for-lambda-output-format).
+The return value of the post-hook Lambda must be an instance of an [API Gateway Proxy Result](https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-lambda-proxy-integrations.html#api-gateway-simple-proxy-for-lambda-output-format).
 
-If the post-hook lambda throws an exception, an internal server error will be returned to the client.
+If the post-hook Lambda throws an exception, an internal server error will be returned to the client.
+
+The post-hook Lambda configuration may reference any Lambda, not only one deployed as part
+of this stack. There is an example post-hook Lambda that can be included with this stack,
+which does nothing, but shows how the API Lambda response can be modified.
+
+The post-hook Lambda configuration may reference any Lambda, not only one deployed as part
+of this stack. There is an example post-hook Lambda that can be included with this stack,
+which provides an example of how to interact with the response, but does not modify it.
+
+To enable this example post-hook:
+
+- Modify bin/build.sh to not exclude the "post-hook" package from being built.
+- In the serverless.yml file, uncomment the `postHook` function and the `postHook`
+  IAM permissions.
+- Build and deploy.
 
 ### Request Flow
 
 ```mermaid
 flowchart
   client -- APIGatewayProxyEvent --> pre-hook
-  pre-hook[pre-hook lambda]
+  pre-hook[pre-hook Lambda]
   pre-hook -- APIGatewayProxyResult --> client
   pre-hook -- APIGatewayProxyEvent --> stac-server
-  post-hook[post-hook lambda]
+  post-hook[post-hook Lambda]
   stac-server -- APIGatewayProxyResult --> post-hook
   post-hook -- APIGatewayProxyResult --> client
 ```

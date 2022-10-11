@@ -2,9 +2,12 @@ service: stac-server
 
 provider:
   name: aws
-  runtime: nodejs14.x
+  runtime: nodejs16.x
   stage: ${opt:stage, 'dev'}
   region: ${opt:region, 'us-west-2'}
+  # uncomment this if using a bucket that already exists for deployment files
+  # deploymentBucket:
+  #   name: my-deployment-bucket
   environment:
     STAC_ID: "stac-server"
     STAC_TITLE: "STAC API"
@@ -17,11 +20,17 @@ provider:
     ES_HOST:
       Fn::GetAtt: [ElasticSearchInstance, DomainEndpoint]
     ENABLE_TRANSACTIONS_EXTENSION: false
+    # comment STAC_API_ROOTPATH if deployed with a custom domain
+    STAC_API_ROOTPATH: "/${self:provider.stage}"
+    # PRE_HOOK: ${self:service}-${self:provider.stage}-preHook
+    # PRE_HOOK_AUTH_TOKEN: xxx
+    # PRE_HOOK_AUTH_TOKEN_TXN: xxx
+    # POST_HOOK: ${self:service}-${self:provider.stage}-postHook
   iam:
     role:
       statements:
         - Effect: "Allow"
-          Resource: "arn:aws:es:#{AWS::Region}:#{AWS::AccountId}:domain/*"
+          Resource: "arn:aws:es:${aws:region}:${aws:accountId}:domain/*"
           Action: "es:*"
         - Effect: "Allow"
           Action:
@@ -31,6 +40,13 @@ provider:
             - sqs:DeleteMessage
           Resource:
             Fn::GetAtt: [ingestQueue, Arn]
+        # - Effect: "Allow"
+        #   Action: "lambda:InvokeFunction"
+        #   Resource: "arn:aws:lambda:${aws:region}:${aws:accountId}:function:${self:service}-${self:provider.stage}-preHook"
+        # - Effect: "Allow"
+        #   Action: "lambda:InvokeFunction"
+        #   Resource: "arn:aws:lambda:${aws:region}:${aws:accountId}:function:${self:service}-${self:provider.stage}-postHook"
+
   lambdaHashingVersion: 20201221
 package:
   individually: true
@@ -61,6 +77,21 @@ functions:
       - sqs:
           arn:
             Fn::GetAtt: [ingestQueue, Arn]
+  # preHook:
+  #   description: stac-server pre-hook Lambda
+  #   handler: index.handler
+  #   memorySize: 512
+  #   timeout: 25
+  #   package:
+  #     artifact: dist/pre-hook/pre-hook.zip
+
+  # postHook:
+  #   description: stac-server post-hook Lambda
+  #   handler: index.handler
+  #   memorySize: 512
+  #   timeout: 25
+  #   package:
+  #     artifact: dist/post-hook/post-hook.zip
 
 resources:
   Description: A STAC API running on stac-server
@@ -103,7 +134,7 @@ resources:
       Properties:
         Endpoint: !GetAtt ingestQueue.Arn
         Protocol: sqs
-        Region: "#{AWS::Region}"
+        Region: "${aws:region}"
         TopicArn: !Ref ingestTopic
     ElasticSearchInstance:
       Type: AWS::Elasticsearch::Domain
@@ -115,9 +146,9 @@ resources:
           VolumeSize: 35
         ElasticsearchClusterConfig:
           InstanceType: t3.small.elasticsearch
-          InstanceCount: 3
+          InstanceCount: 2
           DedicatedMasterEnabled: false
-          ZoneAwarenessEnabled: false
+          ZoneAwarenessEnabled: true
         ElasticsearchVersion: "7.10"
         DomainEndpointOptions:
           EnforceHTTPS: true
@@ -129,5 +160,4 @@ resources:
         Name: ${self:service}-${self:provider.stage}-es-endpoint
 
 plugins:
-  - serverless-pseudo-parameters
   - serverless-offline

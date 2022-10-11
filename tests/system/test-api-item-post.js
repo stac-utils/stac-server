@@ -67,7 +67,7 @@ test('POST /collections/:collectionId/items', async (t) => {
   t.assert(response.headers['location'].endsWith(`/collections/${collectionId}/items/${itemId}`))
   t.is(response.body, 'Created')
 
-  // ES needs a second to process the patch request
+  // ES needs a second to process the create request
   // eslint-disable-next-line no-promise-executor-return
   await new Promise((r) => setTimeout(r, 1000))
 

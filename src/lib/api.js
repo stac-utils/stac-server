@@ -306,7 +306,13 @@ const parsePath = function (inpath) {
 // Impure - mutates results
 const addCollectionLinks = function (results, endpoint) {
   results.forEach((result) => {
-    const { id, links } = result
+    const { id } = result
+    let { links } = result
+    if (links == null) {
+      links = []
+      result.links = links
+    }
+
     // self link
     links.splice(0, 0, {
       rel: 'self',
@@ -639,6 +645,16 @@ const getCollection = async function (collectionId, backend, endpoint = '') {
   return new Error('Collection retrieval failed')
 }
 
+const createCollection = async function (collection, backend) {
+  const response = await backend.indexCollection(collection)
+  logger.debug(`Create Collection: ${JSON.stringify(response)}`)
+
+  if (response) {
+    return response
+  }
+  return new Error(`Error creating collection ${collection}`)
+}
+
 const getItem = async function (collectionId, itemId, backend, endpoint = '') {
   const itemQuery = { collections: [collectionId], id: itemId }
   const { results } = await backend.search(itemQuery)
@@ -694,6 +710,7 @@ module.exports = {
   getCatalog,
   getCollections,
   getCollection,
+  createCollection,
   getItem,
   searchItems,
   parsePath,

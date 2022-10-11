@@ -94,6 +94,27 @@ app.get('/collections', async (req, res, next) => {
   }
 })
 
+app.post('/collections', async (req, res, next) => {
+  if (txnEnabled) {
+    const collectionId = req.body.collection
+    try {
+      await api.createCollection(req.body, es)
+      res.location(`${req.endpoint}/collections/${collectionId}`)
+      res.sendStatus(201)
+    } catch (error) {
+      if (error instanceof Error
+              && error.name === 'ResponseError'
+              && error.message.includes('version_conflict_engine_exception')) {
+        res.sendStatus(409)
+      } else {
+        next(error)
+      }
+    }
+  } else {
+    next(createError(404))
+  }
+})
+
 app.get('/collections/:collectionId', async (req, res, next) => {
   const { collectionId } = req.params
   try {

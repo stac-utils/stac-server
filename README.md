@@ -40,10 +40,10 @@ Stac-server is an implementation of the [STAC API specification](https://github.
 
 The following APIs are deployed instances of stac-server:
 
-| Name                                                                                      | STAC Version | STAC API Version | Description                                        |
-| ----------------------------------------------------------------------------------------- | ------------ | ---------------- |
-| [Earth Search](https://earth-search.aws.element84.com/v0/)                                | 1.0.0-beta.2 | 0.9.0            | Catalog of some AWS Public Datasets                |
-| [Landsat Look](https://landsatlook.usgs.gov/stac-server)                                  | 1.0.0        | 0.9.0            |                                                    |
+| Name                                                       | STAC Version | STAC API Version | Description                         |
+| ---------------------------------------------------------- | ------------ | ---------------- | ----------------------------------- |
+| [Earth Search](https://earth-search.aws.element84.com/v0/) | 1.0.0-beta.2 | 0.9.0            | Catalog of some AWS Public Datasets |
+| [Landsat Look](https://landsatlook.usgs.gov/stac-server)   | 1.0.0        | 0.9.0            |                                     |
 
 ## Architecture
 
@@ -272,7 +272,7 @@ Invoke the `stac-server-<stage>-ingest` Lambda function with a payload of:
 }
 ```
 
-This can be done with the AWS CLI with (the final `-` parameter pipes the output to stdout):
+This can be done with the [AWS CLI Version 2](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html). (The final `-` parameter pipes the output to stdout).
 
 ```shell
 aws lambda invoke \
@@ -321,7 +321,7 @@ The API Gateway URL associated with the deployed stac-server instance may not be
         print(request)
         return request
     ```
- 
+
 ### Locking down transaction endpoints
 
 If you wanted to deploy STAC Server in a way which ensures certain endpoints have restricted access but others don't, you can deploy it into a VPC and add conditions that allow only certain IP addresses to access certain endpoints. Once you deploy STAC Server into a VPC, you can modify the Resource Policy of the API Gateway endpoint that gets deployed to restrict access to certain endpoints. Here is a hypothetical example. Assume that the account into which STAC Server is deployed is numbered 1234-5678-9123, the API ID is ab1c23def, and the region in which it is deployed is us-west-2. You might want to give the general public access to use any GET or POST endpoints with the API such as the "/search" endpoint, but lock down access to the transaction endpoints (see https://github.com/radiantearth/stac-api-spec/tree/master/ogcapi-features/extensions/transaction) to only allow certain IP addresses to access them. These IP addresses can be, for example: 94.61.192.106, 204.176.50.129, and 11.27.65.78. In order to do this, you can impose a condition on the API Gateway that only allows API transactions such as adding, updating, and deleting STAC items from the whitelisted endpoints. For example, here is a Resource Policy containing two statements that allow this to happen:

@@ -224,6 +224,30 @@ function buildFieldsFilter(parameters) {
 }
 
 /*
+ * Create a new Collection
+ *
+ */
+async function indexCollection(collection) {
+  const client = await esClient.client()
+
+  const exists = await client.indices.exists({ index: COLLECTIONS_INDEX })
+  if (!exists.body) {
+    await esClient.createIndex(COLLECTIONS_INDEX)
+  }
+
+  await client.index({
+    index: COLLECTIONS_INDEX,
+    id: collection.id,
+    body: collection,
+    opType: 'create'
+  })
+
+  const response = await esClient.createIndex(collection.id)
+
+  return response
+}
+
+/*
  * Create a new Item in an index corresponding to the Collection
  *
  */
@@ -429,8 +453,9 @@ async function updateItem(item) {
 }
 
 module.exports = {
-  getCollection,
   getCollections,
+  getCollection,
+  indexCollection,
   getItem,
   getItemCreated,
   indexItem,

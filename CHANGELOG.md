@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Added
 
 - Added pre-hook and post-hook Lambda examples
+- POST /collections endpoint to create collections
 
 ### Changed
 

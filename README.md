@@ -6,7 +6,10 @@
   - [Overview](#overview)
   - [Architecture](#architecture)
   - [Migration](#migration)
-    - [0.3 -> 0.4](#03---04)
+    - [0.4.x -\> 0.5.x](#04x---05x)
+      - [serverless.yml migration](#serverlessyml-migration)
+      - [Switch to Opensearch 2.3 from Elasticsearch 7.10](#switch-to-opensearch-23-from-elasticsearch-710)
+    - [0.3.x -\> 0.4.x](#03x---04x)
       - [Elasticsearch upgrade from 7.9 to 7.10](#elasticsearch-upgrade-from-79-to-710)
       - [Disable automatic index creation](#disable-automatic-index-creation)
       - [Validate index mappings](#validate-index-mappings)
@@ -95,13 +98,36 @@ apiLambda --> elasticsearch
 
 ## Migration
 
-### 0.3 -> 0.4
+### 0.4.x -> 0.5.x
 
-Create a new deployment, copy the elasticsearch database, rename indexes,
+Create a new deployment, copy the elasticsearch database, rename indexes.
+
+#### serverless.yml migration
+
+- `runtime`: preferred runtime is now nodejs18.x instead of nodejs16.x
+- `STAC_API_VERSION` can be updated to `1.0.0-rc.2`
+- `ElasticSearchInstance` should be renamed to `OpensearchInstance`
+  - The `Type` of this resource should be changed from `AWS::Elasticsearch::Domain` to
+    `AWS::OpenSearchService::Domain`
+  - The `DomainName` can be changed to a suffix of `-os` from `-es`
+  - `ElasticsearchClusterConfig` is now `ClusterConfig`
+  - `InstanceType` values have changed, e.g., t3.small.elasticsearch is now t3.small.search
+  - `ElasticsearchVersion` is replaced with `EngineVersion` and set to `OpenSearch_2.3`
+  - `EsEndpoint` should be renamed to `OpensearchEndpoint` and the exported name suffixed
+    with `-os-endpoint` instead of `-es-endpoint`
+
+#### Switch to Opensearch 2.3 from Elasticsearch 7.10
+
+AWS supports upgrading between Elasticsearch 7.10 and Opensearch 2.3. Work needs to be
+done on if this can be supported through the serverless deployment.
+
+### 0.3.x -> 0.4.x
+
+Create a new deployment, copy the elasticsearch database, and rename indexes.
 
 #### Elasticsearch upgrade from 7.9 to 7.10
 
-The Serverless Framework supports provisioning AWS resources, but it does not support updating existing resources. In 0.4, the default Elasticsearch version has been updated from 7.9 to 7.10. Continuing to use 7.9 should not cause any problems, but it recommended that you manually upgrade to 7.10 by going to [AWS Console - Amazon OpenSearch Service](https://console.aws.amazon.com/esv3/home), choosing the Elasticsearch domain used by your stac-server deployment (e.g., stac-server-{stage}-es), choose Upgrade from the Actions menu, and then upgrade to Elasticsearch 7.10.
+The Serverless Framework supports provisioning AWS resources, but it does not support updating existing resources. In 0.4, the default Elasticsearch version has been updated from 7.9 to 7.10. Continuing to use 7.9 should not cause any problems, but it recommended that you manually upgrade to 7.10 by going to [AWS Console - Amazon OpenSearch Service](https://console.aws.amazon.com/esv3/home), choosing the Elasticsearch domain used by your stac-server deployment (e.g., stac-server-{stage}-os), choose Upgrade from the Actions menu, and then upgrade to Elasticsearch 7.10.
 
 #### Disable automatic index creation
 
@@ -552,7 +578,7 @@ Other configurations can be passed as shell environment variables, e.g.,
 
 ```
 export ENABLE_TRANSACTIONS_EXTENSION=true
-export ES_HOST='https://search-stac-server-dev-es-7awl6h344qlpvly.us-west-2.es.amazonaws.com'
+export ES_HOST='https://search-stac-server-dev-os-7awl6h344qlpvly.us-west-2.es.amazonaws.com'
 npm run serve
 ```
 

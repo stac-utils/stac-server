@@ -1,6 +1,6 @@
 const AWS = require('aws-sdk')
-const { createAWSConnection, awsCredsifyAll } = require('@acuris/aws-es-connection')
-const elasticsearch = require('@elastic/elasticsearch')
+const { createAWSConnection, awsCredsifyAll } = require('aws-os-connection')
+const opensearch = require('@opensearch-project/opensearch')
 const logger = console //require('./logger')
 
 const collectionsMapping = require('../../fixtures/collections')
@@ -18,7 +18,7 @@ async function connect() {
     esConfig = {
       node: 'http://localhost:9200'
     }
-    client = new elasticsearch.Client(esConfig)
+    client = new opensearch.Client(esConfig)
   } else {
     //const awsCredentials = await awsGetCredentials()
     const AWSConnector = createAWSConnection(AWS.config.credentials)
@@ -27,7 +27,7 @@ async function connect() {
       esHost = `https://${process.env.ES_HOST}`
     }
     client = awsCredsifyAll(
-      new elasticsearch.Client({
+      new opensearch.Client({
         node: esHost,
         Connection: AWSConnector
       })

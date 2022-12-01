@@ -1,0 +1,10 @@
+## Cluster Settings
+cluster.name: stac-cluster
+node.name: es01
+network.host: 0.0.0.0
+transport.host: 0.0.0.0
+discovery.type: single-node
+http.port: 9200
+
+# Security
+plugins.security.disabled: true

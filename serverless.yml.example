@@ -12,13 +12,13 @@ provider:
     STAC_ID: "stac-server"
     STAC_TITLE: "STAC API"
     STAC_DESCRIPTION: "A STAC API using stac-server"
-    STAC_API_VERSION: "1.0.0-beta.5"
+    STAC_API_VERSION: "1.0.0-rc.2"
     STAC_VERSION: 1.0.0
     LOG_LEVEL: DEBUG
     ES_BATCH_SIZE: 500
     STAC_DOCS_URL: https://stac-utils.github.io/stac-server/
     ES_HOST:
-      Fn::GetAtt: [ElasticSearchInstance, DomainEndpoint]
+      Fn::GetAtt: [OpensearchInstance, DomainEndpoint]
     ENABLE_TRANSACTIONS_EXTENSION: false
     # comment STAC_API_ROOTPATH if deployed with a custom domain
     STAC_API_ROOTPATH: "/${self:provider.stage}"
@@ -136,28 +136,28 @@ resources:
         Protocol: sqs
         Region: "${aws:region}"
         TopicArn: !Ref ingestTopic
-    ElasticSearchInstance:
-      Type: AWS::Elasticsearch::Domain
+    OpensearchInstance:
+      Type: AWS::OpenSearchService::Domain
       Properties:
-        DomainName: ${self:service}-${self:provider.stage}-es
+        DomainName: ${self:service}-${self:provider.stage}-os
         EBSOptions:
           EBSEnabled: true
           VolumeType: gp2
           VolumeSize: 35
-        ElasticsearchClusterConfig:
-          InstanceType: t3.small.elasticsearch
+        ClusterConfig:
+          InstanceType: t3.small.search
           InstanceCount: 2
           DedicatedMasterEnabled: false
           ZoneAwarenessEnabled: true
-        ElasticsearchVersion: "7.10"
+        EngineVersion: "OpenSearch_2.3"
         DomainEndpointOptions:
           EnforceHTTPS: true
   Outputs:
-    ESEndpoint:
+    OpensearchEndpoint:
       Value:
-        Fn::GetAtt: [ElasticSearchInstance, DomainEndpoint]
+        Fn::GetAtt: [OpensearchInstance, DomainEndpoint]
       Export:
-        Name: ${self:service}-${self:provider.stage}-es-endpoint
+        Name: ${self:service}-${self:provider.stage}-os-endpoint
 
 plugins:
   - serverless-offline

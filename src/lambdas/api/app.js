@@ -333,8 +333,7 @@ app.use(
       res.json({ code: 'NotFound', description: 'Not Found' })
       break
     default:
-      console.log(`Error fulfilling request:${err}`)
-      console.log(err)
+      console.log(err) // clarify where error is from?
       console.log(err.meta.body) // if meta is undefined, error
       res.json({ code: 'InternalServerError', description: 'Internal Server Error' })
       break

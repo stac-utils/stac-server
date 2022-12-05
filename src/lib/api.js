@@ -535,6 +535,109 @@ const searchItems = async function (collectionId, queryParameters, backend, endp
   return response
 }
 
+const agg = function (esAggs, name, dataType) {
+  const buckets = []
+  for (const bucket of esAggs[name].buckets) {
+    buckets.push({
+      key: bucket.key_as_string || bucket.key,
+      data_type: dataType,
+      frequency: bucket.doc_count,
+      to: bucket.to,
+      from: bucket.from,
+    })
+  }
+  return {
+    name: name,
+    data_type: 'frequency_distribution',
+    overflow: esAggs[name].sum_other_doc_count || 0,
+    buckets: buckets
+  }
+}
+
+const aggregate = async function (queryParameters, backend, endpoint, httpMethod) {
+  logger.debug(`Aggregate parameters: ${JSON.stringify(queryParameters)}`)
+  const {
+    next,
+    bbox,
+    intersects
+  } = queryParameters
+  if (bbox && intersects) {
+    throw new ValidationError('Expected bbox OR intersects, not both')
+  }
+  const datetime = extractDatetime(queryParameters)
+  const bboxGeometry = extractBbox(queryParameters, httpMethod)
+  const intersectsGeometry = extractIntersects(queryParameters)
+  const geometry = intersectsGeometry || bboxGeometry
+  const query = extractStacQuery(queryParameters)
+  const ids = extractIds(queryParameters)
+  const collections = extractCollectionIds(queryParameters)
+
+  const searchParams = pickBy({
+    datetime,
+    intersects: geometry,
+    query,
+    ids,
+    collections,
+    next
+  })
+
+  logger.debug(`Aggregate parameters: ${JSON.stringify(searchParams)}`)
+
+  let esResponse
+  try {
+    esResponse = await backend.aggregate(searchParams)
+  } catch (error) {
+    if (isIndexNotFoundError(error)) {
+      esResponse = {
+      }
+    } else {
+      throw error
+    }
+  }
+
+  const { body } = esResponse
+  const { aggregations: esAggs } = body
+  const aggregations = []
+
+  logger.debug(`esResponse: ${JSON.stringify(esResponse)}`)
+
+  aggregations.push(
+    {
+      name: 'total_count',
+      data_type: 'integer',
+      value: esAggs['total_count']['value'],
+    }
+  )
+
+  aggregations.push(
+    {
+      name: 'datetime_max',
+      data_type: 'datetime',
+      value: esAggs['datetime_max']['value_as_string'],
+    }
+  )
+
+  aggregations.push(
+    {
+      name: 'datetime_min',
+      data_type: 'datetime',
+      value: esAggs['datetime_min']['value_as_string'],
+    }
+  )
+
+  aggregations.push(agg(esAggs, 'collection_frequency', 'string'))
+  aggregations.push(agg(esAggs, 'datetime_frequency', 'datetime'))
+  aggregations.push(agg(esAggs, 'cloud_cover_frequency', 'numeric'))
+  aggregations.push(agg(esAggs, 'grid_code_frequency', 'string'))
+  aggregations.push(agg(esAggs, 'platform_frequency', 'string'))
+  aggregations.push(agg(esAggs, 'grid_code_landsat_frequency', 'string'))
+  aggregations.push(agg(esAggs, 'sun_elevation_frequency', 'string'))
+  aggregations.push(agg(esAggs, 'sun_azimuth_frequency', 'string'))
+  aggregations.push(agg(esAggs, 'off_nadir_frequency', 'string'))
+
+  return { type: 'AggregationCollection', aggregations }
+}
+
 const getConformance = async function (txnEnabled) {
   const prefix = 'https://api.stacspec.org/v1.0.0-rc.2'
   const conformsTo = [
@@ -730,5 +833,6 @@ module.exports = {
   partialUpdateItem,
   ValidationError,
   extractLimit,
-  extractDatetime
+  extractDatetime,
+  aggregate,
 }

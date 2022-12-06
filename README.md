@@ -199,7 +199,7 @@ that only has the OpenSearchInstance resource in it. For example:
           "DedicatedMasterEnabled": false,
           "ZoneAwarenessEnabled": true
         },
-        "EngineVersion": OpenSearch_2.3,
+        "EngineVersion": "OpenSearch_2.3",
         "DomainEndpointOptions": {
           "EnforceHTTPS": true
         }

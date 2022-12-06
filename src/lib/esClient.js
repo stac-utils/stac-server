@@ -1,6 +1,7 @@
-const AWS = require('aws-sdk')
-const { createAWSConnection, awsCredsifyAll } = require('aws-os-connection')
 const opensearch = require('@opensearch-project/opensearch')
+const { createAWSConnection: createAWSConnectionOS,
+  awsGetCredentials } = require('aws-os-connection')
+
 const logger = console //require('./logger')
 
 const collectionsMapping = require('../../fixtures/collections')
@@ -10,28 +11,24 @@ let _esClient
 
 // Connect to an Elasticsearch instance
 async function connect() {
-  let esConfig
   let client
 
-  // use local client
   if (!process.env.ES_HOST) {
-    esConfig = {
+    // use local client
+    const config = {
       node: 'http://localhost:9200'
     }
-    client = new opensearch.Client(esConfig)
+    client = new opensearch.Client(config)
   } else {
-    //const awsCredentials = await awsGetCredentials()
-    const AWSConnector = createAWSConnection(AWS.config.credentials)
     let esHost = process.env.ES_HOST
     if (!esHost.startsWith('http')) {
       esHost = `https://${process.env.ES_HOST}`
     }
-    client = awsCredsifyAll(
-      new opensearch.Client({
-        node: esHost,
-        Connection: AWSConnector
-      })
-    )
+
+    client = new opensearch.Client({
+      ...createAWSConnectionOS(await awsGetCredentials()),
+      node: esHost
+    })
   }
 
   const health = await client.cat.health()

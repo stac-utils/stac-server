@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Changed
 
-- AWS Opensearch Service Opensearch 2.3 is now used instead of Elasticsearch 7.10
+- **BREAKING** AWS Opensearch Service Opensearch 2.3 is now used instead of Elasticsearch 7.10
 - The serverless.yml.example file now has zone awareness enabled and an even number of
   Elasticsearch nodes
 - Upgrade serverless to 3.x

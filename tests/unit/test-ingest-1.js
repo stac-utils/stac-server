@@ -6,7 +6,7 @@ const createEvent = require('aws-event-mocks')
 const setup = () => {
   const ingest = sinon.stub().resolves(true)
   const ingestItem = sinon.stub().resolves(true)
-  const elasticsearch = 'elasticsearch'
+  const opensearch = 'opensearch'
   const ECS = sinon.stub()
   const runTask = sinon.stub().resolves(true).returns({
     promise: () => (Promise.resolve(true))
@@ -15,28 +15,20 @@ const setup = () => {
   const AWS = {
     ECS
   }
-  const satlib = {
-    ingest: {
-      ingest,
-      ingestItem
-    },
-    es: elasticsearch
-  }
   const lambda = proxyquire('../../src/lambdas/ingest/', {
-    '@sat-utils/api-lib': satlib,
     'aws-sdk': AWS
   })
   return {
     ingest,
     ingestItem,
-    elasticsearch,
+    opensearch,
     lambda,
     runTask
   }
 }
 
 test.skip('handler uses non-recursive ingest for S3 SNS Event', async (t) => {
-  const { ingest, lambda, elasticsearch } = setup()
+  const { ingest, lambda, opensearch } = setup()
   const bucket = 'bucket'
   const key = 'key'
   const s3Event = createEvent({
@@ -71,22 +63,22 @@ test.skip('handler uses non-recursive ingest for S3 SNS Event', async (t) => {
   const expectedUrl = `https://${bucket}.s3.amazonaws.com/${key}`
   const expectedRecursive = false
   t.is(ingest.firstCall.args[0], expectedUrl, 'S3 Url is parsed correctly')
-  t.is(ingest.firstCall.args[1], elasticsearch, 'ES library passed as parameter')
+  t.is(ingest.firstCall.args[1], opensearch, 'Search library passed as parameter')
   t.is(ingest.firstCall.args[2], expectedRecursive, 'Recursive is false')
 })
 
 test.skip('handler calls ingestItem when event payload is a feature', async (t) => {
-  const { ingestItem, lambda, elasticsearch } = setup()
+  const { ingestItem, lambda, opensearch } = setup()
   const event = {
     type: 'Feature'
   }
   await lambda.handler(event)
   t.deepEqual(ingestItem.firstCall.args[0], event, 'Calls ingestItem with event')
-  t.is(ingestItem.firstCall.args[1], elasticsearch, 'ES library passed as a parameter')
+  t.is(ingestItem.firstCall.args[1], opensearch, 'Search library passed as a parameter')
 })
 
 test.skip('handler call ingest when event payload contains url', async (t) => {
-  const { ingest, lambda, elasticsearch } = setup()
+  const { ingest, lambda, opensearch } = setup()
   const url = 'url'
   const recursive = false
   const collectionsOnly = true
@@ -97,7 +89,7 @@ test.skip('handler call ingest when event payload contains url', async (t) => {
   }
   await lambda.handler(event)
   t.truthy(
-    ingest.calledOnceWith(url, elasticsearch, recursive, collectionsOnly),
+    ingest.calledOnceWith(url, opensearch, recursive, collectionsOnly),
     'Calls ingest with url and correct parameters.'
   )
 })

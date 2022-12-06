@@ -14,7 +14,7 @@ const itemsMapping = require('../../fixtures/items')
 
 let _esClient
 
-// Connect to an Elasticsearch instance
+// Connect to a search database instance
 async function connect() {
   let client
 
@@ -55,13 +55,13 @@ async function connect() {
   return client
 }
 
-// get existing ES client or create a new one
+// get existing search database client or create a new one
 async function esClient() {
   if (_esClient) {
-    logger.debug('Using existing Elasticsearch connection')
+    logger.debug('Using existing search database connection')
   } else {
     _esClient = await connect()
-    logger.debug('Connected to Elasticsearch')
+    logger.debug('Connected to search database')
   }
 
   return _esClient

@@ -6,13 +6,7 @@ const createEvent = require('aws-event-mocks')
 test.skip('handler calls search with parameters', async (t) => {
   const result = { value: 'value' }
   const search = sinon.stub().resolves(result)
-  const satlib = {
-    api: {
-      search
-    }
-  }
   const lambda = proxyquire('../../src/lambdas/api/', {
-    '@sat-utils/api-lib': satlib
   })
   const host = 'host'
   const httpMethod = 'GET'
@@ -46,15 +40,7 @@ test.skip('handler calls search with parameters', async (t) => {
 
 test.skip('handler returns 404 for error', async (t) => {
   const errorMessage = 'errorMessage'
-  const result = new Error(errorMessage)
-  const search = sinon.stub().resolves(result)
-  const satlib = {
-    api: {
-      search
-    }
-  }
   const lambda = proxyquire('../../src/lambdas/api/', {
-    '@sat-utils/api-lib': satlib
   })
   const host = 'host'
   const httpMethod = 'GET'

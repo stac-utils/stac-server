@@ -2,6 +2,11 @@ const opensearch = require('@opensearch-project/opensearch')
 const { createAWSConnection: createAWSConnectionOS,
   awsGetCredentials } = require('aws-os-connection')
 
+const AWS = require('aws-sdk')
+const elasticsearch = require('@elastic/elasticsearch')
+const { createAWSConnection: createAWSConnectionES,
+  awsCredsifyAll } = require('@acuris/aws-es-connection')
+
 const logger = console //require('./logger')
 
 const collectionsMapping = require('../../fixtures/collections')
@@ -18,17 +23,30 @@ async function connect() {
     const config = {
       node: 'http://localhost:9200'
     }
-    client = new opensearch.Client(config)
+    if (process.env.ES_COMPAT_MODE === 'true') {
+      client = new elasticsearch.Client(config)
+    } else {
+      client = new opensearch.Client(config)
+    }
   } else {
     let esHost = process.env.ES_HOST
     if (!esHost.startsWith('http')) {
       esHost = `https://${process.env.ES_HOST}`
     }
 
-    client = new opensearch.Client({
-      ...createAWSConnectionOS(await awsGetCredentials()),
-      node: esHost
-    })
+    if (process.env.ES_COMPAT_MODE === 'true') {
+      client = awsCredsifyAll(
+        new elasticsearch.Client({
+          node: esHost,
+          Connection: createAWSConnectionES(AWS.config.credentials)
+        })
+      )
+    } else {
+      client = new opensearch.Client({
+        ...createAWSConnectionOS(await awsGetCredentials()),
+        node: esHost
+      })
+    }
   }
 
   const health = await client.cat.health()

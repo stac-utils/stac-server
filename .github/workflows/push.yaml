@@ -17,8 +17,15 @@ jobs:
         ports:
           - "127.0.0.1:9200:9200"
           - "127.0.0.1:9300:9300"
-        volumes:
-          - ./opensearch/config/opensearch.yml:/usr/share/opensearch/config/opensearch.yml
+        environment:
+          - cluster.name=opensearch-cluster
+          - node.name=opensearch-node1
+          - network.host=0.0.0.0
+          - transport.host=0.0.0.0
+          - discovery.type=single-node
+          - http.port=9200
+          - plugins.security.disabled=true
+          - "OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m" # Set min and max JVM heap sizes to at least 50% of system RAM
       localstack:
         image: localstack/localstack
         env:

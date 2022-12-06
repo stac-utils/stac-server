@@ -12,20 +12,6 @@ jobs:
     name: Run tests
     runs-on: ubuntu-latest
     services:
-      opensearch:
-        image: opensearchproject/opensearch:2.3.0
-        ports:
-          - "127.0.0.1:9200:9200"
-          - "127.0.0.1:9300:9300"
-        environment:
-          - cluster.name=opensearch-cluster
-          - node.name=opensearch-node1
-          - network.host=0.0.0.0
-          - transport.host=0.0.0.0
-          - discovery.type=single-node
-          - http.port=9200
-          - plugins.security.disabled=true
-          - "OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m" # Set min and max JVM heap sizes to at least 50% of system RAM
       localstack:
         image: localstack/localstack
         env:
@@ -39,6 +25,9 @@ jobs:
           node-version-file: ".nvmrc"
           cache: npm
           cache-dependency-path: package.json
+      - uses: ankane/setup-opensearch@v1
+        with:
+          opensearch-version: 2.3
       - name: Upgrade npm
         run: npm install -g npm@latest
       - name: Install dependencies

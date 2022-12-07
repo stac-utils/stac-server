@@ -533,8 +533,7 @@ const searchItems = async function (collectionId, queryParameters, backend, endp
 }
 
 const getConformance = async function (txnEnabled) {
-  const stacApiVersion = process.env.STAC_API_VERSION || '1.0.0-rc.2'
-  const prefix = `https://api.stacspec.org/v${stacApiVersion}`
+  const prefix = 'https://api.stacspec.org/v1.0.0-rc.2'
   const conformsTo = [
     `${prefix}/core`,
     `${prefix}/collections`,

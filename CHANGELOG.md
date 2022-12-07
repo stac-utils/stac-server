@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased] - TBD
 
+### Removed
+
+- stac_api_version is no longer field in the root catalog. This was removed from the
+  STAC API spec several versions ago, in favor of the conformance classes.
+- STAC_API_VERSION environment variable is no longer supported. The version is now hard-coded
+  to 1.0.0-rc.2
+
 ### Added
 
 - Added pre-hook and post-hook Lambda examples
@@ -14,6 +21,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Changed
 
+- The STAC API version is now 1.0.0-rc.2
 - AWS OpenSearch Service OpenSearch 2.3 is used as the default instead of Elasticsearch 7.10.
   See [migration section in README.md](README.md#04x---05x).
 - The serverless.example.yml file now has zone awareness enabled and an even number of
@@ -95,10 +103,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   conformance class because it conflicts with the Transaction Extension
 
 ## [0.3.1] - 2021-07-28
-
-### Removed
-
-- stac_api_version from root catalog ([#126](https://github.com/stac-utils/stac-server/pull/126))
 
 ### Fixed
 

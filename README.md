@@ -164,7 +164,7 @@ Create a clone of the stac-server 0.5.x code. Copy and update the serverless.yml
     with `-os-endpoint` instead of `-es-endpoint`
 - Environment variable `STAC_API_VERSION` should be removed to instead defer to the default version of `1.0.0-rc.2`
 
-You can also compare it with the serverless.yml.example file. The `DomainName` value
+You can also compare it with the serverless.example.yml file. The `DomainName` value
 **must** remain the same as it is for the current deployment so
 the CloudFormation deployment will import the existing resource. Instead of a parameterized
 value of `${self:service}-${self:provider.stage}-os` as in the example serverless.yml file,
@@ -308,10 +308,10 @@ git clone https://github.com/stac-utils/stac-server.git
 cd stac-server
 ```
 
-Copy the [example serverless config file](serverless.yml.example) to a file named `serverless.yml`:
+Copy the [example serverless config file](serverless.example.yml) to a file named `serverless.yml`:
 
 ```shell
-cp serverless.yml.example serverless.yml
+cp serverless.example.yml serverless.yml
 ```
 
 There are some settings that should be reviewed and updated as needeed in the serverless config file, under provider->environment:

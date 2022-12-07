@@ -410,7 +410,7 @@ aws lambda invoke \
   --function-name stac-server-dev-ingest \
   --cli-binary-format raw-in-base64-out \
   --payload '{ "create_indices": true }' \
-  -
+  /dev/stdout
 ```
 
 Stac-server is now ready to ingest data!

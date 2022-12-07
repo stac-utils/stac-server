@@ -341,13 +341,17 @@ async function getCollection(collectionId) {
 
 // get all collections
 async function getCollections(page = 1, limit = 100) {
-  const response = await esQuery({
-    index: COLLECTIONS_INDEX,
-    size: limit,
-    from: (page - 1) * limit
-  })
-  const results = response.body.hits.hits.map((r) => (r._source))
-  return results
+  try {
+    const response = await esQuery({
+      index: COLLECTIONS_INDEX,
+      size: limit,
+      from: (page - 1) * limit
+    })
+    return response.body.hits.hits.map((r) => (r._source))
+  } catch (e) {
+    logger.error(`Failure getting collections, maybe none exist? ${e}`)
+  }
+  return []
 }
 
 async function constructSearchParams(parameters, page, limit) {

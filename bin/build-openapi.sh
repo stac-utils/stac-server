@@ -4,7 +4,7 @@ set -x # print each command before exec
 
 PATH=./node_modules/.bin:$PATH
 
-STAC_API_VERSION='v1.0.0-beta.5'
+STAC_API_VERSION='v1.0.0-rc.2'
 
 curl "https://api.stacspec.org/${STAC_API_VERSION}/core/openapi.yaml" -o core.yaml
 curl "https://api.stacspec.org/${STAC_API_VERSION}/collections/openapi.yaml" -o collections.yaml

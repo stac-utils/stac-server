@@ -148,15 +148,9 @@ resources:
           VolumeSize: 35
         ClusterConfig:
           InstanceType: t3.small.search
-<<<<<<< HEAD
           InstanceCount: 1
           DedicatedMasterEnabled: false
           ZoneAwarenessEnabled: false
-=======
-          InstanceCount: 2
-          DedicatedMasterEnabled: false
-          ZoneAwarenessEnabled: true
->>>>>>> main
         EngineVersion: OpenSearch_2.3
         DomainEndpointOptions:
           EnforceHTTPS: true

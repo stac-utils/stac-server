@@ -633,7 +633,17 @@ const aggregate = async function (queryParameters, backend, endpoint, httpMethod
   aggregations.push(agg(esAggs, 'sun_azimuth_frequency', 'string'))
   aggregations.push(agg(esAggs, 'off_nadir_frequency', 'string'))
 
-  return { type: 'AggregationCollection', aggregations }
+  return {
+    aggregations,
+    links: [{
+      rel: 'self',
+      href: `${endpoint}/aggregate`
+    },
+    {
+      rel: 'root',
+      href: `${endpoint}/`
+    }]
+  }
 }
 
 const getConformance = async function (txnEnabled) {
@@ -694,6 +704,11 @@ const getCatalog = async function (txnEnabled, backend, endpoint = '') {
       type: 'application/geo+json',
       href: `${endpoint}/search`,
       method: 'POST',
+    },
+    {
+      rel: 'aggregate',
+      type: 'application/json',
+      href: `${endpoint}/aggregate`
     },
     {
       rel: 'service-desc',

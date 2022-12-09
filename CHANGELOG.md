@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Changed
 
+- Landing Page (root) now has links for both GET and POST methods of search link relation
 - The STAC API version is now 1.0.0-rc.2
 - AWS OpenSearch Service OpenSearch 2.3 is used as the default instead of Elasticsearch 7.10.
   See [migration section in README.md](README.md#04x---05x).

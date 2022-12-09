@@ -1,12 +1,12 @@
 version: "3.8"
 services:
-  elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:7.10.2
+  opensearch:
+    image: opensearchproject/opensearch:2.3.0
     ports:
       - "127.0.0.1:9200:9200"
       - "127.0.0.1:9300:9300"
-    environment:
-      - discovery.type=single-node
+    volumes:
+      - ./opensearch/config/opensearch.yml:/usr/share/opensearch/config/opensearch.yml
   localstack:
     image: localstack/localstack
     ports:

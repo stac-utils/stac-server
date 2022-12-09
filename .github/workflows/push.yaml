@@ -12,13 +12,6 @@ jobs:
     name: Run tests
     runs-on: ubuntu-latest
     services:
-      elasticsearch:
-        image: docker.elastic.co/elasticsearch/elasticsearch:7.10.2
-        env:
-          discovery.type: single-node
-        ports:
-          - 9200:9200
-          - 9300:9300
       localstack:
         image: localstack/localstack
         env:
@@ -32,6 +25,9 @@ jobs:
           node-version-file: ".nvmrc"
           cache: npm
           cache-dependency-path: package.json
+      - uses: ankane/setup-opensearch@v1
+        with:
+          opensearch-version: 2.3
       - name: Upgrade npm
         run: npm install -g npm@latest
       - name: Install dependencies
@@ -44,8 +40,8 @@ jobs:
         run: npm audit --omit dev
       - name: Unit tests
         run: npm run test:coverage
-      - name: Wait for Elasticsearch
-        run: ./bin/wait-for-elasticsearch/run.sh
+      - name: Wait for OpenSearch
+        run: ./bin/wait-for-opensearch/run.sh
       - name: System tests
         run: npm run test:system
       - name: Run build

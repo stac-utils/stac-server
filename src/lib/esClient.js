@@ -1,6 +1,12 @@
+const opensearch = require('@opensearch-project/opensearch')
+const { createAWSConnection: createAWSConnectionOS,
+  awsGetCredentials } = require('aws-os-connection')
+
 const AWS = require('aws-sdk')
-const { createAWSConnection, awsCredsifyAll } = require('@acuris/aws-es-connection')
 const elasticsearch = require('@elastic/elasticsearch')
+const { createAWSConnection: createAWSConnectionES,
+  awsCredsifyAll } = require('@acuris/aws-es-connection')
+
 const logger = console //require('./logger')
 
 const collectionsMapping = require('../../fixtures/collections')
@@ -8,30 +14,39 @@ const itemsMapping = require('../../fixtures/items')
 
 let _esClient
 
-// Connect to an Elasticsearch instance
+// Connect to a search database instance
 async function connect() {
-  let esConfig
   let client
 
-  // use local client
   if (!process.env.ES_HOST) {
-    esConfig = {
+    // use local client
+    const config = {
       node: 'http://localhost:9200'
     }
-    client = new elasticsearch.Client(esConfig)
+    if (process.env.ES_COMPAT_MODE === 'true') {
+      client = new elasticsearch.Client(config)
+    } else {
+      client = new opensearch.Client(config)
+    }
   } else {
-    //const awsCredentials = await awsGetCredentials()
-    const AWSConnector = createAWSConnection(AWS.config.credentials)
     let esHost = process.env.ES_HOST
     if (!esHost.startsWith('http')) {
       esHost = `https://${process.env.ES_HOST}`
     }
-    client = awsCredsifyAll(
-      new elasticsearch.Client({
-        node: esHost,
-        Connection: AWSConnector
+
+    if (process.env.ES_COMPAT_MODE === 'true') {
+      client = awsCredsifyAll(
+        new elasticsearch.Client({
+          node: esHost,
+          Connection: createAWSConnectionES(AWS.config.credentials)
+        })
+      )
+    } else {
+      client = new opensearch.Client({
+        ...createAWSConnectionOS(await awsGetCredentials()),
+        node: esHost
       })
-    )
+    }
   }
 
   const health = await client.cat.health()
@@ -40,13 +55,13 @@ async function connect() {
   return client
 }
 
-// get existing ES client or create a new one
+// get existing search database client or create a new one
 async function esClient() {
   if (_esClient) {
-    logger.debug('Using existing Elasticsearch connection')
+    logger.debug('Using existing search database connection')
   } else {
     _esClient = await connect()
-    logger.debug('Connected to Elasticsearch')
+    logger.debug('Connected to search database')
   }
 
   return _esClient

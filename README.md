@@ -6,7 +6,9 @@
   - [Overview](#overview)
   - [Architecture](#architecture)
   - [Migration](#migration)
-    - [0.3 -> 0.4](#03---04)
+    - [0.4.x -\> 0.5.x](#04x---05x)
+      - [Preferred Elasticsearch to OpenSearch Migration Process](#preferred-elasticsearch-to-opensearch-migration-process)
+    - [0.3.x -\> 0.4.x](#03x---04x)
       - [Elasticsearch upgrade from 7.9 to 7.10](#elasticsearch-upgrade-from-79-to-710)
       - [Disable automatic index creation](#disable-automatic-index-creation)
       - [Validate index mappings](#validate-index-mappings)
@@ -95,9 +97,128 @@ apiLambda --> elasticsearch
 
 ## Migration
 
-### 0.3 -> 0.4
+### 0.4.x -> 0.5.x
 
-Create a new deployment, copy the elasticsearch database, rename indexes,
+By default, a new deployment of 0.5.x will use OpenSearch instead of Elasticsearch. There
+are three options if you have an existing deployment that uses Elasticsearch:
+
+1. Use stac-server in compatibility mode
+   1. Add to serverless.yml environment variables `ES_COMPAT_MODE: "true"` and retain the
+   existing Elasticsearch 7.10 resource description.
+2. Manage the Elasticsearch/OpenSearch domain outside the stac-server serverless deployment.
+   1. With the 0.4.x stac-server code, add `DeletionPolicy: Retain` to the `AWS::Elasticsearch::Domain` resource
+   2. Deploy the stack to update this property in the deployed CloudFormation Stack.
+   3. Remove the `AWS::Elasticsearch::Domain` resource from serverless.yml, modify all of the variables that were previously dynamically populated by the Elasticsearch resource values to be hard-coded, and re-deploy.
+   4. The Elasticsearch domain is now independent of the CF Stack.
+   5. With the 0.5.x stac-server code, update the serverless.yml environment variable `ES_COMPAT_MODE: "true"`
+   6. Deploy the 0.5.x stac-server code with the updated serverless.yml file
+   7. Through the AWS Console, upgrade the OpenSearch Service domain from Elasticsearch 7.10
+      to OpenSearch 1.3, retaining the compatibilty mode enabled configuration.
+   8. Upgrade the OpenSearch 1.3 domain to OpenSearch 2.3.
+   9. Re-deploy the stack without the ES_COMPAT_MODE environment variable set.
+3. (Preferred) Disconnect the Elasticsearch domain from the stac-server CF Stack, deploy a new stac-server CF Stack,
+   upgrade the Elasticsearch domain to OpenSearch, and connect the domain to the new CF Stack.
+   This is described below.
+
+#### Preferred Elasticsearch to OpenSearch Migration Process
+
+**Note! The migration must be done carefully to avoid losing the database!**
+
+The major part of this migration is the use of OpenSearch 2.3 instead of Elasticsearch
+7.10. Confusingly, both of these are options in the AWS OpenSearch Service, but the Elasticsearch option
+is no longer being updated by AWS in favor of OpenSearch.
+
+The migration generally follows the outline in [here](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-opensearchservice-domain.html#aws-resource-opensearchservice-domain--remarks). The underlying problem being solved
+here is that the CloudFormation resource AWS::Elasticsearch::Domain is used for Elasticsearch,
+but AWS::OpenSearchService::Domain is used for OpenSearch, and a CloudFormation update
+can't "migrate" between these resource types. So, the approach is to upgrade the domain
+to OpenSearch in compatibility mode, then clone the CloudFormation Stack, and import
+the OpenSearch domain into it.
+
+With the 0.4.x codebase, change the serverless.yml file to add to the AWS::Elasticsearch::Domain definition at the same
+level as the `Type` attribute these two attributes:
+
+```
+DeletionPolicy: Retain
+UpdateReplacePolicy: Retain
+```
+
+and deploy.
+
+The existing Elasticsearch domain must be manually migrated to OpenSearch. Prior to
+re-deploying the stack, use the AWS Console to manually upgrade the
+Elasticsearch domain (`Actions->Upgrade`) to OpenSearch 1.3. Select "Enable
+compatibility mode" to support the existing stac-server 0.4.x code using the Elasticsearch
+JavaScript client library (@elastic/elasticsearch version 7.9.0). After this upgrade to
+OpenSearch 1.3, then upgrade the domain to OpenSearch 2.3.
+
+Create a clone of the stac-server 0.5.x code. Copy and update the serverless.yml file used for the 0.4.0 deployment with these changes:
+
+- `ElasticSearchInstance` should be renamed to `OpenSearchInstance`
+  - The `Type` of this resource should be changed from `AWS::Elasticsearch::Domain` to
+    `AWS::OpenSearchService::Domain`
+  - `ElasticsearchClusterConfig` is now `ClusterConfig`
+  - `InstanceType` values have changed, e.g., t3.small.elasticsearch is now t3.small.search
+  - `ElasticsearchVersion` is replaced with `EngineVersion` and set to `OpenSearch_2.3`
+- `EsEndpoint` should be renamed to `OpenSearchEndpoint` and the exported name suffixed
+    with `-os-endpoint` instead of `-es-endpoint`
+- Environment variable `STAC_API_VERSION` should be removed to instead defer to the default version of `1.0.0-rc.2`
+
+You can also compare it with the serverless.example.yml file. The `DomainName` value
+**must** remain the same as it is for the current deployment so
+the CloudFormation deployment will import the existing resource. Instead of a parameterized
+value of `${self:service}-${self:provider.stage}-os` as in the example serverless.yml file,
+it would have a hard-coded service name and `-es` suffix, e.g., `my-stac-server-${self:provider.stage}-es`.
+
+Run `npm run package` to generate the CloudFormation templates in the `.serverless` directory.
+Extract from the file `.serverless/cloudformation-template-update-stack.json` a template
+that only has the OpenSearchInstance resource in it. For example:
+
+```json
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "A STAC API running on stac-server",
+  "Resources": {
+    "OpenSearchInstance": {
+      "Type": "AWS::OpenSearchService::Domain",
+      "DeletionPolicy": "Retain",
+      "UpdateReplacePolicy": "Retain",
+      "UpdatePolicy": {
+        "EnableVersionUpgrade": true
+      },
+      "Properties": {
+        "DomainName": "my-stac-server-dev-es",
+        "EBSOptions": {
+          "EBSEnabled": true,
+          "VolumeType": "gp2",
+          "VolumeSize": 35
+        },
+        "ClusterConfig": {
+          "InstanceType": "t3.small.search",
+          "InstanceCount": 2,
+          "DedicatedMasterEnabled": false,
+          "ZoneAwarenessEnabled": true
+        },
+        "EngineVersion": "OpenSearch_2.3",
+        "DomainEndpointOptions": {
+          "EnforceHTTPS": true
+        }
+      }
+    }
+  }
+}
+```
+
+Within CloudFormation, choose `Create stack` and `With existing resources (import resources)`.
+Upload the template that contains only the OpenSearch resource. Choose a new stack name for this similar to the old one, e.g., `my-stac-server-2` and update `service` name in the serverless.yml file with this name. When prompted for the name of the OpenSearch Domain, put in the name of the existing one, e.g., `my-stac-server-dev-es`.
+
+Switch the DNS entry for the domain name to the API Gateway endpoint for the new Stack.
+
+Double-check that the `DeletionPolicy: Retain` is set on the old Stack for the Elasticsearch/OpenSearch resource, and then delete the old Stack.
+
+### 0.3.x -> 0.4.x
+
+Create a new deployment, copy the elasticsearch database, and rename indexes.
 
 #### Elasticsearch upgrade from 7.9 to 7.10
 
@@ -187,28 +308,29 @@ git clone https://github.com/stac-utils/stac-server.git
 cd stac-server
 ```
 
-Copy the [example serverless config file](serverless.yml.example) to a file named `serverless.yml`:
+Copy the [example serverless config file](serverless.example.yml) to a file named `serverless.yml`:
 
 ```shell
-cp serverless.yml.example serverless.yml
+cp serverless.example.yml serverless.yml
 ```
 
 There are some settings that should be reviewed and updated as needeed in the serverless config file, under provider->environment:
 
-| Name                          | Description                                                                                                                                                             | Default Value                                                                        |
-| ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
-| STAC_VERSION                  | STAC Version of this STAC API                                                                                                                                           | 1.0.0                                                                                |
-| STAC_ID                       | ID of this catalog                                                                                                                                                      | stac-server                                                                          |
-| STAC_TITLE                    | Title of this catalog                                                                                                                                                   | STAC API                                                                             |
-| STAC_DESCRIPTION              | Description of this catalog                                                                                                                                             | A STAC API                                                                           |
-| STAC_DOCS_URL                 | URL to documentation                                                                                                                                                    | [https://stac-utils.github.io/stac-server](https://stac-utils.github.io/stac-server) |
-| ES_BATCH_SIZE                 | Number of records to ingest in single batch                                                                                                                             | 500                                                                                  |
-| LOG_LEVEL                     | Level for logging (CRITICAL, ERROR, WARNING, INFO, DEBUG)                                                                                                               | INFO                                                                                 |
-| STAC_API_URL                  | The root endpoint of this API                                                                                                                                           | Inferred from request                                                                |
-| ENABLE_TRANSACTIONS_EXTENSION | Boolean specifying if the [Transaction Extension](https://github.com/radiantearth/stac-api-spec/tree/master/ogcapi-features/extensions/transaction) should be activated | false                                                                                |
-| STAC_API_ROOTPATH | The path to append to URLs if this is not deployed at the server root. For example, if the server is deployed without a custom domain name, it will have the stage name (e.g., dev) in the path. | ""                                                                                |
-| PRE_HOOK                  | The name of a Lambda function to be called as the pre-hook.                                                                                                                                           | none                                            |
-| POST_HOOK                  | The name of a Lambda function to be called as the post-hook.                                                                                                                                           | none                                                                |
+| Name                          | Description                                                                                                                                                                                      | Default Value                                                                        |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------ |
+| STAC_VERSION                  | STAC Version of this STAC API                                                                                                                                                                    | 1.0.0                                                                                |
+| STAC_ID                       | ID of this catalog                                                                                                                                                                               | stac-server                                                                          |
+| STAC_TITLE                    | Title of this catalog                                                                                                                                                                            | STAC API                                                                             |
+| STAC_DESCRIPTION              | Description of this catalog                                                                                                                                                                      | A STAC API                                                                           |
+| STAC_DOCS_URL                 | URL to documentation                                                                                                                                                                             | [https://stac-utils.github.io/stac-server](https://stac-utils.github.io/stac-server) |
+| ES_BATCH_SIZE                 | Number of records to ingest in single batch                                                                                                                                                      | 500                                                                                  |
+| LOG_LEVEL                     | Level for logging (CRITICAL, ERROR, WARNING, INFO, DEBUG)                                                                                                                                        | INFO                                                                                 |
+| STAC_API_URL                  | The root endpoint of this API                                                                                                                                                                    | Inferred from request                                                                |
+| ENABLE_TRANSACTIONS_EXTENSION | Boolean specifying if the [Transaction Extension](https://github.com/radiantearth/stac-api-spec/tree/master/ogcapi-features/extensions/transaction) should be activated                          | false                                                                                |
+| STAC_API_ROOTPATH             | The path to append to URLs if this is not deployed at the server root. For example, if the server is deployed without a custom domain name, it will have the stage name (e.g., dev) in the path. | ""                                                                                   |
+| PRE_HOOK                      | The name of a Lambda function to be called as the pre-hook.                                                                                                                                      | none                                                                                 |
+| POST_HOOK                     | The name of a Lambda function to be called as the post-hook.                                                                                                                                     | none                                                                                 |
+| ES_COMPAT_MODE                | Enable Elasticsearch 7.10 compatibility mdoe within the server.                                                                                                                                  | false                                                                                |
 
 After reviewing the settings, build and deploy:
 
@@ -288,7 +410,7 @@ aws lambda invoke \
   --function-name stac-server-dev-ingest \
   --cli-binary-format raw-in-base64-out \
   --payload '{ "create_indices": true }' \
-  -
+  /dev/stdout
 ```
 
 Stac-server is now ready to ingest data!
@@ -552,7 +674,7 @@ Other configurations can be passed as shell environment variables, e.g.,
 
 ```
 export ENABLE_TRANSACTIONS_EXTENSION=true
-export ES_HOST='https://search-stac-server-dev-es-7awl6h344qlpvly.us-west-2.es.amazonaws.com'
+export ES_HOST='https://search-stac-server-dev-os-7awl6h344qlpvly.us-west-2.es.amazonaws.com'
 npm run serve
 ```
 

@@ -9,9 +9,9 @@ const isIndexNotFoundError = (e) => (
     && e.message.includes('index_not_found_exception'))
 
 /*
-This module is used for connecting to an Elasticsearch instance, writing records,
+This module is used for connecting to a search database instance, writing records,
 searching records, and managing the indexes. It looks for the ES_HOST environment
-variable which is the URL to the elasticsearch host
+variable which is the URL to the search database host
 */
 
 function buildRangeQuery(property, operators, operatorsObject) {
@@ -319,7 +319,7 @@ async function deleteItem(collectionId, itemId) {
 }
 
 async function esQuery(parameters) {
-  logger.info(`Elasticsearch query: ${JSON.stringify(parameters)}`)
+  logger.info(`Search database query: ${JSON.stringify(parameters)}`)
   const client = await esClient.client()
   if (client === undefined) throw new Error('Client is undefined')
   const response = await client.search(parameters)

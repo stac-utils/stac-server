@@ -6,7 +6,7 @@ const { getItemCreated } = require('./es')
 
 const COLLECTIONS_INDEX = process.env.COLLECTIONS_INDEX || 'collections'
 
-class ElasticSearchWritableStream extends _stream.Writable {
+class SearchDatabaseWritableStream extends _stream.Writable {
   constructor(config, options) {
     super(options)
     this.config = config
@@ -96,7 +96,7 @@ class ElasticSearchWritableStream extends _stream.Writable {
   }
 }
 
-// Given an input stream and a transform, write records to an elasticsearch instance
+// Given an input stream and a transform, write records to a search database instance
 async function stream() {
   let esStreams
   try {
@@ -140,7 +140,7 @@ async function stream() {
       next(null, record)
     })
 
-    const esStream = new ElasticSearchWritableStream({ client: client }, {
+    const esStream = new SearchDatabaseWritableStream({ client: client }, {
       objectMode: true,
       highWaterMark: Number(process.env.ES_BATCH_SIZE) || 500
     })

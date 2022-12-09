@@ -13,16 +13,18 @@ const createCollectionsIndex = async () => {
  * @returns {Promise<void>}
  */
 const refreshIndices = async () => {
-  const esClient = await connect()
-  await esClient.indices.refresh({ index: '_all' })
+  const client = await connect()
+  // @ts-expect-error client can be of two types with the same API
+  await client.indices.refresh({ index: '_all' })
 }
 
 /**
  * @returns {Promise<void>}
  */
 const deleteAllIndices = async () => {
-  const es = await connect()
-  await es.indices.delete({ index: '_all' })
+  const client = await connect()
+  // @ts-expect-error client can be of two types with the same API
+  await client.indices.delete({ index: '_all' })
   await refreshIndices()
 }
 

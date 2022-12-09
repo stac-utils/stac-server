@@ -371,7 +371,7 @@ const addItemLinks = function (results, endpoint) {
 
 const collectionsToCatalogLinks = function (results, endpoint) {
   const stacVersion = process.env.STAC_VERSION || '1.0.0'
-  const stacApiVersion = process.env.STAC_API_VERSION || '1.0.0-beta.5'
+  const stacApiVersion = process.env.STAC_API_VERSION || '1.0.0-rc.2'
   const catalogId = process.env.STAC_ID || 'stac-server'
   const catalogTitle = process.env.STAC_TITLE || 'A STAC API'
   const catalogDescription = process.env.STAC_DESCRIPTION || 'A STAC API running on stac-server'

@@ -557,7 +557,6 @@ const agg = function (esAggs, name, dataType) {
 const aggregate = async function (queryParameters, backend, endpoint, httpMethod) {
   logger.debug(`Aggregate parameters: ${JSON.stringify(queryParameters)}`)
   const {
-    next,
     bbox,
     intersects
   } = queryParameters
@@ -578,7 +577,6 @@ const aggregate = async function (queryParameters, backend, endpoint, httpMethod
     query,
     ids,
     collections,
-    next
   })
 
   logger.debug(`Aggregate parameters: ${JSON.stringify(searchParams)}`)

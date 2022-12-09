@@ -33,8 +33,8 @@ function buildRangeQuery(property, operators, operatorsObject) {
     // All operators for a property go in a single range query.
     comparisons.forEach((comparison) => {
       if (operators.includes(comparison)) {
-        const exisiting = rangeQuery.range[propertyKey]
-        rangeQuery.range[propertyKey] = { ...exisiting, [comparison]: operatorsObject[comparison] }
+        const existing = rangeQuery.range[propertyKey]
+        rangeQuery.range[propertyKey] = { ...existing, [comparison]: operatorsObject[comparison] }
       }
     })
   }

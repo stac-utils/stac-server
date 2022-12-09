@@ -81,10 +81,13 @@ const extractLimit = function (params) {
       throw new ValidationError('Invalid limit value')
     }
 
-    if (Number.isNaN(limit) || limit <= 0 || limit > 10000) {
+    if (Number.isNaN(limit) || limit <= 0) {
       throw new ValidationError(
         'Invalid limit value, must be a number between 1 and 10000 inclusive'
       )
+    }
+    if (limit > 10000) {
+      limit = 10000
     }
     return limit
   }

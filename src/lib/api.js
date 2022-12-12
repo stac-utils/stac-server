@@ -535,6 +535,7 @@ const searchItems = async function (collectionId, queryParameters, backend, endp
   return response
 }
 
+// todo: make this more defensive if the named agg doesn't exist
 const agg = function (esAggs, name, dataType) {
   const buckets = []
   for (const bucket of esAggs[name].buckets) {
@@ -595,44 +596,33 @@ const aggregate = async function (queryParameters, backend, endpoint, httpMethod
 
   const { body } = esResponse
   const { aggregations: esAggs } = body
-  const aggregations = []
-
-  logger.debug(`esResponse: ${JSON.stringify(esResponse)}`)
-
-  aggregations.push(
+  const aggregations = [
     {
       name: 'total_count',
       data_type: 'integer',
       value: esAggs['total_count']['value'],
-    }
-  )
-
-  aggregations.push(
+    },
     {
       name: 'datetime_max',
       data_type: 'datetime',
       value: esAggs['datetime_max']['value_as_string'],
-    }
-  )
-
-  aggregations.push(
+    },
     {
       name: 'datetime_min',
       data_type: 'datetime',
       value: esAggs['datetime_min']['value_as_string'],
-    }
-  )
+    },
 
-  aggregations.push(agg(esAggs, 'collection_frequency', 'string'))
-  aggregations.push(agg(esAggs, 'datetime_frequency', 'datetime'))
-  aggregations.push(agg(esAggs, 'cloud_cover_frequency', 'numeric'))
-  aggregations.push(agg(esAggs, 'grid_code_frequency', 'string'))
-  aggregations.push(agg(esAggs, 'platform_frequency', 'string'))
-  aggregations.push(agg(esAggs, 'grid_code_landsat_frequency', 'string'))
-  aggregations.push(agg(esAggs, 'sun_elevation_frequency', 'string'))
-  aggregations.push(agg(esAggs, 'sun_azimuth_frequency', 'string'))
-  aggregations.push(agg(esAggs, 'off_nadir_frequency', 'string'))
-
+    agg(esAggs, 'collection_frequency', 'string'),
+    agg(esAggs, 'datetime_frequency', 'datetime'),
+    agg(esAggs, 'cloud_cover_frequency', 'numeric'),
+    agg(esAggs, 'grid_code_frequency', 'string'),
+    agg(esAggs, 'platform_frequency', 'string'),
+    agg(esAggs, 'grid_code_landsat_frequency', 'string'),
+    agg(esAggs, 'sun_elevation_frequency', 'string'),
+    agg(esAggs, 'sun_azimuth_frequency', 'string'),
+    agg(esAggs, 'off_nadir_frequency', 'string'),
+  ]
   return {
     aggregations,
     links: [{
@@ -659,6 +649,7 @@ const getConformance = async function (txnEnabled) {
     `${prefix}/item-search#fields`,
     `${prefix}/item-search#sort`,
     `${prefix}/item-search#query`,
+    `${prefix}/aggregation`,
     'http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/core',
     'http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/oas30',
     'http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/geojson'

@@ -585,7 +585,14 @@ const getCatalog = async function (txnEnabled, backend, endpoint = '') {
     {
       rel: 'search',
       type: 'application/geo+json',
-      href: `${endpoint}/search`
+      href: `${endpoint}/search`,
+      method: 'GET',
+    },
+    {
+      rel: 'search',
+      type: 'application/geo+json',
+      href: `${endpoint}/search`,
+      method: 'POST',
     },
     {
       rel: 'service-desc',

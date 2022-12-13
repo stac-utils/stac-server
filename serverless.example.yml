@@ -13,9 +13,8 @@ provider:
     STAC_TITLE: "STAC API"
     STAC_DESCRIPTION: "A STAC API using stac-server"
     LOG_LEVEL: DEBUG
-    ES_BATCH_SIZE: 500
     STAC_DOCS_URL: https://stac-utils.github.io/stac-server/
-    ES_HOST:
+    OPENSEARCH_HOST:
       Fn::GetAtt: [OpenSearchInstance, DomainEndpoint]
     ENABLE_TRANSACTIONS_EXTENSION: false
     # comment STAC_API_ROOTPATH if deployed with a custom domain

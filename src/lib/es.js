@@ -10,7 +10,7 @@ const isIndexNotFoundError = (e) => (
 
 /*
 This module is used for connecting to a search database instance, writing records,
-searching records, and managing the indexes. It looks for the ES_HOST environment
+searching records, and managing the indexes. It looks for the OPENSEARCH_HOST environment
 variable which is the URL to the search database host
 */
 
@@ -235,16 +235,16 @@ async function indexCollection(collection) {
     await esClient.createIndex(COLLECTIONS_INDEX)
   }
 
-  await client.index({
+  const collectionDocResponse = await client.index({
     index: COLLECTIONS_INDEX,
     id: collection.id,
     body: collection,
     opType: 'create'
   })
 
-  const response = await esClient.createIndex(collection.id)
+  const indexCreateResponse = await esClient.createIndex(collection.id)
 
-  return response
+  return [collectionDocResponse, indexCreateResponse]
 }
 
 /*
@@ -366,9 +366,8 @@ async function constructSearchParams(parameters, page, limit) {
     body.search_after = buildSearchAfter(parameters)
   }
 
-  // Specifying the scroll parameter makes the total work
   const searchParams = {
-    index: collections || '*,-*kibana*,-collections',
+    index: collections || '*,-.*,-collections',
     body,
     size: limit,
     track_total_hits: true

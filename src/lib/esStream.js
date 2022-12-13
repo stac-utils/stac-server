@@ -142,7 +142,7 @@ async function stream() {
 
     const esStream = new SearchDatabaseWritableStream({ client: client }, {
       objectMode: true,
-      highWaterMark: Number(process.env.ES_BATCH_SIZE) || 500
+      highWaterMark: Number(process.env.INGEST_BATCH_SIZE || process.env.ES_BATCH_SIZE) || 500
     })
     esStreams = { toEs, esStream }
   } catch (error) {

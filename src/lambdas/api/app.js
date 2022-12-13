@@ -86,6 +86,30 @@ app.post('/search', async (req, res, next) => {
   }
 })
 
+app.get('/aggregate', async (req, res, next) => {
+  try {
+    res.json(await api.aggregate(req.query, es, req.endpoint, 'GET'))
+  } catch (error) {
+    if (error instanceof api.ValidationError) {
+      next(createError(400, error.message))
+    } else {
+      next(error)
+    }
+  }
+})
+
+app.post('/aggregate', async (req, res, next) => {
+  try {
+    res.json(await api.aggregate(req.body, es, req.endpoint, 'POST'))
+  } catch (error) {
+    if (error instanceof api.ValidationError) {
+      next(createError(400, error.message))
+    } else {
+      next(error)
+    }
+  }
+})
+
 app.get('/collections', async (req, res, next) => {
   try {
     res.json(await api.getCollections(es, req.endpoint))

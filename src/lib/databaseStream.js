@@ -1,8 +1,8 @@
 const _stream = require('stream')
 const through2 = require('through2')
 const logger = console //require('./logger')
-const esClient = require('./esClient')
-const { getItemCreated } = require('./es')
+const dbClient = require('./databaseClient')
+const { getItemCreated } = require('./database')
 
 const COLLECTIONS_INDEX = process.env.COLLECTIONS_INDEX || 'collections'
 
@@ -66,7 +66,7 @@ class SearchDatabaseWritableStream extends _stream.Writable {
 
       // if this was a collection, then add a new index with collection name
       if (index === COLLECTIONS_INDEX) {
-        await esClient.createIndex(id)
+        await dbClient.createIndex(id)
       }
 
       return next()
@@ -98,11 +98,11 @@ class SearchDatabaseWritableStream extends _stream.Writable {
 
 // Given an input stream and a transform, write records to a search database instance
 async function stream() {
-  let esStreams
+  let dbStreams
   try {
-    const client = await esClient.client()
+    const client = await dbClient.client()
 
-    const toEs = through2.obj({ objectMode: true }, async (data, encoding, next) => {
+    const toDB = through2.obj({ objectMode: true }, async (data, encoding, next) => {
       let index = ''
       logger.debug(`Data: ${JSON.stringify(data)}`)
       if (data && data.hasOwnProperty('extent')) {
@@ -140,15 +140,15 @@ async function stream() {
       next(null, record)
     })
 
-    const esStream = new SearchDatabaseWritableStream({ client: client }, {
+    const dbStream = new SearchDatabaseWritableStream({ client: client }, {
       objectMode: true,
       highWaterMark: Number(process.env.INGEST_BATCH_SIZE || process.env.ES_BATCH_SIZE) || 500
     })
-    esStreams = { toEs, esStream }
+    dbStreams = { toDB, dbStream }
   } catch (error) {
     logger.error(error)
   }
-  return esStreams
+  return dbStreams
 }
 
 module.exports = stream

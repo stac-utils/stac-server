@@ -1,10 +1,10 @@
 const test = require('ava')
 
-const { deleteAllIndices, refreshIndices } = require('../helpers/es')
+const { deleteAllIndices, refreshIndices } = require('../helpers/database')
 const { randomId } = require('../helpers/utils')
 const ingest = require('../../src/lib/ingest')
 const intersectsGeometry = require('../fixtures/stac/intersectsGeometry.json')
-const stream = require('../../src/lib/esStream')
+const stream = require('../../src/lib/databaseStream')
 const systemTests = require('../helpers/system-tests')
 
 const ingestEntities = async (fixtures) => {

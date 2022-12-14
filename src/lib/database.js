@@ -1,4 +1,4 @@
-const esClient = require('./esClient')
+const dbClient = require('./databaseClient')
 const logger = console //require('./logger')
 
 const COLLECTIONS_INDEX = process.env.COLLECTIONS_INDEX || 'collections'
@@ -228,11 +228,11 @@ function buildFieldsFilter(parameters) {
  *
  */
 async function indexCollection(collection) {
-  const client = await esClient.client()
+  const client = await dbClient.client()
 
   const exists = await client.indices.exists({ index: COLLECTIONS_INDEX })
   if (!exists.body) {
-    await esClient.createIndex(COLLECTIONS_INDEX)
+    await dbClient.createIndex(COLLECTIONS_INDEX)
   }
 
   const collectionDocResponse = await client.index({
@@ -242,7 +242,7 @@ async function indexCollection(collection) {
     opType: 'create'
   })
 
-  const indexCreateResponse = await esClient.createIndex(collection.id)
+  const indexCreateResponse = await dbClient.createIndex(collection.id)
 
   return [collectionDocResponse, indexCreateResponse]
 }
@@ -252,7 +252,7 @@ async function indexCollection(collection) {
  *
  */
 async function indexItem(item) {
-  const client = await esClient.client()
+  const client = await dbClient.client()
 
   const exists = await client.indices.exists({ index: item.collection })
   if (!exists.body) {
@@ -282,7 +282,7 @@ async function indexItem(item) {
  *
  */
 async function partialUpdateItem(collectionId, itemId, updateFields) {
-  const client = await esClient.client()
+  const client = await dbClient.client()
 
   // Handle inserting required default properties to `updateFields`
   const requiredProperties = {
@@ -309,7 +309,7 @@ async function partialUpdateItem(collectionId, itemId, updateFields) {
 }
 
 async function deleteItem(collectionId, itemId) {
-  const client = await esClient.client()
+  const client = await dbClient.client()
   if (client === undefined) throw new Error('Client is undefined')
   return await client.delete_by_query({
     index: collectionId,
@@ -320,7 +320,7 @@ async function deleteItem(collectionId, itemId) {
 
 async function esQuery(parameters) {
   logger.info(`Search database query: ${JSON.stringify(parameters)}`)
-  const client = await esClient.client()
+  const client = await dbClient.client()
   if (client === undefined) throw new Error('Client is undefined')
   const response = await client.search(parameters)
   logger.info(`Response: ${JSON.stringify(response)}`)
@@ -430,7 +430,7 @@ const getItemCreated = async (collectionId, itemId) => {
  *
  */
 async function updateItem(item) {
-  const client = await esClient.client()
+  const client = await dbClient.client()
 
   const exists = await client.indices.exists({ index: item.collection })
   if (!exists.body) {

@@ -1,6 +1,6 @@
 // @ts-check
 
-const { connect, createIndex } = require('../../src/lib/esClient')
+const { connect, createIndex } = require('../../src/lib/databaseClient')
 
 /**
  * @returns {Promise<void>}

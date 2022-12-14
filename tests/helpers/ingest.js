@@ -4,7 +4,7 @@ const awsClients = require('../../src/lib/aws-clients')
 const { handler } = require('../../src/lambdas/ingest')
 const { sqsTriggerLambda } = require('./sqs')
 const { nullLoggerContext } = require('./context')
-const { refreshIndices } = require('./es')
+const { refreshIndices } = require('./database')
 const { loadFixture } = require('./utils')
 
 /**

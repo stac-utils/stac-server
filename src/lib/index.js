@@ -3,6 +3,6 @@
 module.exports = {
   api: require('./api'),
   es: require('./es'),
-  esStream: require('./esStream'),
+  dbStream: require('./databaseStream'),
   ingest: require('./ingest')
 }

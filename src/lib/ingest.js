@@ -4,12 +4,12 @@ const logger = console //require('./logger')
 
 async function ingestItem(item, stream) {
   const readable = new Readable({ objectMode: true })
-  const { toEs, esStream } = await stream()
+  const { toDB, dbStream } = await stream()
   const promise = new Promise((resolve, reject) => {
     pump(
       readable,
-      toEs,
-      esStream,
+      toDB,
+      dbStream,
       (error) => {
         if (error) {
           logger.info(error)
@@ -28,12 +28,12 @@ async function ingestItem(item, stream) {
 
 async function ingestItems(items, stream) {
   const readable = new Readable({ objectMode: true })
-  const { toEs, esStream } = await stream()
+  const { toDB, dbStream } = await stream()
   const promise = new Promise((resolve, reject) => {
     pump(
       readable,
-      toEs,
-      esStream,
+      toDB,
+      dbStream,
       (error) => {
         if (error) {
           logger.info(error)

@@ -1,5 +1,5 @@
 const test = require('ava')
-const es = require('../../src/lib/es')
+const es = require('../../src/lib/database')
 
 test('search id parameter doesnt override other parameters', async (t) => {
   const ids = 'a,b,c'

@@ -7,6 +7,7 @@
   - [Architecture](#architecture)
   - [Migration](#migration)
     - [0.4.x -\> 0.5.x](#04x---05x)
+      - [Elasticsearch to OpenSearch Migration](#elasticsearch-to-opensearch-migration)
       - [Preferred Elasticsearch to OpenSearch Migration Process](#preferred-elasticsearch-to-opensearch-migration-process)
     - [0.3.x -\> 0.4.x](#03x---04x)
       - [Elasticsearch upgrade from 7.9 to 7.10](#elasticsearch-upgrade-from-79-to-710)
@@ -102,6 +103,8 @@ apiLambda --> opensearch
 
 ### 0.4.x -> 0.5.x
 
+#### Elasticsearch to OpenSearch Migration
+
 By default, a new deployment of 0.5.x will use OpenSearch instead of Elasticsearch. There
 are three options if you have an existing deployment that uses Elasticsearch:
 
@@ -122,6 +125,9 @@ are three options if you have an existing deployment that uses Elasticsearch:
 3. (Preferred) Disconnect the Elasticsearch domain from the stac-server CF Stack, deploy a new stac-server CF Stack,
    upgrade the Elasticsearch domain to OpenSearch, and connect the domain to the new CF Stack.
    This is described below.
+
+Additionally, the `ES_HOST` variable used in the serverless.yml file has been
+renamed `OPENSEARCH_HOST`.
 
 #### Preferred Elasticsearch to OpenSearch Migration Process
 
@@ -414,7 +420,7 @@ This can be done with the [AWS CLI Version 2](https://docs.aws.amazon.com/cli/la
 
 ```shell
 aws lambda invoke \
-  --function-name pvarner-stac-server-dev-ingest \
+  --function-name stac-server-dev-ingest \
   --cli-binary-format raw-in-base64-out \
   --payload '{ "create_indices": true }' \
   /dev/stdout

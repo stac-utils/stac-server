@@ -7,6 +7,7 @@
   - [Architecture](#architecture)
   - [Migration](#migration)
     - [0.4.x -\> 0.5.x](#04x---05x)
+      - [OpenSearch migration](#opensearch-migration)
       - [Preferred Elasticsearch to OpenSearch Migration Process](#preferred-elasticsearch-to-opensearch-migration-process)
     - [0.3.x -\> 0.4.x](#03x---04x)
       - [Elasticsearch upgrade from 7.9 to 7.10](#elasticsearch-upgrade-from-79-to-710)
@@ -117,6 +118,8 @@ apiLambda --> opensearch
 
 ### 0.4.x -> 0.5.x
 
+#### OpenSearch migration
+
 By default, a new deployment of 0.5.x will use OpenSearch instead of Elasticsearch. There
 are three options if you have an existing deployment that uses Elasticsearch:
 
@@ -185,7 +188,7 @@ Create a clone of the stac-server 0.5.x code. Copy and update the serverless.yml
 You can also compare it with the serverless.example.yml file. The `DomainName` value
 **must** remain the same as it is for the current deployment so
 the CloudFormation deployment will import the existing resource. Instead of a parameterized
-value of `${self:service}-${self:provider.stage}-os` as in the example serverless.yml file,
+value of `${self:service}-${self:provider.stage}` as in the example serverless.yml file,
 it would have a hard-coded service name and `-es` suffix, e.g., `my-stac-server-${self:provider.stage}-es`.
 
 Run `npm run package` to generate the CloudFormation templates in the `.serverless` directory.
@@ -362,12 +365,20 @@ npm run build
 npm run deploy
 ```
 
-This will create a CloudFormation stack in the `us-west-2` region called `stac-server-dev`.
+This will use the file `serverless.yml` and create a CloudFormation stack in the
+`us-west-2` region called `stac-server-dev`.
 To change the region or the stage name (from `dev`) provide arguments to the deploy command
 (note the additional `--` in the command, required by `npm` to provide arguments):
 
 ```shell
 npm run deploy -- --stage mystage --region eu-central-1
+```
+
+Multiple deployments can be managed with multiple serverless config files and specified
+to the deploy command with:
+
+```shell
+npm run deploy -- --config serverless.some-name.yml
 ```
 
 Once deployed, there are a few steps to configure OpenSearch.
@@ -429,7 +440,7 @@ This can be done with the [AWS CLI Version 2](https://docs.aws.amazon.com/cli/la
 
 ```shell
 aws lambda invoke \
-  --function-name pvarner-stac-server-dev-ingest \
+  --function-name stac-server-dev-ingest \
   --cli-binary-format raw-in-base64-out \
   --payload '{ "create_indices": true }' \
   /dev/stdout
@@ -444,6 +455,12 @@ The default stac-server deployment controls access to the OpenSearch cluster usi
 IAM permissions, which results in access to the cluster with full admin permissions.
 Additionally, using cross-cluster search or replication requires fine-grained access
 control is configured to connect the clusters.
+
+**Warning**: Unfortunately, fine-grained access control cannot be enabled on an
+existing OpenSearch
+cluster through the serverless deploy, as this is a restriction of CloudFormation
+which serverless uses. A migration process between the clusters must be performed similar
+to the Elasticsearch -> OpenSearch migration process.
 
 ##### Configure OpenSearch for fine-grained access control
 
@@ -461,14 +478,26 @@ Add this to the `AWS::OpenSearchService::Domain` resource:
             InternalUserDatabaseEnabled: true
             MasterUserOptions:
               MasterUserName: admin
-              MasterUserPassword: ${opt:password}
+              MasterUserPassword: ${env:OPENSEARCH_MASTER_USER_PASSWORD}
+        AccessPolicies:
+          Version:                        "2012-10-17"
+          Statement:
+            - Effect:                     "Allow"
+              Principal:                  { "AWS": "*" }
+              Action:                     "es:ESHttp*"
+              Resource:                   "arn:aws:es:arn:aws:es:${aws:region}:${aws:accountId}:domain/${self:service}-${self:provider.stage}/*"
 ```
 
-Deploying now requires the `password` option to be passed in the deployment so
-it can be set for the OpenSearch "master" user, e.g.:
+The AccessPolicies Statement will restrict the OpenSearch instance to only being accessible
+within AWS. This requires the user creation steps below be either executed from or proxied
+through an EC2 instance, or that the Access Policy be changed temporarily through the
+console in the domain's Security configuration to be "Only use fine-grained access control".
+
+Deploying now requires the `OPENSEARCH_MASTER_USER_PASSWORD` local shell environment
+variable be set so it can be set for the OpenSearch "master" user, e.g.:
 
 ```shell
-npm run deploy -- --password xxxxxx
+OPENSEARCH_MASTER_USER_PASSWORD='some-password' npm run deploy
 ```
 
 Redeploy the stack, and this will be updated without re-creating the cluster.
@@ -572,7 +601,8 @@ recommended name for this Secret corresponds
 to the stac-server deployment as `{stage}/{service}/opensearch`, e.g.,
 `dev/my-stac-server/opensearch`.
 
-The Secret value should have two keys, `username` and `password`, with the appropriate
+The Secret type should be "Other type of secret" and
+have two keys, `username` and `password`, with the appropriate
 values, e.g., `stac_server` and whatever you set as the password when creating that user.
 
 Add the `OPENSEARCH_CREDENTIALS_SECRET_ID` variable to the serverless.yml section
@@ -607,20 +637,6 @@ OPENSEARCH_PASSWORD: xxxxxxxxxxx
 
 Setting these as environment variables can also be useful when running stac-server
 locally.
-
-Additionally, you may choose to restrict the OpenSearch cluster to access only within
-AWS by adding the following Statement to the `AWS::OpenSearchService::Domain` resource's
-AccessPolicies Statement:
-
-```
-AccessPolicies:
-  Version:                        "2012-10-17"
-  Statement:
-    - Effect:                     "Allow"
-      Principal:                  { "AWS": "*" }
-      Action:                     "es:ESHttp*"
-      Resource:                   "arn:aws:es:arn:aws:es:${aws:region}:${aws:accountId}:domain/${self:service}-${self:provider.stage}-os/*"
-```
 
 #### Supporting cross-cluster replication
 
@@ -900,7 +916,7 @@ Other configurations can be passed as shell environment variables, e.g.,
 
 ```
 export ENABLE_TRANSACTIONS_EXTENSION=true
-export OPENSEARCH_HOST='https://search-stac-server-dev-os-7awl6h344qlpvly.us-west-2.es.amazonaws.com'
+export OPENSEARCH_HOST='https://search-stac-server-dev-7awl6h344qlpvly.us-west-2.es.amazonaws.com'
 npm run serve
 ```
 

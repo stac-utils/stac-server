@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   STAC API spec several versions ago, in favor of the conformance classes.
 - STAC_API_VERSION environment variable is no longer supported. The version is now hard-coded
   to 1.0.0-rc.2
+- `lambdaHashingVersion: 20201221` is now the default for serverless, and has been removed
+  from the serverless example config file.
 
 ### Added
 

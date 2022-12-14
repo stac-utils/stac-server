@@ -53,6 +53,17 @@ Stac-server is an implementation of the [STAC API specification](https://github.
 | 0.4.x               | 1.0.0        | 1.0.0-beta.5     |
 | 0.5.x               | 1.0.0        | 1.0.0-rc.2       |
 
+As of version 0.5.x, stac-server supports the following specifications:
+
+- STAC API - Core
+- STAC API - Features
+- STAC API - Collections
+- STAC API - Item Search
+- Query Extension
+- Fields Extension
+- Sort Extension
+- Aggregation Extension (experimental work-in-progress)
+
 The following APIs are deployed instances of stac-server:
 
 | Name                                                       | STAC Version | STAC API Version | Description                         |

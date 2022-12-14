@@ -409,6 +409,81 @@ async function search(parameters, page, limit = 10) {
   return response
 }
 
+async function aggregate(parameters) {
+  const searchParams = await constructSearchParams(parameters)
+  searchParams.body.size = 0
+  searchParams.body.aggs = {
+    total_count: { value_count: { field: 'id' } },
+    collection_frequency: { terms: { field: 'collection', size: 100 } },
+    platform_frequency: { terms: { field: 'properties.platform', size: 100 } },
+    cloud_cover_frequency: {
+      range: {
+        field: 'properties.eo:cloud_cover',
+        ranges: [
+          { to: 5 },
+          { from: 5, to: 15 },
+          { from: 15, to: 40 },
+          { from: 40 },
+        ],
+      }
+    },
+    datetime_frequency: {
+      date_histogram: {
+        field: 'properties.datetime',
+        calendar_interval: 'month',
+      }
+    },
+    datetime_min: { min: { field: 'properties.datetime' } },
+    datetime_max: { max: { field: 'properties.datetime' } },
+    grid_code_frequency: {
+      terms: {
+        field: 'properties.grid:code',
+        size: 1000,
+        missing: 'none',
+      }
+    },
+    grid_code_landsat_frequency: {
+      terms: {
+        field: 'properties.landsat:wrs_type',
+        size: 1000,
+        missing: 'none',
+        script: {
+          lang: 'painless',
+          source: "return 'WRS' + _value + '-' + "
+            + "doc['properties.landsat:wrs_path'].value + "
+            + "doc['properties.landsat:wrs_row'].value"
+        }
+      }
+    },
+    sun_elevation_frequency: {
+      histogram: {
+        field: 'properties.view:sun_elevation',
+        interval: 5
+      }
+    },
+    sun_azimuth_frequency: {
+      histogram: {
+        field: 'properties.view:sun_azimuth',
+        interval: 5
+      }
+    },
+    off_nadir_frequency: {
+      histogram: {
+        field: 'properties.view:off_nadir',
+        interval: 5
+      }
+    }
+  }
+
+  const esResponse = await esQuery({
+    ignore_unavailable: true,
+    allow_no_indices: true,
+    ...searchParams
+  })
+
+  return esResponse
+}
+
 const getItem = async (collectionId, itemId) => {
   const searchResponse = await search({
     collections: [collectionId],
@@ -467,6 +542,7 @@ module.exports = {
   partialUpdateItem,
   isIndexNotFoundError,
   search,
+  aggregate,
   constructSearchParams,
   buildDatetimeQuery
 }

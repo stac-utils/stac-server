@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - Adds support for authenticating to OpenSearch with a username and password when
   fine-grained access control is enabled.
+- (Experimental) Aggregation Extension endpoint /aggregate
 - Added pre-hook and post-hook Lambda examples
 - POST /collections endpoint to create collections
 

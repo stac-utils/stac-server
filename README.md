@@ -18,6 +18,10 @@
       - [Disable automatic index creation](#disable-automatic-index-creation-1)
       - [Create collection index](#create-collection-index)
       - [Enable OpenSearch fine-grained access control](#enable-opensearch-fine-grained-access-control)
+        - [Configure OpenSearch for fine-grained access control](#configure-opensearch-for-fine-grained-access-control)
+        - [Option 1 - API method:](#option-1---api-method)
+        - [Option 2 - Dashboard method:](#option-2---dashboard-method)
+        - [Populating and accessing credentials](#populating-and-accessing-credentials)
       - [Supporting cross-cluster replication](#supporting-cross-cluster-replication)
     - [Proxying Stac-server through CloudFront](#proxying-stac-server-through-cloudfront)
     - [Locking down transaction endpoints](#locking-down-transaction-endpoints)
@@ -430,6 +434,8 @@ IAM permissions, which results in access to the cluster with full admin permissi
 Additionally, using cross-cluster search or replication requires fine-grained access
 control is configured to connect the clusters.
 
+##### Configure OpenSearch for fine-grained access control
+
 Add this to the `AWS::OpenSearchService::Domain` resource:
 
 ```yaml
@@ -456,6 +462,75 @@ npm run deploy -- --password xxxxxx
 
 Redeploy the stack, and this will be updated without re-creating the cluster.
 
+The next step is to create the OpenSearch user and role to use for stac-server. This can
+either be done through the OpenSearch API or Dashboard.
+
+##### Option 1 - API method:
+
+This assumes the master username is `admin` and creats a user with the name `stac_server`.
+
+Create the Role:
+
+```
+## Request (2) Duplicate
+curl -X "PUT" "${HOST}/_plugins/_security/api/roles/stac_server_role" \
+     -H 'Content-Type: application/json; charset=utf-8' \
+     -u 'admin:xxxxxxxx' \
+     -d $'{
+  "cluster_permissions": [
+    "cluster_composite_ops",
+    "cluster:monitor/health"
+  ],
+  "index_permissions": [
+    {
+      "index_patterns": [
+        "*"
+      ],
+      "allowed_actions": [
+        "indices_all"
+      ]
+    }
+  ],
+  "tenant_permissions": [
+    {
+      "tenant_patterns": [
+        "global_tenant"
+      ],
+      "allowed_actions": [
+        "kibana_all_read"
+      ]
+    }
+  ]
+}'
+
+```
+
+Create the User:
+
+```
+curl -X "PUT" "${HOST}/_plugins/_security/api/internalusers/stac_server" \
+     -H 'Content-Type: application/json; charset=utf-8' \
+     -u 'admin:xxxxxxxx' \
+     -d $'{ "password": "xxx" }'
+```
+
+Double-check the response to ensure that the user was actually created!
+
+Map the Role to the User:
+
+```
+curl -X "PUT" "${HOST}/_plugins/_security/api/rolesmapping/stac_server_role" \
+     -H 'Content-Type: application/json; charset=utf-8' \
+     -u 'admin:xxxxxxxx' \
+     -d $'{
+  "users": [
+    "stac_server"
+  ]
+}'
+```
+
+##### Option 2 - Dashboard method:
+
 Login to the OpenSearch Dashboard with the master username (e.g. `admin`) and password.
 From the left sidebar menu, select "Security". Select "Internal users", and then "Create
 internal user". Create the user with the name `stac_server`.
@@ -474,6 +549,11 @@ not have those permissions in it because they are `indices` permissions rather t
 the OpenSearch Security Plugin to request improvements to the documentation.
 
 Add the user `stac_server` as a mapped user to this role.
+
+##### Populating and accessing credentials
+
+After you've created the users, you'll need to populate the credentials for the user
+so that stac-server can access them.
 
 The preferred mechanism for populating the OpenSearch credentials to stac-server is to
 create a secret in AWS Secret Manager that contains the username and password. The

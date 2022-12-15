@@ -26,6 +26,7 @@
       - [Supporting cross-cluster replication](#supporting-cross-cluster-replication)
     - [Proxying Stac-server through CloudFront](#proxying-stac-server-through-cloudfront)
     - [Locking down transaction endpoints](#locking-down-transaction-endpoints)
+    - [AWS WAF Rule Conflicts](#aws-waf-rule-conflicts)
   - [Ingesting Data](#ingesting-data)
     - [Ingesting large items](#ingesting-large-items)
     - [Subscribing to SNS Topics](#subscribing-to-sns-topics)
@@ -761,6 +762,21 @@ The first statement in the Resource Policy above grants access to STAC API endpo
         }
     }
 ```
+
+### AWS WAF Rule Conflicts
+
+Frequently, stac-server is deployed with AWS WAF protection. When making a POST request
+that only has the `limit` parameter in the body, a WAF SQL injection protection rule
+incurs a false positive and returns a Forbidden status code. This request is an example:
+
+```
+curl -X POST ${HOST}/search -d '{"limit": 1}'
+```
+
+This is also triggered when using pystac_client with no filtering parameters.
+
+The fix is to disable the WAF SQL injection rule, which is unnecessary because
+stac-server does not use SQL.
 
 ## Ingesting Data
 

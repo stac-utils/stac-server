@@ -44,7 +44,6 @@ provider:
         #   Action: "lambda:InvokeFunction"
         #   Resource: "arn:aws:lambda:${aws:region}:${aws:accountId}:function:${self:service}-${self:provider.stage}-postHook"
 
-  lambdaHashingVersion: 20201221
 package:
   individually: true
 
@@ -140,16 +139,16 @@ resources:
       UpdatePolicy:
         EnableVersionUpgrade: true
       Properties:
-        DomainName: ${self:service}-${self:provider.stage}-os
+        DomainName: ${self:service}-${self:provider.stage}
         EBSOptions:
           EBSEnabled: true
-          VolumeType: gp2
+          VolumeType: gp3
           VolumeSize: 35
         ClusterConfig:
           InstanceType: t3.small.search
-          InstanceCount: 2
+          InstanceCount: 1
           DedicatedMasterEnabled: false
-          ZoneAwarenessEnabled: true
+          ZoneAwarenessEnabled: false
         EngineVersion: OpenSearch_2.3
         DomainEndpointOptions:
           EnforceHTTPS: true

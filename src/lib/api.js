@@ -319,21 +319,25 @@ const addCollectionLinks = function (results, endpoint) {
     // self link
     links.splice(0, 0, {
       rel: 'self',
+      type: 'application/geo+json',
       href: `${endpoint}/collections/${id}`
     })
     // parent catalog
     links.push({
       rel: 'parent',
-      href: `${endpoint}/`
+      type: 'application/geo+json',
+      href: `${endpoint}`
     })
     // root catalog
     links.push({
       rel: 'root',
-      href: `${endpoint}/`
+      type: 'application/geo+json',
+      href: `${endpoint}`
     })
     // child items
     links.push({
       rel: 'items',
+      type: 'application/geo+json',
       href: `${endpoint}/collections/${id}/items`
     })
   })
@@ -350,21 +354,25 @@ const addItemLinks = function (results, endpoint) {
     // self link
     links.splice(0, 0, {
       rel: 'self',
+      type: 'application/geo+json',
       href: `${endpoint}/collections/${collection}/items/${id}`
     })
     // parent catalogs
     links.push({
       rel: 'parent',
+      type: 'application/json',
       href: `${endpoint}/collections/${collection}`
     })
     links.push({
       rel: 'collection',
+      type: 'application/json',
       href: `${endpoint}/collections/${collection}`
     })
     // root catalog
     links.push({
       rel: 'root',
-      href: `${endpoint}/`
+      type: 'application/geo+json',
+      href: `${endpoint}`
     })
     result.type = 'Feature'
     return result
@@ -389,6 +397,7 @@ const collectionsToCatalogLinks = function (results, endpoint) {
     const { id } = result
     return {
       rel: 'child',
+      type: 'application/geo+json',
       href: `${endpoint}/collections/${id}`
     }
   })
@@ -535,6 +544,109 @@ const searchItems = async function (collectionId, queryParameters, backend, endp
   return response
 }
 
+// todo: make this more defensive if the named agg doesn't exist
+const agg = function (esAggs, name, dataType) {
+  const buckets = []
+  for (const bucket of esAggs[name].buckets) {
+    buckets.push({
+      key: bucket.key_as_string || bucket.key,
+      data_type: dataType,
+      frequency: bucket.doc_count,
+      to: bucket.to,
+      from: bucket.from,
+    })
+  }
+  return {
+    name: name,
+    data_type: 'frequency_distribution',
+    overflow: esAggs[name].sum_other_doc_count || 0,
+    buckets: buckets
+  }
+}
+
+const aggregate = async function (queryParameters, backend, endpoint, httpMethod) {
+  logger.debug(`Aggregate parameters: ${JSON.stringify(queryParameters)}`)
+  const {
+    bbox,
+    intersects
+  } = queryParameters
+  if (bbox && intersects) {
+    throw new ValidationError('Expected bbox OR intersects, not both')
+  }
+  const datetime = extractDatetime(queryParameters)
+  const bboxGeometry = extractBbox(queryParameters, httpMethod)
+  const intersectsGeometry = extractIntersects(queryParameters)
+  const geometry = intersectsGeometry || bboxGeometry
+  const query = extractStacQuery(queryParameters)
+  const ids = extractIds(queryParameters)
+  const collections = extractCollectionIds(queryParameters)
+
+  const searchParams = pickBy({
+    datetime,
+    intersects: geometry,
+    query,
+    ids,
+    collections,
+  })
+
+  logger.debug(`Aggregate parameters: ${JSON.stringify(searchParams)}`)
+
+  let esResponse
+  try {
+    esResponse = await backend.aggregate(searchParams)
+  } catch (error) {
+    if (isIndexNotFoundError(error)) {
+      esResponse = {
+      }
+    } else {
+      throw error
+    }
+  }
+
+  const { body } = esResponse
+  const { aggregations: esAggs } = body
+  const aggregations = [
+    {
+      name: 'total_count',
+      data_type: 'integer',
+      value: esAggs['total_count']['value'],
+    },
+    {
+      name: 'datetime_max',
+      data_type: 'datetime',
+      value: esAggs['datetime_max']['value_as_string'],
+    },
+    {
+      name: 'datetime_min',
+      data_type: 'datetime',
+      value: esAggs['datetime_min']['value_as_string'],
+    },
+
+    agg(esAggs, 'collection_frequency', 'string'),
+    agg(esAggs, 'datetime_frequency', 'datetime'),
+    agg(esAggs, 'cloud_cover_frequency', 'numeric'),
+    agg(esAggs, 'grid_code_frequency', 'string'),
+    agg(esAggs, 'platform_frequency', 'string'),
+    agg(esAggs, 'grid_code_landsat_frequency', 'string'),
+    agg(esAggs, 'sun_elevation_frequency', 'string'),
+    agg(esAggs, 'sun_azimuth_frequency', 'string'),
+    agg(esAggs, 'off_nadir_frequency', 'string'),
+  ]
+  return {
+    aggregations,
+    links: [{
+      rel: 'self',
+      type: 'application/json',
+      href: `${endpoint}/aggregate`
+    },
+    {
+      rel: 'root',
+      type: 'application/geo+json',
+      href: `${endpoint}`
+    }]
+  }
+}
+
 const getConformance = async function (txnEnabled) {
   const prefix = 'https://api.stacspec.org/v1.0.0-rc.2'
   const conformsTo = [
@@ -548,6 +660,7 @@ const getConformance = async function (txnEnabled) {
     `${prefix}/item-search#fields`,
     `${prefix}/item-search#sort`,
     `${prefix}/item-search#query`,
+    `${prefix}/aggregation`,
     'http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/core',
     'http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/oas30',
     'http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/geojson'
@@ -564,13 +677,13 @@ const getCatalog = async function (txnEnabled, backend, endpoint = '') {
   const links = [
     {
       rel: 'self',
-      type: 'application/json',
-      href: `${endpoint}/`
+      type: 'application/geo+json',
+      href: `${endpoint}`
     },
     {
       rel: 'root',
-      type: 'application/json',
-      href: `${endpoint}/`
+      type: 'application/geo+json',
+      href: `${endpoint}`
     },
     {
       rel: 'conformance',
@@ -595,6 +708,11 @@ const getCatalog = async function (txnEnabled, backend, endpoint = '') {
       method: 'POST',
     },
     {
+      rel: 'aggregate',
+      type: 'application/json',
+      href: `${endpoint}/aggregate`
+    },
+    {
       rel: 'service-desc',
       type: 'application/vnd.oai.openapi',
       href: `${endpoint}/api`
@@ -610,8 +728,8 @@ const getCatalog = async function (txnEnabled, backend, endpoint = '') {
   if (docsUrl) {
     links.push({
       rel: 'server',
+      type: 'text/html',
       href: docsUrl,
-      type: 'text/html'
     })
   }
 
@@ -624,13 +742,24 @@ const getCatalog = async function (txnEnabled, backend, endpoint = '') {
 }
 
 const getCollections = async function (backend, endpoint = '') {
+  // TODO: implement proper pagination, as this will only return up to
+  // COLLECTION_LIMIT collections
   const results = await backend.getCollections(1, COLLECTION_LIMIT)
   const linkedCollections = addCollectionLinks(results, endpoint)
-
-  // TODO: Attention, this is a SHIM. Implement proper pagination!
   const resp = {
     collections: results,
-    links: [],
+    links: [
+      {
+        rel: 'self',
+        type: 'application/json',
+        href: `${endpoint}/collections`,
+      },
+      {
+        rel: 'root',
+        type: 'application/geo+json',
+        href: `${endpoint}`,
+      },
+    ],
     context: {
       page: 1,
       limit: COLLECTION_LIMIT,
@@ -730,5 +859,6 @@ module.exports = {
   partialUpdateItem,
   ValidationError,
   extractLimit,
-  extractDatetime
+  extractDatetime,
+  aggregate,
 }

@@ -19,9 +19,34 @@
       - [Disable automatic index creation](#disable-automatic-index-creation-1)
       - [Create collection index](#create-collection-index)
       - [Enable OpenSearch fine-grained access control](#enable-opensearch-fine-grained-access-control)
+        - [Configure OpenSearch for fine-grained access control](#configure-opensearch-for-fine-grained-access-control)
+        - [Option 1 - API method:](#option-1---api-method)
+        - [Option 2 - Dashboard method:](#option-2---dashboard-method)
+        - [Populating and accessing credentials](#populating-and-accessing-credentials)
       - [Supporting cross-cluster replication](#supporting-cross-cluster-replication)
     - [Proxying Stac-server through CloudFront](#proxying-stac-server-through-cloudfront)
     - [Locking down transaction endpoints](#locking-down-transaction-endpoints)
+    - [AWS WAF Rule Conflicts](#aws-waf-rule-conflicts)
+  - [Ingesting Data](#ingesting-data)
+    - [Ingesting large items](#ingesting-large-items)
+    - [Subscribing to SNS Topics](#subscribing-to-sns-topics)
+    - [Ingest Errors](#ingest-errors)
+  - [Pre- and Post-Hooks](#pre--and-post-hooks)
+    - [Pre-Hook](#pre-hook)
+    - [Post-Hook](#post-hook)
+    - [Request Flow](#request-flow)
+    - [Notes](#notes)
+  - [Development](#development)
+    - [Running Locally](#running-locally)
+    - [Running Unit Tests](#running-unit-tests)
+    - [Running System and Integration Tests](#running-system-and-integration-tests)
+    - [Updating the OpenAPI specification](#updating-the-openapi-specification)
+  - [About](#about)
+>>>>>>> main
+      - [Supporting cross-cluster replication](#supporting-cross-cluster-replication)
+    - [Proxying Stac-server through CloudFront](#proxying-stac-server-through-cloudfront)
+    - [Locking down transaction endpoints](#locking-down-transaction-endpoints)
+    - [AWS WAF Rule Conflicts](#aws-waf-rule-conflicts)
   - [Ingesting Data](#ingesting-data)
     - [Ingesting large items](#ingesting-large-items)
     - [Subscribing to SNS Topics](#subscribing-to-sns-topics)
@@ -49,6 +74,17 @@ Stac-server is an implementation of the [STAC API specification](https://github.
 | 0.3.x               | 1.0.0        | 1.0.0-beta.2     |
 | 0.4.x               | 1.0.0        | 1.0.0-beta.5     |
 | 0.5.x               | 1.0.0        | 1.0.0-rc.2       |
+
+As of version 0.5.x, stac-server supports the following specifications:
+
+- STAC API - Core
+- STAC API - Features
+- STAC API - Collections
+- STAC API - Item Search
+- Query Extension
+- Fields Extension
+- Sort Extension
+- Aggregation Extension (experimental work-in-progress)
 
 The following APIs are deployed instances of stac-server:
 
@@ -176,7 +212,7 @@ Create a clone of the stac-server 0.5.x code. Copy and update the serverless.yml
 You can also compare it with the serverless.example.yml file. The `DomainName` value
 **must** remain the same as it is for the current deployment so
 the CloudFormation deployment will import the existing resource. Instead of a parameterized
-value of `${self:service}-${self:provider.stage}-os` as in the example serverless.yml file,
+value of `${self:service}-${self:provider.stage}` as in the example serverless.yml file,
 it would have a hard-coded service name and `-es` suffix, e.g., `my-stac-server-${self:provider.stage}-es`.
 
 Run `npm run package` to generate the CloudFormation templates in the `.serverless` directory.
@@ -302,9 +338,46 @@ If this is not the case, the easiest solution to fix it is to:
 
 ## Usage
 
-Stac-server is a web API that returns JSON, see the [documentation](http://stac-utils.github.io/stac-server), or the /api endpoint which is a self-documenting OpenAPI document. Here are some additional tools that might prove useful:
+Stac-server is a web API that returns JSON, see the [documentation](http://stac-utils.github.io/stac-server), or the /api endpoint which is a self-documenting OpenAPI document. [STAC Index](https://stacindex.org) collects information on a number of [client tools](https://stacindex.org/ecosystem?category=Client).
 
-- [pystac-client](https://github.com/stac-utils/pystac-client): A Python client library and CLI for searching a STAC compliant API
+stac-server supports both GET and POST Search requests.
+
+An Item Search with GET:
+
+```shell
+curl "${HOST}/search?collections=sentinel-2-l2a,sentinel-2-l1c&bbox=10,10,15,15&query=%7B%22eo%3Acloud_cover%22%3A%7B%22gte%22%3A0,%22lte%22%3A5%7D%7D&sortby=-properties.datetime"
+```
+
+Notice that the `query` parameter is a URL-encoded JSON value.
+
+An Item Search with POST:
+
+```shell
+curl -X "POST" "${HOST}/search" \
+     -H 'Content-Type: application/json; charset=utf-8' \
+     -d $'{
+  "collections": [
+    "sentinel-2-l2a",
+    "sentinel-2-l1c"
+  ],
+  "bbox": [
+    10,
+    10,
+    15,
+    15
+  ],
+  "query": {
+    "eo:cloud_cover": {
+      "gte": 0,
+      "lte": 5
+    }
+  },
+  "sortby": {
+    "field": "properties.datetime",
+    "direction": "desc"
+  }
+}'
+```
 
 ## Deployment
 
@@ -353,12 +426,20 @@ npm run build
 npm run deploy
 ```
 
-This will create a CloudFormation stack in the `us-west-2` region called `stac-server-dev`.
+This will use the file `serverless.yml` and create a CloudFormation stack in the
+`us-west-2` region called `stac-server-dev`.
 To change the region or the stage name (from `dev`) provide arguments to the deploy command
 (note the additional `--` in the command, required by `npm` to provide arguments):
 
 ```shell
 npm run deploy -- --stage mystage --region eu-central-1
+```
+
+Multiple deployments can be managed with multiple serverless config files and specified
+to the deploy command with:
+
+```shell
+npm run deploy -- --config serverless.some-name.yml
 ```
 
 Once deployed, there are a few steps to configure OpenSearch.
@@ -436,6 +517,14 @@ IAM permissions, which results in access to the cluster with full admin permissi
 Additionally, using cross-cluster search or replication requires fine-grained access
 control is configured to connect the clusters.
 
+**Warning**: Unfortunately, fine-grained access control cannot be enabled on an
+existing OpenSearch
+cluster through the serverless deploy, as this is a restriction of CloudFormation
+which serverless uses. A migration process between the clusters must be performed similar
+to the Elasticsearch -> OpenSearch migration process.
+
+##### Configure OpenSearch for fine-grained access control
+
 Add this to the `AWS::OpenSearchService::Domain` resource:
 
 ```yaml
@@ -450,17 +539,98 @@ Add this to the `AWS::OpenSearchService::Domain` resource:
             InternalUserDatabaseEnabled: true
             MasterUserOptions:
               MasterUserName: admin
-              MasterUserPassword: ${opt:password}
+              MasterUserPassword: ${env:OPENSEARCH_MASTER_USER_PASSWORD}
+        AccessPolicies:
+          Version:                        "2012-10-17"
+          Statement:
+            - Effect:                     "Allow"
+              Principal:                  { "AWS": "*" }
+              Action:                     "es:ESHttp*"
+              Resource:                   "arn:aws:es:arn:aws:es:${aws:region}:${aws:accountId}:domain/${self:service}-${self:provider.stage}/*"
 ```
 
-Deploying now requires the `password` option to be passed in the deployment so
-it can be set for the OpenSearch "master" user, e.g.:
+The AccessPolicies Statement will restrict the OpenSearch instance to only being accessible
+within AWS. This requires the user creation steps below be either executed from or proxied
+through an EC2 instance, or that the Access Policy be changed temporarily through the
+console in the domain's Security configuration to be "Only use fine-grained access control".
+
+Deploying now requires the `OPENSEARCH_MASTER_USER_PASSWORD` local shell environment
+variable be set so it can be set for the OpenSearch "master" user, e.g.:
 
 ```shell
-npm run deploy -- --password xxxxxx
+OPENSEARCH_MASTER_USER_PASSWORD='some-password' npm run deploy
 ```
 
 Redeploy the stack, and this will be updated without re-creating the cluster.
+
+The next step is to create the OpenSearch user and role to use for stac-server. This can
+either be done through the OpenSearch API or Dashboard.
+
+##### Option 1 - API method:
+
+This assumes the master username is `admin` and creats a user with the name `stac_server`.
+
+Create the Role:
+
+```
+## Request (2) Duplicate
+curl -X "PUT" "${HOST}/_plugins/_security/api/roles/stac_server_role" \
+     -H 'Content-Type: application/json; charset=utf-8' \
+     -u 'admin:xxxxxxxx' \
+     -d $'{
+  "cluster_permissions": [
+    "cluster_composite_ops",
+    "cluster:monitor/health"
+  ],
+  "index_permissions": [
+    {
+      "index_patterns": [
+        "*"
+      ],
+      "allowed_actions": [
+        "indices_all"
+      ]
+    }
+  ],
+  "tenant_permissions": [
+    {
+      "tenant_patterns": [
+        "global_tenant"
+      ],
+      "allowed_actions": [
+        "kibana_all_read"
+      ]
+    }
+  ]
+}'
+
+```
+
+Create the User:
+
+```
+curl -X "PUT" "${HOST}/_plugins/_security/api/internalusers/stac_server" \
+     -H 'Content-Type: application/json; charset=utf-8' \
+     -u 'admin:xxxxxxxx' \
+     -d $'{ "password": "xxx" }'
+```
+
+Double-check the response to ensure that the user was actually created!
+
+Map the Role to the User:
+
+```
+curl -X "PUT" "${HOST}/_plugins/_security/api/rolesmapping/stac_server_role" \
+     -H 'Content-Type: application/json; charset=utf-8' \
+     -u 'admin:xxxxxxxx' \
+     -d $'{
+  "users": [
+    "stac_server"
+  ]
+}'
+```
+
+##### Option 2 - Dashboard method:
 
 Login to the OpenSearch Dashboard with the master username (e.g. `admin`) and password.
 From the left sidebar menu, select "Security". Select "Internal users", and then "Create
@@ -481,13 +651,19 @@ the OpenSearch Security Plugin to request improvements to the documentation.
 
 Add the user `stac_server` as a mapped user to this role.
 
+##### Populating and accessing credentials
+
+After you've created the users, you'll need to populate the credentials for the user
+so that stac-server can access them.
+
 The preferred mechanism for populating the OpenSearch credentials to stac-server is to
 create a secret in AWS Secret Manager that contains the username and password. The
 recommended name for this Secret corresponds
 to the stac-server deployment as `{stage}/{service}/opensearch`, e.g.,
 `dev/my-stac-server/opensearch`.
 
-The Secret value should have two keys, `username` and `password`, with the appropriate
+The Secret type should be "Other type of secret" and
+have two keys, `username` and `password`, with the appropriate
 values, e.g., `stac_server` and whatever you set as the password when creating that user.
 
 Add the `OPENSEARCH_CREDENTIALS_SECRET_ID` variable to the serverless.yml section
@@ -522,20 +698,6 @@ OPENSEARCH_PASSWORD: xxxxxxxxxxx
 
 Setting these as environment variables can also be useful when running stac-server
 locally.
-
-Additionally, you may choose to restrict the OpenSearch cluster to access only within
-AWS by adding the following Statement to the `AWS::OpenSearchService::Domain` resource's
-AccessPolicies Statement:
-
-```
-AccessPolicies:
-  Version:                        "2012-10-17"
-  Statement:
-    - Effect:                     "Allow"
-      Principal:                  { "AWS": "*" }
-      Action:                     "es:ESHttp*"
-      Resource:                   "arn:aws:es:arn:aws:es:${aws:region}:${aws:accountId}:domain/${self:service}-${self:provider.stage}-os/*"
-```
 
 #### Supporting cross-cluster replication
 
@@ -660,6 +822,21 @@ The first statement in the Resource Policy above grants access to STAC API endpo
         }
     }
 ```
+
+### AWS WAF Rule Conflicts
+
+Frequently, stac-server is deployed with AWS WAF protection. When making a POST request
+that only has the `limit` parameter in the body, a WAF SQL injection protection rule
+incurs a false positive and returns a Forbidden status code. This request is an example:
+
+```
+curl -X POST ${HOST}/search -d '{"limit": 1}'
+```
+
+This is also triggered when using pystac_client with no filtering parameters.
+
+The fix is to disable the WAF SQL injection rule, which is unnecessary because
+stac-server does not use SQL.
 
 ## Ingesting Data
 
@@ -815,7 +992,7 @@ Other configurations can be passed as shell environment variables, e.g.,
 
 ```
 export ENABLE_TRANSACTIONS_EXTENSION=true
-export OPENSEARCH_HOST='https://search-stac-server-dev-os-7awl6h344qlpvly.us-west-2.es.amazonaws.com'
+export OPENSEARCH_HOST='https://search-stac-server-dev-7awl6h344qlpvly.us-west-2.es.amazonaws.com'
 npm run serve
 ```
 

@@ -42,26 +42,6 @@
     - [Running System and Integration Tests](#running-system-and-integration-tests)
     - [Updating the OpenAPI specification](#updating-the-openapi-specification)
   - [About](#about)
->>>>>>> main
-      - [Supporting cross-cluster replication](#supporting-cross-cluster-replication)
-    - [Proxying Stac-server through CloudFront](#proxying-stac-server-through-cloudfront)
-    - [Locking down transaction endpoints](#locking-down-transaction-endpoints)
-    - [AWS WAF Rule Conflicts](#aws-waf-rule-conflicts)
-  - [Ingesting Data](#ingesting-data)
-    - [Ingesting large items](#ingesting-large-items)
-    - [Subscribing to SNS Topics](#subscribing-to-sns-topics)
-    - [Ingest Errors](#ingest-errors)
-  - [Pre- and Post-Hooks](#pre--and-post-hooks)
-    - [Pre-Hook](#pre-hook)
-    - [Post-Hook](#post-hook)
-    - [Request Flow](#request-flow)
-    - [Notes](#notes)
-  - [Development](#development)
-    - [Running Locally](#running-locally)
-    - [Running Unit Tests](#running-unit-tests)
-    - [Running System and Integration Tests](#running-system-and-integration-tests)
-    - [Updating the OpenAPI specification](#updating-the-openapi-specification)
-  - [About](#about)
 
 ## Overview
 

@@ -759,11 +759,6 @@ const getCollections = async function (backend, endpoint = '') {
         type: 'application/geo+json',
         href: `${endpoint}`,
       },
-      {
-        rel: 'parent',
-        type: 'application/geo+json',
-        href: `${endpoint}`,
-      },
     ],
     context: {
       page: 1,

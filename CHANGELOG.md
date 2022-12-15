@@ -39,6 +39,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Remove use of serverless-psuedo-parameters
 - Upgrade to Node 16
 
+### Fixed
+
+- Collections endpoint (/collections) now has `self` and `root` link relations.
+
 ### Deprecated
 
 - ES_BATCH_SIZE variable (replaced by INGEST_BATCH_SIZE)

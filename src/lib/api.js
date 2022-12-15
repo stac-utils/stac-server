@@ -319,21 +319,25 @@ const addCollectionLinks = function (results, endpoint) {
     // self link
     links.splice(0, 0, {
       rel: 'self',
+      type: 'application/geo+json',
       href: `${endpoint}/collections/${id}`
     })
     // parent catalog
     links.push({
       rel: 'parent',
-      href: `${endpoint}/`
+      type: 'application/geo+json',
+      href: `${endpoint}`
     })
     // root catalog
     links.push({
       rel: 'root',
-      href: `${endpoint}/`
+      type: 'application/geo+json',
+      href: `${endpoint}`
     })
     // child items
     links.push({
       rel: 'items',
+      type: 'application/geo+json',
       href: `${endpoint}/collections/${id}/items`
     })
   })
@@ -350,21 +354,25 @@ const addItemLinks = function (results, endpoint) {
     // self link
     links.splice(0, 0, {
       rel: 'self',
+      type: 'application/geo+json',
       href: `${endpoint}/collections/${collection}/items/${id}`
     })
     // parent catalogs
     links.push({
       rel: 'parent',
+      type: 'application/json',
       href: `${endpoint}/collections/${collection}`
     })
     links.push({
       rel: 'collection',
+      type: 'application/json',
       href: `${endpoint}/collections/${collection}`
     })
     // root catalog
     links.push({
       rel: 'root',
-      href: `${endpoint}/`
+      type: 'application/geo+json',
+      href: `${endpoint}`
     })
     result.type = 'Feature'
     return result
@@ -389,6 +397,7 @@ const collectionsToCatalogLinks = function (results, endpoint) {
     const { id } = result
     return {
       rel: 'child',
+      type: 'application/geo+json',
       href: `${endpoint}/collections/${id}`
     }
   })
@@ -627,11 +636,13 @@ const aggregate = async function (queryParameters, backend, endpoint, httpMethod
     aggregations,
     links: [{
       rel: 'self',
+      type: 'application/json',
       href: `${endpoint}/aggregate`
     },
     {
       rel: 'root',
-      href: `${endpoint}/`
+      type: 'application/geo+json',
+      href: `${endpoint}`
     }]
   }
 }
@@ -666,13 +677,13 @@ const getCatalog = async function (txnEnabled, backend, endpoint = '') {
   const links = [
     {
       rel: 'self',
-      type: 'application/json',
-      href: `${endpoint}/`
+      type: 'application/geo+json',
+      href: `${endpoint}`
     },
     {
       rel: 'root',
-      type: 'application/json',
-      href: `${endpoint}/`
+      type: 'application/geo+json',
+      href: `${endpoint}`
     },
     {
       rel: 'conformance',
@@ -717,8 +728,8 @@ const getCatalog = async function (txnEnabled, backend, endpoint = '') {
   if (docsUrl) {
     links.push({
       rel: 'server',
+      type: 'text/html',
       href: docsUrl,
-      type: 'text/html'
     })
   }
 
@@ -731,13 +742,29 @@ const getCatalog = async function (txnEnabled, backend, endpoint = '') {
 }
 
 const getCollections = async function (backend, endpoint = '') {
+  // TODO: implement proper pagination, as this will only return up to
+  // COLLECTION_LIMIT collections
   const results = await backend.getCollections(1, COLLECTION_LIMIT)
   const linkedCollections = addCollectionLinks(results, endpoint)
-
-  // TODO: Attention, this is a SHIM. Implement proper pagination!
   const resp = {
     collections: results,
-    links: [],
+    links: [
+      {
+        rel: 'self',
+        type: 'application/json',
+        href: `${endpoint}/collections`,
+      },
+      {
+        rel: 'root',
+        type: 'application/geo+json',
+        href: `${endpoint}`,
+      },
+      {
+        rel: 'parent',
+        type: 'application/geo+json',
+        href: `${endpoint}`,
+      },
+    ],
     context: {
       page: 1,
       limit: COLLECTION_LIMIT,

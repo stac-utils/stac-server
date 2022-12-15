@@ -32,6 +32,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Remove use of serverless-psuedo-parameters
 - Upgrade to Node 16
 
+### Fixed
+
+- Collections endpoint (/collections) now has `self` and `root` link relations.
+
 ## [0.4.1] - 2022-07-11
 
 ### Added

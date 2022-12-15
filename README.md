@@ -315,9 +315,46 @@ If this is not the case, the easiest solution to fix it is to:
 
 ## Usage
 
-Stac-server is a web API that returns JSON, see the [documentation](http://stac-utils.github.io/stac-server), or the /api endpoint which is a self-documenting OpenAPI document. Here are some additional tools that might prove useful:
+Stac-server is a web API that returns JSON, see the [documentation](http://stac-utils.github.io/stac-server), or the /api endpoint which is a self-documenting OpenAPI document. [STAC Index](https://stacindex.org) collects information on a number of [client tools](https://stacindex.org/ecosystem?category=Client).
 
-- [pystac-client](https://github.com/stac-utils/pystac-client): A Python client library and CLI for searching a STAC compliant API
+stac-server supports both GET and POST Search requests.
+
+An Item Search with GET:
+
+```shell
+curl "${HOST}/search?collections=sentinel-2-l2a,sentinel-2-l1c&bbox=10,10,15,15&query=%7B%22eo%3Acloud_cover%22%3A%7B%22gte%22%3A0,%22lte%22%3A5%7D%7D&sortby=-properties.datetime"
+```
+
+Notice that the `query` parameter is a URL-encoded JSON value.
+
+An Item Search with POST:
+
+```shell
+curl -X "POST" "${HOST}/search" \
+     -H 'Content-Type: application/json; charset=utf-8' \
+     -d $'{
+  "collections": [
+    "sentinel-2-l2a",
+    "sentinel-2-l1c"
+  ],
+  "bbox": [
+    10,
+    10,
+    15,
+    15
+  ],
+  "query": {
+    "eo:cloud_cover": {
+      "gte": 0,
+      "lte": 5
+    }
+  },
+  "sortby": {
+    "field": "properties.datetime",
+    "direction": "desc"
+  }
+}'
+```
 
 ## Deployment
 

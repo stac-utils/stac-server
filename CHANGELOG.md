@@ -13,15 +13,22 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   STAC API spec several versions ago, in favor of the conformance classes.
 - STAC_API_VERSION environment variable is no longer supported. The version is now hard-coded
   to 1.0.0-rc.2
+- `lambdaHashingVersion: 20201221` is now the default for serverless, and has been removed
+  from the serverless example config file.
 
 ### Added
 
+- Adds support for authenticating to OpenSearch with a username and password when
+  fine-grained access control is enabled.
 - (Experimental) Aggregation Extension endpoint /aggregate
 - Added pre-hook and post-hook Lambda examples
 - POST /collections endpoint to create collections
 
 ### Changed
 
+- ES_HOST variable is now OPENSEARCH_HOST, but both will work for now.
+- ES_BATCH_SIZE variable is now INGEST_BATCH_SIZE. Both will work. It is recommended not to
+  configure this explicitly if not changing the value from the default of 500.
 - Landing Page (root) now has links for both GET and POST methods of search link relation
 - The STAC API version is now 1.0.0-rc.2
 - AWS OpenSearch Service OpenSearch 2.3 is used as the default instead of Elasticsearch 7.10.
@@ -31,6 +38,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Upgrade serverless to 3.x
 - Remove use of serverless-psuedo-parameters
 - Upgrade to Node 16
+
+### Deprecated
+
+- ES_BATCH_SIZE variable (replaced by INGEST_BATCH_SIZE)
+- ES_HOST variable (replaced by OPENSEARCH_HOST variable)
 
 ## [0.4.1] - 2022-07-11
 

@@ -13,9 +13,8 @@ provider:
     STAC_TITLE: "STAC API"
     STAC_DESCRIPTION: "A STAC API using stac-server"
     LOG_LEVEL: DEBUG
-    ES_BATCH_SIZE: 500
     STAC_DOCS_URL: https://stac-utils.github.io/stac-server/
-    ES_HOST:
+    OPENSEARCH_HOST:
       Fn::GetAtt: [OpenSearchInstance, DomainEndpoint]
     ENABLE_TRANSACTIONS_EXTENSION: false
     # comment STAC_API_ROOTPATH if deployed with a custom domain
@@ -45,7 +44,6 @@ provider:
         #   Action: "lambda:InvokeFunction"
         #   Resource: "arn:aws:lambda:${aws:region}:${aws:accountId}:function:${self:service}-${self:provider.stage}-postHook"
 
-  lambdaHashingVersion: 20201221
 package:
   individually: true
 
@@ -141,7 +139,7 @@ resources:
       UpdatePolicy:
         EnableVersionUpgrade: true
       Properties:
-        DomainName: ${self:service}-${self:provider.stage}-os
+        DomainName: ${self:service}-${self:provider.stage}
         EBSOptions:
           EBSEnabled: true
           VolumeType: gp3

@@ -7,6 +7,7 @@
   - [Architecture](#architecture)
   - [Migration](#migration)
     - [0.4.x -\> 0.5.x](#04x---05x)
+      - [OpenSearch migration](#opensearch-migration)
       - [Preferred Elasticsearch to OpenSearch Migration Process](#preferred-elasticsearch-to-opensearch-migration-process)
     - [0.3.x -\> 0.4.x](#03x---04x)
       - [Elasticsearch upgrade from 7.9 to 7.10](#elasticsearch-upgrade-from-79-to-710)
@@ -14,9 +15,15 @@
       - [Validate index mappings](#validate-index-mappings)
   - [Usage](#usage)
   - [Deployment](#deployment)
-    - [Elasticsearch Configuration](#elasticsearch-configuration)
+    - [OpenSearch Configuration](#opensearch-configuration)
       - [Disable automatic index creation](#disable-automatic-index-creation-1)
       - [Create collection index](#create-collection-index)
+      - [Enable OpenSearch fine-grained access control](#enable-opensearch-fine-grained-access-control)
+        - [Configure OpenSearch for fine-grained access control](#configure-opensearch-for-fine-grained-access-control)
+        - [Option 1 - API method:](#option-1---api-method)
+        - [Option 2 - Dashboard method:](#option-2---dashboard-method)
+        - [Populating and accessing credentials](#populating-and-accessing-credentials)
+      - [Supporting cross-cluster replication](#supporting-cross-cluster-replication)
     - [Proxying Stac-server through CloudFront](#proxying-stac-server-through-cloudfront)
     - [Locking down transaction endpoints](#locking-down-transaction-endpoints)
   - [Ingesting Data](#ingesting-data)
@@ -88,14 +95,14 @@ subgraph api[STAC API]
   apiLambda[API Lambda]
 end
 
-elasticsearch[(Elasticsearch)]
+opensearch[(OpenSearch)]
 
 %% Ingest workflow
 
 itemsForIngest --> ingestSnsTopic
 ingestSnsTopic --> ingestQueue
 ingestQueue --> ingestLambda
-ingestLambda --> elasticsearch
+ingestLambda --> opensearch
 
 ingestDeadLetterQueue --> failedIngestLambda
 
@@ -103,13 +110,15 @@ ingestDeadLetterQueue --> failedIngestLambda
 
 users --> api
 apiGateway --> apiLambda
-apiLambda --> elasticsearch
+apiLambda --> opensearch
 
 ```
 
 ## Migration
 
 ### 0.4.x -> 0.5.x
+
+#### OpenSearch migration
 
 By default, a new deployment of 0.5.x will use OpenSearch instead of Elasticsearch. There
 are three options if you have an existing deployment that uses Elasticsearch:
@@ -179,7 +188,7 @@ Create a clone of the stac-server 0.5.x code. Copy and update the serverless.yml
 You can also compare it with the serverless.example.yml file. The `DomainName` value
 **must** remain the same as it is for the current deployment so
 the CloudFormation deployment will import the existing resource. Instead of a parameterized
-value of `${self:service}-${self:provider.stage}-os` as in the example serverless.yml file,
+value of `${self:service}-${self:provider.stage}` as in the example serverless.yml file,
 it would have a hard-coded service name and `-es` suffix, e.g., `my-stac-server-${self:provider.stage}-es`.
 
 Run `npm run package` to generate the CloudFormation templates in the `.serverless` directory.
@@ -328,21 +337,25 @@ cp serverless.example.yml serverless.yml
 
 There are some settings that should be reviewed and updated as needeed in the serverless config file, under provider->environment:
 
-| Name                          | Description                                                                                                                                                                                      | Default Value                                                                        |
-| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------ |
-| STAC_VERSION                  | STAC Version of this STAC API                                                                                                                                                                    | 1.0.0                                                                                |
-| STAC_ID                       | ID of this catalog                                                                                                                                                                               | stac-server                                                                          |
-| STAC_TITLE                    | Title of this catalog                                                                                                                                                                            | STAC API                                                                             |
-| STAC_DESCRIPTION              | Description of this catalog                                                                                                                                                                      | A STAC API                                                                           |
-| STAC_DOCS_URL                 | URL to documentation                                                                                                                                                                             | [https://stac-utils.github.io/stac-server](https://stac-utils.github.io/stac-server) |
-| ES_BATCH_SIZE                 | Number of records to ingest in single batch                                                                                                                                                      | 500                                                                                  |
-| LOG_LEVEL                     | Level for logging (CRITICAL, ERROR, WARNING, INFO, DEBUG)                                                                                                                                        | INFO                                                                                 |
-| STAC_API_URL                  | The root endpoint of this API                                                                                                                                                                    | Inferred from request                                                                |
-| ENABLE_TRANSACTIONS_EXTENSION | Boolean specifying if the [Transaction Extension](https://github.com/radiantearth/stac-api-spec/tree/master/ogcapi-features/extensions/transaction) should be activated                          | false                                                                                |
-| STAC_API_ROOTPATH             | The path to append to URLs if this is not deployed at the server root. For example, if the server is deployed without a custom domain name, it will have the stage name (e.g., dev) in the path. | ""                                                                                   |
-| PRE_HOOK                      | The name of a Lambda function to be called as the pre-hook.                                                                                                                                      | none                                                                                 |
-| POST_HOOK                     | The name of a Lambda function to be called as the post-hook.                                                                                                                                     | none                                                                                 |
-| ES_COMPAT_MODE                | Enable Elasticsearch 7.10 compatibility mdoe within the server.                                                                                                                                  | false                                                                                |
+| Name                             | Description                                                                                                                                                                                      | Default Value                                                                        |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------ |
+| OPENSEARCH_HOST                  | The URL of the OpenSearch cluster.                                                                                                                                                               |                                                                                      |
+| STAC_VERSION                     | The STAC version for the STAC objects returned by server. This should not be confused with the STAC API version.                                                                                 | 1.0.0                                                                                |
+| STAC_ID                          | ID of this catalog                                                                                                                                                                               | stac-server                                                                          |
+| STAC_TITLE                       | Title of this catalog                                                                                                                                                                            | STAC API                                                                             |
+| STAC_DESCRIPTION                 | Description of this catalog                                                                                                                                                                      | A STAC API                                                                           |
+| STAC_DOCS_URL                    | URL to documentation                                                                                                                                                                             | [https://stac-utils.github.io/stac-server](https://stac-utils.github.io/stac-server) |
+| INGEST_BATCH_SIZE                | Number of records to ingest in single batch                                                                                                                                                      | 500                                                                                  |
+| LOG_LEVEL                        | Level for logging (CRITICAL, ERROR, WARNING, INFO, DEBUG)                                                                                                                                        | INFO                                                                                 |
+| STAC_API_URL                     | The root endpoint of this API                                                                                                                                                                    | Inferred from request                                                                |
+| ENABLE_TRANSACTIONS_EXTENSION    | Boolean specifying if the [Transaction Extension](https://github.com/radiantearth/stac-api-spec/tree/master/ogcapi-features/extensions/transaction) should be activated                          | false                                                                                |
+| STAC_API_ROOTPATH                | The path to append to URLs if this is not deployed at the server root. For example, if the server is deployed without a custom domain name, it will have the stage name (e.g., dev) in the path. | ""                                                                                   |
+| PRE_HOOK                         | The name of a Lambda function to be called as the pre-hook.                                                                                                                                      | none                                                                                 |
+| POST_HOOK                        | The name of a Lambda function to be called as the post-hook.                                                                                                                                     | none                                                                                 |
+| ES_COMPAT_MODE                   | Enable Elasticsearch 7.10 compatibility mdoe within the server.                                                                                                                                  | false                                                                                |
+| OPENSEARCH_USERNAME              | The username to authenticate to OpenSearch with if fine-grained access control is enabled.                                                                                                       |                                                                                      |
+| OPENSEARCH_PASSWORD              | The password to authenticate to OpenSearch with if fine-grained access control is enabled.                                                                                                       |                                                                                      |
+| OPENSEARCH_CREDENTIALS_SECRET_ID | The AWS Secrets Manager secret to retrieve the username and password from, to authenticate to OpenSearch with if fine-grained access control is enabled.                                         |                                                                                      |
 
 After reviewing the settings, build and deploy:
 
@@ -352,7 +365,8 @@ npm run build
 npm run deploy
 ```
 
-This will create a CloudFormation stack in the `us-west-2` region called `stac-server-dev`.
+This will use the file `serverless.yml` and create a CloudFormation stack in the
+`us-west-2` region called `stac-server-dev`.
 To change the region or the stage name (from `dev`) provide arguments to the deploy command
 (note the additional `--` in the command, required by `npm` to provide arguments):
 
@@ -360,15 +374,22 @@ To change the region or the stage name (from `dev`) provide arguments to the dep
 npm run deploy -- --stage mystage --region eu-central-1
 ```
 
-Once deployed, there are a few steps to configure Elasticsearch.
+Multiple deployments can be managed with multiple serverless config files and specified
+to the deploy command with:
 
-### Elasticsearch Configuration
+```shell
+npm run deploy -- --config serverless.some-name.yml
+```
+
+Once deployed, there are a few steps to configure OpenSearch.
+
+### OpenSearch Configuration
 
 #### Disable automatic index creation
 
 It is recommended to disable the automatic index creation. This prevents the situation where
 a group of Items are bulk indexed before the Collection in which they are contained has
-been created, and an Elasticsearch index is created without the appropriate mappings.
+been created, and an OpenSearch index is created without the appropriate mappings.
 
 This requires installing the requests, requests_aws4auth, and boto3 python libraries, for example, with:
 
@@ -427,6 +448,215 @@ aws lambda invoke \
 
 Stac-server is now ready to ingest data!
 
+#### Enable OpenSearch fine-grained access control
+
+There are two main reasons to enable fine-grained access control to OpenSearch.
+The default stac-server deployment controls access to the OpenSearch cluster using
+IAM permissions, which results in access to the cluster with full admin permissions.
+Additionally, using cross-cluster search or replication requires fine-grained access
+control is configured to connect the clusters.
+
+**Warning**: Unfortunately, fine-grained access control cannot be enabled on an
+existing OpenSearch
+cluster through the serverless deploy, as this is a restriction of CloudFormation
+which serverless uses. A migration process between the clusters must be performed similar
+to the Elasticsearch -> OpenSearch migration process.
+
+##### Configure OpenSearch for fine-grained access control
+
+Add this to the `AWS::OpenSearchService::Domain` resource:
+
+```yaml
+        DomainEndpointOptions:
+          EnforceHTTPS: true
+        NodeToNodeEncryptionOptions:
+          Enabled: true
+        EncryptionAtRestOptions:
+          Enabled: true
+        AdvancedSecurityOptions:
+            Enabled: true
+            InternalUserDatabaseEnabled: true
+            MasterUserOptions:
+              MasterUserName: admin
+              MasterUserPassword: ${env:OPENSEARCH_MASTER_USER_PASSWORD}
+        AccessPolicies:
+          Version:                        "2012-10-17"
+          Statement:
+            - Effect:                     "Allow"
+              Principal:                  { "AWS": "*" }
+              Action:                     "es:ESHttp*"
+              Resource:                   "arn:aws:es:arn:aws:es:${aws:region}:${aws:accountId}:domain/${self:service}-${self:provider.stage}/*"
+```
+
+The AccessPolicies Statement will restrict the OpenSearch instance to only being accessible
+within AWS. This requires the user creation steps below be either executed from or proxied
+through an EC2 instance, or that the Access Policy be changed temporarily through the
+console in the domain's Security configuration to be "Only use fine-grained access control".
+
+Deploying now requires the `OPENSEARCH_MASTER_USER_PASSWORD` local shell environment
+variable be set so it can be set for the OpenSearch "master" user, e.g.:
+
+```shell
+OPENSEARCH_MASTER_USER_PASSWORD='some-password' npm run deploy
+```
+
+Redeploy the stack, and this will be updated without re-creating the cluster.
+
+The next step is to create the OpenSearch user and role to use for stac-server. This can
+either be done through the OpenSearch API or Dashboard.
+
+##### Option 1 - API method:
+
+This assumes the master username is `admin` and creats a user with the name `stac_server`.
+
+Create the Role:
+
+```
+## Request (2) Duplicate
+curl -X "PUT" "${HOST}/_plugins/_security/api/roles/stac_server_role" \
+     -H 'Content-Type: application/json; charset=utf-8' \
+     -u 'admin:xxxxxxxx' \
+     -d $'{
+  "cluster_permissions": [
+    "cluster_composite_ops",
+    "cluster:monitor/health"
+  ],
+  "index_permissions": [
+    {
+      "index_patterns": [
+        "*"
+      ],
+      "allowed_actions": [
+        "indices_all"
+      ]
+    }
+  ],
+  "tenant_permissions": [
+    {
+      "tenant_patterns": [
+        "global_tenant"
+      ],
+      "allowed_actions": [
+        "kibana_all_read"
+      ]
+    }
+  ]
+}'
+
+```
+
+Create the User:
+
+```
+curl -X "PUT" "${HOST}/_plugins/_security/api/internalusers/stac_server" \
+     -H 'Content-Type: application/json; charset=utf-8' \
+     -u 'admin:xxxxxxxx' \
+     -d $'{ "password": "xxx" }'
+```
+
+Double-check the response to ensure that the user was actually created!
+
+Map the Role to the User:
+
+```
+curl -X "PUT" "${HOST}/_plugins/_security/api/rolesmapping/stac_server_role" \
+     -H 'Content-Type: application/json; charset=utf-8' \
+     -u 'admin:xxxxxxxx' \
+     -d $'{
+  "users": [
+    "stac_server"
+  ]
+}'
+```
+
+##### Option 2 - Dashboard method:
+
+Login to the OpenSearch Dashboard with the master username (e.g. `admin`) and password.
+From the left sidebar menu, select "Security". Select "Internal users", and then "Create
+internal user". Create the user with the name `stac_server`.
+
+Click "Create New Role". Create a new Role with name `stac_server_role` with:
+
+- Cluster permissions: `cluster:monitor/health`, `cluster_composite_ops`
+- Index permissions: `indices_all` on `*`
+- Tenant permissions: `global_tenant` Read only
+
+Note that several of the indices permissions in `cluster_composite_ops` action group
+are required to
+be applyed to the Cluster permissions. Confusingly, the `cluster_all` action group does
+not have those permissions in it because they are `indices` permissions rather than
+`cluster` permissions. This is all very confusing!  [This issue](https://github.com/opensearch-project/security/issues/2336) has been filed against
+the OpenSearch Security Plugin to request improvements to the documentation.
+
+Add the user `stac_server` as a mapped user to this role.
+
+##### Populating and accessing credentials
+
+After you've created the users, you'll need to populate the credentials for the user
+so that stac-server can access them.
+
+The preferred mechanism for populating the OpenSearch credentials to stac-server is to
+create a secret in AWS Secret Manager that contains the username and password. The
+recommended name for this Secret corresponds
+to the stac-server deployment as `{stage}/{service}/opensearch`, e.g.,
+`dev/my-stac-server/opensearch`.
+
+The Secret type should be "Other type of secret" and
+have two keys, `username` and `password`, with the appropriate
+values, e.g., `stac_server` and whatever you set as the password when creating that user.
+
+Add the `OPENSEARCH_CREDENTIALS_SECRET_ID` variable to the serverless.yml section
+`environment`:
+
+```
+OPENSEARCH_CREDENTIALS_SECRET_ID: ${self:provider.stage}/${self:service}/opensearch
+```
+
+Add to the IAM Role Statements:
+
+```yaml
+- Effect: "Allow"
+  Resource: "arn:aws:secretsmanager:${aws:region}:${aws:accountId}:secret:${self:provider.stage}/${self:service}/opensearch-*"
+  Action: "secretsmanager:GetSecretValue"
+```
+
+If desired, the resource ARN can be replaced with the exact ARN for the Secret instead of
+using an ARN ending with `*`.
+
+Redeploy to reconfigure OpenSearch and populate the authentication configuration. The server
+should now be using fine-grained access control.
+
+Alternately, instead of using the preferred mechanism of Secrets Manager,
+the `OPENSEARCH_USERNAME` and `OPENSEARCH_PASSWORD` values can be set directly
+in the `environment` section:
+
+```yaml
+OPENSEARCH_USERNAME: stac_server
+OPENSEARCH_PASSWORD: xxxxxxxxxxx
+```
+
+Setting these as environment variables can also be useful when running stac-server
+locally.
+
+#### Supporting cross-cluster replication
+
+Follow steps for [Enable fine-grained access control](#enable-fine-grained-access-control)
+
+Add this as an additional statement to the `AWS::OpenSearchService::Domain` resource's
+AccessPolicies Statement:
+
+```
+AccessPolicies:
+...
+  Statement:
+    ...
+    - Effect:    "Allow"
+    - Principal: { "AWS": "*" }
+    - Action:    "es:ESCrossClusterGet"
+    - Resource:  "arn:aws:es:arn:aws:es:${aws:region}:${aws:accountId}:domain/another-opensearch-domain"
+```
+
+
 ### Proxying Stac-server through CloudFront
 
 The API Gateway URL associated with the deployed stac-server instance may not be the URL that you ultimately wish to expose to your API users. AWS CloudFront can be used to proxy to a more human readable URL. In order to accomplish this:
@@ -440,30 +670,30 @@ The API Gateway URL associated with the deployed stac-server instance may not be
 7. Set the Cache Policy to a custom policy that forwards query strings. If one simply disables caching, CloudFront strips the query strings.
 8. Optionally, define a LambdaEdge to perform a URL rewrite. This is necessary if your API URL is appended to the root URL (e.g., mydomain.com/api). The Lambda must rewrite the URL to remove the /api. For example:
 
-    ```python
-    from re import sub
+```python
+from re import sub
 
-    def lambda_handler(event, context):
-        request = event['Records'][0]['cf']['request']
-        uri = request["uri"]
+def lambda_handler(event, context):
+    request = event['Records'][0]['cf']['request']
+    uri = request["uri"]
 
-        if uri in ["/", "/index.html"]:
-            response = {
-                "status": 302,
-                "statusDescription": "Found",
-                "headers": {
-                    "location": [{
-                        "key": "Location",
-                        "value": "/api/"
-                    }]
-                }
+    if uri in ["/", "/index.html"]:
+        response = {
+            "status": 302,
+            "statusDescription": "Found",
+            "headers": {
+                "location": [{
+                    "key": "Location",
+                    "value": "/api/"
+                }]
             }
-            return response
+        }
+        return response
 
-        request["uri"] = sub("^/api", "/", uri)
-        print(request)
-        return request
-    ```
+    request["uri"] = sub("^/api", "/", uri)
+    print(request)
+    return request
+```
 
 ### Locking down transaction endpoints
 
@@ -668,7 +898,7 @@ npm run build-api-docs # TODO: this fails
 
 ### Running Locally
 
-Before the API can be run, Elasticsearch and Localstack need to be running. There is a `docker-compose.yml` file to simplify running Elasticsearch locally:
+Before the API can be run, OpenSearch and Localstack need to be running. There is a `docker-compose.yml` file to simplify running OpenSearch locally:
 
 ```shell
 docker-compose up -d
@@ -686,7 +916,7 @@ Other configurations can be passed as shell environment variables, e.g.,
 
 ```
 export ENABLE_TRANSACTIONS_EXTENSION=true
-export ES_HOST='https://search-stac-server-dev-os-7awl6h344qlpvly.us-west-2.es.amazonaws.com'
+export OPENSEARCH_HOST='https://search-stac-server-dev-7awl6h344qlpvly.us-west-2.es.amazonaws.com'
 npm run serve
 ```
 
@@ -710,18 +940,18 @@ npx ava tests/test-es.js --match='foobar*'
 
 ### Running System and Integration Tests
 
-The System and Integration tests use an Elasticsearch server running in Docker and a local instance of the API.
+The System and Integration tests use an OpenSearch server running in Docker and a local instance of the API.
 
 When the system tests run, they:
 
-1. Wait for Elasticsearch to be available
-1. Delete all indices from Elasticsearch
+1. Wait for OpenSearch to be available
+1. Delete all indices from OpenSearch
 1. Start an instance of the API. That API will be available at <http://localhost:3000/dev/>
 1. Wait for the API to be available
 1. Run the system tests in `./tests/system/test-*.js`
 1. Stop the API
 
-Before running the system tests, make sure to start Elasticsearch using:
+Before running the system tests, make sure to start OpenSearch using:
 
 ```shell
 docker-compose up -d
@@ -730,7 +960,7 @@ docker-compose up -d
 Running these tests requires the timeout utility is installed. On Linux,
 this is probably already installed, and on macOS it can be installed with `brew install coreutils`.
 
-Once Elasticsearch has been started, run the system tests:
+Once OpenSearch has been started, run the system tests:
 
 ```shell
 npm run test:system

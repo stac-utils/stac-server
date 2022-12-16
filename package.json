@@ -60,7 +60,7 @@
     "p-filter": "^3.0.0",
     "pump": "^3.0.0",
     "serverless-http": "^2.7.0",
-    "through2": "^3.0.1",
+    "through2": "^4.0.2",
     "zod": "^3.20.2"
   },
   "devDependencies": {

@@ -23,6 +23,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - (Experimental) Aggregation Extension endpoint /aggregate
 - Added pre-hook and post-hook Lambda examples
 - POST /collections endpoint to create collections
+- Configuration of shards and replicas for the indices containing Items can now be done
+  with environment variables ITEMS_INDICIES_NUM_OF_SHARDS and ITEMS_INDICIES_NUM_OF_REPLICAS.
 
 ### Changed
 

@@ -398,6 +398,10 @@ There are some settings that should be reviewed and updated as needeed in the se
 | OPENSEARCH_PASSWORD              | The password to authenticate to OpenSearch with if fine-grained access control is enabled.                                                                                                       |                                                                                      |
 | OPENSEARCH_CREDENTIALS_SECRET_ID | The AWS Secrets Manager secret to retrieve the username and password from, to authenticate to OpenSearch with if fine-grained access control is enabled.                                         |                                                                                      |
 
+
+| ITEMS_INDICIES_NUM_OF_SHARDS                | Configure the number of shards for the indices that contain Items.                                                                                                                                  | none                                                                                |
+| ITEMS_INDICIES_NUM_OF_REPLICAS                | Configure the number of replicas for the indices that contain Items.                                                                                                                                                                              | none                                                                                |
+
 After reviewing the settings, build and deploy:
 
 ```shell

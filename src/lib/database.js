@@ -3,6 +3,8 @@ const logger = console //require('./logger')
 
 const COLLECTIONS_INDEX = process.env.COLLECTIONS_INDEX || 'collections'
 
+let collectionToIndexMapping = null
+
 const isIndexNotFoundError = (e) => (
   e instanceof Error
     && e.name === 'ResponseError'
@@ -354,6 +356,24 @@ async function getCollections(page = 1, limit = 100) {
   return []
 }
 
+async function populateCollectionToIndexMapping() {
+  if (process.env.COLLECTION_TO_INDEX_MAPPINGS) {
+    try {
+      collectionToIndexMapping = JSON.parse(process.env.COLLECTION_TO_INDEX_MAPPINGS)
+    } catch (e) {
+      logger.error('COLLECTION_TO_INDEX_MAPPINGS is not a valid JSON object.')
+      collectionToIndexMapping = {}
+    }
+  } else {
+    collectionToIndexMapping = {}
+  }
+}
+
+async function indexForCollection(collectionId) {
+  if (!collectionToIndexMapping) await populateCollectionToIndexMapping()
+  return collectionToIndexMapping[collectionId] || collectionId
+}
+
 async function constructSearchParams(parameters, page, limit) {
   const { id, collections } = parameters
 
@@ -366,8 +386,13 @@ async function constructSearchParams(parameters, page, limit) {
     body.search_after = buildSearchAfter(parameters)
   }
 
+  const indices = (process.env.COLLECTION_TO_INDEX_MAPPINGS && Array.isArray(collections)
+  && collections.length)
+    ? await Promise.all(collections.map(async (x) => await indexForCollection(x)))
+    : ['*', '-.*', '-collections']
+
   const searchParams = {
-    index: collections || '*,-.*,-collections',
+    index: indices,
     body,
     size: limit,
     track_total_hits: true

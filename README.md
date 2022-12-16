@@ -31,6 +31,9 @@
     - [Ingesting large items](#ingesting-large-items)
     - [Subscribing to SNS Topics](#subscribing-to-sns-topics)
     - [Ingest Errors](#ingest-errors)
+  - [Supporting Cross-cluster Search and Replication](#supporting-cross-cluster-search-and-replication)
+    - [Cross-cluster Replication](#cross-cluster-replication)
+    - [Cross-cluster Search](#cross-cluster-search)
   - [Pre- and Post-Hooks](#pre--and-post-hooks)
     - [Pre-Hook](#pre-hook)
     - [Post-Hook](#post-hook)
@@ -397,6 +400,7 @@ There are some settings that should be reviewed and updated as needeed in the se
 | OPENSEARCH_USERNAME              | The username to authenticate to OpenSearch with if fine-grained access control is enabled.                                                                                                       |                                                                                      |
 | OPENSEARCH_PASSWORD              | The password to authenticate to OpenSearch with if fine-grained access control is enabled.                                                                                                       |                                                                                      |
 | OPENSEARCH_CREDENTIALS_SECRET_ID | The AWS Secrets Manager secret to retrieve the username and password from, to authenticate to OpenSearch with if fine-grained access control is enabled.                                         |                                                                                      |
+| COLLECTION_TO_INDEX_MAPPINGS | A JSON object representing collection id to index name mappings if they do not have the same names.                                         |                                                                                      |
 
 After reviewing the settings, build and deploy:
 
@@ -848,6 +852,38 @@ Stac-server can also be subscribed to SNS Topics that publish complete STAC Item
 ### Ingest Errors
 
 Errors that occur during ingest will end up in the dead letter processing queue, where they are processed by the `stac-server-<stage>-failed-ingest` Lambda function. Currently all the failed-ingest Lambda does is log the error, see the CloudWatch log `/aws/lambda/stac-server-<stage>-failed-ingest` for errors.
+
+## Supporting Cross-cluster Search and Replication
+
+OpenSearch support cross-cluster connections that can be configured to either allow search
+across the clusters, treating a remote cluster as if it were another group of nodes in the
+cluster, or configure indicies to be replicated (continuously copied) from from one
+cluster to another.
+
+Configuring either cross-cluster behavior requires [enabling fine-grained access control](#enable-fine-grained-access-control).
+
+### Cross-cluster Replication
+
+The AWS documentation for cross-cluster replication can be found
+[here](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/replication.html).
+
+1. Create the replication connection in the source to the destination
+2. Create the collection in the source's stac-server instance
+
+### Cross-cluster Search
+
+The AWS documentation for cross-cluster search can be found
+[here](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/cross-cluster-search.html).
+
+1. On the leader OpenSearch domain, create a user with permissions to read the indices
+   you want to make visible to the follower.
+2. Create a connection between the source and destination OpenSearch domains.
+3. In the source stac-server, create a Collection for each collection to be mapped. This
+   must have the same name as the destination collection.
+4. In the source stac-server, configure and deploy the `COLLECTION_TO_INDEX_MAPPINGS`
+   environment variable with a stringified JSON object mapping the collection name to the
+   name of the index. For example, `{"collection1": "cluster2:collection1", "collection2": "cluster2:collection2"}` is a value mapping two collections through a
+   connection named `cluster2`.
 
 ## Pre- and Post-Hooks
 

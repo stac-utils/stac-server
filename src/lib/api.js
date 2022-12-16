@@ -536,11 +536,31 @@ const searchItems = async function (collectionId, queryParameters, backend, endp
   }
 
   const { results: responseItems, context } = esResponse
-  const pageLinks = buildPaginationLinks(
+  const paginationLinks = buildPaginationLinks(
     limit, searchParams, bbox, intersects, newEndpoint, httpMethod, sortby, responseItems
   )
+
+  let links
+
+  if (collectionId) { // add these links for a features request
+    links = paginationLinks.concat([
+      {
+        rel: 'self',
+        type: 'application/json',
+        href: `${newEndpoint}`
+      },
+      {
+        rel: 'root',
+        type: 'application/geo+json',
+        href: `${endpoint}`
+      }
+    ])
+  } else {
+    links = paginationLinks
+  }
+
   const items = addItemLinks(responseItems, endpoint)
-  const response = wrapResponseInFeatureCollection(context, items, pageLinks)
+  const response = wrapResponseInFeatureCollection(context, items, links)
   return response
 }
 

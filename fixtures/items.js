@@ -1,7 +1,20 @@
 const dynamicTemplates = require('./dynamicTemplates')
 
-module.exports = {
-  mappings: {
+const itemsIndexConfiguration = function () {
+  const numberOfShards = process.env.ITEMS_INDICIES_NUM_OF_SHARDS
+  const numberOfReplicas = process.env.ITEMS_INDICIES_NUM_OF_REPLICAS
+
+  const config = {}
+
+  if (numberOfShards || numberOfReplicas) {
+    const index = {}
+    if (numberOfShards) index.number_of_shards = Number(numberOfShards)
+    if (numberOfReplicas) index.number_of_replicas = Number(numberOfReplicas)
+
+    config.settings = { index }
+  }
+
+  config.mappings = {
     numeric_detection: false,
     dynamic_templates: dynamicTemplates.templates,
     properties: {
@@ -28,4 +41,10 @@ module.exports = {
       }
     }
   }
+
+  return config
+}
+
+module.exports = {
+  itemsIndexConfiguration
 }

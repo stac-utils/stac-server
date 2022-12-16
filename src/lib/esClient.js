@@ -9,8 +9,8 @@ const { createAWSConnection: createAWSConnectionES,
 
 const logger = console //require('./logger')
 
-const collectionsMapping = require('../../fixtures/collections')
-const itemsMapping = require('../../fixtures/items')
+const { collectionsIndexConfiguration } = require('../../fixtures/collections')
+const { itemsIndexConfiguration } = require('../../fixtures/items')
 
 let _esClient
 
@@ -85,13 +85,14 @@ async function esClient() {
 async function createIndex(index) {
   const client = await esClient()
   const exists = await client.indices.exists({ index })
-  const mapping = index === 'collections' ? collectionsMapping : itemsMapping
+  const indexConfiguration = index === 'collections'
+    ? collectionsIndexConfiguration() : itemsIndexConfiguration()
   if (!exists.body) {
     logger.info(`${index} does not exist, creating...`)
     try {
-      await client.indices.create({ index, body: mapping })
+      await client.indices.create({ index, body: indexConfiguration })
       logger.info(`Created index ${index}`)
-      logger.debug(`Mapping: ${JSON.stringify(mapping)}`)
+      logger.debug(`Mapping: ${JSON.stringify(indexConfiguration)}`)
     } catch (error) {
       const debugMessage = `Error creating index ${index}, already created: ${error}`
       logger.debug(debugMessage)

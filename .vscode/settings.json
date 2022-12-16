@@ -16,5 +16,11 @@
     "editor.defaultFormatter": "dbaeumer.vscode-eslint"
   },
   "editor.tabSize": 2,
-  "files.insertFinalNewline": true
+  "files.insertFinalNewline": true,
+  "terminal.integrated.profiles.osx": {
+    "zsh": {
+      "path": "/bin/zsh", // your path here
+      "args": ["-l"]
+    }
+  },
 }

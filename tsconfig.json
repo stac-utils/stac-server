@@ -2,7 +2,6 @@
   "extends": "@tsconfig/node16/tsconfig.json",
   "compilerOptions": {
     "alwaysStrict": true,
-    "strict": true,
     "allowUnusedLabels": false,
     "allowUnreachableCode": false,
     "exactOptionalPropertyTypes": true,
@@ -16,9 +15,6 @@
     "importsNotUsedAsValues": "error",
     "checkJs": false,
     "allowJs": true,
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true,
     "noEmit": true,
     "resolveJsonModule": true,
     "typeRoots": [

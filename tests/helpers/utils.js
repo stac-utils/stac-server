@@ -3,6 +3,7 @@ const cryptoRandomString = require('crypto-random-string')
 const fs = require('fs')
 const path = require('path')
 
+// @ts-expect-error no-empty-function
 const noop = () => { }
 
 const nullLogger = {

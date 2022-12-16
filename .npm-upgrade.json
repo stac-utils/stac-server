@@ -1,0 +1,16 @@
+{
+  "ignore": {
+    "@acuris/aws-es-connection": {
+      "versions": "^2",
+      "reason": "deprecated feature, leave as-is"
+    },
+    "@elastic/elasticsearch": {
+      "versions": "^8",
+      "reason": "deprecated feature, leave as-is"
+    },
+    "got": {
+      "versions": "^12",
+      "reason": "esm"
+    }
+  }
+}

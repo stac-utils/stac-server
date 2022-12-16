@@ -15,6 +15,10 @@
     "@types/node": {
       "versions": "^18",
       "reason": "using 16"
+    },
+    "crypto-random-string": {
+      "versions": "",
+      "reason": "esm"
     }
   }
 }

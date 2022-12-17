@@ -8,13 +8,13 @@
       "versions": "^8",
       "reason": "deprecated feature, leave as-is"
     },
-    "got": {
-      "versions": "^12",
-      "reason": "esm"
-    },
     "@types/node": {
       "versions": "^18",
       "reason": "using 16"
+    },
+    "got": {
+      "versions": "^12",
+      "reason": "esm"
     },
     "crypto-random-string": {
       "versions": "",

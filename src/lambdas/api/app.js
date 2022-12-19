@@ -34,6 +34,14 @@ app.get('/', async (req, res, next) => {
   }
 })
 
+app.get('/healthcheck', async (_req, res, next) => {
+  try {
+    res.json(await api.healthCheck(es))
+  } catch (error) {
+    next(error)
+  }
+})
+
 app.get('/api', async (_req, res, next) => {
   try {
     res.type('application/vnd.oai.openapi')

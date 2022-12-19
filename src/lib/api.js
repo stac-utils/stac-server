@@ -842,6 +842,15 @@ const deleteItem = async function (collectionId, itemId, backend) {
   return new Error(`Error deleting item ${collectionId}/${itemId}`)
 }
 
+const healthCheck = async function (backend) {
+  const response = await backend.healthCheck()
+  logger.debug(`Health check: ${response}`)
+  if (response && response.statusCode === 200) {
+    return { status: 'ok' }
+  }
+  return new Error('Error with health check.')
+}
+
 module.exports = {
   getConformance,
   getCatalog,
@@ -861,4 +870,5 @@ module.exports = {
   extractLimit,
   extractDatetime,
   aggregate,
+  healthCheck
 }

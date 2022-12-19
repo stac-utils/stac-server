@@ -1,7 +1,7 @@
 const { pickBy, assign, get: getNested } = require('lodash')
 const extent = require('@mapbox/extent')
 const { DateTime } = require('luxon')
-const { isIndexNotFoundError } = require('./es')
+const { isIndexNotFoundError } = require('./database')
 const logger = console
 
 // max number of collections to retrieve

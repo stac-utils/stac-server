@@ -1,9 +1,9 @@
 const test = require('ava')
 const { default: got } = require('got')
-const { deleteAllIndices, refreshIndices } = require('../helpers/es')
+const { deleteAllIndices, refreshIndices } = require('../helpers/database')
 const { randomId } = require('../helpers/utils')
 const ingest = require('../../src/lib/ingest')
-const stream = require('../../src/lib/esStream')
+const stream = require('../../src/lib/databaseStream')
 const systemTests = require('../helpers/system-tests')
 
 test.before(async (t) => {

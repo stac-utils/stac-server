@@ -5,7 +5,7 @@ const { promisify } = require('util')
 const fs = require('fs')
 const path = require('path')
 const { startApi } = require('./api')
-const { createCollectionsIndex, refreshIndices } = require('./es')
+const { createCollectionsIndex, refreshIndices } = require('./database')
 const { createTopic, addSnsToSqsSubscription } = require('./sns')
 const { createQueue, getQueueArn } = require('./sqs')
 

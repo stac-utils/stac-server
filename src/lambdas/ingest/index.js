@@ -1,6 +1,6 @@
 const { default: got } = require('got')
-const esClient = require('../../lib/esClient.js')
-const stream = require('../../lib/esStream.js')
+const dbClient = require('../../lib/databaseClient.js')
+const stream = require('../../lib/databaseStream.js')
 const ingest = require('../../lib/ingest.js')
 const s3Utils = require('../../lib/s3-utils')
 
@@ -53,7 +53,7 @@ module.exports.handler = async function handler(event, context) {
   logger.debug(`Event: ${JSON.stringify(event, undefined, 2)}`)
 
   if (event.create_indices) {
-    await esClient.createIndex('collections')
+    await dbClient.createIndex('collections')
   }
 
   const stacItems = isSqsEvent(event)

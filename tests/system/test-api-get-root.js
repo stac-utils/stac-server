@@ -1,5 +1,5 @@
 const test = require('ava')
-const { deleteAllIndices } = require('../helpers/es')
+const { deleteAllIndices } = require('../helpers/database')
 const { randomId } = require('../helpers/utils')
 const { startApi } = require('../helpers/api')
 const systemTests = require('../helpers/system-tests')

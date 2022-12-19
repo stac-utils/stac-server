@@ -12,7 +12,7 @@ const logger = console //require('./logger')
 const { collectionsIndexConfiguration } = require('../../fixtures/collections')
 const { itemsIndexConfiguration } = require('../../fixtures/items')
 
-let _esClient
+let _dbClient
 
 function createClientWithUsernameAndPassword(host, username, password) {
   const protocolAndHost = host.split('://')
@@ -71,19 +71,19 @@ async function connect() {
 }
 
 // get existing search database client or create a new one
-async function esClient() {
-  if (_esClient) {
+async function dbClient() {
+  if (_dbClient) {
     logger.debug('Using existing search database connection')
   } else {
-    _esClient = await connect()
+    _dbClient = await connect()
     logger.debug('Connected to search database')
   }
 
-  return _esClient
+  return _dbClient
 }
 
 async function createIndex(index) {
-  const client = await esClient()
+  const client = await dbClient()
   const exists = await client.indices.exists({ index })
   const indexConfiguration = index === 'collections'
     ? collectionsIndexConfiguration() : itemsIndexConfiguration()
@@ -101,7 +101,7 @@ async function createIndex(index) {
 }
 
 module.exports = {
-  client: esClient,
+  client: dbClient,
   createIndex,
   connect
 }

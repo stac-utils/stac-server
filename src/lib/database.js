@@ -1,4 +1,4 @@
-const esClient = require('./esClient')
+const dbClient = require('./databaseClient')
 const logger = console //require('./logger')
 
 const COLLECTIONS_INDEX = process.env.COLLECTIONS_INDEX || 'collections'
@@ -228,11 +228,11 @@ function buildFieldsFilter(parameters) {
  *
  */
 async function indexCollection(collection) {
-  const client = await esClient.client()
+  const client = await dbClient.client()
 
   const exists = await client.indices.exists({ index: COLLECTIONS_INDEX })
   if (!exists.body) {
-    await esClient.createIndex(COLLECTIONS_INDEX)
+    await dbClient.createIndex(COLLECTIONS_INDEX)
   }
 
   const collectionDocResponse = await client.index({
@@ -242,7 +242,7 @@ async function indexCollection(collection) {
     opType: 'create'
   })
 
-  const indexCreateResponse = await esClient.createIndex(collection.id)
+  const indexCreateResponse = await dbClient.createIndex(collection.id)
 
   return [collectionDocResponse, indexCreateResponse]
 }
@@ -252,7 +252,7 @@ async function indexCollection(collection) {
  *
  */
 async function indexItem(item) {
-  const client = await esClient.client()
+  const client = await dbClient.client()
 
   const exists = await client.indices.exists({ index: item.collection })
   if (!exists.body) {
@@ -282,7 +282,7 @@ async function indexItem(item) {
  *
  */
 async function partialUpdateItem(collectionId, itemId, updateFields) {
-  const client = await esClient.client()
+  const client = await dbClient.client()
 
   // Handle inserting required default properties to `updateFields`
   const requiredProperties = {
@@ -309,7 +309,7 @@ async function partialUpdateItem(collectionId, itemId, updateFields) {
 }
 
 async function deleteItem(collectionId, itemId) {
-  const client = await esClient.client()
+  const client = await dbClient.client()
   if (client === undefined) throw new Error('Client is undefined')
   return await client.delete_by_query({
     index: collectionId,
@@ -318,9 +318,9 @@ async function deleteItem(collectionId, itemId) {
   })
 }
 
-async function esQuery(parameters) {
+async function dbQuery(parameters) {
   logger.info(`Search database query: ${JSON.stringify(parameters)}`)
-  const client = await esClient.client()
+  const client = await dbClient.client()
   if (client === undefined) throw new Error('Client is undefined')
   const response = await client.search(parameters)
   logger.info(`Response: ${JSON.stringify(response)}`)
@@ -329,7 +329,7 @@ async function esQuery(parameters) {
 
 // get single collection
 async function getCollection(collectionId) {
-  const response = await esQuery({
+  const response = await dbQuery({
     index: COLLECTIONS_INDEX,
     body: buildIdQuery(collectionId)
   })
@@ -342,7 +342,7 @@ async function getCollection(collectionId) {
 // get all collections
 async function getCollections(page = 1, limit = 100) {
   try {
-    const response = await esQuery({
+    const response = await dbQuery({
       index: COLLECTIONS_INDEX,
       size: limit,
       from: (page - 1) * limit
@@ -391,18 +391,18 @@ async function constructSearchParams(parameters, page, limit) {
 
 async function search(parameters, page, limit = 10) {
   const searchParams = await constructSearchParams(parameters, page, limit)
-  const esResponse = await esQuery({
+  const dbResponse = await dbQuery({
     ignore_unavailable: true,
     allow_no_indices: true,
     ...searchParams
   })
 
-  const results = esResponse.body.hits.hits.map((r) => (r._source))
+  const results = dbResponse.body.hits.hits.map((r) => (r._source))
   const response = {
     results,
     context: {
       limit: Number(limit),
-      matched: esResponse.body.hits.total.value,
+      matched: dbResponse.body.hits.total.value,
       returned: results.length
     }
   }
@@ -475,13 +475,13 @@ async function aggregate(parameters) {
     }
   }
 
-  const esResponse = await esQuery({
+  const dbResponse = await dbQuery({
     ignore_unavailable: true,
     allow_no_indices: true,
     ...searchParams
   })
 
-  return esResponse
+  return dbResponse
 }
 
 const getItem = async (collectionId, itemId) => {
@@ -505,7 +505,7 @@ const getItemCreated = async (collectionId, itemId) => {
  *
  */
 async function updateItem(item) {
-  const client = await esClient.client()
+  const client = await dbClient.client()
 
   const exists = await client.indices.exists({ index: item.collection })
   if (!exists.body) {

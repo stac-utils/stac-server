@@ -1,7 +1,7 @@
 const test = require('ava')
 const { ingestItem } = require('../helpers/ingest')
 const { randomId, loadFixture } = require('../helpers/utils')
-const { refreshIndices, deleteAllIndices } = require('../helpers/es')
+const { refreshIndices, deleteAllIndices } = require('../helpers/database')
 const systemTests = require('../helpers/system-tests')
 
 test.before(async (t) => {

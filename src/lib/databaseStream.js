@@ -117,24 +117,24 @@ async function stream() {
       // remove any hierarchy links in a non-mutating way
       const hlinks = ['self', 'root', 'parent', 'child', 'collection', 'item', 'items']
       const links = data.links.filter((link) => !hlinks.includes(link.rel))
-      const esDataObject = { ...data, links }
+      const dbDataObject = { ...data, links }
 
       if (data.hasOwnProperty('properties')) {
         const now = (new Date()).toISOString()
 
         const created = (await getItemCreated(data.collection, data.id)) || now
 
-        esDataObject.properties.created = created
-        esDataObject.properties.updated = now
+        dbDataObject.properties.created = created
+        dbDataObject.properties.updated = now
       }
 
       // create ES record
       const record = {
         index,
-        id: esDataObject.id,
+        id: dbDataObject.id,
         action: 'index',
         _retry_on_conflict: 3,
-        body: esDataObject
+        body: dbDataObject
       }
 
       next(null, record)

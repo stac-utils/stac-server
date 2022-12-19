@@ -318,7 +318,7 @@ async function deleteItem(collectionId, itemId) {
   })
 }
 
-async function esQuery(parameters) {
+async function dbQuery(parameters) {
   logger.info(`Search database query: ${JSON.stringify(parameters)}`)
   const client = await dbClient.client()
   if (client === undefined) throw new Error('Client is undefined')
@@ -329,7 +329,7 @@ async function esQuery(parameters) {
 
 // get single collection
 async function getCollection(collectionId) {
-  const response = await esQuery({
+  const response = await dbQuery({
     index: COLLECTIONS_INDEX,
     body: buildIdQuery(collectionId)
   })
@@ -342,7 +342,7 @@ async function getCollection(collectionId) {
 // get all collections
 async function getCollections(page = 1, limit = 100) {
   try {
-    const response = await esQuery({
+    const response = await dbQuery({
       index: COLLECTIONS_INDEX,
       size: limit,
       from: (page - 1) * limit
@@ -391,18 +391,18 @@ async function constructSearchParams(parameters, page, limit) {
 
 async function search(parameters, page, limit = 10) {
   const searchParams = await constructSearchParams(parameters, page, limit)
-  const esResponse = await esQuery({
+  const dbResponse = await dbQuery({
     ignore_unavailable: true,
     allow_no_indices: true,
     ...searchParams
   })
 
-  const results = esResponse.body.hits.hits.map((r) => (r._source))
+  const results = dbResponse.body.hits.hits.map((r) => (r._source))
   const response = {
     results,
     context: {
       limit: Number(limit),
-      matched: esResponse.body.hits.total.value,
+      matched: dbResponse.body.hits.total.value,
       returned: results.length
     }
   }
@@ -475,13 +475,13 @@ async function aggregate(parameters) {
     }
   }
 
-  const esResponse = await esQuery({
+  const dbResponse = await dbQuery({
     ignore_unavailable: true,
     allow_no_indices: true,
     ...searchParams
   })
 
-  return esResponse
+  return dbResponse
 }
 
 const getItem = async (collectionId, itemId) => {

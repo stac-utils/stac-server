@@ -1,7 +1,9 @@
 const { pickBy, assign, get: getNested } = require('lodash')
 const extent = require('@mapbox/extent')
 const { DateTime } = require('luxon')
+const AWS = require('aws-sdk')
 const { isIndexNotFoundError } = require('./database')
+
 const logger = console
 
 // max number of collections to retrieve
@@ -373,6 +375,11 @@ const addItemLinks = function (results, endpoint) {
       rel: 'root',
       type: 'application/geo+json',
       href: `${endpoint}`
+    })
+    links.push({
+      rel: 'thumbnail',
+      type: 'image/jpeg',
+      href: `${endpoint}/collections/${collection}/items/${id}/thumbnail`
     })
     result.type = 'Feature'
     return result
@@ -842,6 +849,39 @@ const deleteItem = async function (collectionId, itemId, backend) {
   return new Error(`Error deleting item ${collectionId}/${itemId}`)
 }
 
+const getItemThumbnail = async function (collectionId, itemId, backend) {
+  const itemQuery = { collections: [collectionId], id: itemId }
+  const { results } = await backend.search(itemQuery)
+  const [item] = results
+  if (!item) {
+    return new Error('Item not found')
+  }
+
+  const thumbnailAsset = Object.values(item.assets).find((x) => x.roles.includes('thumbnail'))
+  if (!thumbnailAsset) {
+    return new Error('Thumbnail not found')
+  }
+
+  let url
+  if (thumbnailAsset.href.startsWith('http')) {
+    url = thumbnailAsset.href
+  } else if (thumbnailAsset.href.startsWith('s3')) {
+    const withoutProtocol = thumbnailAsset.href.substring(5) // chop off s3://
+    const [bucket, ...keyArray] = withoutProtocol.split('/')
+    const key = keyArray.join('/')
+    url = new AWS.S3().getSignedUrl('getObject', {
+      Bucket: bucket,
+      Key: key,
+      Expires: 60 * 5, // expiry in seconds
+      RequestPayer: 'requester'
+    })
+  } else {
+    return new Error('Thumbnail not found')
+  }
+
+  return { location: url }
+}
+
 module.exports = {
   getConformance,
   getCatalog,
@@ -861,4 +901,5 @@ module.exports = {
   extractLimit,
   extractDatetime,
   aggregate,
+  getItemThumbnail,
 }

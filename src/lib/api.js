@@ -3,7 +3,6 @@ const extent = require('@mapbox/extent')
 const { DateTime } = require('luxon')
 const AWS = require('aws-sdk')
 const { isIndexNotFoundError } = require('./database')
-
 const logger = console
 
 // max number of collections to retrieve

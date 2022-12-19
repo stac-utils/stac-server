@@ -2,6 +2,10 @@ const dbClient = require('./databaseClient')
 const logger = console //require('./logger')
 
 const COLLECTIONS_INDEX = process.env.COLLECTIONS_INDEX || 'collections'
+const DEFAULT_INDICES = ['*', '-.*', '-collections']
+
+let collectionToIndexMapping = null
+let unrestrictedIndices = null
 
 const isIndexNotFoundError = (e) => (
   e instanceof Error
@@ -354,6 +358,42 @@ async function getCollections(page = 1, limit = 100) {
   return []
 }
 
+async function populateCollectionToIndexMapping() {
+  if (process.env.COLLECTION_TO_INDEX_MAPPINGS) {
+    try {
+      collectionToIndexMapping = JSON.parse(process.env.COLLECTION_TO_INDEX_MAPPINGS)
+    } catch (e) {
+      logger.error('COLLECTION_TO_INDEX_MAPPINGS is not a valid JSON object.')
+      collectionToIndexMapping = {}
+    }
+  } else {
+    collectionToIndexMapping = {}
+  }
+}
+
+async function indexForCollection(collectionId) {
+  return collectionToIndexMapping[collectionId] || collectionId
+}
+
+async function populateUnrestrictedIndices() {
+  if (!unrestrictedIndices) {
+    if (process.env.COLLECTION_TO_INDEX_MAPPINGS) {
+      if (!collectionToIndexMapping) {
+        await populateCollectionToIndexMapping()
+      }
+      // When no collections are specified, the default index restriction
+      // is for all local indices (*, which excludes remote indices), excludes any
+      // system indices that start with a ".", the collections index, and then
+      // explicitly adds each of the remote indicies that have a mapping defined to them
+      unrestrictedIndices = DEFAULT_INDICES.concat(
+        Object.values(collectionToIndexMapping)
+      )
+    } else {
+      unrestrictedIndices = DEFAULT_INDICES
+    }
+  }
+}
+
 async function constructSearchParams(parameters, page, limit) {
   const { id, collections } = parameters
 
@@ -366,8 +406,23 @@ async function constructSearchParams(parameters, page, limit) {
     body.search_after = buildSearchAfter(parameters)
   }
 
+  let indices
+  if (Array.isArray(collections) && collections.length) {
+    if (process.env.COLLECTION_TO_INDEX_MAPPINGS) {
+      if (!collectionToIndexMapping) await populateCollectionToIndexMapping()
+      indices = await Promise.all(collections.map(async (x) => await indexForCollection(x)))
+    } else {
+      indices = collections
+    }
+  } else {
+    if (!unrestrictedIndices) {
+      populateUnrestrictedIndices()
+    }
+    indices = unrestrictedIndices
+  }
+
   const searchParams = {
-    index: collections || '*,-.*,-collections',
+    index: indices,
     body,
     size: limit,
     track_total_hits: true

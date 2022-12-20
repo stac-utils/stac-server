@@ -36,7 +36,7 @@ app.get('/', async (req, res, next) => {
 
 app.get('/healthcheck', async (_req, res, next) => {
   try {
-    res.json(await api.healthCheck(es))
+    res.json(await api.healthCheck(database))
   } catch (error) {
     next(error)
   }

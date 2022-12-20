@@ -25,6 +25,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - POST /collections endpoint to create collections
 - Configuration of shards and replicas for the indices containing Items can now be done
   with environment variables ITEMS_INDICIES_NUM_OF_SHARDS and ITEMS_INDICIES_NUM_OF_REPLICAS.
+- (Experimental) Adds Item 'thumbnail' link to presign an s3 protocol thumbnail asset ARN
 
 ### Changed
 

@@ -542,11 +542,31 @@ const searchItems = async function (collectionId, queryParameters, backend, endp
   }
 
   const { results: responseItems, context } = esResponse
-  const pageLinks = buildPaginationLinks(
+  const paginationLinks = buildPaginationLinks(
     limit, searchParams, bbox, intersects, newEndpoint, httpMethod, sortby, responseItems
   )
+
+  let links
+
+  if (collectionId) { // add these links for a features request
+    links = paginationLinks.concat([
+      {
+        rel: 'self',
+        type: 'application/json',
+        href: `${newEndpoint}`
+      },
+      {
+        rel: 'root',
+        type: 'application/geo+json',
+        href: `${endpoint}`
+      }
+    ])
+  } else {
+    links = paginationLinks
+  }
+
   const items = addItemLinks(responseItems, endpoint)
-  const response = wrapResponseInFeatureCollection(context, items, pageLinks)
+  const response = wrapResponseInFeatureCollection(context, items, links)
   return response
 }
 
@@ -666,7 +686,7 @@ const getConformance = async function (txnEnabled) {
     `${prefix}/item-search#fields`,
     `${prefix}/item-search#sort`,
     `${prefix}/item-search#query`,
-    `${prefix}/aggregation`,
+    'https://api.stacspec.org/v0.2.0/aggregation',
     'http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/core',
     'http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/oas30',
     'http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/geojson'

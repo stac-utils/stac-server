@@ -585,6 +585,14 @@ async function updateItem(item) {
   return response
 }
 
+async function healthCheck() {
+  const client = await dbClient.client()
+  if (client === undefined) throw new Error('Client is undefined')
+  const health = await client.cat.health()
+  logger.debug(`Health: ${JSON.stringify(health)}`)
+  return health
+}
+
 module.exports = {
   getCollections,
   getCollection,
@@ -599,5 +607,6 @@ module.exports = {
   search,
   aggregate,
   constructSearchParams,
-  buildDatetimeQuery
+  buildDatetimeQuery,
+  healthCheck
 }

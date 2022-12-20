@@ -898,6 +898,14 @@ const getItemThumbnail = async function (collectionId, itemId, backend) {
   }
 
   return { location }
+
+const healthCheck = async function (backend) {
+  const response = await backend.healthCheck()
+  logger.debug(`Health check: ${response}`)
+  if (response && response.statusCode === 200) {
+    return { status: 'ok' }
+  }
+  return new Error('Error with health check.')
 }
 
 module.exports = {
@@ -920,4 +928,5 @@ module.exports = {
   extractDatetime,
   aggregate,
   getItemThumbnail,
+  healthCheck
 }

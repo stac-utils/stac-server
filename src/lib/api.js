@@ -898,6 +898,7 @@ const getItemThumbnail = async function (collectionId, itemId, backend) {
   }
 
   return { location }
+}
 
 const healthCheck = async function (backend) {
   const response = await backend.healthCheck()
@@ -928,5 +929,5 @@ module.exports = {
   extractDatetime,
   aggregate,
   getItemThumbnail,
-  healthCheck
+  healthCheck,
 }

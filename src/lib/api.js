@@ -660,7 +660,7 @@ const getConformance = async function (txnEnabled) {
     `${prefix}/item-search#fields`,
     `${prefix}/item-search#sort`,
     `${prefix}/item-search#query`,
-    `${prefix}/aggregation`,
+    'https://api.stacspec.org/v0.2.0/aggregation',
     'http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/core',
     'http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/oas30',
     'http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/geojson'

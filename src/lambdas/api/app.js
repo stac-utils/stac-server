@@ -321,6 +321,31 @@ app.delete('/collections/:collectionId/items/:itemId', async (req, res, next) =>
   }
 })
 
+app.get('/collections/:collectionId/items/:itemId/thumbnail', async (req, res, next) => {
+  try {
+    const { itemId, collectionId } = req.params
+
+    const response = await api.getItemThumbnail(
+      collectionId,
+      itemId,
+      database,
+    )
+
+    if (response instanceof Error) {
+      if (response.message === 'Item not found'
+          || response.message === 'Thumbnail not found') {
+        next(createError(404))
+      } else {
+        next(createError(500))
+      }
+    } else {
+      res.redirect(response.location)
+    }
+  } catch (error) {
+    next(error)
+  }
+})
+
 // catch 404 and forward to error handler
 app.use((_req, _res, next) => {
   next(createError(404))

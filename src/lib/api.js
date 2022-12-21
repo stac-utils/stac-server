@@ -875,7 +875,10 @@ const getItemThumbnail = async function (collectionId, itemId, backend) {
     return new Error('Item not found')
   }
 
-  const thumbnailAsset = Object.values(item.assets || []).find((x) => x.roles.includes('thumbnail'))
+  const thumbnailAsset = Object.values(item.assets || []).find(
+    (x) => x.roles && x.roles.includes('thumbnail')
+  )
+
   if (!thumbnailAsset) {
     return new Error('Thumbnail not found')
   }

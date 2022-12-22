@@ -37,6 +37,9 @@ provider:
             - sqs:DeleteMessage
           Resource:
             Fn::GetAtt: [ingestQueue, Arn]
+        - Effect: Allow
+          Action: s3:GetObject
+          Resource: 'arn:aws:s3:::usgs-landsat/*'
         # - Effect: "Allow"
         #   Action: "lambda:InvokeFunction"
         #   Resource: "arn:aws:lambda:${aws:region}:${aws:accountId}:function:${self:service}-${self:provider.stage}-preHook"

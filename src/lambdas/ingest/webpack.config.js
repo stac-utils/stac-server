@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 const path = require('path')
 const ZipPlugin = require('zip-webpack-plugin')
 

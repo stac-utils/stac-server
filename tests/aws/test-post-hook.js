@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 const { default: test } = require('ava')
 const { handler } = require('../../src/lambdas/api')
 const { setupResources } = require('../helpers/system-tests')

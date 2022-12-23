@@ -19,6 +19,7 @@
     }
   },
   "rules": {
+    "@typescript-eslint/ban-ts-comment": "off",
     "dot-notation": "off",
     "implicit-arrow-linebreak": "off",
     "no-restricted-syntax": [

@@ -1,5 +1,3 @@
-// @ts-check
-
 const { z } = require('zod')
 
 const NumberOrUndefined = z.union([z.number(), z.undefined()])

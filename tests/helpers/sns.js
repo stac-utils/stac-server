@@ -1,5 +1,3 @@
-// @ts-check
-
 const awsClients = require('../../src/lib/aws-clients')
 const { randomId } = require('./utils')
 

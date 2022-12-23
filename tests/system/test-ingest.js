@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 const test = require('ava')
 const nock = require('nock')
 const { DateTime } = require('luxon')

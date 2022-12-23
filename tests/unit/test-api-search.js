@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 const test = require('ava')
 const sinon = require('sinon')
 const api = require('../../src/lib/api')

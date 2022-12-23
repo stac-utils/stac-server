@@ -1,5 +1,3 @@
-// @ts-check
-
 const awsClients = require('../../src/lib/aws-clients')
 const { handler } = require('../../src/lambdas/ingest')
 const { sqsTriggerLambda } = require('./sqs')

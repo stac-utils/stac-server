@@ -1,5 +1,3 @@
-// @ts-check
-
 const cors = require('cors')
 const createError = require('http-errors')
 const express = require('express')
@@ -353,7 +351,7 @@ app.use((_req, _res, next) => {
 
 // error handler
 app.use(
-  /** @type {ErrorRequestHandler} */ ((err, _req, res, _next) => {
+  /** @type {ErrorRequestHandler} */ ((err, _req, res /* _next */) => {
     res.status(err.status || 500)
 
     res.type('application/json')

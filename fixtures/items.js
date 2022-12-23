@@ -1,8 +1,8 @@
 const dynamicTemplates = require('./dynamicTemplates')
 
 const itemsIndexConfiguration = function () {
-  const numberOfShards = process.env.ITEMS_INDICIES_NUM_OF_SHARDS
-  const numberOfReplicas = process.env.ITEMS_INDICIES_NUM_OF_REPLICAS
+  const numberOfShards = process.env['ITEMS_INDICIES_NUM_OF_SHARDS']
+  const numberOfReplicas = process.env['ITEMS_INDICIES_NUM_OF_REPLICAS']
 
   const config = {}
 

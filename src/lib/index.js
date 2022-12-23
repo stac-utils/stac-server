@@ -1,3 +1,4 @@
+// @ts-nocheck
 /* eslint-disable global-require */
 
 module.exports = {

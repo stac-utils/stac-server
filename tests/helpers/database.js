@@ -1,5 +1,3 @@
-// @ts-check
-
 const { connect, createIndex } = require('../../src/lib/databaseClient')
 
 /**

@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 const { Readable } = require('readable-stream')
 const pump = require('pump')
 const logger = console //require('./logger')

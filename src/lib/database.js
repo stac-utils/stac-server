@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 const dbClient = require('./databaseClient')
 const logger = console //require('./logger')
 

@@ -1,5 +1,3 @@
-// @ts-check
-
 const nock = require('nock')
 const { promisify } = require('util')
 const fs = require('fs')

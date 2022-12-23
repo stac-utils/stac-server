@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 const { default: got } = require('got')
 const dbClient = require('../../lib/databaseClient.js')
 const stream = require('../../lib/databaseStream.js')

@@ -1,5 +1,3 @@
-// @ts-check
-
 const { default: got } = require('got')
 const { once } = require('events')
 const { app } = require('../../src/lambdas/api/app')

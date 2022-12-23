@@ -35,7 +35,13 @@
     ]
   },
   "ava": {
-    "verbose": true
+    "verbose": true,
+    "extensions": [
+      "js", "ts"
+    ],
+    "require": [
+      "ts-node/register"
+    ]
   },
   "publishConfig": {
     "access": "public"

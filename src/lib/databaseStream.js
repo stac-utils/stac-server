@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 const _stream = require('stream')
 const through2 = require('through2')
 const logger = console //require('./logger')

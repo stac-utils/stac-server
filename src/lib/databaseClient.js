@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 const opensearch = require('@opensearch-project/opensearch')
 const { createAWSConnection: createAWSConnectionOS,
   awsGetCredentials } = require('aws-os-connection')

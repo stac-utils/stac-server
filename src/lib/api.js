@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 const { pickBy, assign, get: getNested } = require('lodash')
 const extent = require('@mapbox/extent')
 const { DateTime } = require('luxon')

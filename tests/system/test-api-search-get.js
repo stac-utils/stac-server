@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 const test = require('ava')
 const { default: got } = require('got')
 const { deleteAllIndices, refreshIndices } = require('../helpers/database')

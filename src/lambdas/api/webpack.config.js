@@ -5,9 +5,9 @@ const CopyPlugin = require('copy-webpack-plugin')
 let mode = 'development'
 let devtool = 'inline-source-map'
 
-if (process.env.PRODUCTION) {
+if (process.env['PRODUCTION']) {
   mode = 'production'
-  devtool = false
+  devtool = 'false'
 }
 
 module.exports = {

@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 const test = require('ava')
 const db = require('../../src/lib/database')
 

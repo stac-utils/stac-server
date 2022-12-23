@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 const test = require('ava')
 const { ingestItem } = require('../helpers/ingest')
 const { randomId, loadFixture } = require('../helpers/utils')

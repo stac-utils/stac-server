@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 const test = require('ava')
 const { deleteAllIndices } = require('../helpers/database')
 const { randomId } = require('../helpers/utils')

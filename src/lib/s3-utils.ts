@@ -1,8 +1,8 @@
-import awsClients from './aws-clients'
+import { s3 } from './aws-clients'
 
 const getObjectBody = async (s3Location: {bucket: string, key: string}) => {
   try {
-    const result = await awsClients.s3().getObject({
+    const result = await s3().getObject({
       Bucket: s3Location.bucket,
       Key: s3Location.key
     }).promise()
@@ -23,5 +23,7 @@ const getObjectBody = async (s3Location: {bucket: string, key: string}) => {
 const getObjectText = (s3Location: {bucket: string, key: string}) =>
   getObjectBody(s3Location).then((b) => b.toString())
 
-export const getObjectJson = (s3Location: {bucket: string, key: string}) =>
+const getObjectJson = (s3Location: {bucket: string, key: string}) =>
   getObjectText(s3Location).then(JSON.parse)
+
+export default getObjectJson

@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 const { S3, SNS, SQS } = require('aws-sdk')
 
 const localStackEndpointEnvVar = 'LOCAL_STACK_ENDPOINT'

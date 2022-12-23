@@ -1,3 +1,7 @@
+// @ts-nocheck
+
+/* eslint @typescript-eslint/no-empty-function: 0 */
+
 const { promisify } = require('util')
 const cryptoRandomString = require('crypto-random-string')
 const fs = require('fs')

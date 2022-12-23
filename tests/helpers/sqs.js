@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 const { isUndefined } = require('lodash')
 const awsClients = require('../../src/lib/aws-clients')
 const { randomId } = require('./utils')

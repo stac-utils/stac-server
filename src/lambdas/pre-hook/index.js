@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 module.exports.handler = async function handler(event, context) {
   const { logger = console } = context
 

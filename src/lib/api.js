@@ -1,6 +1,7 @@
 const { pickBy, assign, get: getNested } = require('lodash')
 const extent = require('@mapbox/extent')
 const { DateTime } = require('luxon')
+const AWS = require('aws-sdk')
 const { isIndexNotFoundError } = require('./database')
 const logger = console
 
@@ -374,6 +375,10 @@ const addItemLinks = function (results, endpoint) {
       type: 'application/geo+json',
       href: `${endpoint}`
     })
+    links.push({
+      rel: 'thumbnail',
+      href: `${endpoint}/collections/${collection}/items/${id}/thumbnail`
+    })
     result.type = 'Feature'
     return result
   })
@@ -536,11 +541,31 @@ const searchItems = async function (collectionId, queryParameters, backend, endp
   }
 
   const { results: responseItems, context } = esResponse
-  const pageLinks = buildPaginationLinks(
+  const paginationLinks = buildPaginationLinks(
     limit, searchParams, bbox, intersects, newEndpoint, httpMethod, sortby, responseItems
   )
+
+  let links
+
+  if (collectionId) { // add these links for a features request
+    links = paginationLinks.concat([
+      {
+        rel: 'self',
+        type: 'application/json',
+        href: `${newEndpoint}`
+      },
+      {
+        rel: 'root',
+        type: 'application/geo+json',
+        href: `${endpoint}`
+      }
+    ])
+  } else {
+    links = paginationLinks
+  }
+
   const items = addItemLinks(responseItems, endpoint)
-  const response = wrapResponseInFeatureCollection(context, items, pageLinks)
+  const response = wrapResponseInFeatureCollection(context, items, links)
   return response
 }
 
@@ -660,7 +685,7 @@ const getConformance = async function (txnEnabled) {
     `${prefix}/item-search#fields`,
     `${prefix}/item-search#sort`,
     `${prefix}/item-search#query`,
-    `${prefix}/aggregation`,
+    'https://api.stacspec.org/v0.2.0/aggregation',
     'http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/core',
     'http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/oas30',
     'http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/geojson'
@@ -842,6 +867,51 @@ const deleteItem = async function (collectionId, itemId, backend) {
   return new Error(`Error deleting item ${collectionId}/${itemId}`)
 }
 
+const getItemThumbnail = async function (collectionId, itemId, backend) {
+  const itemQuery = { collections: [collectionId], id: itemId }
+  const { results } = await backend.search(itemQuery)
+  const [item] = results
+  if (!item) {
+    return new Error('Item not found')
+  }
+
+  const thumbnailAsset = Object.values(item.assets || []).find(
+    (x) => x.roles && x.roles.includes('thumbnail')
+  )
+
+  if (!thumbnailAsset) {
+    return new Error('Thumbnail not found')
+  }
+
+  let location
+  if (thumbnailAsset.href && thumbnailAsset.href.startsWith('http')) {
+    location = thumbnailAsset.href
+  } else if (thumbnailAsset.href && thumbnailAsset.href.startsWith('s3')) {
+    const withoutProtocol = thumbnailAsset.href.substring(5) // chop off s3://
+    const [bucket, ...keyArray] = withoutProtocol.split('/')
+    const key = keyArray.join('/')
+    location = new AWS.S3().getSignedUrl('getObject', {
+      Bucket: bucket,
+      Key: key,
+      Expires: 60 * 5, // expiry in seconds
+      RequestPayer: 'requester'
+    })
+  } else {
+    return new Error('Thumbnail not found')
+  }
+
+  return { location }
+}
+
+const healthCheck = async function (backend) {
+  const response = await backend.healthCheck()
+  logger.debug(`Health check: ${response}`)
+  if (response && response.statusCode === 200) {
+    return { status: 'ok' }
+  }
+  return new Error('Error with health check.')
+}
+
 module.exports = {
   getConformance,
   getCatalog,
@@ -861,4 +931,6 @@ module.exports = {
   extractLimit,
   extractDatetime,
   aggregate,
+  getItemThumbnail,
+  healthCheck,
 }

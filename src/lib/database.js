@@ -2,6 +2,10 @@ const dbClient = require('./databaseClient')
 const logger = console //require('./logger')
 
 const COLLECTIONS_INDEX = process.env.COLLECTIONS_INDEX || 'collections'
+const DEFAULT_INDICES = ['*', '-.*', '-collections']
+
+let collectionToIndexMapping = null
+let unrestrictedIndices = null
 
 const isIndexNotFoundError = (e) => (
   e instanceof Error
@@ -318,7 +322,7 @@ async function deleteItem(collectionId, itemId) {
   })
 }
 
-async function esQuery(parameters) {
+async function dbQuery(parameters) {
   logger.info(`Search database query: ${JSON.stringify(parameters)}`)
   const client = await dbClient.client()
   if (client === undefined) throw new Error('Client is undefined')
@@ -329,7 +333,7 @@ async function esQuery(parameters) {
 
 // get single collection
 async function getCollection(collectionId) {
-  const response = await esQuery({
+  const response = await dbQuery({
     index: COLLECTIONS_INDEX,
     body: buildIdQuery(collectionId)
   })
@@ -342,7 +346,7 @@ async function getCollection(collectionId) {
 // get all collections
 async function getCollections(page = 1, limit = 100) {
   try {
-    const response = await esQuery({
+    const response = await dbQuery({
       index: COLLECTIONS_INDEX,
       size: limit,
       from: (page - 1) * limit
@@ -352,6 +356,42 @@ async function getCollections(page = 1, limit = 100) {
     logger.error(`Failure getting collections, maybe none exist? ${e}`)
   }
   return []
+}
+
+async function populateCollectionToIndexMapping() {
+  if (process.env.COLLECTION_TO_INDEX_MAPPINGS) {
+    try {
+      collectionToIndexMapping = JSON.parse(process.env.COLLECTION_TO_INDEX_MAPPINGS)
+    } catch (e) {
+      logger.error('COLLECTION_TO_INDEX_MAPPINGS is not a valid JSON object.')
+      collectionToIndexMapping = {}
+    }
+  } else {
+    collectionToIndexMapping = {}
+  }
+}
+
+async function indexForCollection(collectionId) {
+  return collectionToIndexMapping[collectionId] || collectionId
+}
+
+async function populateUnrestrictedIndices() {
+  if (!unrestrictedIndices) {
+    if (process.env.COLLECTION_TO_INDEX_MAPPINGS) {
+      if (!collectionToIndexMapping) {
+        await populateCollectionToIndexMapping()
+      }
+      // When no collections are specified, the default index restriction
+      // is for all local indices (*, which excludes remote indices), excludes any
+      // system indices that start with a ".", the collections index, and then
+      // explicitly adds each of the remote indicies that have a mapping defined to them
+      unrestrictedIndices = DEFAULT_INDICES.concat(
+        Object.values(collectionToIndexMapping)
+      )
+    } else {
+      unrestrictedIndices = DEFAULT_INDICES
+    }
+  }
 }
 
 async function constructSearchParams(parameters, page, limit) {
@@ -366,8 +406,23 @@ async function constructSearchParams(parameters, page, limit) {
     body.search_after = buildSearchAfter(parameters)
   }
 
+  let indices
+  if (Array.isArray(collections) && collections.length) {
+    if (process.env.COLLECTION_TO_INDEX_MAPPINGS) {
+      if (!collectionToIndexMapping) await populateCollectionToIndexMapping()
+      indices = await Promise.all(collections.map(async (x) => await indexForCollection(x)))
+    } else {
+      indices = collections
+    }
+  } else {
+    if (!unrestrictedIndices) {
+      populateUnrestrictedIndices()
+    }
+    indices = unrestrictedIndices
+  }
+
   const searchParams = {
-    index: collections || '*,-.*,-collections',
+    index: indices,
     body,
     size: limit,
     track_total_hits: true
@@ -391,18 +446,18 @@ async function constructSearchParams(parameters, page, limit) {
 
 async function search(parameters, page, limit = 10) {
   const searchParams = await constructSearchParams(parameters, page, limit)
-  const esResponse = await esQuery({
+  const dbResponse = await dbQuery({
     ignore_unavailable: true,
     allow_no_indices: true,
     ...searchParams
   })
 
-  const results = esResponse.body.hits.hits.map((r) => (r._source))
+  const results = dbResponse.body.hits.hits.map((r) => (r._source))
   const response = {
     results,
     context: {
       limit: Number(limit),
-      matched: esResponse.body.hits.total.value,
+      matched: dbResponse.body.hits.total.value,
       returned: results.length
     }
   }
@@ -475,13 +530,13 @@ async function aggregate(parameters) {
     }
   }
 
-  const esResponse = await esQuery({
+  const dbResponse = await dbQuery({
     ignore_unavailable: true,
     allow_no_indices: true,
     ...searchParams
   })
 
-  return esResponse
+  return dbResponse
 }
 
 const getItem = async (collectionId, itemId) => {
@@ -530,6 +585,14 @@ async function updateItem(item) {
   return response
 }
 
+async function healthCheck() {
+  const client = await dbClient.client()
+  if (client === undefined) throw new Error('Client is undefined')
+  const health = await client.cat.health()
+  logger.debug(`Health: ${JSON.stringify(health)}`)
+  return health
+}
+
 module.exports = {
   getCollections,
   getCollection,
@@ -544,5 +607,6 @@ module.exports = {
   search,
   aggregate,
   constructSearchParams,
-  buildDatetimeQuery
+  buildDatetimeQuery,
+  healthCheck
 }

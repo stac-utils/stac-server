@@ -1,6 +1,6 @@
 # stac-server
 
-![](https://github.com/stac-utils/stac-server/workflows/Push%20Event/badge.svg)
+![push event badge](https://github.com/stac-utils/stac-server/workflows/Push%20Event/badge.svg)
 
 - [stac-server](#stac-server)
   - [Overview](#overview)
@@ -9,6 +9,7 @@
     - [0.4.x -\> 0.5.x](#04x---05x)
       - [Elasticsearch to OpenSearch Migration](#elasticsearch-to-opensearch-migration)
       - [Preferred Elasticsearch to OpenSearch Migration Process](#preferred-elasticsearch-to-opensearch-migration-process)
+      - [Granting Access for Thumbnails](#granting-access-for-thumbnails)
     - [0.3.x -\> 0.4.x](#03x---04x)
       - [Elasticsearch upgrade from 7.9 to 7.10](#elasticsearch-upgrade-from-79-to-710)
       - [Disable automatic index creation](#disable-automatic-index-creation)
@@ -20,10 +21,9 @@
       - [Create collection index](#create-collection-index)
       - [Enable OpenSearch fine-grained access control](#enable-opensearch-fine-grained-access-control)
         - [Configure OpenSearch for fine-grained access control](#configure-opensearch-for-fine-grained-access-control)
-        - [Option 1 - API method:](#option-1---api-method)
-        - [Option 2 - Dashboard method:](#option-2---dashboard-method)
+        - [Option 1 - API method](#option-1---api-method)
+        - [Option 2 - Dashboard method](#option-2---dashboard-method)
         - [Populating and accessing credentials](#populating-and-accessing-credentials)
-      - [Supporting cross-cluster replication](#supporting-cross-cluster-replication)
     - [Proxying Stac-server through CloudFront](#proxying-stac-server-through-cloudfront)
     - [Locking down transaction endpoints](#locking-down-transaction-endpoints)
     - [AWS WAF Rule Conflicts](#aws-waf-rule-conflicts)
@@ -31,6 +31,9 @@
     - [Ingesting large items](#ingesting-large-items)
     - [Subscribing to SNS Topics](#subscribing-to-sns-topics)
     - [Ingest Errors](#ingest-errors)
+  - [Supporting Cross-cluster Search and Replication](#supporting-cross-cluster-search-and-replication)
+    - [Cross-cluster Search](#cross-cluster-search)
+    - [Cross-cluster Replication](#cross-cluster-replication)
   - [Pre- and Post-Hooks](#pre--and-post-hooks)
     - [Pre-Hook](#pre-hook)
     - [Post-Hook](#post-hook)
@@ -241,6 +244,19 @@ Switch the DNS entry for the domain name to the API Gateway endpoint for the new
 
 Double-check that the `DeletionPolicy: Retain` is set on the old Stack for the Elasticsearch/OpenSearch resource, and then delete the old Stack.
 
+#### Granting Access for Thumbnails
+
+The new experimental endpoint `/collections/{c_id}/items/{item_id}/thumbnail` will
+redirect to a URL providing a thumbnail as determined by the assets in an item. If the
+href for this is an AWS S3 ARN, IAM permissions must be granted for the API Lambda to
+generate a pre-signed HTTP URL instead. For example:
+
+```yaml
+- Effect: Allow
+  Action: s3:GetObject
+  Resource: 'arn:aws:s3:::usgs-landsat/*'
+```
+
 ### 0.3.x -> 0.4.x
 
 Create a new deployment, copy the elasticsearch database, and rename indexes.
@@ -397,7 +413,7 @@ There are some settings that should be reviewed and updated as needeed in the se
 | OPENSEARCH_USERNAME              | The username to authenticate to OpenSearch with if fine-grained access control is enabled.                                                                                                       |                                                                                      |
 | OPENSEARCH_PASSWORD              | The password to authenticate to OpenSearch with if fine-grained access control is enabled.                                                                                                       |                                                                                      |
 | OPENSEARCH_CREDENTIALS_SECRET_ID | The AWS Secrets Manager secret to retrieve the username and password from, to authenticate to OpenSearch with if fine-grained access control is enabled.                                         |                                                                                      |
-
+| COLLECTION_TO_INDEX_MAPPINGS | A JSON object representing collection id to index name mappings if they do not have the same names.                                         |                                                                                      |
 
 | ITEMS_INDICIES_NUM_OF_SHARDS                | Configure the number of shards for the indices that contain Items.                                                                                                                                  | none                                                                                |
 | ITEMS_INDICIES_NUM_OF_REPLICAS                | Configure the number of replicas for the indices that contain Items.                                                                                                                                                                              | none                                                                                |
@@ -481,7 +497,7 @@ Invoke the `stac-server-<stage>-ingest` Lambda function with a payload of:
 }
 ```
 
-This can be done with the [AWS CLI Version 2](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html). (The final `-` parameter pipes the output to stdout).
+This can be done with the [AWS CLI Version 2](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html).
 
 ```shell
 aws lambda invoke \
@@ -550,7 +566,7 @@ Redeploy the stack, and this will be updated without re-creating the cluster.
 The next step is to create the OpenSearch user and role to use for stac-server. This can
 either be done through the OpenSearch API or Dashboard.
 
-##### Option 1 - API method:
+##### Option 1 - API method
 
 This assumes the master username is `admin` and creats a user with the name `stac_server`.
 
@@ -614,7 +630,7 @@ curl -X "PUT" "${HOST}/_plugins/_security/api/rolesmapping/stac_server_role" \
 }'
 ```
 
-##### Option 2 - Dashboard method:
+##### Option 2 - Dashboard method
 
 Login to the OpenSearch Dashboard with the master username (e.g. `admin`) and password.
 From the left sidebar menu, select "Security". Select "Internal users", and then "Create
@@ -683,25 +699,6 @@ OPENSEARCH_PASSWORD: xxxxxxxxxxx
 Setting these as environment variables can also be useful when running stac-server
 locally.
 
-#### Supporting cross-cluster replication
-
-Follow steps for [Enable fine-grained access control](#enable-fine-grained-access-control)
-
-Add this as an additional statement to the `AWS::OpenSearchService::Domain` resource's
-AccessPolicies Statement:
-
-```
-AccessPolicies:
-...
-  Statement:
-    ...
-    - Effect:    "Allow"
-    - Principal: { "AWS": "*" }
-    - Action:    "es:ESCrossClusterGet"
-    - Resource:  "arn:aws:es:arn:aws:es:${aws:region}:${aws:accountId}:domain/another-opensearch-domain"
-```
-
-
 ### Proxying Stac-server through CloudFront
 
 The API Gateway URL associated with the deployed stac-server instance may not be the URL that you ultimately wish to expose to your API users. AWS CloudFront can be used to proxy to a more human readable URL. In order to accomplish this:
@@ -742,7 +739,8 @@ def lambda_handler(event, context):
 
 ### Locking down transaction endpoints
 
-If you wanted to deploy STAC Server in a way which ensures certain endpoints have restricted access but others don't, you can deploy it into a VPC and add conditions that allow only certain IP addresses to access certain endpoints. Once you deploy STAC Server into a VPC, you can modify the Resource Policy of the API Gateway endpoint that gets deployed to restrict access to certain endpoints. Here is a hypothetical example. Assume that the account into which STAC Server is deployed is numbered 1234-5678-9123, the API ID is ab1c23def, and the region in which it is deployed is us-west-2. You might want to give the general public access to use any GET or POST endpoints with the API such as the "/search" endpoint, but lock down access to the transaction endpoints (see https://github.com/radiantearth/stac-api-spec/tree/master/ogcapi-features/extensions/transaction) to only allow certain IP addresses to access them. These IP addresses can be, for example: 94.61.192.106, 204.176.50.129, and 11.27.65.78. In order to do this, you can impose a condition on the API Gateway that only allows API transactions such as adding, updating, and deleting STAC items from the whitelisted endpoints. For example, here is a Resource Policy containing two statements that allow this to happen:
+If you wanted to deploy STAC Server in a way which ensures certain endpoints have restricted access but others don't, you can deploy it into a VPC and add conditions that allow only certain IP addresses to access certain endpoints. Once you deploy STAC Server into a VPC, you can modify the Resource Policy of the API Gateway endpoint that gets deployed to restrict access to certain endpoints. Here is a hypothetical example. Assume that the account into which STAC Server is deployed is numbered 1234-5678-9123, the API ID is ab1c23def, and the region in which it is deployed is us-west-2. You might want to give the general public access to use any GET or POST endpoints with the API such as the "/search" endpoint, but lock down access to the transaction endpoints (see <https://github.com/radiantearth/stac-api-spec/tree/master/ogcapi-features/extensions/transaction>) to only allow certain IP addresses to access them. These IP addresses can be, for example: 94.61.192.106, 204.176.50.129, and 11.27.65.78. In order to do this, you can impose a condition on the API Gateway that only allows API transactions such as adding, updating, and deleting STAC items from the whitelisted endpoints. For example, here is a Resource Policy containing two statements that allow this to happen:
+
 ```
 {
     "Version": "2012-10-17",
@@ -852,6 +850,39 @@ Stac-server can also be subscribed to SNS Topics that publish complete STAC Item
 ### Ingest Errors
 
 Errors that occur during ingest will end up in the dead letter processing queue, where they are processed by the `stac-server-<stage>-failed-ingest` Lambda function. Currently all the failed-ingest Lambda does is log the error, see the CloudWatch log `/aws/lambda/stac-server-<stage>-failed-ingest` for errors.
+
+## Supporting Cross-cluster Search and Replication
+
+OpenSearch support cross-cluster connections that can be configured to either allow search
+across the clusters, treating a remote cluster as if it were another group of nodes in the
+cluster, or configure indicies to be replicated (continuously copied) from from one
+cluster to another.
+
+Configuring either cross-cluster behavior requires [enabling fine-grained access control](#enable-fine-grained-access-control).
+
+### Cross-cluster Search
+
+The AWS documentation for cross-cluster search can be found
+[here](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/cross-cluster-search.html).
+
+1. [Enable fine-grained access control](#enable-fine-grained-access-control)
+3. Create a connection between the source and destination OpenSearch domains.
+3. Ensure there is a `es:ESCrossClusterGet` action in the destination's access policy.
+4. In the source stac-server, create a Collection for each collection to be mapped. This
+   must have the same id as the destination collection.
+5. For the source stac-server, configure a `COLLECTION_TO_INDEX_MAPPINGS`
+   environment variable with a stringified JSON object mapping the collection name to the
+   name of the index. For example, `{"collection1": "cluster2:collection1", "collection2": "cluster2:collection2"}` is a value mapping two collections through a
+   connection named `cluster2`. Deploy this change.
+
+### Cross-cluster Replication
+
+The AWS documentation for cross-cluster replication can be found
+[here](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/replication.html).
+
+1. [Enable fine-grained access control](#enable-fine-grained-access-control)
+1. Create the replication connection in the source to the destination
+2. Create the collection in the source's stac-server instance
 
 ## Pre- and Post-Hooks
 

@@ -64,9 +64,6 @@ async function connect() {
     }
   }
 
-  const health = await client.cat.health()
-  logger.debug(`Health: ${JSON.stringify(health)}`)
-
   return client
 }
 

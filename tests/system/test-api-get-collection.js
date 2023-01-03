@@ -1,12 +1,12 @@
-const test = require('ava')
-const { deleteAllIndices } = require('../helpers/database')
-const { ingestItem } = require('../helpers/ingest')
-const { randomId, loadFixture } = require('../helpers/utils')
-const systemTests = require('../helpers/system-tests')
+import test, { before, after } from 'ava'
+import { deleteAllIndices } from '../helpers/database'
+import { ingestItem } from '../helpers/ingest'
+import { randomId, loadFixture } from '../helpers/utils'
+import { setup } from '../helpers/system-tests'
 
-test.before(async (t) => {
+before(async (t) => {
   await deleteAllIndices()
-  const standUpResult = await systemTests.setup()
+  const standUpResult = await setup()
 
   t.context = standUpResult
 
@@ -24,7 +24,7 @@ test.before(async (t) => {
   })
 })
 
-test.after.always(async (t) => {
+after.always(async (t) => {
   if (t.context.api) await t.context.api.close()
 })
 

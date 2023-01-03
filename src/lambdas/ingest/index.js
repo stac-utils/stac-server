@@ -1,8 +1,8 @@
-const { default: got } = require('got')
-const dbClient = require('../../lib/databaseClient.js')
-const stream = require('../../lib/databaseStream.js')
-const ingest = require('../../lib/ingest.js')
-const s3Utils = require('../../lib/s3-utils')
+import got from 'got'
+import { createIndex } from '../../lib/databaseClient.js'
+import stream from '../../lib/databaseStream.js'
+import { ingestItems } from '../../lib/ingest.js'
+import { getObjectJson } from '../../lib/s3-utils'
 
 const isSqsEvent = (event) => 'Records' in event
 
@@ -13,7 +13,7 @@ const stacItemFromSnsMessage = async (message) => {
     const { protocol, hostname, pathname } = new URL(message.href)
 
     if (protocol === 's3:') {
-      return await s3Utils.getObjectJson({
+      return await getObjectJson({
         bucket: hostname,
         key: pathname.replace(/^\//, '')
       })
@@ -47,13 +47,13 @@ const stacItemsFromSqsEvent = async (event) => {
   )
 }
 
-module.exports.handler = async function handler(event, context) {
+export default async function handler(event, context) {
   const { logger = console } = context
 
   logger.debug(`Event: ${JSON.stringify(event, undefined, 2)}`)
 
   if (event.create_indices) {
-    await dbClient.createIndex('collections')
+    await createIndex('collections')
   }
 
   const stacItems = isSqsEvent(event)
@@ -61,7 +61,7 @@ module.exports.handler = async function handler(event, context) {
     : [event]
 
   try {
-    await ingest.ingestItems(stacItems, stream)
+    await ingestItems(stacItems, stream)
     logger.info(`Ingested ${stacItems.length} Items: ${JSON.stringify(stacItems)}`)
   } catch (error) {
     console.log(error)

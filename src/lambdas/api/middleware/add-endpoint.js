@@ -33,11 +33,7 @@ const determineEndpoint = (req) => {
  * @param {NextFunction} next
  * @returns {void}
  */
-const addEndpoint = (req, _res, next) => {
+export default (req, _res, next) => {
   req.endpoint = determineEndpoint(req)
   next()
-}
-
-module.exports = {
-  addEndpoint
 }

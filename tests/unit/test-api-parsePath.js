@@ -1,5 +1,5 @@
-const test = require('ava')
-const api = require('../../src/lib/api')
+import test from 'ava'
+import { parsePath } from '../../src/lib/api.js'
 
 test('parsePath', (t) => {
   let expected = {
@@ -13,7 +13,7 @@ test('parsePath', (t) => {
     itemId: false,
     edit: false
   }
-  let actual = api.parsePath('/')
+  let actual = parsePath('/')
   t.deepEqual(actual, expected)
 
   expected = {
@@ -27,7 +27,7 @@ test('parsePath', (t) => {
     itemId: false,
     edit: false
   }
-  actual = api.parsePath('/api')
+  actual = parsePath('/api')
   t.deepEqual(actual, expected)
 
   expected = {
@@ -41,7 +41,7 @@ test('parsePath', (t) => {
     itemId: false,
     edit: false
   }
-  actual = api.parsePath('/conformance')
+  actual = parsePath('/conformance')
   t.deepEqual(actual, expected)
 
   expected = {
@@ -55,7 +55,7 @@ test('parsePath', (t) => {
     itemId: false,
     edit: false
   }
-  actual = api.parsePath('/search')
+  actual = parsePath('/search')
   t.deepEqual(actual, expected)
 
   expected = {
@@ -69,7 +69,7 @@ test('parsePath', (t) => {
     itemId: false,
     edit: false
   }
-  actual = api.parsePath('/collections')
+  actual = parsePath('/collections')
   t.deepEqual(actual, expected)
 
   expected = {
@@ -83,7 +83,7 @@ test('parsePath', (t) => {
     itemId: false,
     edit: false
   }
-  actual = api.parsePath('/collections/id')
+  actual = parsePath('/collections/id')
   t.deepEqual(actual, expected)
 
   expected = {
@@ -97,7 +97,7 @@ test('parsePath', (t) => {
     itemId: false,
     edit: false
   }
-  actual = api.parsePath('/collections/id/items')
+  actual = parsePath('/collections/id/items')
   t.deepEqual(actual, expected)
 
   expected = {
@@ -111,6 +111,6 @@ test('parsePath', (t) => {
     itemId: 'id',
     edit: false
   }
-  actual = api.parsePath('/collections/id/items/id')
+  actual = parsePath('/collections/id/items/id')
   t.deepEqual(actual, expected)
 })

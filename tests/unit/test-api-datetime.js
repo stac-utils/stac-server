@@ -1,5 +1,5 @@
-const test = require('ava')
-const api = require('../../src/lib/api')
+import test from 'ava'
+import { extractDatetime, ValidationError } from '../../src/lib/api.js'
 
 const validDatetimes = [
   '1985-04-12T23:20:50.52Z',
@@ -60,20 +60,20 @@ const invalidDatetimes = [
 ]
 
 test('extractBboxNull', (t) => {
-  t.falsy(api.extractDatetime({}),
+  t.falsy(extractDatetime({}),
     'Returns undefined when no datetime parameter')
 })
 
 test('extractDatetime valid datetime values', (t) => {
   for (const datetime of validDatetimes) {
-    t.is(api.extractDatetime({ datetime }), datetime.toUpperCase())
+    t.is(extractDatetime({ datetime }), datetime.toUpperCase())
   }
 })
 
 test('extractDatetime invalid datetime values', (t) => {
   for (const datetime of invalidDatetimes) {
     t.throws(() => {
-      api.extractDatetime({ datetime })
-    }, { instanceOf: api.ValidationError })
+      extractDatetime({ datetime })
+    }, { instanceOf: ValidationError })
   }
 })

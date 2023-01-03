@@ -1,8 +1,10 @@
-const _stream = require('stream')
-const through2 = require('through2')
+import _stream from 'stream'
+import through2 from 'through2'
+import { dbClient } from './databaseClient.js'
+
+import { getItemCreated } from './database.js'
+
 const logger = console //require('./logger')
-const dbClient = require('./databaseClient')
-const { getItemCreated } = require('./database')
 
 const COLLECTIONS_INDEX = process.env.COLLECTIONS_INDEX || 'collections'
 
@@ -97,7 +99,7 @@ class SearchDatabaseWritableStream extends _stream.Writable {
 }
 
 // Given an input stream and a transform, write records to a search database instance
-async function stream() {
+export default async function stream() {
   let dbStreams
   try {
     const client = await dbClient.client()
@@ -150,5 +152,3 @@ async function stream() {
   }
   return dbStreams
 }
-
-module.exports = stream

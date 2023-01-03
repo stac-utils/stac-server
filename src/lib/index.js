@@ -1,6 +1,6 @@
 /* eslint-disable global-require */
 
-module.exports = {
+export default {
   api: require('./api'),
   es: require('./es'),
   dbStream: require('./databaseStream'),

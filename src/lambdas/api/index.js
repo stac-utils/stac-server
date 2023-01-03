@@ -9,14 +9,14 @@
 const { z } = require('zod')
 const serverless = require('serverless-http')
 const { Lambda } = require('aws-sdk')
-const { app } = require('./app')
+const { app } = require('./app').default
 const {
   APIGatewayProxyResultSchema,
   PreHookResultSchema,
   PostHookResultSchema,
   LambdaErrorSchema, // eslint-disable-line no-unused-vars
   APIGatewayProxyEventSchema
-} = require('./types')
+} = require('./types').default
 
 /**
  * @typedef {import('aws-lambda').APIGatewayProxyEvent} APIGatewayProxyEvent

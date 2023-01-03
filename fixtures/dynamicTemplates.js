@@ -65,6 +65,6 @@ const templates = [
   }
 ]
 
-module.exports = {
+export default {
   templates
 }

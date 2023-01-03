@@ -1,6 +1,6 @@
 // @ts-check
 
-const { z } = require('zod')
+import { z } from 'zod'
 
 const NumberOrUndefined = z.union([z.number(), z.undefined()])
 const StringArrayOrUndefined = z.union([z.array(z.string()), z.undefined()])
@@ -109,7 +109,7 @@ const PostHookResultSchema = z.union([
   LambdaErrorSchema
 ])
 
-module.exports = {
+export default {
   APIGatewayProxyEventSchema,
   APIGatewayProxyResultSchema,
   LambdaErrorSchema,

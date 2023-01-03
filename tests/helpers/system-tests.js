@@ -1,15 +1,15 @@
 // @ts-check
 
-const nock = require('nock')
-const { promisify } = require('util')
-const fs = require('fs')
-const path = require('path')
-const { startApi } = require('./api')
-const { createCollectionsIndex, refreshIndices } = require('./database')
-const { createTopic, addSnsToSqsSubscription } = require('./sns')
-const { createQueue, getQueueArn } = require('./sqs')
+import nock from 'nock'
+import { promisify } from 'util'
+import { readFile as _readFile } from 'fs'
+import { join } from 'path'
+import { startApi } from './api.js'
+import { createCollectionsIndex, refreshIndices } from './database.js'
+import { createTopic, addSnsToSqsSubscription } from './sns.js'
+import { createQueue, getQueueArn } from './sqs.js'
 
-const setupResources = async () => {
+export const setupResources = async () => {
   // Create Ingest SNS topic
   const ingestTopicArn = await createTopic()
 
@@ -48,7 +48,7 @@ const setupResources = async () => {
 /**
  * @returns {Promise<StandUpResult>}
  */
-const setup = async () => {
+export const setup = async () => {
   nock.disableNetConnect()
   nock.enableNetConnect(/127\.0\.0\.1|localhost/)
 
@@ -63,21 +63,15 @@ const setup = async () => {
   }
 }
 
-const readFile = promisify(fs.readFile)
+const readFile = promisify(_readFile)
 
 /**
  * @param {string} filename
  * @returns {Promise<unknown>}
  */
-const loadJson = async (filename) => {
-  const filePath = path.join(__dirname, '..', 'fixtures', 'stac', filename)
+export const loadJson = async (filename) => {
+  const filePath = join(__dirname, '..', 'fixtures', 'stac', filename)
 
   const data = await readFile(filePath, 'utf8')
   return JSON.parse(data)
-}
-
-module.exports = {
-  setup,
-  loadJson,
-  setupResources
 }

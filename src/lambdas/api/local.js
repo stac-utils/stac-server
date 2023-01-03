@@ -1,6 +1,6 @@
 // @ts-check
 
-const { app } = require('./app')
+import { app } from './app.js'
 
 const port = 3000
 

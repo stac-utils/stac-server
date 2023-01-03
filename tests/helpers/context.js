@@ -1,9 +1,5 @@
 // @ts-check
 
-const { nullLogger } = require('./utils')
+const { nullLogger } = require('./utils').default
 
-const nullLoggerContext = { logger: nullLogger }
-
-module.exports = {
-  nullLoggerContext
-}
+export default const nullLoggerContext = { logger: nullLogger }

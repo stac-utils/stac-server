@@ -1,28 +1,27 @@
-const opensearch = require('@opensearch-project/opensearch')
-const { createAWSConnection: createAWSConnectionOS,
-  awsGetCredentials } = require('aws-os-connection')
+import { Client } from '@opensearch-project/opensearch'
+import { createAWSConnection as createAWSConnectionOS, awsGetCredentials } from 'aws-os-connection'
 
-const AWS = require('aws-sdk')
-const elasticsearch = require('@elastic/elasticsearch')
-const { createAWSConnection: createAWSConnectionES,
-  awsCredsifyAll } = require('@acuris/aws-es-connection')
+import AWS from 'aws-sdk'
+import { Client as _Client } from '@elastic/elasticsearch'
+import { createAWSConnection as createAWSConnectionES, awsCredsifyAll
+} from '@acuris/aws-es-connection'
 
-const logger = console //require('./logger')
+import collectionsIndexConfiguration from '../../fixtures/collections.js'
+import itemsIndexConfiguration from '../../fixtures/items.js'
 
-const { collectionsIndexConfiguration } = require('../../fixtures/collections')
-const { itemsIndexConfiguration } = require('../../fixtures/items')
+const logger = console
 
 let _dbClient
 
 function createClientWithUsernameAndPassword(host, username, password) {
   const protocolAndHost = host.split('://')
-  return new opensearch.Client({
+  return new Client({
     node: `${protocolAndHost[0]}://${username}:${password}@${protocolAndHost[1]}`
   })
 }
 
 // Connect to a search database instance
-async function connect() {
+export async function connect() {
   let client
   const hostConfig = process.env.OPENSEARCH_HOST || process.env.ES_HOST
   const envUsername = process.env.OPENSEARCH_USERNAME
@@ -35,16 +34,16 @@ async function connect() {
       node: 'http://localhost:9200'
     }
     if (process.env.ES_COMPAT_MODE === 'true') {
-      client = new elasticsearch.Client(config)
+      client = new _Client(config)
     } else {
-      client = new opensearch.Client(config)
+      client = new Client(config)
     }
   } else {
     const host = hostConfig.startsWith('http') ? hostConfig : `https://${hostConfig}`
 
     if (process.env.ES_COMPAT_MODE === 'true') {
       client = awsCredsifyAll(
-        new elasticsearch.Client({
+        new _Client({
           node: host,
           Connection: createAWSConnectionES(AWS.config.credentials)
         })
@@ -57,7 +56,7 @@ async function connect() {
     } else if (envUsername && envPassword) { // fine-grained perms enabled
       client = createClientWithUsernameAndPassword(host, envUsername, envPassword)
     } else { // authenticate with IAM, fine-grained perms not enabled
-      client = new opensearch.Client({
+      client = new Client({
         ...createAWSConnectionOS(await awsGetCredentials()),
         node: host
       })
@@ -68,7 +67,7 @@ async function connect() {
 }
 
 // get existing search database client or create a new one
-async function dbClient() {
+export async function dbClient() {
   if (_dbClient) {
     logger.debug('Using existing search database connection')
   } else {
@@ -79,7 +78,7 @@ async function dbClient() {
   return _dbClient
 }
 
-async function createIndex(index) {
+export async function createIndex(index) {
   const client = await dbClient()
   const exists = await client.indices.exists({ index })
   const indexConfiguration = index === 'collections'
@@ -95,10 +94,4 @@ async function createIndex(index) {
       logger.debug(debugMessage)
     }
   }
-}
-
-module.exports = {
-  client: dbClient,
-  createIndex,
-  connect
 }

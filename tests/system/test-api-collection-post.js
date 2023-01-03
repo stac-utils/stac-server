@@ -1,15 +1,15 @@
-const test = require('ava')
-const { deleteAllIndices } = require('../helpers/database')
-const { randomId } = require('../helpers/utils')
-const systemTests = require('../helpers/system-tests')
+import test, { before, after } from 'ava'
+import { deleteAllIndices } from '../helpers/database'
+import { randomId } from '../helpers/utils'
+import { setup } from '../helpers/system-tests'
 
-test.before(async (t) => {
+before(async (t) => {
   await deleteAllIndices()
 
-  t.context = await systemTests.setup()
+  t.context = await setup()
 })
 
-test.after.always(async (t) => {
+after.always(async (t) => {
   if (t.context.api) await t.context.api.close()
 })
 

@@ -1,4 +1,5 @@
-const dbClient = require('./databaseClient')
+import { dbClient as _client, createIndex } from './databaseClient.js'
+
 const logger = console //require('./logger')
 
 const COLLECTIONS_INDEX = process.env.COLLECTIONS_INDEX || 'collections'
@@ -7,7 +8,7 @@ const DEFAULT_INDICES = ['*', '-.*', '-collections']
 let collectionToIndexMapping = null
 let unrestrictedIndices = null
 
-const isIndexNotFoundError = (e) => (
+export const isIndexNotFoundError = (e) => (
   e instanceof Error
     && e.name === 'ResponseError'
     && e.message.includes('index_not_found_exception'))
@@ -47,7 +48,7 @@ function buildRangeQuery(property, operators, operatorsObject) {
 
 // assumes a valid RFC3339 datetime or interval
 // validation was previously done by api.extractDatetime
-function buildDatetimeQuery(parameters) {
+export function buildDatetimeQuery(parameters) {
   let dateQuery
   const { datetime } = parameters
   if (datetime) {
@@ -232,11 +233,11 @@ function buildFieldsFilter(parameters) {
  *
  */
 async function indexCollection(collection) {
-  const client = await dbClient.client()
+  const client = await _client()
 
   const exists = await client.indices.exists({ index: COLLECTIONS_INDEX })
   if (!exists.body) {
-    await dbClient.createIndex(COLLECTIONS_INDEX)
+    await createIndex(COLLECTIONS_INDEX)
   }
 
   const collectionDocResponse = await client.index({
@@ -246,7 +247,7 @@ async function indexCollection(collection) {
     opType: 'create'
   })
 
-  const indexCreateResponse = await dbClient.createIndex(collection.id)
+  const indexCreateResponse = await createIndex(collection.id)
 
   return [collectionDocResponse, indexCreateResponse]
 }
@@ -256,7 +257,7 @@ async function indexCollection(collection) {
  *
  */
 async function indexItem(item) {
-  const client = await dbClient.client()
+  const client = await _client()
 
   const exists = await client.indices.exists({ index: item.collection })
   if (!exists.body) {
@@ -286,7 +287,7 @@ async function indexItem(item) {
  *
  */
 async function partialUpdateItem(collectionId, itemId, updateFields) {
-  const client = await dbClient.client()
+  const client = await _client()
 
   // Handle inserting required default properties to `updateFields`
   const requiredProperties = {
@@ -313,7 +314,7 @@ async function partialUpdateItem(collectionId, itemId, updateFields) {
 }
 
 async function deleteItem(collectionId, itemId) {
-  const client = await dbClient.client()
+  const client = await _client()
   if (client === undefined) throw new Error('Client is undefined')
   return await client.delete_by_query({
     index: collectionId,
@@ -324,7 +325,7 @@ async function deleteItem(collectionId, itemId) {
 
 async function dbQuery(parameters) {
   logger.info(`Search database query: ${JSON.stringify(parameters)}`)
-  const client = await dbClient.client()
+  const client = await _client()
   if (client === undefined) throw new Error('Client is undefined')
   const response = await client.search(parameters)
   logger.info(`Response: ${JSON.stringify(response)}`)
@@ -394,7 +395,7 @@ async function populateUnrestrictedIndices() {
   }
 }
 
-async function constructSearchParams(parameters, page, limit) {
+export async function constructSearchParams(parameters, page, limit) {
   const { id, collections } = parameters
 
   let body
@@ -548,7 +549,7 @@ const getItem = async (collectionId, itemId) => {
   return searchResponse.results[0]
 }
 
-const getItemCreated = async (collectionId, itemId) => {
+export const getItemCreated = async (collectionId, itemId) => {
   const item = await getItem(collectionId, itemId)
   if (!item) return undefined
   if (!item.properties) return undefined
@@ -560,7 +561,7 @@ const getItemCreated = async (collectionId, itemId) => {
  *
  */
 async function updateItem(item) {
-  const client = await dbClient.client()
+  const client = await _client()
 
   const exists = await client.indices.exists({ index: item.collection })
   if (!exists.body) {
@@ -586,14 +587,14 @@ async function updateItem(item) {
 }
 
 async function healthCheck() {
-  const client = await dbClient.client()
+  const client = await _client.client()
   if (client === undefined) throw new Error('Client is undefined')
   const health = await client.cat.health()
   logger.debug(`Health: ${JSON.stringify(health)}`)
   return health
 }
 
-module.exports = {
+export default {
   getCollections,
   getCollection,
   indexCollection,

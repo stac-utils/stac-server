@@ -1,6 +1,6 @@
-const { isUndefined } = require('lodash')
-const awsClients = require('../../src/lib/aws-clients')
-const { randomId } = require('./utils')
+import { isUndefined } from 'lodash-es'
+import { sqs as _sqs } from '../../src/lib/aws-clients.js'
+import { randomId } from './utils.js'
 
 const sqsMessageToRecord = (message) => ({
   messageId: message.MessageId,
@@ -15,7 +15,7 @@ const sqsMessageToRecord = (message) => ({
 })
 
 const eventFromQueue = async (ingestQueueUrl) => {
-  const { Messages } = await awsClients.sqs().receiveMessage({
+  const { Messages } = await _sqs().receiveMessage({
     QueueUrl: ingestQueueUrl,
     WaitTimeSeconds: 1
   }).promise()
@@ -25,7 +25,7 @@ const eventFromQueue = async (ingestQueueUrl) => {
   }
 }
 
-const sqsTriggerLambda = async (sqsUrl, handler, context = {}) => {
+export const sqsTriggerLambda = async (sqsUrl, handler, context = {}) => {
   const event = await eventFromQueue(sqsUrl)
   return handler(event, context)
 }
@@ -34,15 +34,15 @@ const sqsTriggerLambda = async (sqsUrl, handler, context = {}) => {
  * @param {string} url
  * @returns {Promise<void>}
  */
-const purgeQueue = async (url) => {
-  await awsClients.sqs().purgeQueue({ QueueUrl: url }).promise()
+export const purgeQueue = async (url) => {
+  await _sqs().purgeQueue({ QueueUrl: url }).promise()
 }
 
 /**
  * @returns {Promise<string>} the queue URL
  */
-const createQueue = async () => {
-  const sqs = awsClients.sqs()
+export const createQueue = async () => {
+  const sqs = _sqs()
 
   const { QueueUrl } = await sqs.createQueue({
     QueueName: randomId('queue')
@@ -57,8 +57,8 @@ const createQueue = async () => {
  * @param {string} queueUrl
  * @returns {Promise<string>} queueArn
  */
-const getQueueArn = async (queueUrl) => {
-  const sqs = awsClients.sqs()
+export const getQueueArn = async (queueUrl) => {
+  const sqs = _sqs()
 
   const getQueueAttributesResult = await sqs.getQueueAttributes({
     QueueUrl: queueUrl,
@@ -71,11 +71,4 @@ const getQueueArn = async (queueUrl) => {
   ) throw new Error('Unable to get Queue ARN')
 
   return getQueueAttributesResult.Attributes['QueueArn']
-}
-
-module.exports = {
-  createQueue,
-  getQueueArn,
-  purgeQueue,
-  sqsTriggerLambda
 }

@@ -1,4 +1,4 @@
-module.exports.handler = async function handler(event, context) {
+export default async function handler(event, context) {
   const { logger = console } = context
 
   logger.debug(`Event: ${JSON.stringify(event, undefined, 2)}`)

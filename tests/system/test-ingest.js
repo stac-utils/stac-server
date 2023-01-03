@@ -1,33 +1,33 @@
-const test = require('ava')
-const nock = require('nock')
-const { DateTime } = require('luxon')
-const { getCollectionIds, getItem } = require('../helpers/api')
-const { handler } = require('../../src/lambdas/ingest')
-const { loadFixture, randomId } = require('../helpers/utils')
-const { nullLoggerContext } = require('../helpers/context')
-const { refreshIndices, deleteAllIndices } = require('../helpers/database')
-const { sqsTriggerLambda, purgeQueue } = require('../helpers/sqs')
-const awsClients = require('../../src/lib/aws-clients')
-const systemTests = require('../helpers/system-tests')
-const ingestHelpers = require('../helpers/ingest')
+import test, { before, beforeEach, afterEach } from 'ava'
+import nock, { cleanAll } from 'nock'
+import { DateTime } from 'luxon'
+import { getCollectionIds, getItem } from '../helpers/api.js'
+import handler from '../../src/lambdas/ingest'
+import { loadFixture, randomId } from '../helpers/utils.js'
+import { nullLoggerContext } from '../helpers/context.js'
+import { refreshIndices, deleteAllIndices } from '../helpers/database.js'
+import { sqsTriggerLambda, purgeQueue } from '../helpers/sqs.js'
+import { sns, s3 as _s3 } from '../../src/lib/aws-clients.js'
+import { setup } from '../helpers/system-tests.js'
+import { ingestItemC, ingestFixtureC } from '../helpers/ingest.js'
 
-test.before(async (t) => {
+before(async (t) => {
   await deleteAllIndices()
-  const standUpResult = await systemTests.setup()
+  const standUpResult = await setup()
 
   t.context = standUpResult
 
-  t.context.ingestItem = ingestHelpers.ingestItemC(
+  t.context.ingestItem = ingestItemC(
     standUpResult.ingestTopicArn,
     standUpResult.ingestQueueUrl
   )
-  t.context.ingestFixture = ingestHelpers.ingestFixtureC(
+  t.context.ingestFixture = ingestFixtureC(
     standUpResult.ingestTopicArn,
     standUpResult.ingestQueueUrl
   )
 })
 
-test.beforeEach(async (t) => {
+beforeEach(async (t) => {
   const { ingestQueueUrl } = t.context
 
   if (ingestQueueUrl === undefined) throw new Error('No ingest queue url')
@@ -35,8 +35,8 @@ test.beforeEach(async (t) => {
   await purgeQueue(ingestQueueUrl)
 })
 
-test.afterEach.always(() => {
-  nock.cleanAll()
+afterEach.always(() => {
+  cleanAll()
 })
 
 test('The ingest lambda supports ingesting a collection published to SNS', async (t) => {
@@ -49,7 +49,7 @@ test('The ingest lambda supports ingesting a collection published to SNS', async
     { id: randomId('collection') }
   )
 
-  await awsClients.sns().publish({
+  await sns().publish({
     TopicArn: ingestTopicArn,
     Message: JSON.stringify(collection)
   }).promise()
@@ -68,7 +68,7 @@ test('The ingest lambda supports ingesting a collection sourced from S3', async 
 
   if (ingestTopicArn === undefined) throw new Error('No ingest topic ARN')
 
-  const s3 = awsClients.s3()
+  const s3 = _s3()
 
   // Load the collection to be ingested
   const collection = await loadFixture(
@@ -90,7 +90,7 @@ test('The ingest lambda supports ingesting a collection sourced from S3', async 
     Body: JSON.stringify(collection)
   }).promise()
 
-  await awsClients.sns().publish({
+  await sns().publish({
     TopicArn: ingestTopicArn,
     Message: JSON.stringify({ href: `s3://${sourceBucket}/${sourceKey}` })
   }).promise()
@@ -117,7 +117,7 @@ test('The ingest lambda supports ingesting a collection sourced from http', asyn
 
   nock('http://source.local').get('/my-file.dat').reply(200, collection)
 
-  await awsClients.sns().publish({
+  await sns().publish({
     TopicArn: ingestTopicArn,
     Message: JSON.stringify({ href: 'http://source.local/my-file.dat' })
   }).promise()

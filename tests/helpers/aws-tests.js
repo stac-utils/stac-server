@@ -55,7 +55,7 @@ const event = Object.freeze({
   }
 })
 
-module.exports = {
+export default {
   disableNetConnect,
   event
 }

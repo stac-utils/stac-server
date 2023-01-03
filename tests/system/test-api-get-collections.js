@@ -1,12 +1,12 @@
-const test = require('ava')
-const { ingestItem } = require('../helpers/ingest')
-const { randomId, loadFixture } = require('../helpers/utils')
-const { refreshIndices, deleteAllIndices } = require('../helpers/database')
-const systemTests = require('../helpers/system-tests')
+import test, { before } from 'ava'
+import { ingestItem } from '../helpers/ingest'
+import { randomId, loadFixture } from '../helpers/utils'
+import { refreshIndices, deleteAllIndices } from '../helpers/database'
+import { setup } from '../helpers/system-tests'
 
-test.before(async (t) => {
+before(async (t) => {
   await deleteAllIndices()
-  const standUpResult = await systemTests.setup()
+  const standUpResult = await setup()
 
   t.context = standUpResult
 

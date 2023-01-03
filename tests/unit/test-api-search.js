@@ -1,7 +1,9 @@
-const test = require('ava')
-const sinon = require('sinon')
-const api = require('../../src/lib/api')
-const item = require('../fixtures/item.json')
+import test from 'ava'
+import sinon from 'sinon'
+import fs from 'fs'
+import api from '../../src/lib/api.js'
+
+const item = fs.readFileSync('tests/fixtures/item.json', 'utf8')
 
 function cloneMutatedItem() {
   return { ...item, links: item.links.slice(0) }

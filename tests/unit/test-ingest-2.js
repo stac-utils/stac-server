@@ -1,9 +1,9 @@
-const test = require('ava')
-const sinon = require('sinon')
-const MemoryStream = require('memorystream')
-const { ingestItems } = require('../../src/lib/ingest')
-const firstItem = require('../fixtures/stac/LC80100102015050LGN00.json')
-const stream = require('../../src/lib/databaseStream')
+import test from 'ava'
+import { stub } from 'sinon'
+import MemoryStream from 'memorystream'
+import fs from 'fs'
+import { ingestItems } from '../../src/lib/ingest.js'
+import stream from '../../src/lib/databaseStream.js'
 
 const setup = () => {
   const dupOptions = {
@@ -21,7 +21,7 @@ const setup = () => {
   const dbStream = new MemoryStream(null, writeOptions)
   const backend = {
     stream: () => ({ toDB, dbStream }),
-    prepare: sinon.stub().resolves(true)
+    prepare: stub().resolves(true)
   }
   return {
     toDB,
@@ -32,6 +32,8 @@ const setup = () => {
 
 test.skip('ingestItem passes item through transform stream', async (t) => {
   const { dbStream } = setup()
+  const firstItem = fs.readFileSync('../fixtures/stac/LC80100102015050LGN00.json', 'utf8')
+
   await ingestItems([firstItem], stream)
   t.deepEqual(dbStream.queue[0], firstItem)
 })

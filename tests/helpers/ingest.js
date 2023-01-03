@@ -1,11 +1,12 @@
 // @ts-check
 
-const awsClients = require('../../src/lib/aws-clients')
-const { handler } = require('../../src/lambdas/ingest')
-const { sqsTriggerLambda } = require('./sqs')
-const { nullLoggerContext } = require('./context')
-const { refreshIndices } = require('./database')
-const { loadFixture } = require('./utils')
+import { sns } from '../../src/lib/aws-clients.js'
+import { handler } from '../../src/lambdas/ingest/index.js'
+import { sqsTriggerLambda } from './sqs.js'
+import nullLoggerContext from './context.js'
+import { refreshIndices } from './database.js'
+import _default from './utils'
+const { loadFixture } = _default
 
 /**
  * @typedef {Object} IngestItemParams
@@ -18,8 +19,8 @@ const { loadFixture } = require('./utils')
  * @param {IngestItemParams} params
  * @returns {Promise<void>}
  */
-const ingestItem = async (params) => {
-  await awsClients.sns().publish({
+export const ingestItem = async (params) => {
+  await sns().publish({
     TopicArn: params.ingestTopicArn,
     Message: JSON.stringify(params.item)
   }).promise()
@@ -35,7 +36,7 @@ const ingestItem = async (params) => {
  * @param {string} ingestQueueUrl
  * @returns {(item: unknown) => Promise<void>}
  */
-const ingestItemC = (ingestTopicArn, ingestQueueUrl) =>
+export const ingestItemC = (ingestTopicArn, ingestQueueUrl) =>
   (item) => ingestItem({ ingestQueueUrl, ingestTopicArn, item })
 
 /**
@@ -46,7 +47,7 @@ const ingestItemC = (ingestTopicArn, ingestQueueUrl) =>
  * @param {Object} params.overrides
  * @returns {Promise<unknown>}
  */
-const ingestFixture = async ({
+export const ingestFixture = async ({
   ingestTopicArn,
   ingestQueueUrl,
   filename,
@@ -69,17 +70,10 @@ const ingestFixture = async ({
  * @param {string} ingestQueueUrl
  * @returns {(filename: string, overrides?: Object) => Promise<unknown>}
  */
-const ingestFixtureC = (ingestTopicArn, ingestQueueUrl) =>
+export const ingestFixtureC = (ingestTopicArn, ingestQueueUrl) =>
   (filename, overrides = {}) => ingestFixture({
     ingestQueueUrl,
     ingestTopicArn,
     filename,
     overrides
   })
-
-module.exports = {
-  ingestFixture,
-  ingestFixtureC,
-  ingestItem,
-  ingestItemC
-}

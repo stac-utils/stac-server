@@ -1,4 +1,4 @@
-const awsClients = require('./aws-clients')
+const awsClients = require('./aws-clients').default
 
 const getObjectBody = async (s3Location) => {
   try {
@@ -24,6 +24,6 @@ const getObjectText = (s3Location) => getObjectBody(s3Location).then((b) => b.to
 
 const getObjectJson = (s3Location) => getObjectText(s3Location).then(JSON.parse)
 
-module.exports = {
+export default {
   getObjectJson
 }

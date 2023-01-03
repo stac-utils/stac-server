@@ -1,4 +1,4 @@
-const dynamicTemplates = require('./dynamicTemplates')
+import templates from './dynamicTemplates.js'
 
 const itemsIndexConfiguration = function () {
   const numberOfShards = process.env.ITEMS_INDICIES_NUM_OF_SHARDS
@@ -16,7 +16,7 @@ const itemsIndexConfiguration = function () {
 
   config.mappings = {
     numeric_detection: false,
-    dynamic_templates: dynamicTemplates.templates,
+    dynamic_templates: templates,
     properties: {
       geometry: { type: 'geo_shape' },
       assets: { type: 'object', enabled: false },
@@ -45,6 +45,6 @@ const itemsIndexConfiguration = function () {
   return config
 }
 
-module.exports = {
+export default {
   itemsIndexConfiguration
 }

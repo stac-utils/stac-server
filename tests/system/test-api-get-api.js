@@ -1,11 +1,11 @@
-const test = require('ava')
-const { startApi } = require('../helpers/api')
+import test, { before, after } from 'ava'
+import { startApi } from '../helpers/api'
 
-test.before(async (t) => {
+before(async (t) => {
   t.context.api = await startApi()
 })
 
-test.after.always(async (t) => {
+after.always(async (t) => {
   await t.context.api.close()
 })
 

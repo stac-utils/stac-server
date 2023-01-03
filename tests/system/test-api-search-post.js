@@ -1,23 +1,26 @@
-const test = require('ava')
+import test, { before, after } from 'ava'
 
-const { deleteAllIndices, refreshIndices } = require('../helpers/database')
-const { randomId } = require('../helpers/utils')
-const ingest = require('../../src/lib/ingest')
-const intersectsGeometry = require('../fixtures/stac/intersectsGeometry.json')
-const stream = require('../../src/lib/databaseStream')
-const systemTests = require('../helpers/system-tests')
+import fs from 'fs'
+import { deleteAllIndices, refreshIndices } from '../helpers/database.js'
+import { randomId } from '../helpers/utils.js'
+import { ingestItems } from '../../src/lib/ingest.js'
+
+import stream from '../../src/lib/databaseStream.js'
+import { loadJson, setup } from '../helpers/system-tests.js'
+
+const intersectsGeometry = fs.readFileSync('../fixtures/stac/intersectsGeometry.json', 'utf8')
 
 const ingestEntities = async (fixtures) => {
-  await ingest.ingestItems(
-    await Promise.all(fixtures.map((x) => systemTests.loadJson(x))), stream
+  await ingestItems(
+    await Promise.all(fixtures.map((x) => loadJson(x))), stream
   )
   await refreshIndices()
 }
 
-test.before(async (t) => {
+before(async (t) => {
   await deleteAllIndices()
 
-  t.context = await systemTests.setup()
+  t.context = await setup()
 
   // ingest collections before items so mappings are applied
   await ingestEntities([
@@ -32,7 +35,7 @@ test.before(async (t) => {
   ])
 })
 
-test.after.always(async (t) => {
+after.always(async (t) => {
   if (t.context.api) await t.context.api.close()
 })
 

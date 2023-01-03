@@ -1,14 +1,17 @@
-const test = require('ava')
-const { default: got } = require('got')
-const { deleteAllIndices, refreshIndices } = require('../helpers/database')
-const { randomId } = require('../helpers/utils')
-const ingest = require('../../src/lib/ingest')
-const stream = require('../../src/lib/databaseStream')
-const systemTests = require('../helpers/system-tests')
+import test from 'ava'
+import got from 'got'
+import { resolve } from 'path'
+import { deleteAllIndices, refreshIndices } from '../helpers/database.js'
+import { randomId } from '../helpers/utils.js'
+import { ingestItems } from '../../src/lib/ingest.js'
+import stream from '../../src/lib/databaseStream.js'
+import { setup, loadJson } from '../helpers/system-tests.js'
+
+const __dirname = resolve() // eslint-disable-line no-unused-vars
 
 test.before(async (t) => {
   await deleteAllIndices()
-  const standUpResult = await systemTests.setup()
+  const standUpResult = await setup()
 
   t.context = standUpResult
 })
@@ -42,8 +45,8 @@ test('/search preserve bbox in next links', async (t) => {
     'LC80100102015050LGN00.json',
     'LC80100102015082LGN00.json'
   ]
-  const items = await Promise.all(fixtureFiles.map((x) => systemTests.loadJson(x)))
-  await ingest.ingestItems(items, stream)
+  const items = await Promise.all(fixtureFiles.map((x) => loadJson(x)))
+  await ingestItems(items, stream)
   await refreshIndices()
 
   const bbox = '-180,-90,180,90'
@@ -81,8 +84,8 @@ test('/search preserve bbox and datetime in next links', async (t) => {
     'LC80100102015050LGN00.json',
     'LC80100102015082LGN00.json'
   ]
-  const items = await Promise.all(fixtureFiles.map((x) => systemTests.loadJson(x)))
-  await ingest.ingestItems(items, stream)
+  const items = await Promise.all(fixtureFiles.map((x) => loadJson(x)))
+  await ingestItems(items, stream)
   await refreshIndices()
 
   const bbox = '-180,-90,180,90'

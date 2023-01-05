@@ -1,17 +1,17 @@
-import test, { before as _before, after } from 'ava'
-import { deleteAllIndices } from '../helpers/database'
-import { randomId } from '../helpers/utils'
-import { startApi } from '../helpers/api'
-import { setup } from '../helpers/system-tests'
+import test from 'ava'
+import { deleteAllIndices } from '../helpers/database.js'
+import { randomId } from '../helpers/utils.js'
+import { startApi } from '../helpers/api.js'
+import { setup } from '../helpers/system-tests.js'
 
-_before(async (t) => {
+test.before(async (t) => {
   await deleteAllIndices()
   const standUpResult = await setup()
 
   t.context = standUpResult
 })
 
-after.always(async (t) => {
+test.after.always(async (t) => {
   if (t.context.api) await t.context.api.close()
 })
 

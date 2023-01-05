@@ -6,17 +6,16 @@
  * - `invokePreHook` and `invokePostHook` are very similar. They should be DRY'd up.
  */
 
-const { z } = require('zod')
-const serverless = require('serverless-http')
-const { Lambda } = require('aws-sdk')
-const { app } = require('./app').default
+import { z } from 'zod'
+import serverless from 'serverless-http'
+import { Lambda } from 'aws-sdk'
+import default from './app'
+const { app } = default
+import _default from './types'
 const {
-  APIGatewayProxyResultSchema,
-  PreHookResultSchema,
-  PostHookResultSchema,
-  LambdaErrorSchema, // eslint-disable-line no-unused-vars
+  APIGatewayProxyResultSchema, PreHookResultSchema, PostHookResultSchema, LambdaErrorSchema, // eslint-disable-line no-unused-vars
   APIGatewayProxyEventSchema
-} = require('./types').default
+} = _default
 
 /**
  * @typedef {import('aws-lambda').APIGatewayProxyEvent} APIGatewayProxyEvent
@@ -226,4 +225,4 @@ const handler = async (event, context) => {
     : serverlessAppResult
 }
 
-module.exports = { handler }
+export default { handler }

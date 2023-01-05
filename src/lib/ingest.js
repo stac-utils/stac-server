@@ -1,7 +1,7 @@
 import { Readable } from 'readable-stream'
 import pump from 'pump'
 
-const logger = console //require('./logger')
+const logger = console
 
 export async function ingestItem(item, stream) {
   const readable = new Readable({ objectMode: true })

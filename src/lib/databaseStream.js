@@ -4,7 +4,7 @@ import { dbClient } from './databaseClient.js'
 
 import { getItemCreated } from './database.js'
 
-const logger = console //require('./logger')
+const logger = console
 
 const COLLECTIONS_INDEX = process.env.COLLECTIONS_INDEX || 'collections'
 
@@ -102,7 +102,7 @@ class SearchDatabaseWritableStream extends _stream.Writable {
 export default async function stream() {
   let dbStreams
   try {
-    const client = await dbClient.client()
+    const client = (await dbClient()).client()
 
     const toDB = through2.obj({ objectMode: true }, async (data, encoding, next) => {
       let index = ''

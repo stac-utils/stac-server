@@ -1,16 +1,5 @@
 // @ts-check
 
-// <<<<<<< Updated upstream
-// const cors = require('cors')
-// const createError = require('http-errors')
-// const express = require('express')
-// const logger = require('morgan')
-// const path = require('path')
-// const database = require('../../lib/database')
-// const api = require('../../lib/api')
-// const { readFile } = require('../../lib/fs')
-// const { addEndpoint } = require('./middleware/add-endpoint')
-// =======
 import cors from 'cors'
 import createError from 'http-errors'
 import express, { json } from 'express'

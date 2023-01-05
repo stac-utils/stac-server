@@ -17,8 +17,8 @@ const setup = () => {
     objectMode: true
   }
   // Catalog is filtered by real toDB transform stream but is left in here.
-  const toDB = new MemoryStream(null, dupOptions)
-  const dbStream = new MemoryStream(null, writeOptions)
+  const toDB = new MemoryStream(undefined, dupOptions)
+  const dbStream = new MemoryStream(undefined, writeOptions)
   const backend = {
     stream: () => ({ toDB, dbStream }),
     prepare: stub().resolves(true)

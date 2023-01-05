@@ -1,12 +1,11 @@
 // @ts-check
 
 import { sns } from '../../src/lib/aws-clients.js'
-import { handler } from '../../src/lambdas/ingest/index.js'
+import handler from '../../src/lambdas/ingest/index.js'
 import { sqsTriggerLambda } from './sqs.js'
 import nullLoggerContext from './context.js'
 import { refreshIndices } from './database.js'
-import _default from './utils'
-const { loadFixture } = _default
+import { loadFixture } from './utils.js'
 
 /**
  * @typedef {Object} IngestItemParams

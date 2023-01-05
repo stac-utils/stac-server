@@ -1,17 +1,17 @@
-import test, { before, beforeEach, afterEach } from 'ava'
-import nock, { cleanAll } from 'nock'
+import test from 'ava'
+import nock from 'nock'
 import { DateTime } from 'luxon'
 import { getCollectionIds, getItem } from '../helpers/api.js'
-import handler from '../../src/lambdas/ingest'
+import handler from '../../src/lambdas/ingest/index.js'
 import { loadFixture, randomId } from '../helpers/utils.js'
-import { nullLoggerContext } from '../helpers/context.js'
+import nullLoggerContext from '../helpers/context.js'
 import { refreshIndices, deleteAllIndices } from '../helpers/database.js'
 import { sqsTriggerLambda, purgeQueue } from '../helpers/sqs.js'
 import { sns, s3 as _s3 } from '../../src/lib/aws-clients.js'
 import { setup } from '../helpers/system-tests.js'
 import { ingestItemC, ingestFixtureC } from '../helpers/ingest.js'
 
-before(async (t) => {
+test.before(async (t) => {
   await deleteAllIndices()
   const standUpResult = await setup()
 
@@ -27,7 +27,7 @@ before(async (t) => {
   )
 })
 
-beforeEach(async (t) => {
+test.beforeEach(async (t) => {
   const { ingestQueueUrl } = t.context
 
   if (ingestQueueUrl === undefined) throw new Error('No ingest queue url')
@@ -35,8 +35,8 @@ beforeEach(async (t) => {
   await purgeQueue(ingestQueueUrl)
 })
 
-afterEach.always(() => {
-  cleanAll()
+test.afterEach.always(() => {
+  nock.cleanAll()
 })
 
 test('The ingest lambda supports ingesting a collection published to SNS', async (t) => {

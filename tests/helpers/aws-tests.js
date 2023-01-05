@@ -1,6 +1,6 @@
 // @ts-check
 
-const nock = require('nock')
+import nock from 'nock'
 
 const disableNetConnect = () => {
   nock.disableNetConnect()

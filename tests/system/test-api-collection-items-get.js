@@ -1,10 +1,10 @@
-import test, { before, after } from 'ava'
-import { deleteAllIndices } from '../helpers/database'
+import test from 'ava'
+import { deleteAllIndices } from '../helpers/database.js'
 import { ingestItem } from '../helpers/ingest.js'
 import { randomId, loadFixture } from '../helpers/utils.js'
-import { setup } from '../helpers/system-tests'
+import { setup } from '../helpers/system-tests.js'
 
-before(async (t) => {
+test.before(async (t) => {
   await deleteAllIndices()
   const standUpResult = await setup()
 
@@ -56,7 +56,7 @@ before(async (t) => {
   })
 })
 
-after.always(async (t) => {
+test.after.always(async (t) => {
   if (t.context.api) await t.context.api.close()
 })
 

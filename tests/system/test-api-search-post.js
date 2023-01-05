@@ -1,4 +1,4 @@
-import test, { before, after } from 'ava'
+import test from 'ava'
 
 import fs from 'fs'
 import { deleteAllIndices, refreshIndices } from '../helpers/database.js'
@@ -17,7 +17,7 @@ const ingestEntities = async (fixtures) => {
   await refreshIndices()
 }
 
-before(async (t) => {
+test.before(async (t) => {
   await deleteAllIndices()
 
   t.context = await setup()
@@ -35,7 +35,7 @@ before(async (t) => {
   ])
 })
 
-after.always(async (t) => {
+test.after.always(async (t) => {
   if (t.context.api) await t.context.api.close()
 })
 

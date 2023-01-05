@@ -1,11 +1,11 @@
-import test, { before, after } from 'ava'
-import { startApi } from '../helpers/api'
+import test from 'ava'
+import { startApi } from '../helpers/api.js'
 
-before(async (t) => {
+test.before(async (t) => {
   t.context.api = await startApi()
 })
 
-after.always(async (t) => {
+test.after.always(async (t) => {
   await t.context.api.close()
 })
 

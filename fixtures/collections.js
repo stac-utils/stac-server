@@ -1,6 +1,6 @@
 import templates from './dynamicTemplates.js'
 
-const collectionsIndexConfiguration = function () {
+export default function () {
   return {
     mappings: {
       numeric_detection: false,
@@ -14,8 +14,4 @@ const collectionsIndexConfiguration = function () {
       }
     }
   }
-}
-
-export default {
-  collectionsIndexConfiguration
 }

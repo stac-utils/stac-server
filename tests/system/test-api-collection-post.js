@@ -1,15 +1,15 @@
-import test, { before, after } from 'ava'
-import { deleteAllIndices } from '../helpers/database'
-import { randomId } from '../helpers/utils'
-import { setup } from '../helpers/system-tests'
+import test from 'ava'
+import { deleteAllIndices } from '../helpers/database.js'
+import { randomId } from '../helpers/utils.js'
+import { setup } from '../helpers/system-tests.js'
 
-before(async (t) => {
+test.before(async (t) => {
   await deleteAllIndices()
 
   t.context = await setup()
 })
 
-after.always(async (t) => {
+test.after.always(async (t) => {
   if (t.context.api) await t.context.api.close()
 })
 

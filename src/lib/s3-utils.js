@@ -1,8 +1,8 @@
-const awsClients = require('./aws-clients').default
+import { s3 } from './aws-clients.js'
 
 const getObjectBody = async (s3Location) => {
   try {
-    const result = await awsClients.s3().getObject({
+    const result = await s3().getObject({
       Bucket: s3Location.bucket,
       Key: s3Location.key
     }).promise()

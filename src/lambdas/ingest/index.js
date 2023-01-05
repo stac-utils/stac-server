@@ -2,7 +2,7 @@ import got from 'got'
 import { createIndex } from '../../lib/databaseClient.js'
 import stream from '../../lib/databaseStream.js'
 import { ingestItems } from '../../lib/ingest.js'
-import { getObjectJson } from '../../lib/s3-utils'
+import getObjectJson from '../../lib/s3-utils.js'
 
 const isSqsEvent = (event) => 'Records' in event
 

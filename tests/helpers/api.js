@@ -1,8 +1,8 @@
 // @ts-check
 
-const { default: got } = require('got')
-const { once } = require('events')
-const { app } = require('../../src/lambdas/api/app').default
+import got from 'got'
+import { once } from 'events'
+import { app } from '../../src/lambdas/api/app.js'
 
 /**
  * @typedef {import('got').Got} Got

@@ -8,6 +8,11 @@ import { startApi } from './api.js'
 import { createCollectionsIndex, refreshIndices } from './database.js'
 import { createTopic, addSnsToSqsSubscription } from './sns.js'
 import { createQueue, getQueueArn } from './sqs.js'
+import path from 'path'
+import { fileURLToPath } from 'url'
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename); // eslint-disable-line no-unused-vars
 
 export const setupResources = async () => {
   // Create Ingest SNS topic

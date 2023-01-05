@@ -21,6 +21,9 @@ module.exports = {
     'aws-sdk'
   ],
   devtool,
+  resolve: {
+    extensions: ["", ".webpack.js", ".web.js", ".ts", ".js"],
+  },
   target: 'node',
   plugins: [
     new ZipPlugin({

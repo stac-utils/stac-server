@@ -22,6 +22,9 @@ module.exports = {
     'aws-sdk'
   ],
   devtool,
+  resolve: {
+    extensions: ["", ".webpack.js", ".web.js", ".ts", ".js"],
+  },
   optimization: {
     usedExports: true
   },

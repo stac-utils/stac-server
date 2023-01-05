@@ -68,7 +68,7 @@ class SearchDatabaseWritableStream extends _stream.Writable {
 
       // if this was a collection, then add a new index with collection name
       if (index === COLLECTIONS_INDEX) {
-        await dbClient.createIndex(id)
+        (await dbClient()).createIndex(id)
       }
 
       return next()
@@ -102,7 +102,7 @@ class SearchDatabaseWritableStream extends _stream.Writable {
 export default async function stream() {
   let dbStreams
   try {
-    const client = (await dbClient()).client()
+    const client = await dbClient()
 
     const toDB = through2.obj({ objectMode: true }, async (data, encoding, next) => {
       let index = ''

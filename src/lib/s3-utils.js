@@ -22,8 +22,4 @@ const getObjectBody = async (s3Location) => {
 
 const getObjectText = (s3Location) => getObjectBody(s3Location).then((b) => b.toString())
 
-const getObjectJson = (s3Location) => getObjectText(s3Location).then(JSON.parse)
-
-export default {
-  getObjectJson
-}
+export default (s3Location) => getObjectText(s3Location).then(JSON.parse)

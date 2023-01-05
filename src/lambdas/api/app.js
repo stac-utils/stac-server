@@ -9,6 +9,11 @@ import database from '../../lib/database.js'
 import api, { ValidationError } from '../../lib/api.js'
 import { readFile } from '../../lib/fs.js'
 import addEndpoint from './middleware/add-endpoint.js'
+import path from 'path'
+import { fileURLToPath } from 'url'
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename); // eslint-disable-line no-unused-vars
 
 /**
  * @typedef {import('express').Request} Request

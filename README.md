@@ -528,25 +528,25 @@ to the Elasticsearch -> OpenSearch migration process.
 Add this to the `AWS::OpenSearchService::Domain` resource:
 
 ```yaml
-        DomainEndpointOptions:
-          EnforceHTTPS: true
-        NodeToNodeEncryptionOptions:
-          Enabled: true
-        EncryptionAtRestOptions:
-          Enabled: true
-        AdvancedSecurityOptions:
-            Enabled: true
-            InternalUserDatabaseEnabled: true
-            MasterUserOptions:
-              MasterUserName: admin
-              MasterUserPassword: ${env:OPENSEARCH_MASTER_USER_PASSWORD}
-        AccessPolicies:
-          Version:                        "2012-10-17"
-          Statement:
-            - Effect:                     "Allow"
-              Principal:                  { "AWS": "*" }
-              Action:                     "es:ESHttp*"
-              Resource:                   "arn:aws:es:arn:aws:es:${aws:region}:${aws:accountId}:domain/${self:service}-${self:provider.stage}/*"
+DomainEndpointOptions:
+  EnforceHTTPS: true
+NodeToNodeEncryptionOptions:
+  Enabled: true
+EncryptionAtRestOptions:
+  Enabled: true
+AdvancedSecurityOptions:
+    Enabled: true
+    InternalUserDatabaseEnabled: true
+    MasterUserOptions:
+      MasterUserName: admin
+      MasterUserPassword: ${env:OPENSEARCH_MASTER_USER_PASSWORD}
+AccessPolicies:
+  Version:                        "2012-10-17"
+  Statement:
+    - Effect:                     "Allow"
+      Principal:                  { "AWS": "*" }
+      Action:                     "es:ESHttp*"
+      Resource:                   "arn:aws:es:${aws:region}:${aws:accountId}:domain/${self:service}-${self:provider.stage}/*"
 ```
 
 The AccessPolicies Statement will restrict the OpenSearch instance to only being accessible

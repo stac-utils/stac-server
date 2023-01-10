@@ -35,8 +35,7 @@
     ]
   },
   "ava": {
-    "verbose": true,
-    "serial": true
+    "verbose": true
   },
   "publishConfig": {
     "access": "public"

@@ -21,7 +21,7 @@ const app = express()
 
 app.use(logger('dev'))
 app.use(cors())
-app.use(express.json())
+app.use(express.json({ limit: '1mb' }))
 app.use(addEndpoint)
 
 app.get('/', async (req, res, next) => {
@@ -351,6 +351,7 @@ app.use((_req, _res, next) => {
 
 // error handler
 app.use(
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   /** @type {ErrorRequestHandler} */ ((err, _req, res /* _next */) => {
     res.status(err.status || 500)
 

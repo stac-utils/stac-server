@@ -13,10 +13,11 @@ const {
   APIGatewayProxyResultSchema,
   PreHookResultSchema,
   PostHookResultSchema,
-  LambdaErrorSchema,
+  LambdaErrorSchema, // false positive unused vars no-unused-vars
   APIGatewayProxyEventSchema
 } = require('./types')
 /*eslint-enable */
+
 /**
  * @typedef {import('aws-lambda').APIGatewayProxyEvent} APIGatewayProxyEvent
  * @typedef {import('aws-lambda').APIGatewayProxyResult} APIGatewayProxyResult

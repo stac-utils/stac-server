@@ -1,8 +1,13 @@
 {
   "root": true,
-  "extends": "airbnb",
+  "extends": [
+    "airbnb",
+    "plugin:@typescript-eslint/recommended"
+  ],
+  "parser": "@typescript-eslint/parser",
   "plugins": [
-    "eslint-plugin-jsdoc"
+    "eslint-plugin-jsdoc",
+    "@typescript-eslint"
   ],
   "env": {
     "node": true,
@@ -14,6 +19,7 @@
     }
   },
   "rules": {
+    "@typescript-eslint/ban-ts-comment": "off",
     "dot-notation": "off",
     "implicit-arrow-linebreak": "off",
     "no-restricted-syntax": [
@@ -142,6 +148,14 @@
             "ignoreStrings": true
           }
         ]
+      }
+    },
+    {
+      "files": [
+        "*.js"
+      ],
+      "rules": {
+        "@typescript-eslint/no-var-requires": 0
       }
     }
   ]

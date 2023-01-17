@@ -416,7 +416,7 @@ async function constructSearchParams(parameters, page, limit) {
     }
   } else {
     if (!unrestrictedIndices) {
-      populateUnrestrictedIndices()
+      await populateUnrestrictedIndices()
     }
     indices = unrestrictedIndices
   }

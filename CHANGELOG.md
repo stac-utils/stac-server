@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Fixed
 
+- Fixed incorrect usage of `application/geo+json` in several link relations.
 - When cross-cluster search is configured, the first search without a collection returned
   zero results.
 

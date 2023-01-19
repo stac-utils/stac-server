@@ -62,7 +62,7 @@ module.exports.handler = async function handler(event, context) {
 
   try {
     await ingest.ingestItems(stacItems, stream)
-    logger.info(`Ingested ${stacItems.length} Items: ${JSON.stringify(stacItems)}`)
+    logger.debug(`Ingested ${stacItems.length} Items: ${JSON.stringify(stacItems)}`)
   } catch (error) {
     console.log(error)
     throw (error)

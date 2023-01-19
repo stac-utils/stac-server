@@ -12,7 +12,7 @@ async function ingestItem(item, stream) {
       dbStream,
       (error) => {
         if (error) {
-          logger.info(error)
+          logger.error(`Error ingesting: ${error}`)
           reject(error)
         } else {
           logger.info(`Ingested item ${item.id}`)
@@ -36,7 +36,7 @@ async function ingestItems(items, stream) {
       dbStream,
       (error) => {
         if (error) {
-          logger.info(error)
+          logger.error(`Error ingesting: ${error}`)
           reject(error)
         } else {
           logger.debug('Ingested item')

@@ -323,11 +323,11 @@ async function deleteItem(collectionId, itemId) {
 }
 
 async function dbQuery(parameters) {
-  logger.info(`Search database query: ${JSON.stringify(parameters)}`)
+  logger.debug(`Search query: ${JSON.stringify(parameters)}`)
   const client = await dbClient.client()
   if (client === undefined) throw new Error('Client is undefined')
   const response = await client.search(parameters)
-  logger.info(`Response: ${JSON.stringify(response)}`)
+  logger.debug(`Response: ${JSON.stringify(response)}`)
   return response
 }
 

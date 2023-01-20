@@ -3,12 +3,18 @@
 const cors = require('cors')
 const createError = require('http-errors')
 const express = require('express')
-const logger = require('morgan')
+const morgan = require('morgan')
 const path = require('path')
+const winston = require('winston')
 const database = require('../../lib/database')
 const api = require('../../lib/api')
 const { readFile } = require('../../lib/fs')
 const { addEndpoint } = require('./middleware/add-endpoint')
+
+const logger = winston.createLogger({
+  level: process.env['LOG_LEVEL'] || 'warn',
+  transports: [new winston.transports.Console()],
+})
 
 /**
  * @typedef {import('express').Request} Request
@@ -21,7 +27,7 @@ const txnEnabled = process.env['ENABLE_TRANSACTIONS_EXTENSION'] === 'true'
 
 const app = express()
 
-app.use(logger('dev'))
+app.use(morgan('dev'))
 app.use(cors())
 app.use(express.json({ limit: '1mb' }))
 app.use(addEndpoint)
@@ -367,7 +373,7 @@ app.use(
       res.json({ code: 'NotFound', description: 'Not Found' })
       break
     default:
-      console.log(err)
+      logger.error(err)
       res.json({ code: 'InternalServerError', description: 'Internal Server Error' })
       break
     }

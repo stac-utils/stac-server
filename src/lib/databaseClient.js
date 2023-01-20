@@ -1,16 +1,19 @@
+const winston = require('winston')
 const opensearch = require('@opensearch-project/opensearch')
 const { createAWSConnection: createAWSConnectionOS,
   awsGetCredentials } = require('aws-os-connection')
-
 const AWS = require('aws-sdk')
 const elasticsearch = require('@elastic/elasticsearch')
 const { createAWSConnection: createAWSConnectionES,
   awsCredsifyAll } = require('@acuris/aws-es-connection')
 
-const logger = console //require('./logger')
-
 const { collectionsIndexConfiguration } = require('../../fixtures/collections')
 const { itemsIndexConfiguration } = require('../../fixtures/items')
+
+const logger = winston.createLogger({
+  level: process.env['LOG_LEVEL'] || 'warn',
+  transports: [new winston.transports.Console()],
+})
 
 let _dbClient
 

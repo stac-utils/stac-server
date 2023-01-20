@@ -2,8 +2,13 @@ const { pickBy, assign, get: getNested } = require('lodash')
 const extent = require('@mapbox/extent')
 const { DateTime } = require('luxon')
 const AWS = require('aws-sdk')
+const winston = require('winston')
 const { isIndexNotFoundError } = require('./database')
-const logger = console
+
+const logger = winston.createLogger({
+  level: process.env['LOG_LEVEL'] || 'warn',
+  transports: [new winston.transports.Console()],
+})
 
 // max number of collections to retrieve
 const COLLECTION_LIMIT = process.env.STAC_SERVER_COLLECTION_LIMIT || 100

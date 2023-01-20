@@ -1,5 +1,10 @@
+const winston = require('winston')
 const dbClient = require('./databaseClient')
-const logger = console //require('./logger')
+
+const logger = winston.createLogger({
+  level: process.env['LOG_LEVEL'] || 'warn',
+  transports: [new winston.transports.Console()],
+})
 
 const COLLECTIONS_INDEX = process.env.COLLECTIONS_INDEX || 'collections'
 const DEFAULT_INDICES = ['*', '-.*', '-collections']

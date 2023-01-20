@@ -12,7 +12,7 @@ provider:
     STAC_ID: "stac-server"
     STAC_TITLE: "STAC API"
     STAC_DESCRIPTION: "A STAC API using stac-server"
-    LOG_LEVEL: DEBUG
+    LOG_LEVEL: debug
     STAC_DOCS_URL: https://stac-utils.github.io/stac-server/
     OPENSEARCH_HOST:
       Fn::GetAtt: [OpenSearchInstance, DomainEndpoint]

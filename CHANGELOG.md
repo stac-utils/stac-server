@@ -7,10 +7,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## Unreleased - TBD
 
+### Fixed
+
+- Log level configuration now has an effect on log levels
+
 ### Changed
 
-- Search query and response body is now logged at level DEBUG rather than INFO
-- Ingested item body is now logged at level DEBUG rather than INFO
+- Log level must be configured with lowercase values error, warn, info, http, verbose, debug, silly instead of uppercase values (this config had no effect before)
+- Search query and response body is now logged at level debug rather than info
+- Ingested item body is now logged at level debug rather than info
 
 ## [0.5.2] - 2023-01-17
 

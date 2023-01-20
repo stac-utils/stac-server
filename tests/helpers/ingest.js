@@ -3,7 +3,6 @@
 const awsClients = require('../../src/lib/aws-clients')
 const { handler } = require('../../src/lambdas/ingest')
 const { sqsTriggerLambda } = require('./sqs')
-const { nullLoggerContext } = require('./context')
 const { refreshIndices } = require('./database')
 const { loadFixture } = require('./utils')
 
@@ -24,7 +23,7 @@ const ingestItem = async (params) => {
     Message: JSON.stringify(params.item)
   }).promise()
 
-  await sqsTriggerLambda(params.ingestQueueUrl, handler, nullLoggerContext)
+  await sqsTriggerLambda(params.ingestQueueUrl, handler)
 
   await refreshIndices()
 }

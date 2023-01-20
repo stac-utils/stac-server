@@ -1,6 +1,11 @@
-module.exports.handler = async function handler(event, context) {
-  const { logger = console } = context
+const winston = require('winston')
 
+const logger = winston.createLogger({
+  level: process.env['LOG_LEVEL'] || 'warn',
+  transports: [new winston.transports.Console()],
+})
+
+module.exports.handler = async function handler(event, _context) {
   logger.debug(`Event: ${JSON.stringify(event, undefined, 2)}`)
 
   const result = { ...event }

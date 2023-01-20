@@ -1,6 +1,11 @@
 const { Readable } = require('readable-stream')
 const pump = require('pump')
-const logger = console //require('./logger')
+const winston = require('winston')
+
+const logger = winston.createLogger({
+  level: process.env['LOG_LEVEL'] || 'warn',
+  transports: [new winston.transports.Console()],
+})
 
 async function ingestItem(item, stream) {
   const readable = new Readable({ objectMode: true })

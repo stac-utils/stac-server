@@ -1,8 +1,13 @@
 const _stream = require('stream')
 const through2 = require('through2')
-const logger = console //require('./logger')
+const winston = require('winston')
 const dbClient = require('./databaseClient')
 const { getItemCreated } = require('./database')
+
+const logger = winston.createLogger({
+  level: process.env['LOG_LEVEL'] || 'warn',
+  transports: [new winston.transports.Console()],
+})
 
 const COLLECTIONS_INDEX = process.env.COLLECTIONS_INDEX || 'collections'
 

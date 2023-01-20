@@ -1,11 +1,6 @@
 const { Readable } = require('readable-stream')
 const pump = require('pump')
-const winston = require('winston')
-
-const logger = winston.createLogger({
-  level: process.env['LOG_LEVEL'] || 'warn',
-  transports: [new winston.transports.Console()],
-})
+const { logger } = require('./logger')
 
 async function ingestItem(item, stream) {
   const readable = new Readable({ objectMode: true })
@@ -17,7 +12,7 @@ async function ingestItem(item, stream) {
       dbStream,
       (error) => {
         if (error) {
-          logger.error(`Error ingesting: ${error}`)
+          logger.error('Error ingesting', error)
           reject(error)
         } else {
           logger.info(`Ingested item ${item.id}`)
@@ -41,7 +36,7 @@ async function ingestItems(items, stream) {
       dbStream,
       (error) => {
         if (error) {
-          logger.error(`Error ingesting: ${error}`)
+          logger.error('Error ingesting', error)
           reject(error)
         } else {
           logger.debug('Ingested item')

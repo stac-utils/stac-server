@@ -1,10 +1,5 @@
-const winston = require('winston')
+const { logger } = require('./logger')
 const awsClients = require('./aws-clients')
-
-const logger = winston.createLogger({
-  level: process.env['LOG_LEVEL'] || 'warn',
-  transports: [new winston.transports.Console()],
-})
 
 const getObjectBody = async (s3Location) => {
   try {
@@ -20,7 +15,7 @@ const getObjectBody = async (s3Location) => {
     return result.Body
   } catch (error) {
     if (error instanceof Error) {
-      logger.error(`Failed to fetch ${s3Location.url}: ${error.message}`)
+      logger.error(`Failed to fetch ${s3Location.url}`, error)
     }
     throw error
   }

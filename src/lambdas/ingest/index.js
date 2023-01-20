@@ -1,14 +1,9 @@
 const { default: got } = require('got')
-const winston = require('winston')
 const dbClient = require('../../lib/databaseClient.js')
 const stream = require('../../lib/databaseStream.js')
 const ingest = require('../../lib/ingest.js')
 const s3Utils = require('../../lib/s3-utils')
-
-const logger = winston.createLogger({
-  level: process.env['LOG_LEVEL'] || 'warn',
-  transports: [new winston.transports.Console()],
-})
+const { logger } = require('../../lib/logger')
 
 const isSqsEvent = (event) => 'Records' in event
 
@@ -54,7 +49,7 @@ const stacItemsFromSqsEvent = async (event) => {
 }
 
 module.exports.handler = async function handler(event, _context) {
-  logger.debug(`Event: ${JSON.stringify(event, undefined, 2)}`)
+  logger.debug('Event: %j', event)
 
   if (event.create_indices) {
     await dbClient.createIndex('collections')
@@ -66,7 +61,7 @@ module.exports.handler = async function handler(event, _context) {
 
   try {
     await ingest.ingestItems(stacItems, stream)
-    logger.debug(`Ingested ${stacItems.length} Items: ${JSON.stringify(stacItems)}`)
+    logger.debug('Ingested %d items: %j', stacItems.length, stacItems)
   } catch (error) {
     logger.error(error)
     throw (error)

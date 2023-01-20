@@ -9,7 +9,7 @@
 const { z } = require('zod')
 const serverless = require('serverless-http')
 const { Lambda } = require('aws-sdk')
-const winston = require('winston')
+const { logger } = require('../../lib/logger')
 const { app } = require('./app')
 /*eslint-disable */ /* no-unused-vars */
 const {
@@ -20,11 +20,6 @@ const {
   APIGatewayProxyEventSchema
 } = require('./types')
 /*eslint-enable */
-
-const logger = winston.createLogger({
-  level: process.env['LOG_LEVEL'] || 'warn',
-  transports: [new winston.transports.Console()],
-})
 
 /**
  * @typedef {import('aws-lambda').APIGatewayProxyEvent} APIGatewayProxyEvent
@@ -63,7 +58,7 @@ const logZodParseError = (data, error) => {
     errorObj = { data, error }
   }
 
-  logger.error(JSON.stringify(errorObj, undefined, 2))
+  logger.error('zod parsing error: %j', errorObj)
 }
 
 /**
@@ -106,7 +101,7 @@ const invokePreHook = async (lambda, preHook, payload) => {
   }
 
   if ('errorType' in hookResult) {
-    logger.error('Pre-hook failed:', hookResult.trace.join('\n'))
+    logger.error('Pre-hook failed:', hookResult)
     return internalServerError
   }
 
@@ -152,7 +147,7 @@ const invokePostHook = async (lambda, postHook, payload) => {
   }
 
   if ('errorType' in hookResult) {
-    logger.error('Post hook failed:', hookResult.trace.join('\n'))
+    logger.error('Post hook failed:', hookResult)
     return internalServerError
   }
 

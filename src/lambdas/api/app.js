@@ -5,16 +5,11 @@ const createError = require('http-errors')
 const express = require('express')
 const morgan = require('morgan')
 const path = require('path')
-const winston = require('winston')
+const { logger } = require('../../lib/logger')
 const database = require('../../lib/database')
 const api = require('../../lib/api')
 const { readFile } = require('../../lib/fs')
 const { addEndpoint } = require('./middleware/add-endpoint')
-
-const logger = winston.createLogger({
-  level: process.env['LOG_LEVEL'] || 'warn',
-  transports: [new winston.transports.Console()],
-})
 
 /**
  * @typedef {import('express').Request} Request

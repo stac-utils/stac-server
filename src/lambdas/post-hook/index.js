@@ -1,12 +1,7 @@
-const winston = require('winston')
-
-const logger = winston.createLogger({
-  level: process.env['LOG_LEVEL'] || 'warn',
-  transports: [new winston.transports.Console()],
-})
+const { logger } = require('../../lib/logger')
 
 module.exports.handler = async function handler(event, _context) {
-  logger.debug(`Event: ${JSON.stringify(event, undefined, 2)}`)
+  logger.debug('Event: %j', event)
 
   const result = { ...event }
 

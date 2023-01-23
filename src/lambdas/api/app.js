@@ -22,7 +22,10 @@ const txnEnabled = process.env['ENABLE_TRANSACTIONS_EXTENSION'] === 'true'
 
 const app = express()
 
-app.use(morgan('dev'))
+if (process.env['REQUEST_LOGGING_ENABLED'] !== 'false') {
+  app.use(morgan(process.env['REQUEST_LOGGING_FORMAT'] || 'tiny'))
+}
+
 app.use(cors())
 app.use(express.json({ limit: '1mb' }))
 app.use(addEndpoint)

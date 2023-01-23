@@ -14,8 +14,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Changed
 
 - Log level must be configured with lowercase values error, warn, info, http, verbose, debug, silly instead of uppercase values (this config had no effect before)
-- Search query and response body is now logged at level debug rather than info
-- Ingested item body is now logged at level debug rather than info
+- Default request logging format is now "tiny" instead of "dev". Previously, the "dev" format
+  wrote color codes into CloudWatch logs, which cluttered output, as they were not used in display.
+- Search query and response body is now logged at level "debug" rather than "info"
+- Ingested item body is now logged at level "debug" rather than "info"
 
 ## [0.5.2] - 2023-01-17
 

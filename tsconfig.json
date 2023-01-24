@@ -4,6 +4,7 @@
     "allowJs": true,
     "checkJs": true,
     "noEmit": true,
+    "module": "es2022",
     "alwaysStrict": true,
     "noImplicitAny": false,
     "noImplicitOverride": true,

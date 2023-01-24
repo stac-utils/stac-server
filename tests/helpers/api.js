@@ -1,6 +1,6 @@
-const { default: got } = require('got')
-const { once } = require('events')
-const { app } = require('../../src/lambdas/api/app')
+import got from 'got' // eslint-disable-line import/no-unresolved
+import { once } from 'events'
+import { app } from '../../src/lambdas/api/app.js'
 
 /**
  * @typedef {import('got').Got} Got
@@ -29,7 +29,7 @@ const apiClient = (url) => got.extend({
 /**
  * @returns {Promise<ApiInstance>}
  */
-const startApi = async () => {
+export const startApi = async () => {
   const server = app.listen(0, '127.0.0.1')
 
   await once(server, 'listening')
@@ -59,7 +59,7 @@ const startApi = async () => {
  * @param {Got} client
  * @returns {Promise<string[]>}
  */
-const getCollectionIds = async (client) => {
+export const getCollectionIds = async (client) => {
   const response = await client.get('collections')
 
   // @ts-expect-error We need to be validating this response
@@ -80,10 +80,10 @@ const getCollection = async (client, collectionId) =>
  * @param {string} itemId
  * @returns {Promise<unknown>}
  */
-const getItem = async (client, collectionId, itemId) =>
+export const getItem = async (client, collectionId, itemId) =>
   client.get(`collections/${collectionId}/items/${itemId}`)
 
-module.exports = {
+export default {
   getCollection,
   getItem,
   getCollectionIds,

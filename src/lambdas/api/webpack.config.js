@@ -1,6 +1,8 @@
-const path = require('path')
-const ZipPlugin = require('zip-webpack-plugin')
-const CopyPlugin = require('copy-webpack-plugin')
+import {resolve } from 'path'
+import ZipPlugin from 'zip-webpack-plugin'
+import CopyPlugin from 'copy-webpack-plugin'
+
+const __dirname = resolve()
 
 let mode = 'development'
 let devtool = 'inline-source-map'
@@ -10,13 +12,13 @@ if (process.env['PRODUCTION']) {
   devtool = 'false'
 }
 
-module.exports = {
+export default {
   mode,
   entry: './index.js',
   output: {
     libraryTarget: 'commonjs2',
     filename: 'index.js',
-    path: path.resolve(__dirname, '..', '..', '..', 'dist', 'api')
+    path: resolve(__dirname, '..', '..', '..', 'dist', 'api')
   },
   externals: [
     'aws-sdk'

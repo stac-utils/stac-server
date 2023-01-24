@@ -1,13 +1,13 @@
 // @ts-nocheck
 
-const test = require('ava')
-const sinon = require('sinon')
-const proxyquire = require('proxyquire')
-const createEvent = require('aws-event-mocks')
+import test from 'ava'
+import { stub } from 'sinon'
+import proxyquire from 'proxyquire'
+import createEvent from 'aws-event-mocks'
 
 test.skip('handler calls search with parameters', async (t) => {
   const result = { value: 'value' }
-  const search = sinon.stub().resolves(result)
+  const search = stub().resolves(result)
   const lambda = proxyquire('../../src/lambdas/api/', {
   })
   const host = 'host'

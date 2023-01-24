@@ -1,7 +1,7 @@
 // @ts-nocheck
 
-const test = require('ava')
-const { startApi } = require('../helpers/api')
+import test from 'ava'
+import { startApi } from '../helpers/api.js'
 
 test.before(async (t) => {
   t.context.api = await startApi()

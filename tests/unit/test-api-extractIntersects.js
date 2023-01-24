@@ -1,18 +1,18 @@
 // @ts-nocheck
 
-const test = require('ava')
-const api = require('../../src/lib/api')
+import test from 'ava'
+import { extractIntersects } from '../../src/lib/api.js'
 
 test('extractIntersectsNull', (t) => {
   const params = {}
-  const intersectsGeometry = api.extractIntersects(params)
+  const intersectsGeometry = extractIntersects(params)
   t.falsy(intersectsGeometry,
     'Returns undefined when no intersects parameter')
 })
 
 test('extractIntersects FeatureCollection', (t) => {
   t.throws(() => {
-    api.extractIntersects({
+    extractIntersects({
       intersects: { type: 'FeatureCollection' }
     })
   },

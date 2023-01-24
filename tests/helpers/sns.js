@@ -1,11 +1,11 @@
-const awsClients = require('../../src/lib/aws-clients')
-const { randomId } = require('./utils')
+import { sns as _sns } from '../../src/lib/aws-clients.js'
+import { randomId } from './utils.js'
 
 /**
  * @returns {Promise<string>} topic ARN
  */
-const createTopic = async () => {
-  const sns = awsClients.sns()
+export const createTopic = async () => {
+  const sns = _sns()
 
   const { TopicArn } = await sns.createTopic({
     Name: randomId('topic')
@@ -21,15 +21,10 @@ const createTopic = async () => {
  * @param {string} queueArn
  * @returns {Promise<void>}
  */
-const addSnsToSqsSubscription = async (topicArn, queueArn) => {
-  await awsClients.sns().subscribe({
+export const addSnsToSqsSubscription = async (topicArn, queueArn) => {
+  await _sns().subscribe({
     TopicArn: topicArn,
     Protocol: 'sqs',
     Endpoint: queueArn
   }).promise()
-}
-
-module.exports = {
-  addSnsToSqsSubscription,
-  createTopic
 }

@@ -1,7 +1,7 @@
 // @ts-nocheck
 
-const test = require('ava')
-const db = require('../../src/lib/database')
+import test from 'ava'
+import { constructSearchParams, buildDatetimeQuery } from '../../src/lib/database.js'
 
 test('search id parameter doesnt override other parameters', async (t) => {
   const ids = 'a,b,c'
@@ -10,7 +10,7 @@ test('search id parameter doesnt override other parameters', async (t) => {
     ids: ids,
     datetime: range
   }
-  const searchBody = await db.constructSearchParams(queryParams, 1)
+  const searchBody = await constructSearchParams(queryParams, 1)
 
   // TODO: the ordering here is fragile. helper methods needed to ensure the queries are correct
   t.is(
@@ -39,7 +39,7 @@ test('search datetime parameter intervals are correctly parsed', async (t) => {
   ]
 
   await datetimes.map(async ([datetime, start, end]) => {
-    const dtQuery = await db.buildDatetimeQuery({ datetime: datetime })
+    const dtQuery = await buildDatetimeQuery({ datetime: datetime })
     t.is(dtQuery.range['properties.datetime'].gte, start, 'datetime interval start')
     t.is(dtQuery.range['properties.datetime'].lte, end, 'datetime interval end')
   })
@@ -74,7 +74,7 @@ test('search datetime parameter instants are correctly parsed', async (t) => {
   ]
 
   await validDatetimes.map(async (datetime) => {
-    const dtQuery = await db.buildDatetimeQuery({ datetime: datetime })
+    const dtQuery = await buildDatetimeQuery({ datetime: datetime })
     t.is(dtQuery.term['properties.datetime'], datetime, 'datetime instant parses correctly')
   })
 })

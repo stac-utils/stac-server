@@ -1,5 +1,5 @@
 // these are attributes that can appear in multiple places in a STAC entity
-const templates = [
+export default [
   // Common https://github.com/radiantearth/stac-spec/blob/master/item-spec/common-metadata.md
   {
     descriptions: {
@@ -64,7 +64,3 @@ const templates = [
     }
   }
 ]
-
-module.exports = {
-  templates
-}

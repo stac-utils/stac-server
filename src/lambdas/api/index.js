@@ -1,22 +1,24 @@
+/* eslint-disable no-unused-vars */
+/* eslint-disable @typescript-eslint/no-unused-vars */
+
 /**
  * To Do
  *
  * - `invokePreHook` and `invokePostHook` are very similar. They should be DRY'd up.
  */
 
-const { z } = require('zod')
-const serverless = require('serverless-http')
-const { Lambda } = require('aws-sdk')
-const { app } = require('./app')
-/*eslint-disable */ /* no-unused-vars */
+import { z } from 'zod'
+import serverless from 'serverless-http'
+import { Lambda } from 'aws-sdk'
+import { app } from './app.js'
+import _default from './types.js'
 const {
-  APIGatewayProxyResultSchema,
-  PreHookResultSchema,
-  PostHookResultSchema,
-  LambdaErrorSchema, // false positive unused vars no-unused-vars
+  APIGatewayProxyResultSchema, PreHookResultSchema, PostHookResultSchema,
+  LambdaErrorSchema,
   APIGatewayProxyEventSchema
-} = require('./types')
-/*eslint-enable */
+} = _default
+/* eslint-enable no-unused-vars */
+/* eslint-enable @typescript-eslint/no-unused-vars */
 
 /**
  * @typedef {import('aws-lambda').APIGatewayProxyEvent} APIGatewayProxyEvent
@@ -195,7 +197,7 @@ const parseEvent = (rawEvent) => {
  * @param {Context} context
  * @returns {Promise<APIGatewayProxyResult>}
  */
-const handler = async (event, context) => {
+export default async (event, context) => {
   if (!process.env['AWS_REGION']) {
     console.error('AWS_REGION not set')
     return internalServerError
@@ -225,5 +227,3 @@ const handler = async (event, context) => {
     ? await invokePostHook(lambda, process.env['POST_HOOK'], serverlessAppResult)
     : serverlessAppResult
 }
-
-module.exports = { handler }

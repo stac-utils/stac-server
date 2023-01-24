@@ -1,7 +1,3 @@
-const { nullLogger } = require('./utils')
+import { nullLogger } from './utils.js'
 
-const nullLoggerContext = { logger: nullLogger }
-
-module.exports = {
-  nullLoggerContext
-}
+export default { logger: nullLogger }

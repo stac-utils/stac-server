@@ -1,23 +1,24 @@
 // @ts-nocheck
 
-const { pickBy, assign, get: getNested } = require('lodash')
-const extent = require('@mapbox/extent')
-const { DateTime } = require('luxon')
-const AWS = require('aws-sdk')
-const { isIndexNotFoundError } = require('./database')
+import { pickBy, assign, get as getNested } from 'lodash-es'
+import extent from '@mapbox/extent'
+import { DateTime } from 'luxon'
+import AWS from 'aws-sdk'
+import { isIndexNotFoundError } from './database.js'
+
 const logger = console
 
 // max number of collections to retrieve
 const COLLECTION_LIMIT = process.env.STAC_SERVER_COLLECTION_LIMIT || 100
 
-class ValidationError extends Error {
+export class ValidationError extends Error {
   constructor(message) {
     super(message)
     this.name = 'ValidationError'
   }
 }
 
-const extractIntersects = function (params) {
+export const extractIntersects = function (params) {
   let intersectsGeometry
   const { intersects } = params
   if (intersects) {
@@ -43,7 +44,7 @@ const extractIntersects = function (params) {
   return intersectsGeometry
 }
 
-const extractBbox = function (params, httpMethod = 'GET') {
+export const extractBbox = function (params, httpMethod = 'GET') {
   const { bbox } = params
   if (bbox) {
     let bboxArray
@@ -73,7 +74,7 @@ const extractBbox = function (params, httpMethod = 'GET') {
   return undefined
 }
 
-const extractLimit = function (params) {
+export const extractLimit = function (params) {
   const { limit: limitStr } = params
 
   if (limitStr !== undefined) {
@@ -97,7 +98,7 @@ const extractLimit = function (params) {
   return undefined
 }
 
-const extractPage = function (params) {
+export const extractPage = function (params) {
   const { page: pageStr } = params
 
   if (pageStr !== undefined) {
@@ -142,7 +143,7 @@ const validateStartAndEndDatetimes = function (startDateTime, endDateTime) {
   }
 }
 
-const extractDatetime = function (params) {
+export const extractDatetime = function (params) {
   const { datetime } = params
 
   if (datetime) {
@@ -274,7 +275,7 @@ const extractCollectionIds = function (params) {
   return idsRules
 }
 
-const parsePath = function (inpath) {
+export const parsePath = function (inpath) {
   const searchFilters = {
     root: false,
     api: false,
@@ -322,19 +323,19 @@ const addCollectionLinks = function (results, endpoint) {
     // self link
     links.splice(0, 0, {
       rel: 'self',
-      type: 'application/geo+json',
+      type: 'application/json',
       href: `${endpoint}/collections/${id}`
     })
     // parent catalog
     links.push({
       rel: 'parent',
-      type: 'application/geo+json',
+      type: 'application/json',
       href: `${endpoint}`
     })
     // root catalog
     links.push({
       rel: 'root',
-      type: 'application/geo+json',
+      type: 'application/json',
       href: `${endpoint}`
     })
     // child items
@@ -374,7 +375,7 @@ const addItemLinks = function (results, endpoint) {
     // root catalog
     links.push({
       rel: 'root',
-      type: 'application/geo+json',
+      type: 'application/json',
       href: `${endpoint}`
     })
     links.push({
@@ -467,7 +468,8 @@ const buildPaginationLinks = function (limit, parameters, bbox, intersects, endp
     const link = {
       rel: 'next',
       title: 'Next page of Items',
-      method: httpMethod
+      method: httpMethod,
+      type: 'application/geo+json'
     }
     if (httpMethod === 'GET') {
       const nextQueryParameters = dictToURI(nextParams)
@@ -517,9 +519,11 @@ const searchItems = async function (collectionId, queryParameters, backend, endp
   })
 
   let newEndpoint = `${endpoint}/search`
+  let collectionEndpoint
   if (collectionId) {
     searchParams.collections = [collectionId]
     newEndpoint = `${endpoint}/collections/${collectionId}/items`
+    collectionEndpoint = `${endpoint}/collections/${collectionId}`
   }
 
   logger.debug(`Search parameters: ${JSON.stringify(searchParams)}`)
@@ -553,13 +557,18 @@ const searchItems = async function (collectionId, queryParameters, backend, endp
     links = paginationLinks.concat([
       {
         rel: 'self',
-        type: 'application/json',
-        href: `${newEndpoint}`
+        type: 'application/geo+json',
+        href: newEndpoint
       },
       {
         rel: 'root',
-        type: 'application/geo+json',
-        href: `${endpoint}`
+        type: 'application/json',
+        href: endpoint
+      },
+      {
+        rel: 'collection',
+        type: 'application/json',
+        href: collectionEndpoint
       }
     ])
   } else {
@@ -668,7 +677,7 @@ const aggregate = async function (queryParameters, backend, endpoint, httpMethod
     },
     {
       rel: 'root',
-      type: 'application/geo+json',
+      type: 'application/json',
       href: `${endpoint}`
     }]
   }
@@ -704,12 +713,12 @@ const getCatalog = async function (txnEnabled, backend, endpoint = '') {
   const links = [
     {
       rel: 'self',
-      type: 'application/geo+json',
+      type: 'application/json',
       href: `${endpoint}`
     },
     {
       rel: 'root',
-      type: 'application/geo+json',
+      type: 'application/json',
       href: `${endpoint}`
     },
     {
@@ -783,7 +792,7 @@ const getCollections = async function (backend, endpoint = '') {
       },
       {
         rel: 'root',
-        type: 'application/geo+json',
+        type: 'application/json',
         href: `${endpoint}`,
       },
     ],
@@ -914,7 +923,7 @@ const healthCheck = async function (backend) {
   return new Error('Error with health check.')
 }
 
-module.exports = {
+export default {
   getConformance,
   getCatalog,
   getCollections,

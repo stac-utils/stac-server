@@ -1,10 +1,10 @@
-const dynamicTemplates = require('./dynamicTemplates')
+import dynamicTemplates from './dynamicTemplates.js'
 
-const collectionsIndexConfiguration = function () {
+export default function () {
   return {
     mappings: {
       numeric_detection: false,
-      dynamic_templates: dynamicTemplates.templates,
+      dynamic_templates: dynamicTemplates,
       properties: {
         'extent.spatial.bbox': { type: 'long' },
         'extent.temporal.interval': { type: 'date' },
@@ -14,8 +14,4 @@ const collectionsIndexConfiguration = function () {
       }
     }
   }
-}
-
-module.exports = {
-  collectionsIndexConfiguration
 }

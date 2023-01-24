@@ -1,16 +1,16 @@
 // @ts-nocheck
 
-const test = require('ava')
-const sinon = require('sinon')
-const proxyquire = require('proxyquire')
-const createEvent = require('aws-event-mocks')
+import test from 'ava'
+import { stub } from 'sinon'
+import proxyquire from 'proxyquire'
+import createEvent from 'aws-event-mocks'
 
 const setup = () => {
-  const ingest = sinon.stub().resolves(true)
-  const ingestItem = sinon.stub().resolves(true)
+  const ingest = stub().resolves(true)
+  const ingestItem = stub().resolves(true)
   const opensearch = 'opensearch'
-  const ECS = sinon.stub()
-  const runTask = sinon.stub().resolves(true).returns({
+  const ECS = stub()
+  const runTask = stub().resolves(true).returns({
     promise: () => (Promise.resolve(true))
   })
   ECS.prototype.runTask = runTask

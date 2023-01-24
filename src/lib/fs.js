@@ -1,15 +1,10 @@
-const fs = require('fs')
-const { promisify } = require('util')
+import { readFile as _readFile } from 'fs'
+import { promisify } from 'util'
 
-const readFile = promisify(fs.readFile)
+export const readFile = promisify(_readFile)
 
 /**
  * @param {string} filename
  * @returns {Promise<unknown>}
  */
-const readJson = (filename) => readFile(filename, 'utf8').then(JSON.parse)
-
-module.exports = {
-  readFile,
-  readJson
-}
+export const readJson = (filename) => readFile(filename, 'utf8').then(JSON.parse)

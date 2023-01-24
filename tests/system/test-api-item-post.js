@@ -1,14 +1,14 @@
 // @ts-nocheck
 
-const test = require('ava')
-const { deleteAllIndices } = require('../helpers/database')
-const { ingestItem } = require('../helpers/ingest')
-const { randomId, loadFixture } = require('../helpers/utils')
-const systemTests = require('../helpers/system-tests')
+import test from 'ava'
+import { deleteAllIndices } from '../helpers/database.js'
+import { ingestItem } from '../helpers/ingest.js'
+import { randomId, loadFixture } from '../helpers/utils.js'
+import { setup } from '../helpers/system-tests.js'
 
 test.before(async (t) => {
   await deleteAllIndices()
-  const standUpResult = await systemTests.setup()
+  const standUpResult = await setup()
 
   t.context = standUpResult
 

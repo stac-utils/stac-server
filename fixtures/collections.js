@@ -1,10 +1,10 @@
-import templates from './dynamicTemplates.js'
+import dynamicTemplates from './dynamicTemplates.js'
 
 export default function () {
   return {
     mappings: {
       numeric_detection: false,
-      dynamic_templates: templates,
+      dynamic_templates: dynamicTemplates,
       properties: {
         'extent.spatial.bbox': { type: 'long' },
         'extent.temporal.interval': { type: 'date' },

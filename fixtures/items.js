@@ -1,4 +1,4 @@
-import templates from './dynamicTemplates.js'
+import dynamicTemplates from './dynamicTemplates.js'
 
 export default function () {
   const numberOfShards = process.env['ITEMS_INDICIES_NUM_OF_SHARDS']
@@ -16,7 +16,7 @@ export default function () {
 
   config.mappings = {
     numeric_detection: false,
-    dynamic_templates: templates,
+    dynamic_templates: dynamicTemplates,
     properties: {
       geometry: { type: 'geo_shape' },
       assets: { type: 'object', enabled: false },

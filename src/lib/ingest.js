@@ -1,7 +1,6 @@
 import { Readable } from 'readable-stream'
 import pump from 'pump'
-
-const logger = console
+import logger from './logger.js'
 
 export async function ingestItem(item, stream) {
   const readable = new Readable({ objectMode: true })
@@ -13,7 +12,7 @@ export async function ingestItem(item, stream) {
       dbStream,
       (error) => {
         if (error) {
-          logger.error(`Error ingesting: ${error}`)
+          logger.error('Error ingesting', error)
           reject(error)
         } else {
           logger.info(`Ingested item ${item.id}`)
@@ -37,7 +36,7 @@ export async function ingestItems(items, stream) {
       dbStream,
       (error) => {
         if (error) {
-          logger.error(`Error ingesting: ${error}`)
+          logger.error('Error ingesting', error)
           reject(error)
         } else {
           logger.debug('Ingested item')

@@ -9,9 +9,21 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Changed
 
-- Search query and response body is now logged at level DEBUG rather than INFO
-- Ingested item body is now logged at level DEBUG rather than INFO
 - ESM modules are used instead of CommonJS
+
+## [0.6.0] - 2023-01-24
+
+### Fixed
+
+- Log level configuration now has an effect on log levels
+
+### Changed
+
+- Log level must be configured with lowercase values error, warn, info, http, verbose, debug, silly instead of uppercase values (this config had no effect before)
+- Default request logging format is now "tiny" instead of "dev". Previously, the "dev" format
+  wrote color codes into CloudWatch logs, which cluttered output, as they were not used in display.
+- Search query and response body is now logged at level "debug" rather than "info"
+- Ingested item body is now logged at level "debug" rather than "info"
 
 ## [0.5.2] - 2023-01-17
 
@@ -221,6 +233,9 @@ Initial release, forked from [sat-api](https://github.com/sat-utils/sat-api/tree
 
 Compliant with STAC 0.9.0
 
+[0.6.0]: https://github.com/stac-utils/stac-api/compare/v0.5.2...v0.6.0
+[0.5.2]: https://github.com/stac-utils/stac-api/compare/v0.4.1...v0.5.2
+[0.5.1]: https://github.com/stac-utils/stac-api/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/stac-utils/stac-api/compare/v0.4.1...v0.5.0
 [0.4.2]: https://github.com/stac-utils/stac-api/compare/v0.4.1...v0.4.2
 [0.4.1]: https://github.com/stac-utils/stac-api/compare/v0.4.0...v0.4.1

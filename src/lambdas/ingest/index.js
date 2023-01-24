@@ -3,6 +3,7 @@ import { createIndex } from '../../lib/databaseClient.js'
 import stream from '../../lib/databaseStream.js'
 import { ingestItems } from '../../lib/ingest.js'
 import getObjectJson from '../../lib/s3-utils.js'
+import logger from '../../lib/logger.js'
 
 const isSqsEvent = (event) => 'Records' in event
 
@@ -47,10 +48,8 @@ const stacItemsFromSqsEvent = async (event) => {
   )
 }
 
-export default async function handler(event, context) {
-  const { logger = console } = context
-
-  logger.debug(`Event: ${JSON.stringify(event, undefined, 2)}`)
+export default async function handler(event, _context) {
+  logger.debug('Event: %j', event)
 
   if (event.create_indices) {
     await createIndex('collections')
@@ -62,9 +61,9 @@ export default async function handler(event, context) {
 
   try {
     await ingestItems(stacItems, stream)
-    logger.info(`Ingested ${stacItems.length} Items: ${JSON.stringify(stacItems)}`)
+    logger.debug('Ingested %d items: %j', stacItems.length, stacItems)
   } catch (error) {
-    console.log(error)
+    logger.error(error)
     throw (error)
   }
 }

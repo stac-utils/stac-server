@@ -4,7 +4,6 @@ import { DateTime } from 'luxon'
 import { getCollectionIds, getItem } from '../helpers/api.js'
 import handler from '../../src/lambdas/ingest/index.js'
 import { loadFixture, randomId } from '../helpers/utils.js'
-import nullLoggerContext from '../helpers/context.js'
 import { refreshIndices, deleteAllIndices } from '../helpers/database.js'
 import { sqsTriggerLambda, purgeQueue } from '../helpers/sqs.js'
 import { sns, s3 as _s3 } from '../../src/lib/aws-clients.js'
@@ -54,7 +53,7 @@ test('The ingest lambda supports ingesting a collection published to SNS', async
     Message: JSON.stringify(collection)
   }).promise()
 
-  await sqsTriggerLambda(ingestQueueUrl, handler, nullLoggerContext)
+  await sqsTriggerLambda(ingestQueueUrl, handler)
 
   await refreshIndices()
 
@@ -95,7 +94,7 @@ test('The ingest lambda supports ingesting a collection sourced from S3', async 
     Message: JSON.stringify({ href: `s3://${sourceBucket}/${sourceKey}` })
   }).promise()
 
-  await sqsTriggerLambda(ingestQueueUrl, handler, nullLoggerContext)
+  await sqsTriggerLambda(ingestQueueUrl, handler)
 
   await refreshIndices()
 
@@ -122,7 +121,7 @@ test('The ingest lambda supports ingesting a collection sourced from http', asyn
     Message: JSON.stringify({ href: 'http://source.local/my-file.dat' })
   }).promise()
 
-  await sqsTriggerLambda(ingestQueueUrl, handler, nullLoggerContext)
+  await sqsTriggerLambda(ingestQueueUrl, handler)
 
   await refreshIndices()
 

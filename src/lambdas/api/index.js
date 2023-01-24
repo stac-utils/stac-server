@@ -1,6 +1,4 @@
 // @ts-check
-/* eslint-disable no-unused-vars */
-/* eslint-disable @typescript-eslint/no-unused-vars */
 
 /**
  * To Do
@@ -13,6 +11,10 @@ import serverless from 'serverless-http'
 import { Lambda } from 'aws-sdk'
 import { app } from './app.js'
 import _default from './types.js'
+import logger from '../../lib/logger.js'
+
+/* eslint-disable no-unused-vars */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 const {
   APIGatewayProxyResultSchema, PreHookResultSchema, PostHookResultSchema,
   LambdaErrorSchema,
@@ -58,7 +60,7 @@ const logZodParseError = (data, error) => {
     errorObj = { data, error }
   }
 
-  console.error(JSON.stringify(errorObj, undefined, 2))
+  logger.error('zod parsing error: %j', errorObj)
 }
 
 /**
@@ -76,14 +78,14 @@ const invokePreHook = async (lambda, preHook, payload) => {
       Payload: JSON.stringify(payload)
     }).promise()
   } catch (error) {
-    console.error('Failed to invoke pre-hook lambda:', error)
+    logger.error('Failed to invoke pre-hook lambda:', error)
     return internalServerError
   }
 
   // I've never seen this happen but, according to the TypeScript type definitions
   // provided by AWS, `Lambda.InvocationResponse.Payload` could be `undefined`.
   if (invocationResponse.Payload === undefined) {
-    console.error('Undefined Payload returned from pre-hook lambda')
+    logger.error('Undefined Payload returned from pre-hook lambda')
     return internalServerError
   }
 
@@ -95,13 +97,13 @@ const invokePreHook = async (lambda, preHook, payload) => {
     // @ts-expect-error https://github.com/colinhacks/zod/issues/980
     hookResult = PreHookResultSchema.parse(rawHookResult)
   } catch (error) {
-    console.error('Failed to parse response from pre-hook')
+    logger.error('Failed to parse response from pre-hook')
     logZodParseError(rawHookResult, error)
     return internalServerError
   }
 
   if ('errorType' in hookResult) {
-    console.error('Pre-hook failed:', hookResult.trace.join('\n'))
+    logger.error('Pre-hook failed:', hookResult)
     return internalServerError
   }
 
@@ -123,14 +125,14 @@ const invokePostHook = async (lambda, postHook, payload) => {
       Payload: JSON.stringify(payload)
     }).promise()
   } catch (error) {
-    console.error('Failed to invoke post-hook lambda:', error)
+    logger.error('Failed to invoke post-hook lambda:', error)
     return internalServerError
   }
 
   // I've never seen this happen but, according to the TypeScript type definitions
   // provided by AWS, `Lambda.InvocationResponse.Payload` could be `undefined`.
   if (invocationResponse.Payload === undefined) {
-    console.error('Undefined Payload returned from post-hook lambda')
+    logger.error('Undefined Payload returned from post-hook lambda')
     return internalServerError
   }
 
@@ -141,13 +143,13 @@ const invokePostHook = async (lambda, postHook, payload) => {
   try {
     hookResult = PostHookResultSchema.parse(rawHookResult)
   } catch (error) {
-    console.error('Failed to parse response from post-hook')
+    logger.error('Failed to parse response from post-hook')
     logZodParseError(rawHookResult, error)
     return internalServerError
   }
 
   if ('errorType' in hookResult) {
-    console.error('Post hook failed:', hookResult.trace.join('\n'))
+    logger.error('Post hook failed:', hookResult)
     return internalServerError
   }
 
@@ -165,7 +167,7 @@ const callServerlessApp = async (event, context) => {
   try {
     return APIGatewayProxyResultSchema.parse(result)
   } catch (error) {
-    console.error('Failed to parse response from serverless app')
+    logger.error('Failed to parse response from serverless app')
     logZodParseError(result, error)
     return internalServerError
   }
@@ -200,7 +202,7 @@ const parseEvent = (rawEvent) => {
  */
 export default async (event, context) => {
   if (!process.env['AWS_REGION']) {
-    console.error('AWS_REGION not set')
+    logger.error('AWS_REGION not set')
     return internalServerError
   }
 

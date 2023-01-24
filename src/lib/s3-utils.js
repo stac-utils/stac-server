@@ -1,4 +1,5 @@
 import { s3 } from './aws-clients.js'
+import logger from './logger.js'
 
 const getObjectBody = async (s3Location) => {
   try {
@@ -14,7 +15,7 @@ const getObjectBody = async (s3Location) => {
     return result.Body
   } catch (error) {
     if (error instanceof Error) {
-      console.log(`Failed to fetch ${s3Location.url}: ${error.message}`)
+      logger.error(`Failed to fetch ${s3Location.url}`, error)
     }
     throw error
   }

@@ -9,14 +9,6 @@ import { fileURLToPath } from 'url'
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename) // eslint-disable-line no-unused-vars
 
-export const noop = () => { }
-
-export const nullLogger = {
-  debug: noop,
-  info: noop,
-  log: noop
-}
-
 const readFile = promisify(_readFile)
 
 const fixturesPath = join(__dirname, '..', 'fixtures')

@@ -1,6 +1,6 @@
 import _stream from 'stream'
 import through2 from 'through2'
-import { dbClient } from './databaseClient.js'
+import { dbClient, createIndex } from './databaseClient.js'
 
 import { getItemCreated } from './database.js'
 
@@ -68,7 +68,7 @@ class SearchDatabaseWritableStream extends _stream.Writable {
 
       // if this was a collection, then add a new index with collection name
       if (index === COLLECTIONS_INDEX) {
-        (await dbClient()).createIndex(id)
+        await createIndex(id)
       }
 
       return next()

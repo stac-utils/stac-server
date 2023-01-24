@@ -11,7 +11,7 @@ import { loadJson, setup } from '../helpers/system-tests.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename) // eslint-disable-line no-unused-vars
-const intersectsGeometry = fs.readFileSync(path.resolve(__dirname, '../fixtures/stac/intersectsGeometry.json'))
+const intersectsGeometry = fs.readFileSync(path.resolve(__dirname, '../fixtures/stac/intersectsGeometry.json'), 'utf8')
 
 const ingestEntities = async (fixtures) => {
   await ingestItems(

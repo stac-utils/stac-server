@@ -11,8 +11,8 @@
 import { z } from 'zod'
 import serverless from 'serverless-http'
 import { Lambda } from 'aws-sdk'
-import { app } from './app'
-import _default from './types'
+import { app } from './app.js'
+import _default from './types.js'
 const {
   APIGatewayProxyResultSchema, PreHookResultSchema, PostHookResultSchema,
   LambdaErrorSchema,

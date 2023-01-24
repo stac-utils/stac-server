@@ -1,6 +1,7 @@
 import test from 'ava'
-
+import { fileURLToPath } from 'url'
 import fs from 'fs'
+import path from 'path'
 import { deleteAllIndices, refreshIndices } from '../helpers/database.js'
 import { randomId } from '../helpers/utils.js'
 import { ingestItems } from '../../src/lib/ingest.js'
@@ -8,7 +9,9 @@ import { ingestItems } from '../../src/lib/ingest.js'
 import stream from '../../src/lib/databaseStream.js'
 import { loadJson, setup } from '../helpers/system-tests.js'
 
-const intersectsGeometry = fs.readFileSync('../fixtures/stac/intersectsGeometry.json', 'utf8')
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename) // eslint-disable-line no-unused-vars
+const intersectsGeometry = fs.readFileSync(path.resolve(__dirname, '../fixtures/stac/intersectsGeometry.json'))
 
 const ingestEntities = async (fixtures) => {
   await ingestItems(

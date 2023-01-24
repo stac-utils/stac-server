@@ -1,8 +1,8 @@
 import templates from './dynamicTemplates.js'
 
-const itemsIndexConfiguration = function () {
-  const numberOfShards = process.env.ITEMS_INDICIES_NUM_OF_SHARDS
-  const numberOfReplicas = process.env.ITEMS_INDICIES_NUM_OF_REPLICAS
+export default function () {
+  const numberOfShards = process.env['ITEMS_INDICIES_NUM_OF_SHARDS']
+  const numberOfReplicas = process.env['ITEMS_INDICIES_NUM_OF_REPLICAS']
 
   const config = {}
 
@@ -43,8 +43,4 @@ const itemsIndexConfiguration = function () {
   }
 
   return config
-}
-
-export default {
-  itemsIndexConfiguration
 }

@@ -81,16 +81,18 @@ export async function dbClient() {
 export async function createIndex(index) {
   const client = await dbClient()
   const exists = await client.indices.exists({ index })
-  const indexConfiguration = index === 'collections'
-    ? collectionsIndexConfiguration() : itemsIndexConfiguration()
+  console.log(JSON.stringify(exists))
   if (!exists.body) {
     logger.info(`${index} does not exist, creating...`)
+    const indexConfiguration = index === 'collections'
+      ? collectionsIndexConfiguration() : itemsIndexConfiguration()
+    console.log(JSON.stringify(indexConfiguration))
     try {
       await client.indices.create({ index, body: indexConfiguration })
       logger.info(`Created index ${index}`)
       logger.debug(`Mapping: ${JSON.stringify(indexConfiguration)}`)
     } catch (error) {
-      const debugMessage = `Error creating index ${index}, already created: ${error}`
+      const debugMessage = `Error creating index '${index}': ${error}`
       logger.debug(debugMessage)
     }
   }

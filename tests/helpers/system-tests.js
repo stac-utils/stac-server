@@ -3,16 +3,15 @@
 import nock from 'nock'
 import { promisify } from 'util'
 import { readFile as _readFile } from 'fs'
-import { join } from 'path'
+import path, { join } from 'path'
+import { fileURLToPath } from 'url'
 import { startApi } from './api.js'
 import { createCollectionsIndex, refreshIndices } from './database.js'
 import { createTopic, addSnsToSqsSubscription } from './sns.js'
 import { createQueue, getQueueArn } from './sqs.js'
-import path from 'path'
-import { fileURLToPath } from 'url'
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename); // eslint-disable-line no-unused-vars
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename) // eslint-disable-line no-unused-vars
 
 export const setupResources = async () => {
   // Create Ingest SNS topic

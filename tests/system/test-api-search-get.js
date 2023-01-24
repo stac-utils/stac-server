@@ -1,5 +1,5 @@
 import test from 'ava'
-import got from 'got'
+import got from 'got' // eslint-disable-line import/no-unresolved
 import { deleteAllIndices, refreshIndices } from '../helpers/database.js'
 import { randomId } from '../helpers/utils.js'
 import { ingestItems } from '../../src/lib/ingest.js'

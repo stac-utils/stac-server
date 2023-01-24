@@ -1,4 +1,6 @@
 // @ts-check
+/* eslint-disable no-unused-vars */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 
 /**
  * To Do
@@ -12,9 +14,12 @@ import { Lambda } from 'aws-sdk'
 import { app } from './app'
 import _default from './types'
 const {
-  APIGatewayProxyResultSchema, PreHookResultSchema, PostHookResultSchema, LambdaErrorSchema, // eslint-disable-line no-unused-vars
+  APIGatewayProxyResultSchema, PreHookResultSchema, PostHookResultSchema,
+  LambdaErrorSchema,
   APIGatewayProxyEventSchema
 } = _default
+/* eslint-enable no-unused-vars */
+/* eslint-enable @typescript-eslint/no-unused-vars */
 
 /**
  * @typedef {import('aws-lambda').APIGatewayProxyEvent} APIGatewayProxyEvent
@@ -193,7 +198,7 @@ const parseEvent = (rawEvent) => {
  * @param {Context} context
  * @returns {Promise<APIGatewayProxyResult>}
  */
-const handler = async (event, context) => {
+export default async (event, context) => {
   if (!process.env['AWS_REGION']) {
     console.error('AWS_REGION not set')
     return internalServerError
@@ -223,5 +228,3 @@ const handler = async (event, context) => {
     ? await invokePostHook(lambda, process.env['POST_HOOK'], serverlessAppResult)
     : serverlessAppResult
 }
-
-export default { handler }

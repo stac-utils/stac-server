@@ -2,18 +2,17 @@
 
 import cors from 'cors'
 import createError from 'http-errors'
-import express, { json } from 'express'
+import express from 'express'
 import logger from 'morgan'
-import { join } from 'path'
+import path, { join } from 'path'
+import { fileURLToPath } from 'url'
 import database from '../../lib/database.js'
 import api, { ValidationError } from '../../lib/api.js'
 import { readFile } from '../../lib/fs.js'
 import addEndpoint from './middleware/add-endpoint.js'
-import path from 'path'
-import { fileURLToPath } from 'url'
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename); // eslint-disable-line no-unused-vars
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename) // eslint-disable-line no-unused-vars
 
 /**
  * @typedef {import('express').Request} Request
@@ -28,7 +27,7 @@ export const app = express()
 
 app.use(logger('dev'))
 app.use(cors())
-app.use(json())
+app.use(express.json({ limit: '1mb' }))
 app.use(addEndpoint)
 
 app.get('/', async (req, res, next) => {
@@ -358,6 +357,7 @@ app.use((_req, _res, next) => {
 
 // error handler
 app.use(
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   /** @type {ErrorRequestHandler} */ ((err, _req, res, _next) => {
     res.status(err.status || 500)
 

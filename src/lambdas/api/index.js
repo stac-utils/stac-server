@@ -9,8 +9,7 @@
 import { z } from 'zod'
 import serverless from 'serverless-http'
 import { Lambda } from 'aws-sdk'
-import default from './app'
-const { app } = default
+import { app } from './app'
 import _default from './types'
 const {
   APIGatewayProxyResultSchema, PreHookResultSchema, PostHookResultSchema, LambdaErrorSchema, // eslint-disable-line no-unused-vars

@@ -166,7 +166,7 @@ the OpenSearch domain into it.
 With the 0.4.x codebase, change the serverless.yml file to add to the AWS::Elasticsearch::Domain definition at the same
 level as the `Type` attribute these two attributes:
 
-```
+```yaml
 DeletionPolicy: Retain
 UpdateReplacePolicy: Retain
 ```
@@ -282,7 +282,7 @@ validate that `properties.datetime` type is `date`, and `id` and `collection` ma
 
 The results should look simliar to this:
 
-```
+```json
 {
   "my_collection_name": {
     "mappings": {
@@ -403,7 +403,7 @@ There are some settings that should be reviewed and updated as needeed in the se
 | STAC_DESCRIPTION                 | Description of this catalog                                                                                                                                                                      | A STAC API                                                                           |
 | STAC_DOCS_URL                    | URL to documentation                                                                                                                                                                             | [https://stac-utils.github.io/stac-server](https://stac-utils.github.io/stac-server) |
 | INGEST_BATCH_SIZE                | Number of records to ingest in single batch                                                                                                                                                      | 500                                                                                  |
-| LOG_LEVEL                        | Level for logging (CRITICAL, ERROR, WARNING, INFO, DEBUG)                                                                                                                                        | INFO                                                                                 |
+| LOG_LEVEL                        | Level for logging (CRITICAL, ERROR, WARN, INFO, DEBUG)                                                                                                                                        | INFO                                                                                 |
 | STAC_API_URL                     | The root endpoint of this API                                                                                                                                                                    | Inferred from request                                                                |
 | ENABLE_TRANSACTIONS_EXTENSION    | Boolean specifying if the [Transaction Extension](https://github.com/radiantearth/stac-api-spec/tree/master/ogcapi-features/extensions/transaction) should be activated                          | false                                                                                |
 | STAC_API_ROOTPATH                | The path to append to URLs if this is not deployed at the server root. For example, if the server is deployed without a custom domain name, it will have the stage name (e.g., dev) in the path. | ""                                                                                   |
@@ -413,7 +413,7 @@ There are some settings that should be reviewed and updated as needeed in the se
 | OPENSEARCH_USERNAME              | The username to authenticate to OpenSearch with if fine-grained access control is enabled.                                                                                                       |                                                                                      |
 | OPENSEARCH_PASSWORD              | The password to authenticate to OpenSearch with if fine-grained access control is enabled.                                                                                                       |                                                                                      |
 | OPENSEARCH_CREDENTIALS_SECRET_ID | The AWS Secrets Manager secret to retrieve the username and password from, to authenticate to OpenSearch with if fine-grained access control is enabled.                                         |                                                                                      |
-| COLLECTION_TO_INDEX_MAPPINGS | A JSON object representing collection id to index name mappings if they do not have the same names.                                         |                                                                                      |
+| COLLECTION_TO_INDEX_MAPPINGS     | A JSON object representing collection id to index name mappings if they do not have the same names.                                                                                              |                                                                                      |
 
 | ITEMS_INDICIES_NUM_OF_SHARDS                | Configure the number of shards for the indices that contain Items.                                                                                                                                  | none                                                                                |
 | ITEMS_INDICIES_NUM_OF_REPLICAS                | Configure the number of replicas for the indices that contain Items.                                                                                                                                                                              | none                                                                                |
@@ -528,25 +528,25 @@ to the Elasticsearch -> OpenSearch migration process.
 Add this to the `AWS::OpenSearchService::Domain` resource:
 
 ```yaml
-        DomainEndpointOptions:
-          EnforceHTTPS: true
-        NodeToNodeEncryptionOptions:
-          Enabled: true
-        EncryptionAtRestOptions:
-          Enabled: true
-        AdvancedSecurityOptions:
-            Enabled: true
-            InternalUserDatabaseEnabled: true
-            MasterUserOptions:
-              MasterUserName: admin
-              MasterUserPassword: ${env:OPENSEARCH_MASTER_USER_PASSWORD}
-        AccessPolicies:
-          Version:                        "2012-10-17"
-          Statement:
-            - Effect:                     "Allow"
-              Principal:                  { "AWS": "*" }
-              Action:                     "es:ESHttp*"
-              Resource:                   "arn:aws:es:arn:aws:es:${aws:region}:${aws:accountId}:domain/${self:service}-${self:provider.stage}/*"
+DomainEndpointOptions:
+  EnforceHTTPS: true
+NodeToNodeEncryptionOptions:
+  Enabled: true
+EncryptionAtRestOptions:
+  Enabled: true
+AdvancedSecurityOptions:
+    Enabled: true
+    InternalUserDatabaseEnabled: true
+    MasterUserOptions:
+      MasterUserName: admin
+      MasterUserPassword: ${env:OPENSEARCH_MASTER_USER_PASSWORD}
+AccessPolicies:
+  Version:                        "2012-10-17"
+  Statement:
+    - Effect:                     "Allow"
+      Principal:                  { "AWS": "*" }
+      Action:                     "es:ESHttp*"
+      Resource:                   "arn:aws:es:${aws:region}:${aws:accountId}:domain/${self:service}-${self:provider.stage}/*"
 ```
 
 The AccessPolicies Statement will restrict the OpenSearch instance to only being accessible
@@ -572,8 +572,7 @@ This assumes the master username is `admin` and creats a user with the name `sta
 
 Create the Role:
 
-```
-## Request (2) Duplicate
+```shell
 curl -X "PUT" "${HOST}/_plugins/_security/api/roles/stac_server_role" \
      -H 'Content-Type: application/json; charset=utf-8' \
      -u 'admin:xxxxxxxx' \
@@ -608,7 +607,7 @@ curl -X "PUT" "${HOST}/_plugins/_security/api/roles/stac_server_role" \
 
 Create the User:
 
-```
+```shell
 curl -X "PUT" "${HOST}/_plugins/_security/api/internalusers/stac_server" \
      -H 'Content-Type: application/json; charset=utf-8' \
      -u 'admin:xxxxxxxx' \
@@ -619,7 +618,7 @@ Double-check the response to ensure that the user was actually created!
 
 Map the Role to the User:
 
-```
+```shell
 curl -X "PUT" "${HOST}/_plugins/_security/api/rolesmapping/stac_server_role" \
      -H 'Content-Type: application/json; charset=utf-8' \
      -u 'admin:xxxxxxxx' \
@@ -669,7 +668,7 @@ values, e.g., `stac_server` and whatever you set as the password when creating t
 Add the `OPENSEARCH_CREDENTIALS_SECRET_ID` variable to the serverless.yml section
 `environment`:
 
-```
+```yaml
 OPENSEARCH_CREDENTIALS_SECRET_ID: ${self:provider.stage}/${self:service}/opensearch
 ```
 
@@ -741,7 +740,7 @@ def lambda_handler(event, context):
 
 If you wanted to deploy STAC Server in a way which ensures certain endpoints have restricted access but others don't, you can deploy it into a VPC and add conditions that allow only certain IP addresses to access certain endpoints. Once you deploy STAC Server into a VPC, you can modify the Resource Policy of the API Gateway endpoint that gets deployed to restrict access to certain endpoints. Here is a hypothetical example. Assume that the account into which STAC Server is deployed is numbered 1234-5678-9123, the API ID is ab1c23def, and the region in which it is deployed is us-west-2. You might want to give the general public access to use any GET or POST endpoints with the API such as the "/search" endpoint, but lock down access to the transaction endpoints (see <https://github.com/radiantearth/stac-api-spec/tree/master/ogcapi-features/extensions/transaction>) to only allow certain IP addresses to access them. These IP addresses can be, for example: 94.61.192.106, 204.176.50.129, and 11.27.65.78. In order to do this, you can impose a condition on the API Gateway that only allows API transactions such as adding, updating, and deleting STAC items from the whitelisted endpoints. For example, here is a Resource Policy containing two statements that allow this to happen:
 
-```
+```json
 {
     "Version": "2012-10-17",
     "Statement": [
@@ -782,27 +781,27 @@ If you wanted to deploy STAC Server in a way which ensures certain endpoints hav
 
 The first statement in the Resource Policy above grants access to STAC API endpoints for use in general operations like searching, and the second statement restricts access to the Transaction endpoints to a set of source IP addresses. According to this policy, POST, PUT, PATCH, and DELETE operations on items within collections are only allowed if the request originates from the IP addresses 94.61.192.106, 204.176.50.129, or 11.27.65.78. The second statement can also be written in another manner, denying access to the Transaction endpoints for all addresses that don’t match a set of source IP addresses. This is shown below.
 
-```
-    {
-        "Effect": "Deny",
-        "Principal": "*",
-        "Action": "execute-api:Invoke",
-        "Resource": [
-            "arn:aws:execute-api:us-west-2:123456789123:ab1c23def/v1/POST/collections/*/items",
-            "arn:aws:execute-api:us-west-2:123456789123:ab1c23def/v1/PUT/collections/*/items/*",
-            "arn:aws:execute-api:us-west-2:123456789123:ab1c23def/v1/PATCH/collections/*/items/*",
-            "arn:aws:execute-api:us-west-2:123456789123:ab1c23def/v1/DELETE/collections/*/items/*"
-        ],
-        "Condition": {
-            "NotIpAddress": {
-                "aws:sourceIp": [
-                    "94.61.192.106",
-                    "204.176.50.129",
-                    "11.27.65.78"
-                ]
-            }
+```json
+{
+    "Effect": "Deny",
+    "Principal": "*",
+    "Action": "execute-api:Invoke",
+    "Resource": [
+        "arn:aws:execute-api:us-west-2:123456789123:ab1c23def/v1/POST/collections/*/items",
+        "arn:aws:execute-api:us-west-2:123456789123:ab1c23def/v1/PUT/collections/*/items/*",
+        "arn:aws:execute-api:us-west-2:123456789123:ab1c23def/v1/PATCH/collections/*/items/*",
+        "arn:aws:execute-api:us-west-2:123456789123:ab1c23def/v1/DELETE/collections/*/items/*"
+    ],
+    "Condition": {
+        "NotIpAddress": {
+            "aws:sourceIp": [
+                "94.61.192.106",
+                "204.176.50.129",
+                "11.27.65.78"
+            ]
         }
     }
+}
 ```
 
 ### AWS WAF Rule Conflicts
@@ -811,7 +810,7 @@ Frequently, stac-server is deployed with AWS WAF protection. When making a POST 
 that only has the `limit` parameter in the body, a WAF SQL injection protection rule
 incurs a false positive and returns a Forbidden status code. This request is an example:
 
-```
+```shell
 curl -X POST ${HOST}/search -d '{"limit": 1}'
 ```
 
@@ -858,15 +857,15 @@ across the clusters, treating a remote cluster as if it were another group of no
 cluster, or configure indicies to be replicated (continuously copied) from from one
 cluster to another.
 
-Configuring either cross-cluster behavior requires [enabling fine-grained access control](#enable-fine-grained-access-control).
+Configuring either cross-cluster behavior requires [enabling fine-grained access control](#enable-opensearch-fine-grained-access-control).
 
 ### Cross-cluster Search
 
 The AWS documentation for cross-cluster search can be found
 [here](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/cross-cluster-search.html).
 
-1. [Enable fine-grained access control](#enable-fine-grained-access-control)
-3. Create a connection between the source and destination OpenSearch domains.
+1. [Enable fine-grained access control](#enable-opensearch-fine-grained-access-control)
+2. Create a connection between the source and destination OpenSearch domains.
 3. Ensure there is a `es:ESCrossClusterGet` action in the destination's access policy.
 4. In the source stac-server, create a Collection for each collection to be mapped. This
    must have the same id as the destination collection.
@@ -880,9 +879,9 @@ The AWS documentation for cross-cluster search can be found
 The AWS documentation for cross-cluster replication can be found
 [here](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/replication.html).
 
-1. [Enable fine-grained access control](#enable-fine-grained-access-control)
-1. Create the replication connection in the source to the destination
-2. Create the collection in the source's stac-server instance
+1. [Enable fine-grained access control](#enable-opensearch-fine-grained-access-control)
+2. Create the replication connection in the source to the destination
+3. Create the collection in the source's stac-server instance
 
 ## Pre- and Post-Hooks
 
@@ -960,7 +959,7 @@ The outputs of the pre- and post-hooks are validated and, if they don't comply w
 
 Install [NVM](https://github.com/nvm-sh/nvm) to manage your Node.js environment.
 
-```
+```shell
 # uses version in .nvmrc
 nvm install
 nvm use
@@ -970,7 +969,7 @@ The package-lock.json was built with npm 8.5.0, so use at least this version.
 
 There are several useful npm commands available to use locally:
 
-```
+```shell
 # Install dependencies in package.json
 npm install
 
@@ -1005,7 +1004,7 @@ Connect to the server on <http://localhost:3000/>
 
 Other configurations can be passed as shell environment variables, e.g.,
 
-```
+```shell
 export ENABLE_TRANSACTIONS_EXTENSION=true
 export OPENSEARCH_HOST='https://search-stac-server-dev-7awl6h344qlpvly.us-west-2.es.amazonaws.com'
 npm run serve
@@ -1093,7 +1092,7 @@ Next, edit that file to make it specific to this server. For example:
 
 To validate the resulting OpenAPI file, run
 
-```
+```shell
 npm run check-openapi
 ```
 

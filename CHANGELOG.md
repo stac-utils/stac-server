@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## Unreleased - TBD
+
+### Changed
+
+- Search query and response body is now logged at level DEBUG rather than INFO
+- Ingested item body is now logged at level DEBUG rather than INFO
+
+## [0.5.2] - 2023-01-17
+
+### Fixed
+
+- Fixed incorrect usage of `application/geo+json` in several link relations.
+- When cross-cluster search is configured, the first search without a collection returned
+  zero results.
+
+## [0.5.1] - 2023-01-10
+
+### Changed
+
+- Max size for POST body is now 1mb instead of 100kb.
+
 ## [0.5.0] - 2022-12-23
 
 ### Removed

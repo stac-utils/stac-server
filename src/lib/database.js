@@ -2,7 +2,7 @@ import { dbClient as _client, createIndex } from './databaseClient.js'
 
 const logger = console
 
-const COLLECTIONS_INDEX = process.env.COLLECTIONS_INDEX || 'collections'
+const COLLECTIONS_INDEX = process.env['COLLECTIONS_INDEX'] || 'collections'
 const DEFAULT_INDICES = ['*', '-.*', '-collections']
 
 let collectionToIndexMapping = null
@@ -324,11 +324,11 @@ async function deleteItem(collectionId, itemId) {
 }
 
 async function dbQuery(parameters) {
-  logger.info(`Search database query: ${JSON.stringify(parameters)}`)
+  logger.debug(`Search query: ${JSON.stringify(parameters)}`)
   const client = await _client()
   if (client === undefined) throw new Error('Client is undefined')
   const response = await client.search(parameters)
-  logger.info(`Response: ${JSON.stringify(response)}`)
+  logger.debug(`Response: ${JSON.stringify(response)}`)
   return response
 }
 
@@ -360,9 +360,9 @@ async function getCollections(page = 1, limit = 100) {
 }
 
 async function populateCollectionToIndexMapping() {
-  if (process.env.COLLECTION_TO_INDEX_MAPPINGS) {
+  if (process.env['COLLECTION_TO_INDEX_MAPPINGS']) {
     try {
-      collectionToIndexMapping = JSON.parse(process.env.COLLECTION_TO_INDEX_MAPPINGS)
+      collectionToIndexMapping = JSON.parse(process.env['COLLECTION_TO_INDEX_MAPPINGS'])
     } catch (e) {
       logger.error('COLLECTION_TO_INDEX_MAPPINGS is not a valid JSON object.')
       collectionToIndexMapping = {}
@@ -378,7 +378,7 @@ async function indexForCollection(collectionId) {
 
 async function populateUnrestrictedIndices() {
   if (!unrestrictedIndices) {
-    if (process.env.COLLECTION_TO_INDEX_MAPPINGS) {
+    if (process.env['COLLECTION_TO_INDEX_MAPPINGS']) {
       if (!collectionToIndexMapping) {
         await populateCollectionToIndexMapping()
       }
@@ -409,7 +409,7 @@ export async function constructSearchParams(parameters, page, limit) {
 
   let indices
   if (Array.isArray(collections) && collections.length) {
-    if (process.env.COLLECTION_TO_INDEX_MAPPINGS) {
+    if (process.env['COLLECTION_TO_INDEX_MAPPINGS']) {
       if (!collectionToIndexMapping) await populateCollectionToIndexMapping()
       indices = await Promise.all(collections.map(async (x) => await indexForCollection(x)))
     } else {
@@ -417,7 +417,7 @@ export async function constructSearchParams(parameters, page, limit) {
     }
   } else {
     if (!unrestrictedIndices) {
-      populateUnrestrictedIndices()
+      await populateUnrestrictedIndices()
     }
     indices = unrestrictedIndices
   }
@@ -587,7 +587,7 @@ async function updateItem(item) {
 }
 
 async function healthCheck() {
-  const client = await _client.client()
+  const client = await _client()
   if (client === undefined) throw new Error('Client is undefined')
   const health = await client.cat.health()
   logger.debug(`Health: ${JSON.stringify(health)}`)

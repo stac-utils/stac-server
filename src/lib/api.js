@@ -321,19 +321,19 @@ const addCollectionLinks = function (results, endpoint) {
     // self link
     links.splice(0, 0, {
       rel: 'self',
-      type: 'application/geo+json',
+      type: 'application/json',
       href: `${endpoint}/collections/${id}`
     })
     // parent catalog
     links.push({
       rel: 'parent',
-      type: 'application/geo+json',
+      type: 'application/json',
       href: `${endpoint}`
     })
     // root catalog
     links.push({
       rel: 'root',
-      type: 'application/geo+json',
+      type: 'application/json',
       href: `${endpoint}`
     })
     // child items
@@ -373,7 +373,7 @@ const addItemLinks = function (results, endpoint) {
     // root catalog
     links.push({
       rel: 'root',
-      type: 'application/geo+json',
+      type: 'application/json',
       href: `${endpoint}`
     })
     links.push({
@@ -466,7 +466,8 @@ const buildPaginationLinks = function (limit, parameters, bbox, intersects, endp
     const link = {
       rel: 'next',
       title: 'Next page of Items',
-      method: httpMethod
+      method: httpMethod,
+      type: 'application/geo+json'
     }
     if (httpMethod === 'GET') {
       const nextQueryParameters = dictToURI(nextParams)
@@ -516,9 +517,11 @@ const searchItems = async function (collectionId, queryParameters, backend, endp
   })
 
   let newEndpoint = `${endpoint}/search`
+  let collectionEndpoint
   if (collectionId) {
     searchParams.collections = [collectionId]
     newEndpoint = `${endpoint}/collections/${collectionId}/items`
+    collectionEndpoint = `${endpoint}/collections/${collectionId}`
   }
 
   logger.debug(`Search parameters: ${JSON.stringify(searchParams)}`)
@@ -552,13 +555,18 @@ const searchItems = async function (collectionId, queryParameters, backend, endp
     links = paginationLinks.concat([
       {
         rel: 'self',
-        type: 'application/json',
-        href: `${newEndpoint}`
+        type: 'application/geo+json',
+        href: newEndpoint
       },
       {
         rel: 'root',
-        type: 'application/geo+json',
-        href: `${endpoint}`
+        type: 'application/json',
+        href: endpoint
+      },
+      {
+        rel: 'collection',
+        type: 'application/json',
+        href: collectionEndpoint
       }
     ])
   } else {
@@ -667,7 +675,7 @@ const aggregate = async function (queryParameters, backend, endpoint, httpMethod
     },
     {
       rel: 'root',
-      type: 'application/geo+json',
+      type: 'application/json',
       href: `${endpoint}`
     }]
   }
@@ -703,12 +711,12 @@ const getCatalog = async function (txnEnabled, backend, endpoint = '') {
   const links = [
     {
       rel: 'self',
-      type: 'application/geo+json',
+      type: 'application/json',
       href: `${endpoint}`
     },
     {
       rel: 'root',
-      type: 'application/geo+json',
+      type: 'application/json',
       href: `${endpoint}`
     },
     {
@@ -782,7 +790,7 @@ const getCollections = async function (backend, endpoint = '') {
       },
       {
         rel: 'root',
-        type: 'application/geo+json',
+        type: 'application/json',
         href: `${endpoint}`,
       },
     ],

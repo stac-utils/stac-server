@@ -24,6 +24,9 @@ export default {
     'aws-sdk'
   ],
   devtool,
+  resolve: {
+    extensions: ["", ".webpack.js", ".web.js", ".ts", ".js"],
+  },
   optimization: {
     usedExports: true
   },

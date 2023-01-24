@@ -1,12 +1,13 @@
+/* eslint @typescript-eslint/no-empty-function: 0 */
+
 import { promisify } from 'util'
 import cryptoRandomString from 'crypto-random-string'
 import { readFile as _readFile } from 'fs'
-import { join } from 'path'
-import path from 'path'
+import path, { join } from 'path'
 import { fileURLToPath } from 'url'
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename); // eslint-disable-line no-unused-vars
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename) // eslint-disable-line no-unused-vars
 
 export const noop = () => { }
 

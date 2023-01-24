@@ -1,6 +1,6 @@
 const _stream = require('stream')
 const through2 = require('through2')
-const logger = console //require('./logger')
+const { logger } = require('./logger')
 const dbClient = require('./databaseClient')
 const { getItemCreated } = require('./database')
 
@@ -81,10 +81,10 @@ class SearchDatabaseWritableStream extends _stream.Writable {
     const body = this.transformRecords(records)
     try {
       const result = await this.client.bulk({ body })
-      logger.debug(`Result: ${JSON.stringify(result, undefined, 2)}`)
+      logger.debug('Result: %j', result)
       const { errors } = result.body
       if (errors) {
-        logger.error(`Batch write had errors: ${JSON.stringify(errors)}`)
+        logger.error('Batch write had errors', errors)
       } else {
         logger.debug(`Wrote batch of documents size ${body.length / 2}`)
       }
@@ -104,7 +104,7 @@ async function stream() {
 
     const toDB = through2.obj({ objectMode: true }, async (data, encoding, next) => {
       let index = ''
-      logger.debug(`Data: ${JSON.stringify(data)}`)
+      logger.debug('Data', data)
       if (data && data.hasOwnProperty('extent')) {
         index = COLLECTIONS_INDEX
       } else if (data && data.hasOwnProperty('geometry')) {

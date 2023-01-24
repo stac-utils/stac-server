@@ -5,15 +5,6 @@ const cryptoRandomString = require('crypto-random-string')
 const fs = require('fs')
 const path = require('path')
 
-// @ts-expect-error no-empty-function
-const noop = () => { }
-
-const nullLogger = {
-  debug: noop,
-  info: noop,
-  log: noop
-}
-
 const readFile = promisify(fs.readFile)
 
 const fixturesPath = path.join(__dirname, '..', 'fixtures')
@@ -37,7 +28,5 @@ const loadFixture = async (filename, overrides = {}) => {
 
 module.exports = {
   loadFixture,
-  noop,
-  nullLogger,
   randomId
 }

@@ -3,8 +3,9 @@
 const cors = require('cors')
 const createError = require('http-errors')
 const express = require('express')
-const logger = require('morgan')
+const morgan = require('morgan')
 const path = require('path')
+const { logger } = require('../../lib/logger')
 const database = require('../../lib/database')
 const api = require('../../lib/api')
 const { readFile } = require('../../lib/fs')
@@ -21,7 +22,10 @@ const txnEnabled = process.env['ENABLE_TRANSACTIONS_EXTENSION'] === 'true'
 
 const app = express()
 
-app.use(logger('dev'))
+if (process.env['REQUEST_LOGGING_ENABLED'] !== 'false') {
+  app.use(morgan(process.env['REQUEST_LOGGING_FORMAT'] || 'tiny'))
+}
+
 app.use(cors())
 app.use(express.json({ limit: '1mb' }))
 app.use(addEndpoint)
@@ -367,7 +371,7 @@ app.use(
       res.json({ code: 'NotFound', description: 'Not Found' })
       break
     default:
-      console.log(err)
+      logger.error(err)
       res.json({ code: 'InternalServerError', description: 'Internal Server Error' })
       break
     }

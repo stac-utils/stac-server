@@ -2,8 +2,8 @@ const { pickBy, assign, get: getNested } = require('lodash')
 const extent = require('@mapbox/extent')
 const { DateTime } = require('luxon')
 const AWS = require('aws-sdk')
+const { logger } = require('./logger')
 const { isIndexNotFoundError } = require('./database')
-const logger = console
 
 // max number of collections to retrieve
 const COLLECTION_LIMIT = process.env.STAC_SERVER_COLLECTION_LIMIT || 100
@@ -482,7 +482,7 @@ const buildPaginationLinks = function (limit, parameters, bbox, intersects, endp
 }
 
 const searchItems = async function (collectionId, queryParameters, backend, endpoint, httpMethod) {
-  logger.debug(`Query parameters: ${JSON.stringify(queryParameters)}`)
+  logger.debug('Query parameters: %j', queryParameters)
   const {
     next,
     bbox,
@@ -523,7 +523,7 @@ const searchItems = async function (collectionId, queryParameters, backend, endp
     collectionEndpoint = `${endpoint}/collections/${collectionId}`
   }
 
-  logger.debug(`Search parameters: ${JSON.stringify(searchParams)}`)
+  logger.debug('Search parameters: %j', searchParams)
 
   let esResponse
   try {
@@ -598,7 +598,7 @@ const agg = function (esAggs, name, dataType) {
 }
 
 const aggregate = async function (queryParameters, backend, endpoint, httpMethod) {
-  logger.debug(`Aggregate parameters: ${JSON.stringify(queryParameters)}`)
+  logger.debug('Aggregate parameters: %j', queryParameters)
   const {
     bbox,
     intersects
@@ -622,7 +622,7 @@ const aggregate = async function (queryParameters, backend, endpoint, httpMethod
     collections,
   })
 
-  logger.debug(`Aggregate parameters: ${JSON.stringify(searchParams)}`)
+  logger.debug('Aggregate parameters: %j', searchParams)
 
   let esResponse
   try {
@@ -817,7 +817,7 @@ const getCollection = async function (collectionId, backend, endpoint = '') {
 
 const createCollection = async function (collection, backend) {
   const response = await backend.indexCollection(collection)
-  logger.debug(`Create Collection: ${JSON.stringify(response)}`)
+  logger.debug('Create Collection: %j', response)
 
   if (response) {
     return response
@@ -839,7 +839,7 @@ const partialUpdateItem = async function (
   collectionId, itemId, queryParameters, backend, endpoint = ''
 ) {
   const response = await backend.partialUpdateItem(collectionId, itemId, queryParameters)
-  logger.debug(`Partial Update Item: ${JSON.stringify(response)}`)
+  logger.debug('Partial Update Item: %j', response)
   if (response) {
     return addItemLinks([response.body.get._source], endpoint)[0]
   }
@@ -848,7 +848,7 @@ const partialUpdateItem = async function (
 
 const createItem = async function (item, backend) {
   const response = await backend.indexItem(item)
-  logger.debug(`Create Item: ${JSON.stringify(response)}`)
+  logger.debug('Create Item: %j', response)
 
   if (response) {
     return response
@@ -858,7 +858,7 @@ const createItem = async function (item, backend) {
 
 const updateItem = async function (item, backend) {
   const response = await backend.updateItem(item)
-  logger.debug(`Update Item: ${JSON.stringify(response)}`)
+  logger.debug('Update Item: %j', response)
 
   if (response) {
     return response
@@ -868,7 +868,7 @@ const updateItem = async function (item, backend) {
 
 const deleteItem = async function (collectionId, itemId, backend) {
   const response = await backend.deleteItem(collectionId, itemId)
-  logger.debug(`Delete Item: ${response}`)
+  logger.debug('Delete Item: %j', response)
   if (response) {
     return response
   }
@@ -913,10 +913,10 @@ const getItemThumbnail = async function (collectionId, itemId, backend) {
 
 const healthCheck = async function (backend) {
   const response = await backend.healthCheck()
-  logger.debug(`Health check: ${response}`)
   if (response && response.statusCode === 200) {
     return { status: 'ok' }
   }
+  logger.error('Health check error: %j', response)
   return new Error('Error with health check.')
 }
 

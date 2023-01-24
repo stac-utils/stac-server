@@ -1,7 +1,7 @@
-module.exports.handler = async function handler(event, context) {
-  const { logger = console } = context
+const { logger } = require('../../lib/logger')
 
-  logger.debug(`Event: ${JSON.stringify(event, undefined, 2)}`)
+module.exports.handler = async function handler(event, _context) {
+  logger.debug('Event: %j', event)
 
   const result = { ...event }
 

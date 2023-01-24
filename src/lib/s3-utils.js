@@ -1,3 +1,4 @@
+const { logger } = require('./logger')
 const awsClients = require('./aws-clients')
 
 const getObjectBody = async (s3Location) => {
@@ -14,7 +15,7 @@ const getObjectBody = async (s3Location) => {
     return result.Body
   } catch (error) {
     if (error instanceof Error) {
-      console.log(`Failed to fetch ${s3Location.url}: ${error.message}`)
+      logger.error(`Failed to fetch ${s3Location.url}`, error)
     }
     throw error
   }

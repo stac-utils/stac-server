@@ -1,5 +1,5 @@
+const { logger } = require('./logger')
 const dbClient = require('./databaseClient')
-const logger = console //require('./logger')
 
 const COLLECTIONS_INDEX = process.env.COLLECTIONS_INDEX || 'collections'
 const DEFAULT_INDICES = ['*', '-.*', '-collections']
@@ -323,11 +323,11 @@ async function deleteItem(collectionId, itemId) {
 }
 
 async function dbQuery(parameters) {
-  logger.debug(`Search query: ${JSON.stringify(parameters)}`)
+  logger.debug('Search query: %j', parameters)
   const client = await dbClient.client()
   if (client === undefined) throw new Error('Client is undefined')
   const response = await client.search(parameters)
-  logger.debug(`Response: ${JSON.stringify(response)}`)
+  logger.debug('Response: %j', response)
   return response
 }
 
@@ -353,7 +353,7 @@ async function getCollections(page = 1, limit = 100) {
     })
     return response.body.hits.hits.map((r) => (r._source))
   } catch (e) {
-    logger.error(`Failure getting collections, maybe none exist? ${e}`)
+    logger.error('Failure getting collections, maybe none exist?', e)
   }
   return []
 }
@@ -588,9 +588,7 @@ async function updateItem(item) {
 async function healthCheck() {
   const client = await dbClient.client()
   if (client === undefined) throw new Error('Client is undefined')
-  const health = await client.cat.health()
-  logger.debug(`Health: ${JSON.stringify(health)}`)
-  return health
+  return client.cat.health()
 }
 
 module.exports = {

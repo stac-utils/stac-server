@@ -1,5 +1,3 @@
-// @ts-nocheck
-
 import { Readable } from 'readable-stream'
 import pump from 'pump'
 

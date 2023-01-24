@@ -1,5 +1,3 @@
-// @ts-nocheck
-
 import test from 'ava'
 import { stub } from 'sinon'
 import proxyquire from 'proxyquire'
@@ -97,8 +95,8 @@ test.skip('handler call ingest when event payload contains url', async (t) => {
 })
 
 test.skip('ingest with fargate event creates ecs task with command', async (t) => {
-  process.env.SUBNETS = '{}'
-  process.env.SECURITY_GROUPS = '{}'
+  process.env['SUBNETS'] = '{}'
+  process.env['SECURITY_GROUPS'] = '{}'
   const { lambda, runTask } = setup()
   const event = {
     fargate: {

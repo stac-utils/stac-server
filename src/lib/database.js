@@ -1,5 +1,3 @@
-// @ts-nocheck
-
 import { dbClient as _client, createIndex } from './databaseClient.js'
 
 const logger = console

@@ -1,5 +1,3 @@
-// @ts-nocheck
-
 import got from 'got' // eslint-disable-line import/no-unresolved
 import { createIndex } from '../../lib/databaseClient.js'
 import stream from '../../lib/databaseStream.js'

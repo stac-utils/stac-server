@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - Search query and response body is now logged at level DEBUG rather than INFO
 - Ingested item body is now logged at level DEBUG rather than INFO
+- ESM modules are used instead of CommonJS
 
 ## [0.5.2] - 2023-01-17
 

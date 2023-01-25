@@ -1,5 +1,3 @@
-// @ts-nocheck
-
 import test from 'ava'
 import { stub } from 'sinon'
 import proxyquire from 'proxyquire'

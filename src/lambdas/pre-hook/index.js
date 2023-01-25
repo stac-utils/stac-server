@@ -1,5 +1,3 @@
-// @ts-nocheck
-
 import logger from '../../lib/logger.js'
 
 export default async function handler(event, _context) {

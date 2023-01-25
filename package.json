@@ -1,7 +1,7 @@
 {
   "displayName": "stac-server",
   "description": "A STAC API running on stac-server",
-  "version": "0.5.1",
+  "version": "0.6.0",
   "repository": "https://github.com/stac-utils/stac-server",
   "author": "Alireza Jazayeri, Matthew Hanson <matt.a.hanson@gmail.com>, Sean Harkins",
   "license": "MIT",
@@ -24,7 +24,7 @@
     "audit-prod": "npx better-npm-audit audit --production",
     "deploy": "sls deploy",
     "package": "sls package",
-    "serve": "STAC_API_URL=http://localhost:3000 ENABLE_TRANSACTIONS_EXTENSION=true nodemon ./src/lambdas/api/local.ts",
+    "serve": "REQUEST_LOGGING_FORMAT=dev LOG_LEVEL=debug STAC_API_URL=http://localhost:3000 ENABLE_TRANSACTIONS_EXTENSION=true nodemon ./src/lambdas/api/local.ts",
     "build-api-docs": "npm run widdershins --search false --language_tabs 'nodejs:NodeJS' 'python:Python' --summary ./packages/api-lib/api-spec.yaml -o ./docs/api.md & npm run shins --inline --logo ./docs/images/logo.png -o ./docs/index.html ./docs/api.md",
     "pre-commit": "./node_modules/pre-commit/hook"
   },
@@ -79,6 +79,7 @@
     "serverless-http": "^3.1.1",
     "through2": "^4.0.2",
     "ts-loader": "^9.4.2",
+    "winston": "^3.8.2",
     "zod": "^3.20.2"
   },
   "devDependencies": {
@@ -106,8 +107,6 @@
     "eslint-config-airbnb": "^19.0.4",
     "eslint-plugin-import": "^2.27.5",
     "eslint-plugin-jsdoc": "^39.6.8",
-    "eslint-plugin-jsx-a11y": "^6.7.1",
-    "eslint-plugin-react": "^7.32.1",
     "luxon": "^3.2.1",
     "nock": "^13.3.0",
     "nodemon": "^2.0.20",

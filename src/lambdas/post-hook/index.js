@@ -1,9 +1,8 @@
 // @ts-nocheck
+import logger from '../../lib/logger.js'
 
-export default async function handler(event, context) {
-  const { logger = console } = context
-
-  logger.debug(`Event: ${JSON.stringify(event, undefined, 2)}`)
+export default async function handler(event, _context) {
+  logger.debug('Event: %j', event)
 
   const result = { ...event }
 

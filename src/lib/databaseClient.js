@@ -8,8 +8,7 @@ import { createAWSConnection as createAWSConnectionES, awsCredsifyAll
 
 import collectionsIndexConfiguration from '../../fixtures/collections.js'
 import itemsIndexConfiguration from '../../fixtures/items.js'
-
-const logger = console
+import logger from './logger.js'
 
 let _dbClient
 
@@ -91,10 +90,9 @@ export async function createIndex(index) {
     try {
       await client.indices.create({ index, body: indexConfiguration })
       logger.info(`Created index ${index}`)
-      logger.debug(`Mapping: ${JSON.stringify(indexConfiguration)}`)
+      logger.debug('Mapping: %j', indexConfiguration)
     } catch (error) {
-      const debugMessage = `Error creating index '${index}': ${error}`
-      logger.debug(debugMessage)
+      logger.debug(`Error creating index '${index}'`, error)
     }
   }
 }

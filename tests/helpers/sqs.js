@@ -27,9 +27,9 @@ const eventFromQueue = async (ingestQueueUrl) => {
   }
 }
 
-export const sqsTriggerLambda = async (sqsUrl, handler, context = {}) => {
+export const sqsTriggerLambda = async (sqsUrl, handler, _context = {}) => {
   const event = await eventFromQueue(sqsUrl)
-  return handler(event, context)
+  return handler(event, {})
 }
 
 /**

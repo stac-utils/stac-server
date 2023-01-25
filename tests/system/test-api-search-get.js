@@ -69,8 +69,6 @@ test('/search preserve bbox in next links', async (t) => {
       response.features[1].collection
     ].join(','))
 
-  console.log(`nexturl ${nextUrl}`)
-
   const nextResponse = await got.get(nextUrl).json()
   t.is(nextResponse.features.length, 0)
   t.falsy(nextResponse.links.find((x) => x.rel === 'next'))

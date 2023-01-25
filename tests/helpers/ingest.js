@@ -1,7 +1,6 @@
 import { sns } from '../../src/lib/aws-clients.js'
 import handler from '../../src/lambdas/ingest/index.js'
 import { sqsTriggerLambda } from './sqs.js'
-import nullLoggerContext from './context.js'
 import { refreshIndices } from './database.js'
 import { loadFixture } from './utils.js'
 
@@ -22,7 +21,7 @@ export const ingestItem = async (params) => {
     Message: JSON.stringify(params.item)
   }).promise()
 
-  await sqsTriggerLambda(params.ingestQueueUrl, handler, nullLoggerContext)
+  await sqsTriggerLambda(params.ingestQueueUrl, handler)
 
   await refreshIndices()
 }

@@ -1,13 +1,14 @@
 import cors from 'cors'
 import createError from 'http-errors'
 import express from 'express'
-import logger from 'morgan'
+import morgan from 'morgan'
 import path, { join } from 'path'
 import { fileURLToPath } from 'url'
 import database from '../../lib/database.js'
 import api, { ValidationError } from '../../lib/api.js'
 import { readFile } from '../../lib/fs.js'
 import addEndpoint from './middleware/add-endpoint.js'
+import logger from '../../lib/logger.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename) // eslint-disable-line no-unused-vars
@@ -23,7 +24,10 @@ const txnEnabled = process.env['ENABLE_TRANSACTIONS_EXTENSION'] === 'true'
 
 export const app = express()
 
-app.use(logger('dev'))
+if (process.env['REQUEST_LOGGING_ENABLED'] !== 'false') {
+  app.use(morgan(process.env['REQUEST_LOGGING_FORMAT'] || 'tiny'))
+}
+
 app.use(cors())
 app.use(express.json({ limit: '1mb' }))
 app.use(addEndpoint)
@@ -369,7 +373,7 @@ app.use(
       res.json({ code: 'NotFound', description: 'Not Found' })
       break
     default:
-      console.log(err)
+      logger.error(err)
       res.json({ code: 'InternalServerError', description: 'Internal Server Error' })
       break
     }

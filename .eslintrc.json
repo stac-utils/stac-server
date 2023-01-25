@@ -91,10 +91,14 @@
     "class-methods-use-this": "off",
     "no-return-await": "off",
     "no-warning-comments": "off",
-    "no-unused-vars": [
-      "error",
+    // note you must disable the base rule as it can report incorrect errors
+    "no-unused-vars": "off",
+    "@typescript-eslint/no-unused-vars": [
+      "warn", // or "error"
       {
-        "argsIgnorePattern": "^_"
+        "argsIgnorePattern": "^_",
+        "varsIgnorePattern": "^_",
+        "caughtErrorsIgnorePattern": "^_"
       }
     ],
     "no-useless-escape": "off",

@@ -1,6 +1,6 @@
-const { logger } = require('../../lib/logger')
+import logger from '../../lib/logger.js'
 
-module.exports.handler = async function handler(event, _context) {
+export default async function handler(event, _context) {
   logger.debug('Event: %j', event)
 
   const result = { ...event }

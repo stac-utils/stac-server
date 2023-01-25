@@ -1,4 +1,4 @@
-const { S3, SNS, SQS } = require('aws-sdk')
+import AWS from 'aws-sdk'
 
 const localStackEndpointEnvVar = 'LOCAL_STACK_ENDPOINT'
 
@@ -18,7 +18,7 @@ const localStackParams = () => ({
   region: 'us-east-1'
 })
 
-const s3 = (options = {}) => {
+export const s3 = (options = {}) => {
   const localStackOverrides = {
     ...localStackParams(),
     s3ForcePathStyle: true
@@ -26,31 +26,31 @@ const s3 = (options = {}) => {
 
   const overrides = useLocalStack() ? localStackOverrides : {}
 
-  return new S3({
+  return new AWS.S3({
     ...overrides,
     ...options
   })
 }
 
-const sns = (options = {}) => {
+export const sns = (options = {}) => {
   const overrides = useLocalStack() ? localStackParams() : {}
 
-  return new SNS({
+  return new AWS.SNS({
     ...overrides,
     ...options
   })
 }
 
-const sqs = (options = {}) => {
+export const sqs = (options = {}) => {
   const overrides = useLocalStack() ? localStackParams() : {}
 
-  return new SQS({
+  return new AWS.SQS({
     ...overrides,
     ...options
   })
 }
 
-module.exports = {
+export default {
   s3,
   sns,
   sqs

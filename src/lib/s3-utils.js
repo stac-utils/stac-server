@@ -1,9 +1,9 @@
-const { logger } = require('./logger')
-const awsClients = require('./aws-clients')
+import { s3 } from './aws-clients.js'
+import logger from './logger.js'
 
 const getObjectBody = async (s3Location) => {
   try {
-    const result = await awsClients.s3().getObject({
+    const result = await s3().getObject({
       Bucket: s3Location.bucket,
       Key: s3Location.key
     }).promise()
@@ -23,8 +23,4 @@ const getObjectBody = async (s3Location) => {
 
 const getObjectText = (s3Location) => getObjectBody(s3Location).then((b) => b.toString())
 
-const getObjectJson = (s3Location) => getObjectText(s3Location).then(JSON.parse)
-
-module.exports = {
-  getObjectJson
-}
+export default (s3Location) => getObjectText(s3Location).then(JSON.parse)

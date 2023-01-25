@@ -1,15 +1,19 @@
 // @ts-check
 
-const cors = require('cors')
-const createError = require('http-errors')
-const express = require('express')
-const morgan = require('morgan')
-const path = require('path')
-const { logger } = require('../../lib/logger')
-const database = require('../../lib/database')
-const api = require('../../lib/api')
-const { readFile } = require('../../lib/fs')
-const { addEndpoint } = require('./middleware/add-endpoint')
+import cors from 'cors'
+import createError from 'http-errors'
+import express from 'express'
+import morgan from 'morgan'
+import path, { join } from 'path'
+import { fileURLToPath } from 'url'
+import database from '../../lib/database.js'
+import api, { ValidationError } from '../../lib/api.js'
+import { readFile } from '../../lib/fs.js'
+import addEndpoint from './middleware/add-endpoint.js'
+import logger from '../../lib/logger.js'
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename) // eslint-disable-line no-unused-vars
 
 /**
  * @typedef {import('express').Request} Request
@@ -20,7 +24,7 @@ const { addEndpoint } = require('./middleware/add-endpoint')
 
 const txnEnabled = process.env['ENABLE_TRANSACTIONS_EXTENSION'] === 'true'
 
-const app = express()
+export const app = express()
 
 if (process.env['REQUEST_LOGGING_ENABLED'] !== 'false') {
   app.use(morgan(process.env['REQUEST_LOGGING_FORMAT'] || 'tiny'))
@@ -49,7 +53,7 @@ app.get('/healthcheck', async (_req, res, next) => {
 app.get('/api', async (_req, res, next) => {
   try {
     res.type('application/vnd.oai.openapi')
-    res.download(path.join(__dirname, 'openapi.yaml'))
+    res.download(join(__dirname, 'openapi.yaml'))
   } catch (error) {
     next(error)
   }
@@ -58,7 +62,7 @@ app.get('/api', async (_req, res, next) => {
 app.get('/api.html', async (_req, res, next) => {
   try {
     res.type('text/html')
-    res.send(await readFile(path.join(__dirname, 'redoc.html'), 'utf8'))
+    res.send(await readFile(join(__dirname, 'redoc.html'), 'utf8'))
   } catch (error) {
     next(error)
   }
@@ -77,7 +81,7 @@ app.get('/search', async (req, res, next) => {
     res.type('application/geo+json')
     res.json(await api.searchItems(null, req.query, database, req.endpoint, 'GET'))
   } catch (error) {
-    if (error instanceof api.ValidationError) {
+    if (error instanceof ValidationError) {
       next(createError(400, error.message))
     } else {
       next(error)
@@ -90,7 +94,7 @@ app.post('/search', async (req, res, next) => {
     res.type('application/geo+json')
     res.json(await api.searchItems(null, req.body, database, req.endpoint, 'POST'))
   } catch (error) {
-    if (error instanceof api.ValidationError) {
+    if (error instanceof ValidationError) {
       next(createError(400, error.message))
     } else {
       next(error)
@@ -102,7 +106,7 @@ app.get('/aggregate', async (req, res, next) => {
   try {
     res.json(await api.aggregate(req.query, database, req.endpoint, 'GET'))
   } catch (error) {
-    if (error instanceof api.ValidationError) {
+    if (error instanceof ValidationError) {
       next(createError(400, error.message))
     } else {
       next(error)
@@ -114,7 +118,7 @@ app.post('/aggregate', async (req, res, next) => {
   try {
     res.json(await api.aggregate(req.body, database, req.endpoint, 'POST'))
   } catch (error) {
-    if (error instanceof api.ValidationError) {
+    if (error instanceof ValidationError) {
       next(createError(400, error.message))
     } else {
       next(error)
@@ -181,7 +185,7 @@ app.get('/collections/:collectionId/items', async (req, res, next) => {
       res.json(items)
     }
   } catch (error) {
-    if (error instanceof api.ValidationError) {
+    if (error instanceof ValidationError) {
       next(createError(400, error.message))
     } else {
       next(error)
@@ -378,4 +382,4 @@ app.use(
   })
 )
 
-module.exports = { app }
+export default { app }

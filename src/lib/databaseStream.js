@@ -1,8 +1,10 @@
-const _stream = require('stream')
-const through2 = require('through2')
-const { logger } = require('./logger')
-const dbClient = require('./databaseClient')
-const { getItemCreated } = require('./database')
+import _stream from 'stream'
+import through2 from 'through2'
+import { dbClient, createIndex } from './databaseClient.js'
+
+import { getItemCreated } from './database.js'
+
+import logger from './logger.js'
 
 const COLLECTIONS_INDEX = process.env.COLLECTIONS_INDEX || 'collections'
 
@@ -66,7 +68,7 @@ class SearchDatabaseWritableStream extends _stream.Writable {
 
       // if this was a collection, then add a new index with collection name
       if (index === COLLECTIONS_INDEX) {
-        await dbClient.createIndex(id)
+        await createIndex(id)
       }
 
       return next()
@@ -97,10 +99,10 @@ class SearchDatabaseWritableStream extends _stream.Writable {
 }
 
 // Given an input stream and a transform, write records to a search database instance
-async function stream() {
+export default async function stream() {
   let dbStreams
   try {
-    const client = await dbClient.client()
+    const client = await dbClient()
 
     const toDB = through2.obj({ objectMode: true }, async (data, encoding, next) => {
       let index = ''
@@ -150,5 +152,3 @@ async function stream() {
   }
   return dbStreams
 }
-
-module.exports = stream

@@ -1,21 +1,21 @@
-const { pickBy, assign, get: getNested } = require('lodash')
-const extent = require('@mapbox/extent')
-const { DateTime } = require('luxon')
-const AWS = require('aws-sdk')
-const { logger } = require('./logger')
-const { isIndexNotFoundError } = require('./database')
+import { pickBy, assign, get as getNested } from 'lodash-es'
+import extent from '@mapbox/extent'
+import { DateTime } from 'luxon'
+import AWS from 'aws-sdk'
+import { isIndexNotFoundError } from './database.js'
+import logger from './logger.js'
 
 // max number of collections to retrieve
 const COLLECTION_LIMIT = process.env.STAC_SERVER_COLLECTION_LIMIT || 100
 
-class ValidationError extends Error {
+export class ValidationError extends Error {
   constructor(message) {
     super(message)
     this.name = 'ValidationError'
   }
 }
 
-const extractIntersects = function (params) {
+export const extractIntersects = function (params) {
   let intersectsGeometry
   const { intersects } = params
   if (intersects) {
@@ -41,7 +41,7 @@ const extractIntersects = function (params) {
   return intersectsGeometry
 }
 
-const extractBbox = function (params, httpMethod = 'GET') {
+export const extractBbox = function (params, httpMethod = 'GET') {
   const { bbox } = params
   if (bbox) {
     let bboxArray
@@ -71,7 +71,7 @@ const extractBbox = function (params, httpMethod = 'GET') {
   return undefined
 }
 
-const extractLimit = function (params) {
+export const extractLimit = function (params) {
   const { limit: limitStr } = params
 
   if (limitStr !== undefined) {
@@ -95,7 +95,7 @@ const extractLimit = function (params) {
   return undefined
 }
 
-const extractPage = function (params) {
+export const extractPage = function (params) {
   const { page: pageStr } = params
 
   if (pageStr !== undefined) {
@@ -140,7 +140,7 @@ const validateStartAndEndDatetimes = function (startDateTime, endDateTime) {
   }
 }
 
-const extractDatetime = function (params) {
+export const extractDatetime = function (params) {
   const { datetime } = params
 
   if (datetime) {
@@ -272,7 +272,7 @@ const extractCollectionIds = function (params) {
   return idsRules
 }
 
-const parsePath = function (inpath) {
+export const parsePath = function (inpath) {
   const searchFilters = {
     root: false,
     api: false,
@@ -920,7 +920,7 @@ const healthCheck = async function (backend) {
   return new Error('Error with health check.')
 }
 
-module.exports = {
+export default {
   getConformance,
   getCatalog,
   getCollections,

@@ -1,8 +1,8 @@
-const { Readable } = require('readable-stream')
-const pump = require('pump')
-const { logger } = require('./logger')
+import { Readable } from 'readable-stream'
+import pump from 'pump'
+import logger from './logger.js'
 
-async function ingestItem(item, stream) {
+export async function ingestItem(item, stream) {
   const readable = new Readable({ objectMode: true })
   const { toDB, dbStream } = await stream()
   const promise = new Promise((resolve, reject) => {
@@ -26,7 +26,7 @@ async function ingestItem(item, stream) {
   return promise
 }
 
-async function ingestItems(items, stream) {
+export async function ingestItems(items, stream) {
   const readable = new Readable({ objectMode: true })
   const { toDB, dbStream } = await stream()
   const promise = new Promise((resolve, reject) => {
@@ -49,5 +49,3 @@ async function ingestItems(items, stream) {
   readable.push(null)
   return promise
 }
-
-module.exports = { ingestItem, ingestItems }

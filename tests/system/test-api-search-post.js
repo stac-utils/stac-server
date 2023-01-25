@@ -1,15 +1,21 @@
-const test = require('ava')
+import test from 'ava'
+import { fileURLToPath } from 'url'
+import fs from 'fs'
+import path from 'path'
+import { deleteAllIndices, refreshIndices } from '../helpers/database.js'
+import { randomId } from '../helpers/utils.js'
+import { ingestItems } from '../../src/lib/ingest.js'
 
-const { deleteAllIndices, refreshIndices } = require('../helpers/database')
-const { randomId } = require('../helpers/utils')
-const ingest = require('../../src/lib/ingest')
-const intersectsGeometry = require('../fixtures/stac/intersectsGeometry.json')
-const stream = require('../../src/lib/databaseStream')
-const systemTests = require('../helpers/system-tests')
+import stream from '../../src/lib/databaseStream.js'
+import { loadJson, setup } from '../helpers/system-tests.js'
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename) // eslint-disable-line no-unused-vars
+const intersectsGeometry = fs.readFileSync(path.resolve(__dirname, '../fixtures/stac/intersectsGeometry.json'), 'utf8')
 
 const ingestEntities = async (fixtures) => {
-  await ingest.ingestItems(
-    await Promise.all(fixtures.map((x) => systemTests.loadJson(x))), stream
+  await ingestItems(
+    await Promise.all(fixtures.map((x) => loadJson(x))), stream
   )
   await refreshIndices()
 }
@@ -17,7 +23,7 @@ const ingestEntities = async (fixtures) => {
 test.before(async (t) => {
   await deleteAllIndices()
 
-  t.context = await systemTests.setup()
+  t.context = await setup()
 
   // ingest collections before items so mappings are applied
   await ingestEntities([

@@ -1,13 +1,13 @@
 // @ts-check
 
-const nock = require('nock')
+import nock from 'nock'
 
-const disableNetConnect = () => {
+export const disableNetConnect = () => {
   nock.disableNetConnect()
   nock.enableNetConnect(/127\.0\.0\.1|localhost|lambda\.us-east-1\.amazonaws\.com/)
 }
 
-const event = Object.freeze({
+export const event = Object.freeze({
   body: null,
   resource: '/{proxy+}',
   path: '/',
@@ -54,8 +54,3 @@ const event = Object.freeze({
     protocol: 'HTTP/1.1'
   }
 })
-
-module.exports = {
-  disableNetConnect,
-  event
-}

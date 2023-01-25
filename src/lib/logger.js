@@ -1,13 +1,9 @@
-const winston = require('winston')
+import winston from 'winston'
 
-const logger = winston.createLogger({
+export default winston.createLogger({
   level: process.env['LOG_LEVEL'] || 'warn',
   format: winston.format.combine(
     winston.format.splat(), winston.format.errors({ stack: true }), winston.format.json()
   ),
   transports: [new winston.transports.Console()],
 })
-
-module.exports = {
-  logger
-}

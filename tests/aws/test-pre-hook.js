@@ -1,8 +1,8 @@
-const { default: test } = require('ava')
-const { handler } = require('../../src/lambdas/api')
-const { setupResources } = require('../helpers/system-tests')
-const { randomId } = require('../helpers/utils')
-const { disableNetConnect, event } = require('../helpers/aws-tests')
+import test from 'ava'
+import handler from '../../src/lambdas/api'
+import { setupResources } from '../helpers/system-tests.js'
+import { randomId } from '../helpers/utils.js'
+import { disableNetConnect, event } from '../helpers/aws-tests.js'
 
 test.before(async () => {
   disableNetConnect()

@@ -1,6 +1,7 @@
 {
   "extends": "@tsconfig/node16/tsconfig.json",
   "compilerOptions": {
+    "module": "es2022",
     "alwaysStrict": true,
     "strict": true,
     "allowUnusedLabels": false,

@@ -1,32 +1,31 @@
 /* eslint @typescript-eslint/no-empty-function: 0 */
 
-const { promisify } = require('util')
-const cryptoRandomString = require('crypto-random-string')
-const fs = require('fs')
-const path = require('path')
+import { promisify } from 'util'
+import cryptoRandomString from 'crypto-random-string'
+import { readFile as _readFile } from 'fs'
+import path, { join } from 'path'
+import { fileURLToPath } from 'url'
 
-const readFile = promisify(fs.readFile)
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename) // eslint-disable-line no-unused-vars
 
-const fixturesPath = path.join(__dirname, '..', 'fixtures')
+const readFile = promisify(_readFile)
 
-const randomId = (prefix) => {
+const fixturesPath = join(__dirname, '..', 'fixtures')
+
+export const randomId = (prefix) => {
   const randomString = cryptoRandomString({ length: 6 })
 
   return prefix ? `${prefix}-${randomString}` : randomString
 }
 
 const readFixture = (filename) => {
-  const fixturePath = path.join(fixturesPath, filename)
+  const fixturePath = join(fixturesPath, filename)
   return readFile(fixturePath, 'utf8')
 }
 
-const loadFixture = async (filename, overrides = {}) => {
+export const loadFixture = async (filename, overrides = {}) => {
   const content = await readFixture(filename)
   const fixture = JSON.parse(content)
   return { ...fixture, ...overrides }
-}
-
-module.exports = {
-  loadFixture,
-  randomId
 }

@@ -5,6 +5,11 @@
   "repository": "https://github.com/stac-utils/stac-server",
   "author": "Alireza Jazayeri, Matthew Hanson <matt.a.hanson@gmail.com>, Sean Harkins",
   "license": "MIT",
+  "type": "module",
+  "moduleDirectories": [
+    "node_modules",
+    "src"
+  ],
   "scripts": {
     "build": "./bin/build.sh",
     "lint": "eslint . --ext .js,.ts",
@@ -20,7 +25,8 @@
     "deploy": "sls deploy",
     "package": "sls package",
     "serve": "REQUEST_LOGGING_FORMAT=dev LOG_LEVEL=debug STAC_API_URL=http://localhost:3000 ENABLE_TRANSACTIONS_EXTENSION=true nodemon ./src/lambdas/api/local.ts",
-    "build-api-docs": "npm run widdershins --search false --language_tabs 'nodejs:NodeJS' 'python:Python' --summary ./packages/api-lib/api-spec.yaml -o ./docs/api.md & npm run shins --inline --logo ./docs/images/logo.png -o ./docs/index.html ./docs/api.md"
+    "build-api-docs": "npm run widdershins --search false --language_tabs 'nodejs:NodeJS' 'python:Python' --summary ./packages/api-lib/api-spec.yaml -o ./docs/api.md & npm run shins --inline --logo ./docs/images/logo.png -o ./docs/index.html ./docs/api.md",
+    "pre-commit": "./node_modules/pre-commit/hook"
   },
   "pre-commit": {
     "silent": false,
@@ -59,13 +65,14 @@
     "better-npm-audit": "^3.7.3",
     "cors": "^2.8.5",
     "express": "^4.18.2",
-    "got": "^11.8.5",
+    "got": "^12.5.3",
     "http-errors": "^2.0.0",
-    "lodash": "^4.17.21",
+    "lodash-es": "^4.17.21",
     "memorystream": "^0.3.1",
     "morgan": "^1.10.0",
     "p-filter": "^3.0.0",
     "pump": "^3.0.0",
+    "readable-stream": "^4.3.0",
     "serverless-http": "^3.1.1",
     "through2": "^4.0.2",
     "ts-loader": "^9.4.2",
@@ -92,7 +99,7 @@
     "aws-sdk": "^2.1301.0",
     "c8": "^7.12.0",
     "copy-webpack-plugin": "^11.0.0",
-    "crypto-random-string": "^3.0.0",
+    "crypto-random-string": "^5.0.0",
     "eslint": "^8.32.0",
     "eslint-config-airbnb": "^19.0.4",
     "eslint-plugin-import": "^2.27.5",

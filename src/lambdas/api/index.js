@@ -1,3 +1,4 @@
+/* eslint-disable import/prefer-default-export */
 // @ts-check
 
 /**
@@ -200,7 +201,8 @@ const parseEvent = (rawEvent) => {
  * @param {Context} context
  * @returns {Promise<APIGatewayProxyResult>}
  */
-export default async (event, context) => {
+
+export const handler = async (event, context) => {
   if (!process.env['AWS_REGION']) {
     logger.error('AWS_REGION not set')
     return internalServerError

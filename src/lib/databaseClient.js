@@ -80,12 +80,10 @@ export async function dbClient() {
 export async function createIndex(index) {
   const client = await dbClient()
   const exists = await client.indices.exists({ index })
-  console.log(JSON.stringify(exists))
   if (!exists.body) {
     logger.info(`${index} does not exist, creating...`)
     const indexConfiguration = index === 'collections'
       ? collectionsIndexConfiguration() : itemsIndexConfiguration()
-    console.log(JSON.stringify(indexConfiguration))
     try {
       await client.indices.create({ index, body: indexConfiguration })
       logger.info(`Created index ${index}`)

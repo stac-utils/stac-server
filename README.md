@@ -907,10 +907,12 @@ which provides an example rudimentary authorization mechanism via a hard-coded t
 
 To enable this example pre-hook:
 
-- Modify bin/build.sh to not exclude the "pre-hook" package from being built.
+- Either (1) in package.json, pass the env var `BUILD_PRE_HOOK=true` in the `build`
+  command, or (2) modify bin/build.sh to always build the "pre-hook" package.
 - In the serverless.yml file, uncomment the `preHook` function, the `preHook` IAM
-  permissions and the environment variables
-  `PRE_HOOK`, `PRE_HOOK_AUTH_TOKEN`, and `PRE_HOOK_AUTH_TOKEN_TXN`.
+  permissions, and the environment variables `PRE_HOOK` and `API_KEYS_SECRET_ID`
+- Create a Secrets Manager secret with the name used in `API_KEYS_SECRET_ID` with
+  the keys as the strings allowed for API Keys and the values as `read`.
 - Build and deploy.
 
 ### Post-Hook

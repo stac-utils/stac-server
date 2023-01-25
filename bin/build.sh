@@ -1,9 +1,9 @@
-#!/bin/sh
+#!/bin/bash
 
 set -e
 
-for x in src/lambdas/*; do
-  if [ "$x" != "src/lambdas/pre-hook" ] && [ "$x" != "src/lambdas/post-hook" ]; then
-    (cd "$x" && webpack)
-  fi
-done
+(cd src/lambdas/api && webpack)
+(cd src/lambdas/ingest && webpack)
+
+if [[ -n "${BUILD_PRE_HOOK}" ]]; then (cd src/lambdas/pre-hook && webpack); fi
+if [[ -n "${BUILD_POST_HOOK}" ]]; then (cd src/lambdas/post-hook && webpack); fi

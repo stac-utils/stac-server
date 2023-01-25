@@ -20,8 +20,7 @@ provider:
     # comment STAC_API_ROOTPATH if deployed with a custom domain
     STAC_API_ROOTPATH: "/${self:provider.stage}"
     # PRE_HOOK: ${self:service}-${self:provider.stage}-preHook
-    # PRE_HOOK_AUTH_TOKEN: xxx
-    # PRE_HOOK_AUTH_TOKEN_TXN: xxx
+    # API_KEYS_SECRET_ID: ${self:service}-${self:provider.stage}-api-keys
     # POST_HOOK: ${self:service}-${self:provider.stage}-postHook
   iam:
     role:
@@ -40,12 +39,15 @@ provider:
         - Effect: Allow
           Action: s3:GetObject
           Resource: 'arn:aws:s3:::usgs-landsat/*'
-        # - Effect: "Allow"
-        #   Action: "lambda:InvokeFunction"
-        #   Resource: "arn:aws:lambda:${aws:region}:${aws:accountId}:function:${self:service}-${self:provider.stage}-preHook"
-        # - Effect: "Allow"
-        #   Action: "lambda:InvokeFunction"
-        #   Resource: "arn:aws:lambda:${aws:region}:${aws:accountId}:function:${self:service}-${self:provider.stage}-postHook"
+        # - Effect: Allow
+        #   Action: lambda:InvokeFunction
+        #   Resource: arn:aws:lambda:${aws:region}:${aws:accountId}:function:${self:service}-${self:provider.stage}-preHook
+        # - Effect: Allow
+        #   Action: secretsmanager:GetSecretValue
+        #   Resource: arn:aws:secretsmanager:${aws:region}:${aws:accountId}:secret:${self:service}-${self:provider.stage}-api-keys-*
+        # - Effect: Allow
+        #   Action: lambda:InvokeFunction
+        #   Resource: arn:aws:lambda:${aws:region}:${aws:accountId}:function:${self:service}-${self:provider.stage}-postHook
 
 package:
   individually: true

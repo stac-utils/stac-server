@@ -4,7 +4,7 @@ const localStackEndpointEnvVar = 'LOCAL_STACK_ENDPOINT'
 
 const useLocalStack = () => {
   if (process.env[localStackEndpointEnvVar]) return true
-  return process.env.NODE_ENV === 'test'
+  return process.env['NODE_ENV'] === 'test'
 }
 
 const localStackEndpoint = () => process.env[localStackEndpointEnvVar] || 'http://localhost:4566'

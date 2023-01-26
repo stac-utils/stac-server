@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 import test from 'ava'
 import { constructSearchParams, buildDatetimeQuery } from '../../src/lib/database.js'
 

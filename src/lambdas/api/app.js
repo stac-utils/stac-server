@@ -1,5 +1,3 @@
-// @ts-check
-
 import cors from 'cors'
 import createError from 'http-errors'
 import express from 'express'

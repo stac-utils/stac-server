@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 import { isUndefined } from 'lodash-es'
 import { sqs as _sqs } from '../../src/lib/aws-clients.js'
 import { randomId } from './utils.js'

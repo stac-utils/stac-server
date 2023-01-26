@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 import test from 'ava'
 import { deleteAllIndices } from '../helpers/database.js'
 import { randomId } from '../helpers/utils.js'

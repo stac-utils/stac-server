@@ -1,5 +1,3 @@
-// @ts-check
-
 import { readFile as _readFile } from 'fs'
 import { promisify } from 'util'
 

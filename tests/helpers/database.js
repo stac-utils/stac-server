@@ -1,5 +1,3 @@
-// @ts-check
-
 import { connect, createIndex } from '../../src/lib/databaseClient.js'
 
 /**

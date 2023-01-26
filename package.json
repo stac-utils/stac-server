@@ -42,6 +42,9 @@
   },
   "ava": {
     "verbose": true,
+    "require": [
+      "ts-node/register"
+    ],
     "timeout": "1m",
     "typescript": {
       "rewritePaths": {

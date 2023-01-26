@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 import test from 'ava'
 import { fileURLToPath } from 'url'
 import fs from 'fs'

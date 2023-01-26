@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 import test from 'ava'
 import { deleteAllIndices } from '../helpers/database.js'
 import { ingestItem } from '../helpers/ingest.js'

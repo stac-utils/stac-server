@@ -19,7 +19,9 @@ const setup = () => {
     objectMode: true
   }
   // Catalog is filtered by real toDB transform stream but is left in here.
+  // @ts-ignore
   const toDB = new MemoryStream(undefined, dupOptions)
+  // @ts-ignore
   const dbStream = new MemoryStream(undefined, writeOptions)
   const backend = {
     stream: () => ({ toDB, dbStream }),
@@ -41,5 +43,6 @@ test.skip('ingestItem passes item through transform stream', async (t) => {
   const firstItem = fs.readFileSync(path.resolve(__dirname, '../fixtures/stac/LC80100102015050LGN00.json'))
 
   await ingestItems([firstItem], stream)
+  // @ts-ignore
   t.deepEqual(dbStream.queue[0], firstItem)
 })

@@ -1,5 +1,4 @@
 /* eslint-disable import/prefer-default-export */
-// @ts-check
 
 /**
  * To Do

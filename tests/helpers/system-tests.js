@@ -1,5 +1,3 @@
-// @ts-check
-
 import nock from 'nock'
 import { promisify } from 'util'
 import { readFile as _readFile } from 'fs'

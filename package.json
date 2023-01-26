@@ -42,6 +42,9 @@
   },
   "ava": {
     "verbose": true,
+    "require": [
+      "ts-node/register"
+    ],
     "timeout": "1m",
     "typescript": {
       "rewritePaths": {
@@ -58,7 +61,7 @@
   },
   "dependencies": {
     "@acuris/aws-es-connection": "^1.1.0",
-    "@aws-sdk/client-secrets-manager": "^3.245.0",
+    "@aws-sdk/client-secrets-manager": "^3.258.0",
     "@elastic/elasticsearch": "^7.9.0",
     "@mapbox/extent": "^0.4.0",
     "@opensearch-project/opensearch": "^2.2.0",
@@ -97,7 +100,7 @@
     "@typescript-eslint/parser": "^5.49.0",
     "ava": "^5.1.1",
     "aws-event-mocks": "^0.0.0",
-    "aws-sdk": "^2.1301.0",
+    "aws-sdk": "^2.1302.0",
     "aws-sdk-client-mock": "^2.0.1",
     "c8": "^7.12.0",
     "copy-webpack-plugin": "^11.0.0",

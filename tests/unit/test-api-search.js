@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 import test from 'ava'
 import sinon from 'sinon'
 import fs from 'fs'
@@ -10,7 +12,7 @@ function cloneMutatedItem() {
 }
 
 test.skip('search /', async (t) => {
-  process.env.STAC_DOCS_URL = 'test'
+  process.env['STAC_DOCS_URL'] = 'test'
   const collection = 'collection'
   const results = { results: [{ id: collection }] }
   const search = sinon.stub().resolves(results)

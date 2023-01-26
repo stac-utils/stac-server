@@ -16,14 +16,14 @@ const response401 = {
 export let apiKeys = new Map()
 
 const updateApiKeys = async () => {
-  await new SecretsManagerClient({ region: process.env['AWS_REGION'] })
+  await new SecretsManagerClient({ region: process.env['AWS_REGION'] || 'us-west-2' })
     .send(
       new GetSecretValueCommand({
         SecretId: process.env['API_KEYS_SECRET_ID'],
       })
     )
     .then((data) => {
-      apiKeys = new Map(Object.entries(JSON.parse(data.SecretString)))
+      apiKeys = new Map(Object.entries(JSON.parse(data.SecretString || '')))
     })
     .catch((error) => {
       console.error(

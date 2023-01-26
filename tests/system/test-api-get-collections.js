@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 import test from 'ava'
 import { ingestItem } from '../helpers/ingest.js'
 import { randomId, loadFixture } from '../helpers/utils.js'

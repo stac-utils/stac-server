@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 import test from 'ava'
 import nock from 'nock'
 import { DateTime } from 'luxon'

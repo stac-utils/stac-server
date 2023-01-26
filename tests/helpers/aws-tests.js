@@ -1,5 +1,3 @@
-// @ts-check
-
 import nock from 'nock'
 
 export const disableNetConnect = () => {

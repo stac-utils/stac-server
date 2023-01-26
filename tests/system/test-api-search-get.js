@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 import test from 'ava'
 import got from 'got' // eslint-disable-line import/no-unresolved
 import { deleteAllIndices, refreshIndices } from '../helpers/database.js'

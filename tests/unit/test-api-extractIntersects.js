@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 import test from 'ava'
 import { extractIntersects } from '../../src/lib/api.js'
 

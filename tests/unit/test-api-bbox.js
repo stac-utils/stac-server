@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 import test from 'ava'
 import { extractBbox, ValidationError } from '../../src/lib/api.js'
 

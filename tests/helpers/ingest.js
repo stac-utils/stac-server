@@ -1,5 +1,3 @@
-// @ts-check
-
 import { sns } from '../../src/lib/aws-clients.js'
 import { handler } from '../../src/lambdas/ingest/index.js'
 import { sqsTriggerLambda } from './sqs.js'

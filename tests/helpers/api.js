@@ -1,5 +1,3 @@
-// @ts-check
-
 import got from 'got' // eslint-disable-line import/no-unresolved
 import { once } from 'events'
 import { app } from '../../src/lambdas/api/app.js'

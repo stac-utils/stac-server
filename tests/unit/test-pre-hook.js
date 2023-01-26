@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-empty-function */
-// ts-check
 
 import test from 'ava'
 import { mockClient } from 'aws-sdk-client-mock'
@@ -72,6 +71,7 @@ const DEFAULT_CONTEXT = {
   succeed: () => {},
 }
 
+// @ts-ignore
 const secretsManagerMock = mockClient(SecretsManagerClient)
 
 const response401 = {
@@ -87,7 +87,9 @@ test.beforeEach(() => {
 
 test.serial('authenticate cases', async (t) => {
   secretsManagerMock
+    // @ts-ignore
     .on(GetSecretValueCommand)
+    // @ts-ignore
     .resolves({ SecretString: JSON.stringify({ ABC: 'read', DEF: 'other' }) })
 
   const event = { ...DEFAULT_EVENT }
@@ -122,6 +124,7 @@ test.serial('authenticate cases', async (t) => {
 })
 
 test.serial('authenticate failure with retrieving keys', async (t) => {
+  // @ts-ignore
   secretsManagerMock.on(GetSecretValueCommand).rejectsOnce('mocked rejection')
 
   const event = { ...DEFAULT_EVENT }

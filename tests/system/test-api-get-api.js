@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 import test from 'ava'
 import { startApi } from '../helpers/api.js'
 

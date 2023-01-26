@@ -1,5 +1,3 @@
-// @ts-check
-
 import { sns as _sns } from '../../src/lib/aws-clients.js'
 import { randomId } from './utils.js'
 

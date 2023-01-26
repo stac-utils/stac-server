@@ -6,7 +6,7 @@ import { isIndexNotFoundError } from './database.js'
 import logger from './logger.js'
 
 // max number of collections to retrieve
-const COLLECTION_LIMIT = process.env.STAC_SERVER_COLLECTION_LIMIT || 100
+const COLLECTION_LIMIT = process.env['STAC_SERVER_COLLECTION_LIMIT'] || 100
 
 export class ValidationError extends Error {
   constructor(message) {
@@ -386,10 +386,10 @@ const addItemLinks = function (results, endpoint) {
 }
 
 const collectionsToCatalogLinks = function (results, endpoint) {
-  const stacVersion = process.env.STAC_VERSION || '1.0.0'
-  const catalogId = process.env.STAC_ID || 'stac-server'
-  const catalogTitle = process.env.STAC_TITLE || 'A STAC API'
-  const catalogDescription = process.env.STAC_DESCRIPTION || 'A STAC API running on stac-server'
+  const stacVersion = process.env['STAC_VERSION'] || '1.0.0'
+  const catalogId = process.env['STAC_ID'] || 'stac-server'
+  const catalogTitle = process.env['STAC_TITLE'] || 'A STAC API'
+  const catalogDescription = process.env['STAC_DESCRIPTION'] || 'A STAC API running on stac-server'
   const catalog = {
     stac_version: stacVersion,
     type: 'Catalog',
@@ -414,7 +414,7 @@ const wrapResponseInFeatureCollection = function (
 ) {
   return {
     type: 'FeatureCollection',
-    stac_version: process.env.STAC_VERSION || '1.0.0',
+    stac_version: process.env['STAC_VERSION'] || '1.0.0',
     stac_extensions: [],
     context,
     numberMatched: context.matched,
@@ -551,6 +551,7 @@ const searchItems = async function (collectionId, queryParameters, backend, endp
   let links
 
   if (collectionId) { // add these links for a features request
+    // @ts-ignore
     links = paginationLinks.concat([
       {
         rel: 'self',
@@ -757,7 +758,7 @@ const getCatalog = async function (txnEnabled, backend, endpoint = '') {
     }
   ]
 
-  const docsUrl = process.env.STAC_DOCS_URL
+  const docsUrl = process.env['STAC_DOCS_URL']
   if (docsUrl) {
     links.push({
       rel: 'server',

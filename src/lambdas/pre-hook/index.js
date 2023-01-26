@@ -1,4 +1,3 @@
-// ts-check
 /* eslint-disable import/prefer-default-export */
 import {
   SecretsManagerClient,

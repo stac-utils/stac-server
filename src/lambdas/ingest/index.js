@@ -1,3 +1,4 @@
+/* eslint-disable import/prefer-default-export */
 import got from 'got' // eslint-disable-line import/no-unresolved
 import { createIndex } from '../../lib/databaseClient.js'
 import stream from '../../lib/databaseStream.js'
@@ -48,7 +49,7 @@ const stacItemsFromSqsEvent = async (event) => {
   )
 }
 
-export default async function handler(event, _context) {
+export const handler = async (event, _context) => {
   logger.debug('Event: %j', event)
 
   if (event.create_indices) {

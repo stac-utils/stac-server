@@ -1,6 +1,7 @@
+/* eslint-disable import/prefer-default-export */
 import logger from '../../lib/logger.js'
 
-export default async function handler(event, _context) {
+export const handler = async (event, _context) => {
   logger.debug('Event: %j', event)
 
   const authTokenValue = process.env['PRE_HOOK_AUTH_TOKEN']

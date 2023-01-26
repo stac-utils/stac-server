@@ -1,7 +1,7 @@
 // @ts-nocheck
 
 import test from 'ava'
-import handler from '../../src/lambdas/api'
+import { handler } from '../../src/lambdas/api'
 import { setupResources } from '../helpers/system-tests.js'
 import { randomId } from '../helpers/utils.js'
 import { disableNetConnect, event } from '../helpers/aws-tests.js'

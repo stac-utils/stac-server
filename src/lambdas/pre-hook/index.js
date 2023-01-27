@@ -1,46 +1,62 @@
 /* eslint-disable import/prefer-default-export */
-import logger from '../../lib/logger.js'
+import {
+  SecretsManagerClient,
+  GetSecretValueCommand,
+} from '@aws-sdk/client-secrets-manager'
+
+const TTL = 60 * 1000 // in ms
+
+const response401 = {
+  statusCode: 401,
+  body: '',
+  headers: { 'access-control-allow-origin': '*' },
+}
+
+// eslint-disable-next-line import/no-mutable-exports
+export let apiKeys = new Map()
+
+const updateApiKeys = async () => {
+  await new SecretsManagerClient({ region: process.env['AWS_REGION'] || 'us-west-2' })
+    .send(
+      new GetSecretValueCommand({
+        SecretId: process.env['API_KEYS_SECRET_ID'],
+      })
+    )
+    .then((data) => {
+      apiKeys = new Map(Object.entries(JSON.parse(data.SecretString || '')))
+    })
+    .catch((error) => {
+      console.error(
+        `Error updating API keys: ${JSON.stringify(error, undefined, 2)}`
+      )
+    })
+    .finally(() => {
+      setTimeout(() => updateApiKeys(), TTL)
+    })
+}
+
+const READ = ['read']
+const isValidReadToken = (token) => READ.includes(apiKeys.get(token))
 
 export const handler = async (event, _context) => {
-  logger.debug('Event: %j', event)
-
-  const authTokenValue = process.env['PRE_HOOK_AUTH_TOKEN']
-  const authTokenTxnValue = process.env['PRE_HOOK_AUTH_TOKEN_TXN']
-  const txnEnabled = process.env['ENABLE_TRANSACTIONS_EXTENSION'] === 'true'
-
-  if (!authTokenValue || (txnEnabled && !authTokenTxnValue)) {
-    return {
-      statusCode: 500,
-      body: 'auth token(s) are not configured'
-    }
-  }
-
   let token = null
 
-  const authHeader = event.headers['Authorization']
-
-  if (authHeader) {
-    token = authHeader.split('Bearer ')[1]
-  } else if (event.queryStringParameters) {
+  if (event.headers && event.headers['Authorization']) {
+    token = event.headers['Authorization'].split('Bearer ')[1]
+  } else if (
+    event.queryStringParameters
+    && event.queryStringParameters['auth_token']
+  ) {
     token = event.queryStringParameters['auth_token']
-  } else {
-    return {
-      statusCode: 401,
-      body: '',
-      headers: { 'access-control-allow-origin': '*' }
-    }
   }
 
-  if (event.httpMethod !== 'GET' && event.path.startsWith('/collections')) {
-    if (token === authTokenTxnValue) {
-      return event
-    }
-  } else if (token === authTokenValue || token === authTokenTxnValue) {
+  if (!apiKeys.size) {
+    await updateApiKeys()
+  }
+
+  if (isValidReadToken(token)) {
     return event
   }
 
-  return {
-    statusCode: 403,
-    body: ''
-  }
+  return response401
 }

@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Changed
 
 - ESM modules are used instead of CommonJS
+- Updated pre-hook auth token example to use SecretsManager rather than single values.
 
 ## [0.6.0] - 2023-01-24
 

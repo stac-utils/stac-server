@@ -108,7 +108,7 @@
     "eslint": "^8.33.0",
     "eslint-config-airbnb": "^19.0.4",
     "eslint-plugin-import": "^2.27.5",
-    "eslint-plugin-jsdoc": "^39.6.8",
+    "eslint-plugin-jsdoc": "^39.8.0",
     "luxon": "^3.2.1",
     "nock": "^13.3.0",
     "nodemon": "^2.0.20",

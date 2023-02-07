@@ -912,7 +912,7 @@ To enable this example pre-hook:
 - In the serverless.yml file, uncomment the `preHook` function, the `preHook` IAM
   permissions, and the environment variables `PRE_HOOK` and `API_KEYS_SECRET_ID`
 - Create a Secrets Manager secret with the name used in `API_KEYS_SECRET_ID` with
-  the keys as the strings allowed for API Keys and the values as `read`.
+  the keys as the strings allowed for API Keys and the values as an array `["write"]`.
 - Build and deploy.
 
 ### Post-Hook

@@ -90,7 +90,7 @@ test.serial('authenticate cases', async (t) => {
     // @ts-ignore
     .on(GetSecretValueCommand)
     // @ts-ignore
-    .resolves({ SecretString: JSON.stringify({ ABC: 'read', DEF: 'other' }) })
+    .resolves({ SecretString: JSON.stringify({ ABC: ['write'], DEF: ['other'] }) })
 
   const event = { ...DEFAULT_EVENT }
   const context = { ...DEFAULT_CONTEXT }

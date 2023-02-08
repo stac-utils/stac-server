@@ -13,7 +13,7 @@ const response401 = {
 }
 
 // eslint-disable-next-line import/no-mutable-exports
-export let apiKeys = new Map()
+export let apiKeys = new Map() // string -> string[]
 
 const updateApiKeys = async () => {
   await new SecretsManagerClient({ region: process.env['AWS_REGION'] || 'us-west-2' })
@@ -35,8 +35,7 @@ const updateApiKeys = async () => {
     })
 }
 
-const READ = ['read']
-const isValidReadToken = (token) => READ.includes(apiKeys.get(token))
+const isValidToken = (token) => (apiKeys.get(token) || []).includes('write')
 
 export const handler = async (event, _context) => {
   let token = null
@@ -54,7 +53,7 @@ export const handler = async (event, _context) => {
     await updateApiKeys()
   }
 
-  if (isValidReadToken(token)) {
+  if (isValidToken(token)) {
     return event
   }
 

@@ -74,6 +74,14 @@ app.get('/conformance', async (_req, res, next) => {
   }
 })
 
+app.get('/queryables', async (req, res, next) => {
+  try {
+    res.json(await api.getQueryables(req.endpoint))
+  } catch (error) {
+    next(error)
+  }
+})
+
 app.get('/search', async (req, res, next) => {
   try {
     res.type('application/geo+json')

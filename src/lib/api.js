@@ -707,6 +707,15 @@ const getConformance = async function (txnEnabled) {
   return { conformsTo }
 }
 
+const getQueryables = async (endpoint = '') => ({
+  $schema: 'https://json-schema.org/draft/2020-12/schema',
+  $id: `${endpoint}/queryables`,
+  type: 'object',
+  title: `Queryables for ${process.env['STAC_TITLE'] || 'STAC API'}`,
+  properties: {},
+  additionalProperties: true
+})
+
 const getCatalog = async function (txnEnabled, backend, endpoint = '') {
   const links = [
     {
@@ -755,7 +764,12 @@ const getCatalog = async function (txnEnabled, backend, endpoint = '') {
       rel: 'service-doc',
       type: 'text/html',
       href: `${endpoint}/api.html`
-    }
+    },
+    {
+      rel: 'http://www.opengis.net/def/rel/ogc/1.0/queryables',
+      type: 'application/schema+json',
+      href: `${endpoint}/queryables`
+    },
   ]
 
   const docsUrl = process.env['STAC_DOCS_URL']
@@ -942,4 +956,5 @@ export default {
   aggregate,
   getItemThumbnail,
   healthCheck,
+  getQueryables,
 }

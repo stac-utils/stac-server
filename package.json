@@ -24,7 +24,7 @@
     "audit-prod": "npx better-npm-audit audit --production",
     "deploy": "sls deploy",
     "package": "sls package",
-    "serve": "REQUEST_LOGGING_FORMAT=dev LOG_LEVEL=debug STAC_API_URL=http://localhost:3000 ENABLE_TRANSACTIONS_EXTENSION=true nodemon ./src/lambdas/api/local.ts",
+    "serve": "REQUEST_LOGGING_FORMAT=dev LOG_LEVEL=debug STAC_API_URL=http://localhost:3000 ENABLE_TRANSACTIONS_EXTENSION=true nodemon --esm ./src/lambdas/api/local.ts",
     "build-api-docs": "npm run widdershins --search false --language_tabs 'nodejs:NodeJS' 'python:Python' --summary ./packages/api-lib/api-spec.yaml -o ./docs/api.md & npm run shins --inline --logo ./docs/images/logo.png -o ./docs/index.html ./docs/api.md",
     "pre-commit": "./node_modules/pre-commit/hook"
   },

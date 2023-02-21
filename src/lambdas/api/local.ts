@@ -1,5 +1,5 @@
 import winston from 'winston'
-import { app } from './app'
+import { app } from './app.js'
 
 const logger = winston.createLogger({
   level: process.env['LOG_LEVEL'] || 'warn',

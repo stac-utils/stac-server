@@ -81,7 +81,7 @@
     "through2": "^4.0.2",
     "ts-loader": "^9.4.2",
     "winston": "^3.8.2",
-    "zod": "^3.20.2"
+    "zod": "^3.20.6"
   },
   "devDependencies": {
     "@ava/typescript": "^3.0.1",

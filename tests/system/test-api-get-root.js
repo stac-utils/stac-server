@@ -73,10 +73,14 @@ test('GET / returns links with the correct endpoint if `X-Forwarded-Proto` and `
     }
   })
 
-  const apiLink = response.links.find((l) => l.rel === 'service-desc')
+  const linkRels = new Map([
+    ['service-desc', '/api'],
+    ['http://www.opengis.net/def/rel/ogc/1.0/queryables', '/queryables'],
+  ])
 
-  t.not(apiLink, undefined)
-  t.is(apiLink.href, `${proto}://${host}/api`)
+  for (const [rel, hrefSuffix] of linkRels) {
+    t.is(response.links.find((l) => l.rel === rel)?.href, `${proto}://${host}${hrefSuffix}`)
+  }
 })
 
 test('GET / returns links with the correct endpoint if `X-STAC-Endpoint` is set', async (t) => {

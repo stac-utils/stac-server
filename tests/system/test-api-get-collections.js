@@ -35,6 +35,13 @@ test('GET /collections', async (t) => {
   t.true(response.collections.length > 0)
 
   t.truthy(response.context.returned)
+
+  // queryables definition is stored in the collection document in OpenSearch,
+  // but we do not want it in the Collection entity returned from the API or
+  // people will start using this (non-standard) field
+  for (const c of response.collections) {
+    t.falsy(c.queryables)
+  }
 })
 
 test('GET /collections has a content type of "application/json', async (t) => {

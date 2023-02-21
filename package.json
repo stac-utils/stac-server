@@ -98,7 +98,7 @@
     "@types/sinon": "^10.0.13",
     "@typescript-eslint/eslint-plugin": "^5.49.0",
     "@typescript-eslint/parser": "^5.49.0",
-    "ava": "^5.1.1",
+    "ava": "^5.2.0",
     "aws-event-mocks": "^0.0.0",
     "aws-sdk": "^2.1302.0",
     "aws-sdk-client-mock": "^2.0.1",

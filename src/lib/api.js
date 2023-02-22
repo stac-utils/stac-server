@@ -341,6 +341,12 @@ const addCollectionLinks = function (results, endpoint) {
       type: 'application/geo+json',
       href: `${endpoint}/collections/${id}/items`
     })
+    // queryables
+    links.push({
+      rel: 'http://www.opengis.net/def/rel/ogc/1.0/queryables',
+      type: 'application/schema+json',
+      href: `${endpoint}/collections/${id}/queryables`
+    })
   })
   return results
 }
@@ -707,6 +713,15 @@ const getConformance = async function (txnEnabled) {
   return { conformsTo }
 }
 
+const getQueryables = async (endpoint = '') => ({
+  $schema: 'https://json-schema.org/draft/2020-12/schema',
+  $id: `${endpoint}/queryables`,
+  type: 'object',
+  title: `Queryables for ${process.env['STAC_TITLE'] || 'STAC API'}`,
+  properties: {},
+  additionalProperties: true
+})
+
 const getCatalog = async function (txnEnabled, backend, endpoint = '') {
   const links = [
     {
@@ -755,7 +770,12 @@ const getCatalog = async function (txnEnabled, backend, endpoint = '') {
       rel: 'service-doc',
       type: 'text/html',
       href: `${endpoint}/api.html`
-    }
+    },
+    {
+      rel: 'http://www.opengis.net/def/rel/ogc/1.0/queryables',
+      type: 'application/schema+json',
+      href: `${endpoint}/queryables`
+    },
   ]
 
   const docsUrl = process.env['STAC_DOCS_URL']
@@ -778,10 +798,14 @@ const getCatalog = async function (txnEnabled, backend, endpoint = '') {
 const getCollections = async function (backend, endpoint = '') {
   // TODO: implement proper pagination, as this will only return up to
   // COLLECTION_LIMIT collections
-  const results = await backend.getCollections(1, COLLECTION_LIMIT)
-  const linkedCollections = addCollectionLinks(results, endpoint)
+  const collections = await backend.getCollections(1, COLLECTION_LIMIT)
+  for (const collection of collections) {
+    delete collection.queryables
+  }
+
+  const linkedCollections = addCollectionLinks(collections, endpoint)
   const resp = {
-    collections: results,
+    collections,
     links: [
       {
         rel: 'self',
@@ -942,4 +966,5 @@ export default {
   aggregate,
   getItemThumbnail,
   healthCheck,
+  getQueryables,
 }

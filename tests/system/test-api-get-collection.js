@@ -40,6 +40,11 @@ test('GET /collections/:collectionId returns a collection', async (t) => {
   t.is(response.headers['content-type'], 'application/json; charset=utf-8')
   // @ts-expect-error We need to validate these responses
   t.is(response.body.id, collectionId)
+
+  t.falsy(response.queryables)
+
+  const qLink = response.body.links.find((l) => l.rel === 'http://www.opengis.net/def/rel/ogc/1.0/queryables')
+  t.true(qLink?.href.endsWith(`/collections/${collectionId}/queryables`))
 })
 
 test('GET /collection/:collectionId for non-existent collection returns Not Found', async (t) => {

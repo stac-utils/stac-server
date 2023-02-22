@@ -27,6 +27,7 @@
     - [Proxying Stac-server through CloudFront](#proxying-stac-server-through-cloudfront)
     - [Locking down transaction endpoints](#locking-down-transaction-endpoints)
     - [AWS WAF Rule Conflicts](#aws-waf-rule-conflicts)
+  - [Queryables](#queryables)
   - [Ingesting Data](#ingesting-data)
     - [Ingesting large items](#ingesting-large-items)
     - [Subscribing to SNS Topics](#subscribing-to-sns-topics)
@@ -820,6 +821,19 @@ This is also triggered when using pystac_client with no filtering parameters.
 
 The fix is to disable the WAF SQL injection rule, which is unnecessary because
 stac-server does not use SQL.
+
+## Queryables
+
+STAC API supports the Query Extension. Unlike the Filter Extension (which is not supported),
+the Query Extension does not (yet) define a mechanism to advertise which terms may be
+used in expressions. However, an optional defintion may be added to it soon that defines
+queryables endpoints the same as used with Filter Extension. To define these for a Collection,
+add a field `queryables` with the value as the JSON Schema definition of the queryables
+for that collection. This will be used for a collection's queryables resource, and removed
+from the Collection entity whenever that is returned.
+
+A non-configurable root-level queryables definition is defined with no named terms but
+`additionalProperties` set to `true`.
 
 ## Ingesting Data
 

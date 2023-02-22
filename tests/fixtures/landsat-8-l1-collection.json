@@ -269,5 +269,17 @@
             ]
         }
     },
-    "license": "PDDL-1.0"
+    "license": "PDDL-1.0",
+    "queryables": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$id": "",
+        "type": "object",
+        "title": "",
+        "properties": {
+            "eo:cloud_cover": {
+                "$ref": "https://stac-extensions.github.io/eo/v1.0.0/schema.json#/definitions/fields/properties/eo:cloud_cover"
+            }
+        },
+        "additionalProperties": true
+    }
 }

@@ -74,6 +74,15 @@ app.get('/conformance', async (_req, res, next) => {
   }
 })
 
+app.get('/queryables', async (req, res, next) => {
+  try {
+    res.type('application/schema+json')
+    res.json(await api.getQueryables(req.endpoint))
+  } catch (error) {
+    next(error)
+  }
+})
+
 app.get('/search', async (req, res, next) => {
   try {
     res.type('application/geo+json')
@@ -157,7 +166,7 @@ app.get('/collections/:collectionId', async (req, res, next) => {
   const { collectionId } = req.params
   try {
     const response = await api.getCollection(collectionId, database, req.endpoint)
-
+    delete response.queryables
     if (response instanceof Error) next(createError(404))
     else res.json(response)
   } catch (error) {
@@ -181,6 +190,35 @@ app.get('/collections/:collectionId/items', async (req, res, next) => {
       )
       res.type('application/geo+json')
       res.json(items)
+    }
+  } catch (error) {
+    if (error instanceof ValidationError) {
+      next(createError(400, error.message))
+    } else {
+      next(error)
+    }
+  }
+})
+
+const DEFAULT_QUERYABLES = {
+  $schema: 'https://json-schema.org/draft/2020-12/schema',
+  type: 'object',
+  properties: {},
+  additionalProperties: true
+}
+
+app.get('/collections/:collectionId/queryables', async (req, res, next) => {
+  const { collectionId } = req.params
+  try {
+    const collection = await api.getCollection(collectionId, database, req.endpoint)
+
+    if (collection instanceof Error) next(createError(404))
+    else {
+      const queryables = collection.queryables || { ...DEFAULT_QUERYABLES }
+      queryables.$id = `${req.endpoint}/collections/${collectionId}/queryables`
+      queryables.title = `Queryables for Collection ${collectionId}`
+      res.type('application/schema+json')
+      res.json(queryables)
     }
   } catch (error) {
     if (error instanceof ValidationError) {

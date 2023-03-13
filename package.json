@@ -61,7 +61,7 @@
   },
   "dependencies": {
     "@acuris/aws-es-connection": "^1.1.0",
-    "@aws-sdk/client-secrets-manager": "^3.276.0",
+    "@aws-sdk/client-secrets-manager": "^3.289.0",
     "@elastic/elasticsearch": "^7.9.0",
     "@mapbox/extent": "^0.4.0",
     "@opensearch-project/opensearch": "^2.2.0",

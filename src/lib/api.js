@@ -920,10 +920,14 @@ const getItemThumbnail = async function (collectionId, itemId, backend) {
   if (thumbnailAsset.href && thumbnailAsset.href.startsWith('http')) {
     location = thumbnailAsset.href
   } else if (thumbnailAsset.href && thumbnailAsset.href.startsWith('s3')) {
+    const region = thumbnailAsset['storage:region']
+                  || item.properties['storage:region']
+                  || process.env['AWS_REGION']
+                  || 'us-west-2'
     const withoutProtocol = thumbnailAsset.href.substring(5) // chop off s3://
     const [bucket, ...keyArray] = withoutProtocol.split('/')
     const key = keyArray.join('/')
-    location = new AWS.S3().getSignedUrl('getObject', {
+    location = new AWS.S3({ region }).getSignedUrl('getObject', {
       Bucket: bucket,
       Key: key,
       Expires: 60 * 5, // expiry in seconds

@@ -101,7 +101,7 @@
     "ava": "^5.2.0",
     "aws-event-mocks": "^0.0.0",
     "aws-sdk": "^2.1319.0",
-    "aws-sdk-client-mock": "^2.0.1",
+    "aws-sdk-client-mock": "^2.1.1",
     "c8": "^7.13.0",
     "copy-webpack-plugin": "^11.0.0",
     "crypto-random-string": "^5.0.0",

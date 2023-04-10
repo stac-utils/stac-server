@@ -77,7 +77,7 @@ app.get('/conformance', async (_req, res, next) => {
 app.get('/queryables', async (req, res, next) => {
   try {
     res.type('application/schema+json')
-    res.json(await api.getQueryables(req.endpoint))
+    res.json(await api.getGlobalQueryables(req.endpoint))
   } catch (error) {
     next(error)
   }
@@ -111,7 +111,7 @@ app.post('/search', async (req, res, next) => {
 
 app.get('/aggregate', async (req, res, next) => {
   try {
-    res.json(await api.aggregate(req.query, database, req.endpoint, 'GET'))
+    res.json(await api.aggregate(null, req.query, database, req.endpoint, 'GET'))
   } catch (error) {
     if (error instanceof ValidationError) {
       next(createError(400, error.message))
@@ -130,6 +130,14 @@ app.post('/aggregate', async (req, res, next) => {
     } else {
       next(error)
     }
+  }
+})
+
+app.get('/aggregations', async (req, res, next) => {
+  try {
+    res.json(await api.getGlobalAggregations(req.endpoint))
+  } catch (error) {
+    next(error)
   }
 })
 
@@ -166,13 +174,68 @@ app.get('/collections/:collectionId', async (req, res, next) => {
   const { collectionId } = req.params
   try {
     const response = await api.getCollection(collectionId, database, req.endpoint)
-    delete response.queryables
     if (response instanceof Error) next(createError(404))
     else res.json(response)
   } catch (error) {
     next(error)
   }
 })
+
+app.get('/collections/:collectionId/queryables', async (req, res, next) => {
+  const { collectionId } = req.params
+  try {
+    const queryables = await api.getCollectionQueryables(collectionId, database, req.endpoint)
+    if (queryables instanceof Error) next(createError(404))
+    else {
+      res.type('application/schema+json')
+      res.json(queryables)
+    }
+  } catch (error) {
+    if (error instanceof ValidationError) {
+      next(createError(400, error.message))
+    } else {
+      next(error)
+    }
+  }
+})
+
+app.get('/collections/:collectionId/aggregations', async (req, res, next) => {
+  const { collectionId } = req.params
+  try {
+    res.json(await api.getCollectionAggregations(collectionId, database, req.endpoint))
+  } catch (error) {
+    if (error instanceof ValidationError) {
+      next(createError(400, error.message))
+    } else {
+      next(error)
+    }
+  }
+})
+
+const collectionAggregate = async (req, res, next, httpMethod) => {
+  const { collectionId } = req.params
+  try {
+    const response = await api.getCollection(collectionId, database, req.endpoint)
+
+    if (response instanceof Error) next(createError(404))
+    else {
+      res.json(await api.aggregate(collectionId, req.query, database, req.endpoint, httpMethod))
+    }
+  } catch (error) {
+    if (error instanceof ValidationError) {
+      next(createError(400, error.message))
+    } else {
+      next(error)
+    }
+  }
+}
+
+// are these supposed to be awaited?
+app.get('/collections/:collectionId/aggregate',
+  async (req, res, next) => await collectionAggregate(req, res, next, 'GET'))
+
+app.get('/collections/:collectionId/aggregate',
+  async (req, res, next) => await collectionAggregate(req, res, next, 'POST'))
 
 app.get('/collections/:collectionId/items', async (req, res, next) => {
   const { collectionId } = req.params
@@ -190,35 +253,6 @@ app.get('/collections/:collectionId/items', async (req, res, next) => {
       )
       res.type('application/geo+json')
       res.json(items)
-    }
-  } catch (error) {
-    if (error instanceof ValidationError) {
-      next(createError(400, error.message))
-    } else {
-      next(error)
-    }
-  }
-})
-
-const DEFAULT_QUERYABLES = {
-  $schema: 'https://json-schema.org/draft/2020-12/schema',
-  type: 'object',
-  properties: {},
-  additionalProperties: true
-}
-
-app.get('/collections/:collectionId/queryables', async (req, res, next) => {
-  const { collectionId } = req.params
-  try {
-    const collection = await api.getCollection(collectionId, database, req.endpoint)
-
-    if (collection instanceof Error) next(createError(404))
-    else {
-      const queryables = collection.queryables || { ...DEFAULT_QUERYABLES }
-      queryables.$id = `${req.endpoint}/collections/${collectionId}/queryables`
-      queryables.title = `Queryables for Collection ${collectionId}`
-      res.type('application/schema+json')
-      res.json(queryables)
     }
   } catch (error) {
     if (error instanceof ValidationError) {

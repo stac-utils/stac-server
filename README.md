@@ -28,6 +28,7 @@
     - [Locking down transaction endpoints](#locking-down-transaction-endpoints)
     - [AWS WAF Rule Conflicts](#aws-waf-rule-conflicts)
   - [Queryables](#queryables)
+  - [Aggregation](#aggregation)
   - [Ingesting Data](#ingesting-data)
     - [Ingesting large items](#ingesting-large-items)
     - [Subscribing to SNS Topics](#subscribing-to-sns-topics)
@@ -834,6 +835,73 @@ from the Collection entity whenever that is returned.
 
 A non-configurable root-level queryables definition is defined with no named terms but
 `additionalProperties` set to `true`.
+
+## Aggregation
+
+STAC API supports the [Aggregation Extension](https://github.com/stac-api-extensions/aggregation). This allows the definition of per-collection aggregations that can be
+calculated, dependent on the relevant fields being available in the STAC Items in that
+Collection. A field named `aggregations` should be added to the Collection object for
+the collection for which the aggregations are available, e.g.:
+
+```text
+  "aggregations": [
+    {
+      "name": "total_count",
+      "data_type": "integer"
+    },
+    {
+      "name": "datetime_max",
+      "data_type": "datetime"
+    },
+    {
+      "name": "datetime_min",
+      "data_type": "datetime"
+    },
+    {
+      "name": "datetime_frequency",
+      "data_type": "frequency_distribution",
+      "frequency_distribution_data_type": "datetime"
+    },
+    {
+      "name": "grid_code_frequency",
+      "data_type": "frequency_distribution",
+      "frequency_distribution_data_type": "string"
+    },
+    {
+      "name": "grid_geohex_frequency",
+      "data_type": "frequency_distribution",
+      "frequency_distribution_data_type": "string"
+    },
+    {
+      "name": "grid_geohash_frequency",
+      "data_type": "frequency_distribution",
+      "frequency_distribution_data_type": "string"
+    },
+    {
+      "name": "grid_geotile_frequency",
+      "data_type": "frequency_distribution",
+      "frequency_distribution_data_type": "string"
+    }
+  ]
+```
+
+Available aggregations are:
+
+- total_count (count of total items)
+- collection_frequency (Item `collection` field)
+- platform_frequency (Item.Properties.platform)
+- cloud_cover_frequency (Item.Properties.eo:cloud_cover)
+- datetime_frequency (Item.Properties.datetime, monthly interval)
+- datetime_min (earliest Item.Properties.datetime)
+- datetime_max (latest Item.Properties.datetime)
+- grid_code_frequency (Item.Properties.grid:code)
+- grid_code_landsat_frequency (synthesized from Item.Properties.landsat:wrs_path and Item.Properties.landsat:wrs_row)
+- sun_elevation_frequency (Item.Properties.view:sun_elevation)
+- sun_azimuth_frequency (Item.Properties.view:sun_azimuth)
+- off_nadir_frequency (Item.Properties.view:off_nadir)
+- grid_geohex_frequency ([GeoHex grid](https://opensearch.org/docs/2.4/opensearch/geohexgrid-agg/) on Item.Properties.proj:centroid)
+- grid_geohash_frequency ([geohash grid](https://opensearch.org/docs/2.4/opensearch/bucket-agg/#geo_distance-geohash_grid) on Item.Properties.proj:centroid)
+- grid_geotile_frequency (geotile on Item.Properties.proj:centroid)
 
 ## Ingesting Data
 

@@ -185,11 +185,11 @@ app.get('/collections/:collectionId/queryables', async (req, res, next) => {
   const { collectionId } = req.params
   try {
     const queryables = await api.getCollectionQueryables(collectionId, database, req.endpoint)
+
     if (queryables instanceof Error) next(createError(404))
-    else {
-      res.type('application/schema+json')
-      res.json(queryables)
-    }
+
+    res.type('application/schema+json')
+    res.json(queryables)
   } catch (error) {
     if (error instanceof ValidationError) {
       next(createError(400, error.message))

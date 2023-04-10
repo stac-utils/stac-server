@@ -18,7 +18,6 @@
     "noUncheckedIndexedAccess": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "importsNotUsedAsValues": "error",
     "resolveJsonModule": true,
     "typeRoots": [
       "./@types",

@@ -37,7 +37,7 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
       - name: Audit
-        run: npm audit --omit dev
+        run: npm run audit-prod
       - name: Unit tests
         run: npm run test:coverage
       - name: Wait for OpenSearch

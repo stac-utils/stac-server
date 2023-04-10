@@ -82,7 +82,10 @@ test('The ingest lambda supports ingesting a collection sourced from S3', async 
   const sourceKey = randomId('key')
 
   await s3.createBucket({
-    Bucket: sourceBucket
+    Bucket: sourceBucket,
+    CreateBucketConfiguration: {
+      LocationConstraint: 'us-west-2'
+    }
   }).promise()
 
   await s3.putObject({

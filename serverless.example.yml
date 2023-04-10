@@ -154,7 +154,7 @@ resources:
           InstanceCount: 1
           DedicatedMasterEnabled: false
           ZoneAwarenessEnabled: false
-        EngineVersion: OpenSearch_2.3
+        EngineVersion: OpenSearch_2.5
         DomainEndpointOptions:
           EnforceHTTPS: true
   Outputs:

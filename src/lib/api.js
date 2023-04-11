@@ -639,15 +639,6 @@ const aggregate = async function (collectionId,
   const ids = extractIds(queryParameters)
   const collections = extractCollectionIds(queryParameters)
 
-  let linkEndpoint = endpoint
-  let collectionEndpoint
-
-  if (collectionId) {
-    queryParameters.collections = [collectionId]
-    linkEndpoint = `${endpoint}/collections/${collectionId}`
-    collectionEndpoint = `${endpoint}/collections/${collectionId}`
-  }
-
   const searchParams = pickBy({
     datetime,
     intersects: geometry,
@@ -655,6 +646,15 @@ const aggregate = async function (collectionId,
     ids,
     collections,
   })
+
+  let linkEndpoint = endpoint
+  let collectionEndpoint
+
+  if (collectionId) {
+    searchParams.collections = [collectionId]
+    linkEndpoint = `${endpoint}/collections/${collectionId}`
+    collectionEndpoint = `${endpoint}/collections/${collectionId}`
+  }
 
   logger.debug('Aggregate parameters: %j', searchParams)
 

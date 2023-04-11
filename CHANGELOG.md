@@ -16,6 +16,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Added support for `/aggregations`, `/collections/{collectionId}/aggregations`, and
   `/collections/{collectionId}/aggregate` endpoints.
 
+## Fixed
+
+- `/api` and `/api.html` endpoints were broken, now fixed
+
 ## [0.8.1] - 2023-03-29
 
 ### Added

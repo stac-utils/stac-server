@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Changed
 
 - Updated example serverless configuration to use OpenSearch 2.5.
+- Added `stac_version` to the default set of fields returned when the `fields` parameter
+  is an empty value.
 
 ## Added
 

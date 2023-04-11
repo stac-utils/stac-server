@@ -2,16 +2,13 @@ import cors from 'cors'
 import createError from 'http-errors'
 import express from 'express'
 import morgan from 'morgan'
-import path, { join } from 'path'
+import path from 'path'
 import { fileURLToPath } from 'url'
 import database from '../../lib/database.js'
 import api, { ValidationError } from '../../lib/api.js'
 import { readFile } from '../../lib/fs.js'
 import addEndpoint from './middleware/add-endpoint.js'
 import logger from '../../lib/logger.js'
-
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = path.dirname(__filename) // eslint-disable-line no-unused-vars
 
 /**
  * @typedef {import('express').Request} Request
@@ -48,10 +45,13 @@ app.get('/healthcheck', async (_req, res, next) => {
   }
 })
 
+const pathName = process.env['LAMBDA_TASK_ROOT']
+  ? process.env['LAMBDA_TASK_ROOT'] : path.dirname(fileURLToPath(import.meta.url))
+
 app.get('/api', async (_req, res, next) => {
   try {
     res.type('application/vnd.oai.openapi')
-    res.download(join(__dirname, 'openapi.yaml'))
+    res.download(path.resolve(pathName, 'openapi.yaml'))
   } catch (error) {
     next(error)
   }
@@ -60,7 +60,7 @@ app.get('/api', async (_req, res, next) => {
 app.get('/api.html', async (_req, res, next) => {
   try {
     res.type('text/html')
-    res.send(await readFile(join(__dirname, 'redoc.html'), 'utf8'))
+    res.send(await readFile(path.resolve(pathName, 'redoc.html'), 'utf8'))
   } catch (error) {
     next(error)
   }

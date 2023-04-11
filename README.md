@@ -242,6 +242,9 @@ that only has the OpenSearchInstance resource in it. For example:
 Within CloudFormation, choose `Create stack` and `With existing resources (import resources)`.
 Upload the template that contains only the OpenSearch resource. Choose a new stack name for this similar to the old one, e.g., `my-stac-server-2` and update `service` name in the serverless.yml file with this name. When prompted for the name of the OpenSearch Domain, put in the name of the existing one, e.g., `my-stac-server-dev-es`.
 
+Deploy the new stack with `npm run deploy`. This should appear as an update to the CloudFormation stack that was just created manually, and should use the existing Open
+Search domain.
+
 Switch the DNS entry for the domain name to the API Gateway endpoint for the new Stack.
 
 Double-check that the `DeletionPolicy: Retain` is set on the old Stack for the Elasticsearch/OpenSearch resource, and then delete the old Stack.

@@ -5,11 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## Unreleased - TBD
+## [Unreleased] - TBD
 
 ### Changed
 
 - Updated example serverless configuration to use OpenSearch 2.5.
+
+## Added
+
+- Added support for `/aggregations`, `/collections/{collectionId}/aggregations`, and
+  `/collections/{collectionId}/aggregate` endpoints.
 
 ## [0.8.1] - 2023-03-29
 

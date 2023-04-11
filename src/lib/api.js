@@ -347,6 +347,23 @@ const addCollectionLinks = function (results, endpoint) {
       type: 'application/schema+json',
       href: `${endpoint}/collections/${id}/queryables`
     })
+    links.push({
+      rel: 'aggregate',
+      type: 'application/json',
+      href: `${endpoint}/collections/${id}/aggregate`,
+      method: 'GET'
+    })
+    links.push({
+      rel: 'aggregate',
+      type: 'application/json',
+      href: `${endpoint}/collections/${id}/aggregate`,
+      method: 'POST'
+    })
+    links.push({
+      rel: 'aggregations',
+      type: 'application/json',
+      href: `${endpoint}/collections/${id}/aggregations`
+    })
   })
   return results
 }
@@ -604,7 +621,8 @@ const agg = function (esAggs, name, dataType) {
   }
 }
 
-const aggregate = async function (queryParameters, backend, endpoint, httpMethod) {
+const aggregate = async function (collectionId,
+  queryParameters, backend, endpoint, httpMethod) {
   logger.debug('Aggregate parameters: %j', queryParameters)
   const {
     bbox,
@@ -620,6 +638,15 @@ const aggregate = async function (queryParameters, backend, endpoint, httpMethod
   const query = extractStacQuery(queryParameters)
   const ids = extractIds(queryParameters)
   const collections = extractCollectionIds(queryParameters)
+
+  let linkEndpoint = endpoint
+  let collectionEndpoint
+
+  if (collectionId) {
+    queryParameters.collections = [collectionId]
+    linkEndpoint = `${endpoint}/collections/${collectionId}`
+    collectionEndpoint = `${endpoint}/collections/${collectionId}`
+  }
 
   const searchParams = pickBy({
     datetime,
@@ -664,27 +691,36 @@ const aggregate = async function (queryParameters, backend, endpoint, httpMethod
 
     agg(esAggs, 'collection_frequency', 'string'),
     agg(esAggs, 'datetime_frequency', 'datetime'),
-    agg(esAggs, 'cloud_cover_frequency', 'numeric'),
     agg(esAggs, 'grid_code_frequency', 'string'),
-    agg(esAggs, 'platform_frequency', 'string'),
     agg(esAggs, 'grid_code_landsat_frequency', 'string'),
+    agg(esAggs, 'cloud_cover_frequency', 'numeric'),
+    agg(esAggs, 'platform_frequency', 'string'),
     agg(esAggs, 'sun_elevation_frequency', 'string'),
     agg(esAggs, 'sun_azimuth_frequency', 'string'),
     agg(esAggs, 'off_nadir_frequency', 'string'),
   ]
-  return {
+  const results = {
     aggregations,
-    links: [{
-      rel: 'self',
-      type: 'application/json',
-      href: `${endpoint}/aggregate`
-    },
-    {
-      rel: 'root',
-      type: 'application/json',
-      href: `${endpoint}`
-    }]
+    links: [
+      {
+        rel: 'self',
+        type: 'application/json',
+        href: `${linkEndpoint}/aggregate`
+      },
+      {
+        rel: 'root',
+        type: 'application/json',
+        href: `${endpoint}`
+      }]
   }
+  if (collectionEndpoint) {
+    results.links.push({
+      rel: 'collection',
+      type: 'application/json',
+      href: `${collectionEndpoint}`
+    })
+  }
+  return results
 }
 
 const getConformance = async function (txnEnabled) {
@@ -713,7 +749,14 @@ const getConformance = async function (txnEnabled) {
   return { conformsTo }
 }
 
-const getQueryables = async (endpoint = '') => ({
+const DEFAULT_QUERYABLES = {
+  $schema: 'https://json-schema.org/draft/2020-12/schema',
+  type: 'object',
+  properties: {},
+  additionalProperties: true
+}
+
+const getGlobalQueryables = async (endpoint = '') => ({
   $schema: 'https://json-schema.org/draft/2020-12/schema',
   $id: `${endpoint}/queryables`,
   type: 'object',
@@ -721,6 +764,84 @@ const getQueryables = async (endpoint = '') => ({
   properties: {},
   additionalProperties: true
 })
+
+const getCollectionQueryables = async (collectionId, backend, endpoint = '') => {
+  const collection = await backend.getCollection(collectionId)
+
+  if (collection instanceof Error) {
+    return collection
+  }
+  const queryables = collection.queryables || { ...DEFAULT_QUERYABLES }
+  queryables.$id = `${endpoint}/collections/${collectionId}/queryables`
+  queryables.title = `Queryables for Collection ${collectionId}`
+  return queryables
+}
+
+const DEFAULT_AGGREGATIONS = [
+  {
+    name: 'total_count',
+    data_type: 'integer'
+  },
+  {
+    name: 'datetime_max',
+    data_type: 'datetime'
+  },
+  {
+    name: 'datetime_min',
+    data_type: 'datetime'
+  },
+  {
+    name: 'datetime_frequency',
+    data_type: 'frequency_distribution',
+    frequency_distribution_data_type: 'datetime'
+  },
+]
+
+const getCollectionAggregations = async (collectionId, backend, endpoint = '') => {
+  const collection = await backend.getCollection(collectionId)
+
+  if (collection instanceof Error) {
+    return collection
+  }
+  const aggregations = collection?.aggregations || DEFAULT_AGGREGATIONS
+
+  const links = [
+    {
+      rel: 'root',
+      type: 'application/json',
+      href: `${endpoint}`
+    },
+    {
+      rel: 'self',
+      type: 'application/json',
+      href: `${endpoint}/collections/${collectionId}/aggregations`
+    },
+    {
+      rel: 'collection',
+      type: 'application/json',
+      href: `${endpoint}/collection/${collectionId}`
+    }
+  ]
+
+  return { aggregations, links }
+}
+
+const getGlobalAggregations = async (endpoint = '') => {
+  const aggregations = DEFAULT_AGGREGATIONS
+  const links = [
+    {
+      rel: 'root',
+      type: 'application/json',
+      href: `${endpoint}`
+    }, {
+      rel: 'self',
+      type: 'application/json',
+      href: `${endpoint}/aggregations`
+    }
+  ]
+
+  return { aggregations, links }
+}
 
 const getCatalog = async function (txnEnabled, backend, endpoint = '') {
   const links = [
@@ -759,7 +880,19 @@ const getCatalog = async function (txnEnabled, backend, endpoint = '') {
     {
       rel: 'aggregate',
       type: 'application/json',
-      href: `${endpoint}/aggregate`
+      href: `${endpoint}/aggregate`,
+      method: 'GET',
+    },
+    {
+      rel: 'aggregate',
+      type: 'application/json',
+      href: `${endpoint}/aggregate`,
+      method: 'POST',
+    },
+    {
+      rel: 'aggregations',
+      type: 'application/json',
+      href: `${endpoint}/aggregations`
     },
     {
       rel: 'service-desc',
@@ -795,12 +928,18 @@ const getCatalog = async function (txnEnabled, backend, endpoint = '') {
   return catalog
 }
 
+const deleteUnusedFields = (collection) => {
+  // delete fields in the collection object that are not part of the STAC Collection
+  delete collection.queryables
+  delete collection.aggregations
+}
+
 const getCollections = async function (backend, endpoint = '') {
   // TODO: implement proper pagination, as this will only return up to
   // COLLECTION_LIMIT collections
   const collections = await backend.getCollections(1, COLLECTION_LIMIT)
   for (const collection of collections) {
-    delete collection.queryables
+    deleteUnusedFields(collection)
   }
 
   const linkedCollections = addCollectionLinks(collections, endpoint)
@@ -833,6 +972,9 @@ const getCollection = async function (collectionId, backend, endpoint = '') {
   if (result instanceof Error) {
     return new Error('Collection not found')
   }
+
+  deleteUnusedFields(result)
+
   const col = addCollectionLinks([result], endpoint)
   if (col.length > 0) {
     return col[0]
@@ -970,5 +1112,8 @@ export default {
   aggregate,
   getItemThumbnail,
   healthCheck,
-  getQueryables,
+  getGlobalQueryables,
+  getCollectionQueryables,
+  getGlobalAggregations,
+  getCollectionAggregations,
 }

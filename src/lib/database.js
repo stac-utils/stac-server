@@ -465,7 +465,7 @@ async function search(parameters, page, limit = 10) {
   return response
 }
 
-async function aggregate(parameters) {
+async function aggregate(parameters, geohashPrecision, geohexPrecision, geotilePrecision) {
   const searchParams = await constructSearchParams(parameters)
   searchParams.body.size = 0
   searchParams.body.aggs = {
@@ -509,6 +509,24 @@ async function aggregate(parameters) {
             + "doc['properties.landsat:wrs_path'].value + "
             + "doc['properties.landsat:wrs_row'].value"
         }
+      }
+    },
+    geohex_grid_frequency: {
+      geohex_grid: {
+        field: 'properties.proj:centroid',
+        precision: geohexPrecision
+      }
+    },
+    geohash_grid_frequency: {
+      geohash_grid: {
+        field: 'properties.proj:centroid',
+        precision: geohashPrecision
+      }
+    },
+    geotile_grid_frequency: {
+      geotile_grid: {
+        field: 'properties.proj:centroid',
+        precision: geotilePrecision
       }
     },
     sun_elevation_frequency: {

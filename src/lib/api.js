@@ -95,6 +95,28 @@ export const extractLimit = function (params) {
   return undefined
 }
 
+export const extractPrecision = function (params, name, min, max) {
+  const precisionStr = params[name]
+
+  if (precisionStr !== undefined) {
+    let precision
+    try {
+      precision = parseInt(precisionStr)
+    } catch (e) {
+      throw new ValidationError(`Invalid precision value for ${name}`)
+    }
+
+    if (Number.isNaN(precision) || precision < min || precision > max) {
+      throw new ValidationError(
+        `Invalid precision value for ${name}, must be a number between ${min} and ${max} inclusive`
+      )
+    }
+    return precision
+  }
+
+  return min
+}
+
 export const extractPage = function (params) {
   const { page: pageStr } = params
 
@@ -647,6 +669,10 @@ const aggregate = async function (collectionId,
     collections,
   })
 
+  const geohashPrecision = extractPrecision(queryParameters, 'geohash_precision', 1, 12)
+  const geohexPrecision = extractPrecision(queryParameters, 'geohex_precision', 0, 15)
+  const geotilePrecision = extractPrecision(queryParameters, 'geotile_precision', 0, 29)
+
   let linkEndpoint = endpoint
   let collectionEndpoint
 
@@ -660,7 +686,9 @@ const aggregate = async function (collectionId,
 
   let esResponse
   try {
-    esResponse = await backend.aggregate(searchParams)
+    esResponse = await backend.aggregate(
+      searchParams, geohashPrecision, geohexPrecision, geotilePrecision
+    )
   } catch (error) {
     if (isIndexNotFoundError(error)) {
       esResponse = {
@@ -693,6 +721,9 @@ const aggregate = async function (collectionId,
     agg(esAggs, 'datetime_frequency', 'datetime'),
     agg(esAggs, 'grid_code_frequency', 'string'),
     agg(esAggs, 'grid_code_landsat_frequency', 'string'),
+    agg(esAggs, 'geohex_grid_frequency', 'string'),
+    agg(esAggs, 'geohash_grid_frequency', 'string'),
+    agg(esAggs, 'geotile_grid_frequency', 'string'),
     agg(esAggs, 'cloud_cover_frequency', 'numeric'),
     agg(esAggs, 'platform_frequency', 'string'),
     agg(esAggs, 'sun_elevation_frequency', 'string'),

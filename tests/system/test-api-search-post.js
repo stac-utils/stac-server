@@ -189,6 +189,7 @@ test('/search fields filter', async (t) => {
   t.truthy(response.features[0].bbox)
   t.truthy(response.features[0].links)
   t.truthy(response.features[0].assets)
+  t.truthy(response.features[0].stac_version)
 
   response = await t.context.api.client.post('search', {
     json: {

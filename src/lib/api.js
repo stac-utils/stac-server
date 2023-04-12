@@ -737,9 +737,24 @@ const aggregate = async function (
     }
   }
 
-  const geohashPrecision = extractPrecision(queryParameters, 'geohash_precision', 1, 12)
-  const geohexPrecision = extractPrecision(queryParameters, 'geohex_precision', 0, 15)
-  const geotilePrecision = extractPrecision(queryParameters, 'geotile_precision', 0, 29)
+  const geohashPrecision = extractPrecision(
+    queryParameters,
+    'grid_geohash_frequency_precision',
+    1,
+    12
+  )
+  const geohexPrecision = extractPrecision(
+    queryParameters,
+    'grid_geohex_frequency_precision',
+    0,
+    15
+  )
+  const geotilePrecision = extractPrecision(
+    queryParameters,
+    'grid_geotile_frequency_precision',
+    0,
+    29
+  )
 
   let dbResponse
   try {

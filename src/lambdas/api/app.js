@@ -230,12 +230,11 @@ const collectionAggregate = async (req, res, next, httpMethod) => {
   }
 }
 
-// are these supposed to be awaited?
 app.get('/collections/:collectionId/aggregate',
-  async (req, res, next) => await collectionAggregate(req, res, next, 'GET'))
+  async (req, res, next) => collectionAggregate(req, res, next, 'GET'))
 
 app.get('/collections/:collectionId/aggregate',
-  async (req, res, next) => await collectionAggregate(req, res, next, 'POST'))
+  async (req, res, next) => collectionAggregate(req, res, next, 'POST'))
 
 app.get('/collections/:collectionId/items', async (req, res, next) => {
   const { collectionId } = req.params

@@ -31,7 +31,7 @@ app.use(addEndpoint)
 
 app.get('/', async (req, res, next) => {
   try {
-    res.json(await api.getCatalog(txnEnabled, database, req.endpoint))
+    res.json(await api.getCatalog(txnEnabled, req.endpoint))
   } catch (error) {
     next(error)
   }

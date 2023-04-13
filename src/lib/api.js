@@ -408,30 +408,6 @@ const addItemLinks = function (results, endpoint) {
   return results
 }
 
-const collectionsToCatalogLinks = function (results, endpoint) {
-  const stacVersion = process.env['STAC_VERSION'] || '1.0.0'
-  const catalogId = process.env['STAC_ID'] || 'stac-server'
-  const catalogTitle = process.env['STAC_TITLE'] || 'A STAC API'
-  const catalogDescription = process.env['STAC_DESCRIPTION'] || 'A STAC API running on stac-server'
-  const catalog = {
-    stac_version: stacVersion,
-    type: 'Catalog',
-    id: catalogId,
-    title: catalogTitle,
-    description: catalogDescription
-  }
-
-  catalog.links = results.map((result) => {
-    const { id } = result
-    return {
-      rel: 'child',
-      type: 'application/geo+json',
-      href: `${endpoint}/collections/${id}`
-    }
-  })
-  return catalog
-}
-
 const wrapResponseInFeatureCollection = function (
   context, features = [], links = []
 ) {
@@ -843,7 +819,11 @@ const getGlobalAggregations = async (endpoint = '') => {
   return { aggregations, links }
 }
 
-const getCatalog = async function (txnEnabled, backend, endpoint = '') {
+const getCatalog = async function (txnEnabled, endpoint = '') {
+  const stacVersion = process.env['STAC_VERSION'] || '1.0.0'
+  const catalogId = process.env['STAC_ID'] || 'stac-server'
+  const catalogTitle = process.env['STAC_TITLE'] || 'A STAC API'
+  const catalogDescription = process.env['STAC_DESCRIPTION'] || 'A STAC API running on stac-server'
   const links = [
     {
       rel: 'self',
@@ -920,12 +900,15 @@ const getCatalog = async function (txnEnabled, backend, endpoint = '') {
     })
   }
 
-  const collections = await backend.getCollections(1, COLLECTION_LIMIT)
-  const catalog = collectionsToCatalogLinks(collections, endpoint)
-  catalog.links = links.concat(catalog.links)
-  catalog.conformsTo = (await getConformance(txnEnabled)).conformsTo
-
-  return catalog
+  return {
+    stac_version: stacVersion,
+    type: 'Catalog',
+    id: catalogId,
+    title: catalogTitle,
+    description: catalogDescription,
+    conformsTo: (await getConformance(txnEnabled)).conformsTo,
+    links
+  }
 }
 
 const deleteUnusedFields = (collection) => {

@@ -199,6 +199,7 @@ function buildFieldsFilter(parameters) {
     _sourceIncludes = [
       'id',
       'type',
+      'stac_version',
       'geometry',
       'bbox',
       'links',

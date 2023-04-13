@@ -28,6 +28,22 @@ const DEFAULT_AGGREGATIONS = [
   },
 ]
 
+const ALL_AGGREGATION_NAMES = DEFAULT_AGGREGATIONS.map((x) => x.name).concat(
+  [
+    'collection_frequency',
+    'grid_code_frequency',
+    'grid_code_landsat_frequency',
+    'grid_geohex_frequency',
+    'grid_geohash_frequency',
+    'grid_geotile_frequency',
+    'platform_frequency',
+    'sun_elevation_frequency',
+    'sun_azimuth_frequency',
+    'off_nadir_frequency',
+    'cloud_cover_frequency',
+  ]
+)
+
 export class ValidationError extends Error {
   constructor(message) {
     super(message)
@@ -735,6 +751,12 @@ const aggregate = async function (
         throw new ValidationError(`Aggregation ${x} not supported by collection ${collectionId}`)
       }
     }
+  } else {
+    for (const x of aggregationsRequested) {
+      if (!ALL_AGGREGATION_NAMES.includes(x)) {
+        throw new ValidationError(`Aggregation ${x} not supported at catalog level`)
+      }
+    }
   }
 
   const geohashPrecision = extractPrecision(
@@ -805,7 +827,7 @@ const aggregate = async function (
       ['grid_code_frequency', 'string'],
       ['grid_code_landsat_frequency', 'string'],
       ['grid_geohex_frequency', 'string'],
-      ['grid_geohex_frequency', 'string'],
+      ['grid_geohash_frequency', 'string'],
       ['grid_geotile_frequency', 'string'],
       ['platform_frequency', 'string'],
       ['sun_elevation_frequency', 'string'],
@@ -922,7 +944,7 @@ const getCollectionAggregations = async (collectionId, backend, endpoint = '') =
     {
       rel: 'collection',
       type: 'application/json',
-      href: `${endpoint}/collection/${collectionId}`
+      href: `${endpoint}/collections/${collectionId}`
     }
   ]
 

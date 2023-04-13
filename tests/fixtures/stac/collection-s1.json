@@ -1,0 +1,414 @@
+{
+  "id": "sentinel-1-grd",
+  "type": "Collection",
+  "links": [
+    {
+      "rel": "about",
+      "href": "https://sentinels.copernicus.eu/web/sentinel/technical-guides/sentinel-1-sar/products-algorithms/level-1-algorithms/ground-range-detected",
+      "title": "Sentinel-1 Ground Range Detected (GRD) Technical Guide"
+    },
+    {
+      "rel": "license",
+      "href": "https://sentinel.esa.int/documents/247904/690755/Sentinel_Data_Legal_Notice",
+      "title": "Copernicus Sentinel data terms"
+    }
+  ],
+  "title": "Sentinel 1 Level-1 Ground Range Detected (GRD)",
+  "extent": {
+    "spatial": {
+      "bbox": [
+        [
+          -180,
+          -90,
+          180,
+          90
+        ]
+      ]
+    },
+    "temporal": {
+      "interval": [
+        [
+          "2014-10-10T00:28:21Z",
+          null
+        ]
+      ]
+    }
+  },
+  "license": "proprietary",
+  "keywords": [
+    "ESA",
+    "Copernicus",
+    "Sentinel",
+    "C-Band",
+    "SAR",
+    "GRD"
+  ],
+  "providers": [
+    {
+      "url": "https://earth.esa.int/web/guest/home",
+      "name": "ESA",
+      "roles": [
+        "producer",
+        "processor",
+        "licensor"
+      ]
+    },
+    {
+      "name": "AWS",
+      "roles": [
+        "host"
+      ],
+      "url": "https://registry.opendata.aws/sentinel-1"
+    },
+    {
+      "name": "Element 84",
+      "roles": [
+        "processor"
+      ],
+      "url": "https://element84.com"
+    }
+  ],
+  "summaries": {
+    "platform": [
+      "sentinel-1a",
+      "sentinel-1b"
+    ],
+    "constellation": [
+      "sentinel-1"
+    ],
+    "s1:resolution": [
+      "full",
+      "high",
+      "medium"
+    ],
+    "s1:orbit_source": [
+      "DOWNLINK",
+      "POEORB",
+      "PREORB",
+      "RESORB"
+    ],
+    "sar:looks_range": [
+      5,
+      6,
+      3,
+      2
+    ],
+    "sat:orbit_state": [
+      "ascending",
+      "descending"
+    ],
+    "sar:product_type": [
+      "GRD"
+    ],
+    "sar:looks_azimuth": [
+      1,
+      6,
+      2
+    ],
+    "sar:polarizations": [
+      [
+        "VV",
+        "VH"
+      ],
+      [
+        "HH",
+        "HV"
+      ],
+      [
+        "VV"
+      ],
+      [
+        "VH"
+      ],
+      [
+        "HH"
+      ],
+      [
+        "HV"
+      ]
+    ],
+    "sar:frequency_band": [
+      "C"
+    ],
+    "s1:processing_level": [
+      "1"
+    ],
+    "sar:instrument_mode": [
+      "IW",
+      "EW",
+      "SM"
+    ],
+    "sar:center_frequency": [
+      5.405
+    ],
+    "sar:resolution_range": [
+      20,
+      23,
+      50,
+      93,
+      9
+    ],
+    "s1:product_timeliness": [
+      "NRT-10m",
+      "NRT-1h",
+      "NRT-3h",
+      "Fast-24h",
+      "Off-line",
+      "Reprocessing"
+    ],
+    "sar:resolution_azimuth": [
+      22,
+      23,
+      50,
+      87,
+      9
+    ],
+    "sar:pixel_spacing_range": [
+      10,
+      25,
+      40,
+      3.5
+    ],
+    "sar:observation_direction": [
+      "right"
+    ],
+    "sar:pixel_spacing_azimuth": [
+      10,
+      25,
+      40,
+      3.5
+    ],
+    "sar:looks_equivalent_number": [
+      4.4,
+      29.7,
+      2.7,
+      10.7,
+      3.7
+    ],
+    "sat:platform_international_designator": [
+      "2014-016A",
+      "2016-025A",
+      "0000-000A"
+    ],
+    "storage:platform": [
+      "AWS"
+    ],
+    "storage:region": [
+      "eu-central-1"
+    ],
+    "storage:requester_pays": [
+      true
+    ]
+  },
+  "description": "Sentinel-1 is a pair of Synthetic Aperture Radar (SAR) imaging satellites launched in 2014 and 2016 by the European Space Agency (ESA). Their 6 day revisit cycle and ability to observe through clouds makes this dataset perfect for sea and land monitoring, emergency response due to environmental disasters, and economic applications. This dataset represents the global Sentinel-1 GRD archive, from beginning to the present, converted to cloud-optimized GeoTIFF format.",
+  "item_assets": {
+    "hh": {
+      "type": "image/tiff; application=geotiff; profile=cloud-optimized",
+      "roles": [
+        "data"
+      ],
+      "title": "HH Data",
+      "raster:bands": [
+        {
+          "nodata": 0,
+          "sampling": "area",
+          "data_type": "uint16"
+        }
+      ]
+    },
+    "hv": {
+      "type": "image/tiff; application=geotiff; profile=cloud-optimized",
+      "roles": [
+        "data"
+      ],
+      "title": "HV Data",
+      "raster:bands": [
+        {
+          "nodata": 0,
+          "sampling": "area",
+          "data_type": "uint16"
+        }
+      ]
+    },
+    "vh": {
+      "type": "image/tiff; application=geotiff; profile=cloud-optimized",
+      "roles": [
+        "data"
+      ],
+      "title": "VH Data",
+      "raster:bands": [
+        {
+          "nodata": 0,
+          "sampling": "area",
+          "data_type": "uint16"
+        }
+      ]
+    },
+    "vv": {
+      "type": "image/tiff; application=geotiff; profile=cloud-optimized",
+      "roles": [
+        "data"
+      ],
+      "title": "VV Data",
+      "raster:bands": [
+        {
+          "nodata": 0,
+          "sampling": "area",
+          "data_type": "uint16"
+        }
+      ]
+    },
+    "thumbnail": {
+      "type": "image/png",
+      "roles": [
+        "thumbnail"
+      ],
+      "title": "Thumbnail Image"
+    },
+    "safe-manifest": {
+      "type": "application/xml",
+      "roles": [
+        "metadata"
+      ],
+      "title": "SAFE Manifest File"
+    },
+    "schema-noise-hh": {
+      "type": "application/xml",
+      "roles": [
+        "metadata"
+      ],
+      "title": "HH Noise Schema"
+    },
+    "schema-noise-hv": {
+      "type": "application/xml",
+      "roles": [
+        "metadata"
+      ],
+      "title": "HV Noise Schema"
+    },
+    "schema-noise-vh": {
+      "type": "application/xml",
+      "roles": [
+        "metadata"
+      ],
+      "title": "VH Noise Schema"
+    },
+    "schema-noise-vv": {
+      "type": "application/xml",
+      "roles": [
+        "metadata"
+      ],
+      "title": "VV Noise Schema"
+    },
+    "schema-product-hh": {
+      "type": "application/xml",
+      "roles": [
+        "metadata"
+      ],
+      "title": "HH Product Schema"
+    },
+    "schema-product-hv": {
+      "type": "application/xml",
+      "roles": [
+        "metadata"
+      ],
+      "title": "HV Product Schema"
+    },
+    "schema-product-vh": {
+      "type": "application/xml",
+      "roles": [
+        "metadata"
+      ],
+      "title": "VH Product Schema"
+    },
+    "schema-product-vv": {
+      "type": "application/xml",
+      "roles": [
+        "metadata"
+      ],
+      "title": "VV Product Schema"
+    },
+    "schema-calibration-hh": {
+      "type": "application/xml",
+      "roles": [
+        "metadata"
+      ],
+      "title": "HH Calibration Schema"
+    },
+    "schema-calibration-hv": {
+      "type": "application/xml",
+      "roles": [
+        "metadata"
+      ],
+      "title": "HV Calibration Schema"
+    },
+    "schema-calibration-vh": {
+      "type": "application/xml",
+      "roles": [
+        "metadata"
+      ],
+      "title": "VH Calibration Schema"
+    },
+    "schema-calibration-vv": {
+      "type": "application/xml",
+      "roles": [
+        "metadata"
+      ],
+      "title": "VV Calibration Schema"
+    }
+  },
+  "stac_version": "1.0.0",
+  "stac_extensions": [
+    "https://stac-extensions.github.io/storage/v1.0.0/schema.json",
+    "https://stac-extensions.github.io/sar/v1.0.0/schema.json",
+    "https://stac-extensions.github.io/sat/v1.0.0/schema.json",
+    "https://stac-extensions.github.io/item-assets/v1.0.0/schema.json",
+    "https://stac-extensions.github.io/raster/v1.1.0/schema.json"
+  ],
+  "queryables": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "",
+    "type": "object",
+    "title": "",
+    "properties": {
+      "sar:polarizations": {
+        "$ref": "https://stac-extensions.github.io/sar/v1.0.0/schema.json#/definitions/fields/properties/sar:polarizations"
+      }
+    },
+    "additionalProperties": true
+  },
+  "aggregations": [
+    {
+      "name": "total_count",
+      "data_type": "integer"
+    },
+    {
+      "name": "datetime_max",
+      "data_type": "datetime"
+    },
+    {
+      "name": "datetime_min",
+      "data_type": "datetime"
+    },
+    {
+      "name": "datetime_frequency",
+      "data_type": "frequency_distribution",
+      "frequency_distribution_data_type": "datetime"
+    },
+    {
+      "name": "grid_geohex_frequency",
+      "data_type": "frequency_distribution",
+      "frequency_distribution_data_type": "string"
+    },
+    {
+      "name": "grid_geohash_frequency",
+      "data_type": "frequency_distribution",
+      "frequency_distribution_data_type": "string"
+    },
+    {
+      "name": "grid_geotile_frequency",
+      "data_type": "frequency_distribution",
+      "frequency_distribution_data_type": "string"
+    }
+  ]
+}

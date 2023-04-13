@@ -13,6 +13,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Added `stac_version` to the default set of fields returned when the `fields` parameter
   is an empty value.
 
+### Removed
+
+- Child link relations removed from root (landing page).
+
 ## Added
 
 - Added support for `/aggregations`, `/collections/{collectionId}/aggregations`, and

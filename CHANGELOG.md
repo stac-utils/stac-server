@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - Added support for `/aggregations`, `/collections/{collectionId}/aggregations`, and
   `/collections/{collectionId}/aggregate` endpoints.
+- Added grid_geohex_frequency, grid_geohash_frequency, and grid_geotile_frequency aggregations
 
 ## Fixed
 

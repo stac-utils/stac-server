@@ -429,12 +429,6 @@ const addCollectionLinks = function (results, endpoint) {
       method: 'GET'
     })
     links.push({
-      rel: 'aggregate',
-      type: 'application/json',
-      href: `${endpoint}/collections/${id}/aggregate`,
-      method: 'POST'
-    })
-    links.push({
       rel: 'aggregations',
       type: 'application/json',
       href: `${endpoint}/collections/${id}/aggregations`
@@ -1007,12 +1001,6 @@ const getCatalog = async function (txnEnabled, backend, endpoint = '') {
       type: 'application/json',
       href: `${endpoint}/aggregate`,
       method: 'GET',
-    },
-    {
-      rel: 'aggregate',
-      type: 'application/json',
-      href: `${endpoint}/aggregate`,
-      method: 'POST',
     },
     {
       rel: 'aggregations',

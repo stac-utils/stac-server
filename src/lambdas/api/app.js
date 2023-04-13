@@ -121,18 +121,6 @@ app.get('/aggregate', async (req, res, next) => {
   }
 })
 
-app.post('/aggregate', async (req, res, next) => {
-  try {
-    res.json(await api.aggregate(req.body, database, req.endpoint, 'POST'))
-  } catch (error) {
-    if (error instanceof ValidationError) {
-      next(createError(400, error.message))
-    } else {
-      next(error)
-    }
-  }
-})
-
 app.get('/aggregations', async (req, res, next) => {
   try {
     res.json(await api.getGlobalAggregations(req.endpoint))
@@ -215,29 +203,24 @@ app.get('/collections/:collectionId/aggregations', async (req, res, next) => {
   }
 })
 
-const collectionAggregate = async (req, res, next, httpMethod) => {
-  const { collectionId } = req.params
-  try {
-    const response = await api.getCollection(collectionId, database, req.endpoint)
-
-    if (response instanceof Error) next(createError(404))
-    else {
-      res.json(await api.aggregate(collectionId, req.query, database, req.endpoint, httpMethod))
-    }
-  } catch (error) {
-    if (error instanceof ValidationError) {
-      next(createError(400, error.message))
-    } else {
-      next(error)
-    }
-  }
-}
-
 app.get('/collections/:collectionId/aggregate',
-  async (req, res, next) => collectionAggregate(req, res, next, 'GET'))
+  async (req, res, next) => {
+    const { collectionId } = req.params
+    try {
+      const response = await api.getCollection(collectionId, database, req.endpoint)
 
-app.get('/collections/:collectionId/aggregate',
-  async (req, res, next) => collectionAggregate(req, res, next, 'POST'))
+      if (response instanceof Error) next(createError(404))
+      else {
+        res.json(await api.aggregate(collectionId, req.query, database, req.endpoint, 'GET'))
+      }
+    } catch (error) {
+      if (error instanceof ValidationError) {
+        next(createError(400, error.message))
+      } else {
+        next(error)
+      }
+    }
+  })
 
 app.get('/collections/:collectionId/items', async (req, res, next) => {
   const { collectionId } = req.params

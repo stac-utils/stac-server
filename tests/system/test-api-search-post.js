@@ -376,7 +376,7 @@ test('/search preserve intersects geometry in next link', async (t) => {
     }
   })
   t.is(response.features.length, 2)
-  t.is(response.links.length, 1)
+  t.is(response.links.length, 2)
   t.truthy(linkRel(response, 'next'))
 
   response = await t.context.api.client.post('search', {
@@ -388,7 +388,7 @@ test('/search preserve intersects geometry in next link', async (t) => {
   })
 
   t.is(response.features.length, 1)
-  t.is(response.links.length, 1)
+  t.is(response.links.length, 2)
   t.truthy(linkRel(response, 'next'))
 
   // next link is not included when there are 0 items in the results
@@ -401,7 +401,7 @@ test('/search preserve intersects geometry in next link', async (t) => {
   })
 
   t.is(response.features.length, 0)
-  t.is(response.links.length, 0)
+  t.is(response.links.length, 1)
 
   const datetime = '2015-02-19T00:00:00Z/2021-02-19T00:00:00Z'
   response = await t.context.api.client.post('search', {
@@ -413,7 +413,7 @@ test('/search preserve intersects geometry in next link', async (t) => {
   })
 
   t.is(response.features.length, 1)
-  t.is(response.links.length, 1)
+  t.is(response.links.length, 2)
   const nextLink = linkRel(response, 'next')
   t.is(nextLink.body.datetime, datetime)
   t.deepEqual(nextLink.body.intersects, intersectsGeometry)
@@ -430,7 +430,7 @@ test('/search preserve bbox in prev and next links', async (t) => {
   })
 
   t.is(response.features.length, 1)
-  t.is(response.links.length, 1)
+  t.is(response.links.length, 2)
   const prevLink = linkRel(response, 'next')
   t.deepEqual(prevLink.body.bbox, bbox)
 
@@ -444,7 +444,7 @@ test('/search preserve bbox in prev and next links', async (t) => {
   })
 
   t.is(response.features.length, 1)
-  t.is(response.links.length, 1)
+  t.is(response.links.length, 2)
   t.is(linkRel(response, 'next').body.datetime, datetime)
   t.deepEqual(linkRel(response, 'next').body.bbox, bbox)
 })

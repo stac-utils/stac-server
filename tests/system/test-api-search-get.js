@@ -96,7 +96,7 @@ test('/search preserve bbox and datetime in next links', async (t) => {
   })
 
   t.is(response.features.length, 1)
-  t.is(response.links.length, 1)
+  t.is(response.links.length, 2)
 
   const nextLink = response.links.find((x) => x.rel === 'next')
   const nextUrl = new URL(nextLink.href)

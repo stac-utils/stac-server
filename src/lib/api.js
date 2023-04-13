@@ -571,29 +571,26 @@ const searchItems = async function (collectionId, queryParameters, backend, endp
     limit, searchParams, bbox, intersects, newEndpoint, httpMethod, sortby, responseItems
   )
 
-  let links
+  // @ts-ignore
+  const links = paginationLinks.concat([{
+    rel: 'root',
+    type: 'application/json',
+    href: endpoint
+  }])
 
   if (collectionId) { // add these links for a features request
     // @ts-ignore
-    links = paginationLinks.concat([
-      {
-        rel: 'self',
-        type: 'application/geo+json',
-        href: newEndpoint
-      },
-      {
-        rel: 'root',
-        type: 'application/json',
-        href: endpoint
-      },
-      {
-        rel: 'collection',
-        type: 'application/json',
-        href: collectionEndpoint
-      }
-    ])
-  } else {
-    links = paginationLinks
+    links.push({
+      rel: 'self',
+      type: 'application/geo+json',
+      href: newEndpoint
+    })
+    // @ts-ignore
+    links.push({
+      rel: 'collection',
+      type: 'application/json',
+      href: collectionEndpoint
+    })
   }
 
   const items = addItemLinks(responseItems, endpoint)

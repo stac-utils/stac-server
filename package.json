@@ -125,7 +125,7 @@
     "ts-node": "^10.9.1",
     "tslib": "^2.5.0",
     "typescript": "^5.0.4",
-    "webpack": "^5.78.0",
+    "webpack": "^5.79.0",
     "webpack-cli": "^5.0.1",
     "widdershins": "^4.0.1",
     "zip-webpack-plugin": "^4.0.1"

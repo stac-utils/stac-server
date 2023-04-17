@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Updated example serverless configuration to use OpenSearch 2.5.
 - Added `stac_version` to the default set of fields returned when the `fields` parameter
   is an empty value.
+- STAC API Foundation conformance classes are now 1.0.0-rc.4
+- STAC API Fields Extension conformance class is now 1.0.0-rc.3
 
 ## Removed
 

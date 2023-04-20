@@ -15,18 +15,18 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - STAC API Foundation conformance classes are now 1.0.0-rc.4
 - STAC API Fields Extension conformance class is now 1.0.0-rc.3
 
-## Removed
+### Removed
 
 - POST /aggregate endpoints were removed, as they didn't work correctly.
 
-## Added
+### Added
 
 - Added support for `/aggregations`, `/collections/{collectionId}/aggregations`, and
   `/collections/{collectionId}/aggregate` endpoints.
 - `/search` ItemCollection now has `root` link relation.
 - Added grid_geohex_frequency, grid_geohash_frequency, and grid_geotile_frequency aggregations
 
-## Fixed
+### Fixed
 
 - `/api` and `/api.html` endpoints were broken, now fixed
 

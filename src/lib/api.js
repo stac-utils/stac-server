@@ -616,29 +616,26 @@ const searchItems = async function (collectionId, queryParameters, backend, endp
     limit, searchParams, bbox, intersects, newEndpoint, httpMethod, sortby, responseItems
   )
 
-  let links
+  // @ts-ignore
+  const links = paginationLinks.concat([{
+    rel: 'root',
+    type: 'application/json',
+    href: endpoint
+  }])
 
   if (collectionId) { // add these links for a features request
     // @ts-ignore
-    links = paginationLinks.concat([
-      {
-        rel: 'self',
-        type: 'application/geo+json',
-        href: newEndpoint
-      },
-      {
-        rel: 'root',
-        type: 'application/json',
-        href: endpoint
-      },
-      {
-        rel: 'collection',
-        type: 'application/json',
-        href: collectionEndpoint
-      }
-    ])
-  } else {
-    links = paginationLinks
+    links.push({
+      rel: 'self',
+      type: 'application/geo+json',
+      href: newEndpoint
+    })
+    // @ts-ignore
+    links.push({
+      rel: 'collection',
+      type: 'application/json',
+      href: collectionEndpoint
+    })
   }
 
   const items = addItemLinks(responseItems, endpoint)
@@ -839,26 +836,26 @@ const aggregate = async function (
 }
 
 const getConformance = async function (txnEnabled) {
-  const prefix = 'https://api.stacspec.org/v1.0.0-rc.2'
+  const foundationPrefix = 'https://api.stacspec.org/v1.0.0-rc.2'
   const conformsTo = [
-    `${prefix}/core`,
-    `${prefix}/collections`,
-    `${prefix}/ogcapi-features`,
-    `${prefix}/ogcapi-features#fields`,
-    `${prefix}/ogcapi-features#sort`,
-    `${prefix}/ogcapi-features#query`,
-    `${prefix}/item-search`,
-    `${prefix}/item-search#fields`,
-    `${prefix}/item-search#sort`,
-    `${prefix}/item-search#query`,
-    'https://api.stacspec.org/v0.2.0/aggregation',
+    `${foundationPrefix}/core`,
+    `${foundationPrefix}/collections`,
+    `${foundationPrefix}/ogcapi-features`,
+    `${foundationPrefix}/item-search`,
+    'https://api.stacspec.org/v1.0.0-rc.3/ogcapi-features#fields',
+    'https://api.stacspec.org/v1.0.0-rc.2/ogcapi-features#sort',
+    'https://api.stacspec.org/v1.0.0-rc.2/ogcapi-features#query',
+    'https://api.stacspec.org/v1.0.0-rc.3/item-search#fields',
+    'https://api.stacspec.org/v1.0.0-rc.2/item-search#sort',
+    'https://api.stacspec.org/v1.0.0-rc.2/item-search#query',
+    'https://api.stacspec.org/v0.3.0/aggregation',
     'http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/core',
     'http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/oas30',
     'http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/geojson'
   ]
 
   if (txnEnabled) {
-    conformsTo.push(`${prefix}/ogcapi-features/extensions/transaction`)
+    conformsTo.push('https://api.stacspec.org/v1.0.0-rc.2/ogcapi-features/extensions/transaction')
   }
 
   return { conformsTo }

@@ -20,14 +20,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Child link relations removed from root (landing page).
 - POST /aggregate endpoints were removed, as they didn't work correctly.
 
-## Added
+### Added
 
 - Added support for `/aggregations`, `/collections/{collectionId}/aggregations`, and
   `/collections/{collectionId}/aggregate` endpoints.
 - `/search` ItemCollection now has `root` link relation.
 - Added grid_geohex_frequency, grid_geohash_frequency, and grid_geotile_frequency aggregations
 
-## Fixed
+### Fixed
 
 - `/api` and `/api.html` endpoints were broken, now fixed
 

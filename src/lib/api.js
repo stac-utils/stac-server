@@ -8,6 +8,42 @@ import logger from './logger.js'
 // max number of collections to retrieve
 const COLLECTION_LIMIT = process.env['STAC_SERVER_COLLECTION_LIMIT'] || 100
 
+const DEFAULT_AGGREGATIONS = [
+  {
+    name: 'total_count',
+    data_type: 'integer'
+  },
+  {
+    name: 'datetime_max',
+    data_type: 'datetime'
+  },
+  {
+    name: 'datetime_min',
+    data_type: 'datetime'
+  },
+  {
+    name: 'datetime_frequency',
+    data_type: 'frequency_distribution',
+    frequency_distribution_data_type: 'datetime'
+  },
+]
+
+const ALL_AGGREGATION_NAMES = DEFAULT_AGGREGATIONS.map((x) => x.name).concat(
+  [
+    'collection_frequency',
+    'grid_code_frequency',
+    'grid_code_landsat_frequency',
+    'grid_geohex_frequency',
+    'grid_geohash_frequency',
+    'grid_geotile_frequency',
+    'platform_frequency',
+    'sun_elevation_frequency',
+    'sun_azimuth_frequency',
+    'off_nadir_frequency',
+    'cloud_cover_frequency',
+  ]
+)
+
 export class ValidationError extends Error {
   constructor(message) {
     super(message)
@@ -93,6 +129,45 @@ export const extractLimit = function (params) {
     return limit
   }
   return undefined
+}
+
+export const extractPrecision = function (params, name, min, max) {
+  const precisionStr = params[name]
+
+  if (precisionStr !== undefined) {
+    let precision
+    try {
+      precision = parseInt(precisionStr)
+    } catch (e) {
+      throw new ValidationError(`Invalid precision value for ${name}`)
+    }
+
+    if (Number.isNaN(precision) || precision < min || precision > max) {
+      throw new ValidationError(
+        `Invalid precision value for ${name}, must be a number between ${min} and ${max} inclusive`
+      )
+    }
+    return precision
+  }
+
+  return min
+}
+
+export const extractAggregations = function (params) {
+  let aggs
+  const { aggregations } = params
+  if (aggregations) {
+    if (typeof aggregations === 'string') {
+      try {
+        aggs = JSON.parse(aggregations)
+      } catch (e) {
+        aggs = aggregations.split(',')
+      }
+    } else {
+      aggs = aggregations.slice()
+    }
+  }
+  return aggs || []
 }
 
 export const extractPage = function (params) {
@@ -354,12 +429,6 @@ const addCollectionLinks = function (results, endpoint) {
       method: 'GET'
     })
     links.push({
-      rel: 'aggregate',
-      type: 'application/json',
-      href: `${endpoint}/collections/${id}/aggregate`,
-      method: 'POST'
-    })
-    links.push({
       rel: 'aggregations',
       type: 'application/json',
       href: `${endpoint}/collections/${id}/aggregations`
@@ -598,29 +667,30 @@ const searchItems = async function (collectionId, queryParameters, backend, endp
   return response
 }
 
-// todo: make this more defensive if the named agg doesn't exist
 const agg = function (esAggs, name, dataType) {
   const buckets = []
-  for (const bucket of esAggs[name].buckets) {
+  for (const bucket of (esAggs[name]?.buckets || [])) {
     buckets.push({
-      key: bucket.key_as_string || bucket.key,
+      key: bucket?.key_as_string || bucket?.key,
       data_type: dataType,
-      frequency: bucket.doc_count,
-      to: bucket.to,
-      from: bucket.from,
+      frequency: bucket?.doc_count,
+      to: bucket?.to,
+      from: bucket?.from,
     })
   }
   return {
     name: name,
     data_type: 'frequency_distribution',
-    overflow: esAggs[name].sum_other_doc_count || 0,
+    overflow: esAggs[name]?.sum_other_doc_count || 0,
     buckets: buckets
   }
 }
 
-const aggregate = async function (collectionId,
-  queryParameters, backend, endpoint, httpMethod) {
+const aggregate = async function (
+  collectionId, queryParameters, backend, endpoint, httpMethod
+) {
   logger.debug('Aggregate parameters: %j', queryParameters)
+
   const {
     bbox,
     intersects
@@ -646,56 +716,125 @@ const aggregate = async function (collectionId,
 
   let linkEndpoint = endpoint
   let collectionEndpoint
+  let collection
 
   if (collectionId) {
     searchParams.collections = [collectionId]
     linkEndpoint = `${endpoint}/collections/${collectionId}`
     collectionEndpoint = `${endpoint}/collections/${collectionId}`
+    collection = await backend.getCollection(collectionId)
+
+    if (collection instanceof Error) {
+      return collection
+    }
   }
 
   logger.debug('Aggregate parameters: %j', searchParams)
 
-  let esResponse
-  try {
-    esResponse = await backend.aggregate(searchParams)
-  } catch (error) {
-    if (isIndexNotFoundError(error)) {
-      esResponse = {
+  const aggregationsRequested = extractAggregations(queryParameters)
+
+  // validate that aggregations are supported by collection
+  // if aggregations are not defined for a collection, any aggregation may be requested
+  if (collection?.aggregations) {
+    const supportedAggregations = collection.aggregations.map((x) => x.name)
+    for (const x of aggregationsRequested) {
+      if (!supportedAggregations.includes(x)) {
+        throw new ValidationError(`Aggregation ${x} not supported by collection ${collectionId}`)
       }
-    } else {
+    }
+  } else {
+    for (const x of aggregationsRequested) {
+      if (!ALL_AGGREGATION_NAMES.includes(x)) {
+        throw new ValidationError(`Aggregation ${x} not supported at catalog level`)
+      }
+    }
+  }
+
+  const geohashPrecision = extractPrecision(
+    queryParameters,
+    'grid_geohash_frequency_precision',
+    1,
+    12
+  )
+  const geohexPrecision = extractPrecision(
+    queryParameters,
+    'grid_geohex_frequency_precision',
+    0,
+    15
+  )
+  const geotilePrecision = extractPrecision(
+    queryParameters,
+    'grid_geotile_frequency_precision',
+    0,
+    29
+  )
+
+  let dbResponse
+  try {
+    dbResponse = await backend.aggregate(
+      aggregationsRequested,
+      searchParams,
+      geohashPrecision,
+      geohexPrecision,
+      geotilePrecision
+    )
+  } catch (error) {
+    if (!isIndexNotFoundError(error)) {
       throw error
     }
   }
 
-  const { body } = esResponse
-  const { aggregations: esAggs } = body
-  const aggregations = [
-    {
-      name: 'total_count',
-      data_type: 'integer',
-      value: esAggs['total_count']['value'],
-    },
-    {
-      name: 'datetime_max',
-      data_type: 'datetime',
-      value: esAggs['datetime_max']['value_as_string'],
-    },
-    {
-      name: 'datetime_min',
-      data_type: 'datetime',
-      value: esAggs['datetime_min']['value_as_string'],
-    },
+  const aggregations = []
 
-    agg(esAggs, 'collection_frequency', 'string'),
-    agg(esAggs, 'datetime_frequency', 'datetime'),
-    agg(esAggs, 'grid_code_frequency', 'string'),
-    agg(esAggs, 'grid_code_landsat_frequency', 'string'),
-    agg(esAggs, 'cloud_cover_frequency', 'numeric'),
-    agg(esAggs, 'platform_frequency', 'string'),
-    agg(esAggs, 'sun_elevation_frequency', 'string'),
-    agg(esAggs, 'sun_azimuth_frequency', 'string'),
-    agg(esAggs, 'off_nadir_frequency', 'string'),
-  ]
+  if (dbResponse) {
+    const { body: { aggregations: resultAggs } } = dbResponse
+
+    if (aggregationsRequested.includes('total_count')) {
+      aggregations.push({
+        name: 'total_count',
+        data_type: 'integer',
+        value: (resultAggs['total_count'] || {})['value'] || 0,
+      })
+    }
+
+    if (aggregationsRequested.includes('datetime_max')) {
+      aggregations.push({
+        name: 'datetime_max',
+        data_type: 'datetime',
+        value: (resultAggs['datetime_max'] || {})['value_as_string'] || null,
+      })
+    }
+
+    if (aggregationsRequested.includes('datetime_min')) {
+      aggregations.push({
+        name: 'datetime_min',
+        data_type: 'datetime',
+        value: (resultAggs['datetime_min'] || {})['value_as_string'] || null,
+      })
+    }
+
+    const otherAggregations = new Map([
+      ['collection_frequency', 'string'],
+      ['grid_code_frequency', 'string'],
+      ['grid_code_landsat_frequency', 'string'],
+      ['grid_geohex_frequency', 'string'],
+      ['grid_geohash_frequency', 'string'],
+      ['grid_geotile_frequency', 'string'],
+      ['platform_frequency', 'string'],
+      ['sun_elevation_frequency', 'string'],
+      ['sun_azimuth_frequency', 'string'],
+      ['off_nadir_frequency', 'string'],
+      ['datetime_frequency', 'datetime'],
+      ['cloud_cover_frequency', 'numeric'],
+    ])
+
+    for (const [k, v] of otherAggregations.entries()) {
+      if (aggregationsRequested.includes(k)) {
+        aggregations.push(agg(resultAggs, k, v))
+      }
+    }
+  }
+
   const results = {
     aggregations,
     links: [
@@ -714,33 +853,33 @@ const aggregate = async function (collectionId,
     results.links.push({
       rel: 'collection',
       type: 'application/json',
-      href: `${collectionEndpoint}`
+      href: collectionEndpoint
     })
   }
   return results
 }
 
 const getConformance = async function (txnEnabled) {
-  const prefix = 'https://api.stacspec.org/v1.0.0-rc.2'
+  const foundationPrefix = 'https://api.stacspec.org/v1.0.0-rc.2'
   const conformsTo = [
-    `${prefix}/core`,
-    `${prefix}/collections`,
-    `${prefix}/ogcapi-features`,
-    `${prefix}/ogcapi-features#fields`,
-    `${prefix}/ogcapi-features#sort`,
-    `${prefix}/ogcapi-features#query`,
-    `${prefix}/item-search`,
-    `${prefix}/item-search#fields`,
-    `${prefix}/item-search#sort`,
-    `${prefix}/item-search#query`,
-    'https://api.stacspec.org/v0.2.0/aggregation',
+    `${foundationPrefix}/core`,
+    `${foundationPrefix}/collections`,
+    `${foundationPrefix}/ogcapi-features`,
+    `${foundationPrefix}/item-search`,
+    'https://api.stacspec.org/v1.0.0-rc.3/ogcapi-features#fields',
+    'https://api.stacspec.org/v1.0.0-rc.2/ogcapi-features#sort',
+    'https://api.stacspec.org/v1.0.0-rc.2/ogcapi-features#query',
+    'https://api.stacspec.org/v1.0.0-rc.3/item-search#fields',
+    'https://api.stacspec.org/v1.0.0-rc.2/item-search#sort',
+    'https://api.stacspec.org/v1.0.0-rc.2/item-search#query',
+    'https://api.stacspec.org/v0.3.0/aggregation',
     'http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/core',
     'http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/oas30',
     'http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/geojson'
   ]
 
   if (txnEnabled) {
-    conformsTo.push(`${prefix}/ogcapi-features/extensions/transaction`)
+    conformsTo.push('https://api.stacspec.org/v1.0.0-rc.2/ogcapi-features/extensions/transaction')
   }
 
   return { conformsTo }
@@ -774,26 +913,6 @@ const getCollectionQueryables = async (collectionId, backend, endpoint = '') => 
   return queryables
 }
 
-const DEFAULT_AGGREGATIONS = [
-  {
-    name: 'total_count',
-    data_type: 'integer'
-  },
-  {
-    name: 'datetime_max',
-    data_type: 'datetime'
-  },
-  {
-    name: 'datetime_min',
-    data_type: 'datetime'
-  },
-  {
-    name: 'datetime_frequency',
-    data_type: 'frequency_distribution',
-    frequency_distribution_data_type: 'datetime'
-  },
-]
-
 const getCollectionAggregations = async (collectionId, backend, endpoint = '') => {
   const collection = await backend.getCollection(collectionId)
 
@@ -816,7 +935,7 @@ const getCollectionAggregations = async (collectionId, backend, endpoint = '') =
     {
       rel: 'collection',
       type: 'application/json',
-      href: `${endpoint}/collection/${collectionId}`
+      href: `${endpoint}/collections/${collectionId}`
     }
   ]
 
@@ -879,12 +998,6 @@ const getCatalog = async function (txnEnabled, backend, endpoint = '') {
       type: 'application/json',
       href: `${endpoint}/aggregate`,
       method: 'GET',
-    },
-    {
-      rel: 'aggregate',
-      type: 'application/json',
-      href: `${endpoint}/aggregate`,
-      method: 'POST',
     },
     {
       rel: 'aggregations',

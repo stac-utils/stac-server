@@ -45,6 +45,10 @@ test('GET /collections/:collectionId returns a collection', async (t) => {
 
   const qLink = response.body.links.find((l) => l.rel === 'http://www.opengis.net/def/rel/ogc/1.0/queryables')
   t.true(qLink?.href.endsWith(`/collections/${collectionId}/queryables`))
+  const aggregateLink = response.body.links.find((l) => l.rel === 'aggregate')
+  t.true(aggregateLink?.href.endsWith(`/collections/${collectionId}/aggregate`))
+  const aggregationsLink = response.body.links.find((l) => l.rel === 'aggregations')
+  t.true(aggregationsLink?.href.endsWith(`/collections/${collectionId}/aggregations`))
 })
 
 test('GET /collection/:collectionId for non-existent collection returns Not Found', async (t) => {

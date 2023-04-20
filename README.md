@@ -52,15 +52,16 @@
 
 Stac-server is an implementation of the [STAC API specification](https://github.com/radiantearth/stac-api-spec) for searching and serving metadata for geospatial data, including but not limited to satellite imagery). The STAC and STAC API versions supported by a given version of stac-server are shown in the table below. Additional information can be found in the [CHANGELOG](CHANGELOG.md)
 
-| stac-server Version | STAC Version | STAC API Version |
-| ------------------- | ------------ | ---------------- |
-| 0.1.x               | 0.9.x        | 0.9.x            |
-| 0.2.x               | <1.0.0-rc.1  | 0.9.x            |
-| 0.3.x               | 1.0.0        | 1.0.0-beta.2     |
-| 0.4.x               | 1.0.0        | 1.0.0-beta.5     |
-| 0.5.x               | 1.0.0        | 1.0.0-rc.2       |
+| stac-server Version(s) | STAC Version | STAC API Foundation Version |
+| ---------------------- | ------------ | --------------------------- |
+| 0.1.x                  | 0.9.x        | 0.9.x                       |
+| 0.2.x                  | <1.0.0-rc.1  | 0.9.x                       |
+| 0.3.x                  | 1.0.0        | 1.0.0-beta.2                |
+| 0.4.x                  | 1.0.0        | 1.0.0-beta.5                |
+| 0.5.x-0.8.x            | 1.0.0        | 1.0.0-rc.2                  |
+| >=0.9.x                | 1.0.0        | 1.0.0-rc.4                  |
 
-As of version 0.5.x, stac-server supports the following specifications:
+Currently, stac-server supports the following specifications:
 
 - STAC API - Core
 - STAC API - Features
@@ -69,7 +70,7 @@ As of version 0.5.x, stac-server supports the following specifications:
 - Query Extension
 - Fields Extension
 - Sort Extension
-- Aggregation Extension (experimental work-in-progress)
+- Aggregation Extension (experimental, work-in-progress)
 
 The following APIs are deployed instances of stac-server:
 
@@ -192,7 +193,7 @@ Create a clone of the stac-server 0.5.x code. Copy and update the serverless.yml
   - `ElasticsearchVersion` is replaced with `EngineVersion` and set to `OpenSearch_2.3`
 - `EsEndpoint` should be renamed to `OpenSearchEndpoint` and the exported name suffixed
     with `-os-endpoint` instead of `-es-endpoint`
-- Environment variable `STAC_API_VERSION` should be removed to instead defer to the default version of `1.0.0-rc.2`
+- Environment variable `STAC_API_VERSION` should be removed to instead defer to the current default version
 
 You can also compare it with the serverless.example.yml file. The `DomainName` value
 **must** remain the same as it is for the current deployment so
@@ -409,8 +410,8 @@ There are some settings that should be reviewed and updated as needeed in the se
 | STAC_DOCS_URL                    | URL to documentation                                                                                                                                                                             | [https://stac-utils.github.io/stac-server](https://stac-utils.github.io/stac-server) |
 | INGEST_BATCH_SIZE                | Number of records to ingest in single batch                                                                                                                                                      | 500                                                                                  |
 | LOG_LEVEL                        | Level for logging (error, warn, info, http, verbose, debug, silly)                                                                                                                               | warn                                                                                 |
-| REQUEST_LOGGING_ENABLED                        | Express request logging enabled. String 'false' disables.                                                                                                                               | enabled                                                                                 |
-| REQUEST_LOGGING_FORMAT                        | Express request logging format to use. Any of the [Morgan predefined formats](https://github.com/expressjs/morgan#predefined-formats).                                                                                                                           | tiny                                                                                 |
+| REQUEST_LOGGING_ENABLED          | Express request logging enabled. String 'false' disables.                                                                                                                                        | enabled                                                                              |
+| REQUEST_LOGGING_FORMAT           | Express request logging format to use. Any of the [Morgan predefined formats](https://github.com/expressjs/morgan#predefined-formats).                                                           | tiny                                                                                 |
 | STAC_API_URL                     | The root endpoint of this API                                                                                                                                                                    | Inferred from request                                                                |
 | ENABLE_TRANSACTIONS_EXTENSION    | Boolean specifying if the [Transaction Extension](https://github.com/radiantearth/stac-api-spec/tree/master/ogcapi-features/extensions/transaction) should be activated                          | false                                                                                |
 | STAC_API_ROOTPATH                | The path to append to URLs if this is not deployed at the server root. For example, if the server is deployed without a custom domain name, it will have the stage name (e.g., dev) in the path. | ""                                                                                   |

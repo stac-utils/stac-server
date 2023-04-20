@@ -121,18 +121,6 @@ app.get('/aggregate', async (req, res, next) => {
   }
 })
 
-app.post('/aggregate', async (req, res, next) => {
-  try {
-    res.json(await api.aggregate(req.body, database, req.endpoint, 'POST'))
-  } catch (error) {
-    if (error instanceof ValidationError) {
-      next(createError(400, error.message))
-    } else {
-      next(error)
-    }
-  }
-})
-
 app.get('/aggregations', async (req, res, next) => {
   try {
     res.json(await api.getGlobalAggregations(req.endpoint))
@@ -187,9 +175,10 @@ app.get('/collections/:collectionId/queryables', async (req, res, next) => {
     const queryables = await api.getCollectionQueryables(collectionId, database, req.endpoint)
 
     if (queryables instanceof Error) next(createError(404))
-
-    res.type('application/schema+json')
-    res.json(queryables)
+    else {
+      res.type('application/schema+json')
+      res.json(queryables)
+    }
   } catch (error) {
     if (error instanceof ValidationError) {
       next(createError(400, error.message))
@@ -202,7 +191,9 @@ app.get('/collections/:collectionId/queryables', async (req, res, next) => {
 app.get('/collections/:collectionId/aggregations', async (req, res, next) => {
   const { collectionId } = req.params
   try {
-    res.json(await api.getCollectionAggregations(collectionId, database, req.endpoint))
+    const aggs = await api.getCollectionAggregations(collectionId, database, req.endpoint)
+    if (aggs instanceof Error) next(createError(404))
+    else res.json(aggs)
   } catch (error) {
     if (error instanceof ValidationError) {
       next(createError(400, error.message))
@@ -212,30 +203,24 @@ app.get('/collections/:collectionId/aggregations', async (req, res, next) => {
   }
 })
 
-const collectionAggregate = async (req, res, next, httpMethod) => {
-  const { collectionId } = req.params
-  try {
-    const response = await api.getCollection(collectionId, database, req.endpoint)
-
-    if (response instanceof Error) next(createError(404))
-    else {
-      res.json(await api.aggregate(collectionId, req.query, database, req.endpoint, httpMethod))
-    }
-  } catch (error) {
-    if (error instanceof ValidationError) {
-      next(createError(400, error.message))
-    } else {
-      next(error)
-    }
-  }
-}
-
-// are these supposed to be awaited?
 app.get('/collections/:collectionId/aggregate',
-  async (req, res, next) => await collectionAggregate(req, res, next, 'GET'))
+  async (req, res, next) => {
+    const { collectionId } = req.params
+    try {
+      const response = await api.getCollection(collectionId, database, req.endpoint)
 
-app.get('/collections/:collectionId/aggregate',
-  async (req, res, next) => await collectionAggregate(req, res, next, 'POST'))
+      if (response instanceof Error) next(createError(404))
+      else {
+        res.json(await api.aggregate(collectionId, req.query, database, req.endpoint, 'GET'))
+      }
+    } catch (error) {
+      if (error instanceof ValidationError) {
+        next(createError(400, error.message))
+      } else {
+        next(error)
+      }
+    }
+  })
 
 app.get('/collections/:collectionId/items', async (req, res, next) => {
   const { collectionId } = req.params
@@ -273,18 +258,20 @@ app.post('/collections/:collectionId/items', async (req, res, next) => {
     } else {
       const collectionRes = await api.getCollection(collectionId, database, req.endpoint)
       if (collectionRes instanceof Error) next(createError(404))
-      try {
-        req.body.collection = collectionId
-        await api.createItem(req.body, database)
-        res.location(`${req.endpoint}/collections/${collectionId}/items/${itemId}`)
-        res.sendStatus(201)
-      } catch (error) {
-        if (error instanceof Error
+      else {
+        try {
+          req.body.collection = collectionId
+          await api.createItem(req.body, database)
+          res.location(`${req.endpoint}/collections/${collectionId}/items/${itemId}`)
+          res.sendStatus(201)
+        } catch (error) {
+          if (error instanceof Error
               && error.name === 'ResponseError'
               && error.message.includes('version_conflict_engine_exception')) {
-          res.sendStatus(409)
-        } else {
-          next(error)
+            res.sendStatus(409)
+          } else {
+            next(error)
+          }
         }
       }
     }

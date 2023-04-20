@@ -4,19 +4,17 @@ set -x # print each command before exec
 
 PATH=./node_modules/.bin:$PATH
 
-STAC_API_VERSION='v1.0.0-rc.2'
+STAC_API_VERSION='v1.0.0-rc.4'
 
 curl "https://api.stacspec.org/${STAC_API_VERSION}/core/openapi.yaml" -o core.yaml
 curl "https://api.stacspec.org/${STAC_API_VERSION}/collections/openapi.yaml" -o collections.yaml
 curl "https://api.stacspec.org/${STAC_API_VERSION}/item-search/openapi.yaml" -o item-search.yaml
 curl "https://api.stacspec.org/${STAC_API_VERSION}/ogcapi-features/openapi.yaml" -o ogcapi-features.yaml
-curl "https://api.stacspec.org/${STAC_API_VERSION}/ogcapi-features/extensions/transaction/openapi.yaml" -o ogcapi-features-txn.yaml
 
 yq eval-all '. as $item ireduce ({}; . * $item )' \
   core.yaml collections.yaml \
   ogcapi-features.yaml \
-  \ #ogcapi-features-txn.yaml \
   item-search.yaml \
   > src/lambdas/api/openapi.yaml
 
-rm core.yaml collections.yaml item-search.yaml ogcapi-features.yaml ogcapi-features-txn.yaml
+rm core.yaml collections.yaml item-search.yaml ogcapi-features.yaml

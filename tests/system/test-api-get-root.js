@@ -76,6 +76,8 @@ test('GET / returns links with the correct endpoint if `X-Forwarded-Proto` and `
   const linkRels = new Map([
     ['service-desc', '/api'],
     ['http://www.opengis.net/def/rel/ogc/1.0/queryables', '/queryables'],
+    ['aggregate', '/aggregate'],
+    ['aggregations', '/aggregations'],
   ])
 
   for (const [rel, hrefSuffix] of linkRels) {

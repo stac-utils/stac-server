@@ -53,7 +53,7 @@ test('GET /collections/:collectionId/queryables returns queryables', async (t) =
 
 test('GET /collections/:collectionId/queryables returns queryables even if not defined in Collection', async (t) => {
   const collection = await loadFixture(
-    'collection-without-queryables.json',
+    'stac/collection-without-queryables.json',
     { id: t.context.collectionId }
   )
 

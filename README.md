@@ -59,7 +59,7 @@ Stac-server is an implementation of the [STAC API specification](https://github.
 | 0.3.x                  | 1.0.0        | 1.0.0-beta.2                |
 | 0.4.x                  | 1.0.0        | 1.0.0-beta.5                |
 | 0.5.x-0.8.x            | 1.0.0        | 1.0.0-rc.2                  |
-| >=0.9.x                | 1.0.0        | 1.0.0-rc.4                  |
+| 1.0.0                  | 1.0.0        | 1.0.0                       |
 
 Currently, stac-server supports the following specifications:
 

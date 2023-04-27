@@ -860,7 +860,7 @@ const aggregate = async function (
 }
 
 const getConformance = async function (txnEnabled) {
-  const foundationPrefix = 'https://api.stacspec.org/v1.0.0-rc.2'
+  const foundationPrefix = 'https://api.stacspec.org/v1.0.0'
   const conformsTo = [
     `${foundationPrefix}/core`,
     `${foundationPrefix}/collections`,

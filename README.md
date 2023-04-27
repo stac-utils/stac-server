@@ -142,7 +142,7 @@ are three options if you have an existing deployment that uses Elasticsearch:
    6. Deploy the 0.5.x stac-server code with the updated serverless.yml file
    7. Through the AWS Console, upgrade the OpenSearch Service domain from Elasticsearch 7.10
       to OpenSearch 1.3, retaining the compatibilty mode enabled configuration.
-   8. Upgrade the OpenSearch 1.3 domain to OpenSearch 2.3.
+   8. Upgrade the OpenSearch 1.3 domain to OpenSearch 2.5.
    9. Re-deploy the stack without the ES_COMPAT_MODE environment variable set.
 3. (Preferred) Disconnect the Elasticsearch domain from the stac-server CF Stack, deploy a new stac-server CF Stack,
    upgrade the Elasticsearch domain to OpenSearch, and connect the domain to the new CF Stack.
@@ -155,7 +155,7 @@ renamed `OPENSEARCH_HOST`.
 
 **Note! The migration must be done carefully to avoid losing the database!**
 
-The major part of this migration is the use of OpenSearch 2.3 instead of Elasticsearch
+The major part of this migration is the use of OpenSearch 2.5 instead of Elasticsearch
 7.10. Confusingly, both of these are options in the AWS OpenSearch Service, but the Elasticsearch option
 is no longer being updated by AWS in favor of OpenSearch.
 
@@ -166,42 +166,44 @@ can't "migrate" between these resource types. So, the approach is to upgrade the
 to OpenSearch in compatibility mode, then clone the CloudFormation Stack, and import
 the OpenSearch domain into it.
 
-With the 0.4.x codebase, change the serverless.yml file to add to the AWS::Elasticsearch::Domain definition at the same
-level as the `Type` attribute these two attributes:
+1. With the 0.4.x codebase, change the serverless.yml file to add `DeletionPolicy: Retain` and `UpdateReplacePolicy: Retain` to the `AWS::Elasticsearch::Domain` definition at the same level as the `Type` and deploy. See instructions for deploying [here](https://github.com/stac-utils/stac-server/blob/main/README.md#deployment).
 
 ```yaml
-DeletionPolicy: Retain
-UpdateReplacePolicy: Retain
+  Type: AWS::Elasticsearch::Domain
+  DeletionPolicy: Retain
+  UpdateReplacePolicy: Retain
+  Properties:
+    . . .
 ```
 
-and deploy.
-
-The existing Elasticsearch domain must be manually migrated to OpenSearch. Prior to
+2. The existing Elasticsearch domain must be manually migrated to OpenSearch. Prior to
 re-deploying the stack, use the AWS Console to manually upgrade the
 Elasticsearch domain (`Actions->Upgrade`) to OpenSearch 1.3. Select "Enable
 compatibility mode" to support the existing stac-server 0.4.x code using the Elasticsearch
 JavaScript client library (@elastic/elasticsearch version 7.9.0). After this upgrade to
-OpenSearch 1.3, then upgrade the domain to OpenSearch 2.3.
+OpenSearch 1.3, then upgrade the domain to OpenSearch 2.5.
 
-Create a clone of the stac-server 0.5.x code. Copy and update the serverless.yml file used for the 0.4.0 deployment with these changes:
+3. Create a clone of the stac-server 0.5.x code. Copy and update the serverless.yml file used for the 0.4.0 deployment with these changes:
 
 - `ElasticSearchInstance` should be renamed to `OpenSearchInstance`
   - The `Type` of this resource should be changed from `AWS::Elasticsearch::Domain` to
     `AWS::OpenSearchService::Domain`
   - `ElasticsearchClusterConfig` is now `ClusterConfig`
   - `InstanceType` values have changed, e.g., t3.small.elasticsearch is now t3.small.search
-  - `ElasticsearchVersion` is replaced with `EngineVersion` and set to `OpenSearch_2.3`
+  - `ElasticsearchVersion` is replaced with `EngineVersion` and set to `OpenSearch_2.5`
 - `EsEndpoint` should be renamed to `OpenSearchEndpoint` and the exported name suffixed
     with `-os-endpoint` instead of `-es-endpoint`
 - Environment variable `STAC_API_VERSION` should be removed to instead defer to the current default version
 
-You can also compare it with the serverless.example.yml file. The `DomainName` value
+- The `DomainName` value
 **must** remain the same as it is for the current deployment so
 the CloudFormation deployment will import the existing resource. Instead of a parameterized
 value of `${self:service}-${self:provider.stage}` as in the example serverless.yml file,
 it would have a hard-coded service name and `-es` suffix, e.g., `my-stac-server-${self:provider.stage}-es`.
 
-Run `npm run package` to generate the CloudFormation templates in the `.serverless` directory.
+- Note: these changes can be checked against the [serverless.example.yml](https://github.com/stac-utils/stac-server/blob/main/serverless.example.yml) file.
+
+4. Run `npm run package` to generate the CloudFormation templates in the `.serverless` directory.
 Extract from the file `.serverless/cloudformation-template-update-stack.json` a template
 that only has the OpenSearchInstance resource in it. For example:
 
@@ -240,15 +242,14 @@ that only has the OpenSearchInstance resource in it. For example:
 }
 ```
 
-Within CloudFormation, choose `Create stack` and `With existing resources (import resources)`.
-Upload the template that contains only the OpenSearch resource. Choose a new stack name for this similar to the old one, e.g., `my-stac-server-2` and update `service` name in the serverless.yml file with this name. When prompted for the name of the OpenSearch Domain, put in the name of the existing one, e.g., `my-stac-server-dev-es`.
+5. Within CloudFormation, choose `Create stack` and `With existing resources (import resources)`.
+Upload the template that contains only the OpenSearch resource. Choose a new stack name for this similar to the old one, e.g., `my-stac-server-2-{deploy-stage}` and update `service` name in the serverless.yml file with this name without the deploy stage e.g., `my-stac-server-2`. When prompted for the name of the OpenSearch Domain, put in the name of the existing one, e.g., `my-stac-server-dev-es`.
 
-Deploy the new stack with `npm run deploy`. This should appear as an update to the CloudFormation stack that was just created manually, and should use the existing Open
-Search domain.
+6. Deploy the new stack with `npm run deploy -- --stage {deploy-stage}`. This should appear as an update to the CloudFormation stack that was just created manually, and should use the existing OpenSearch domain.
 
-Switch the DNS entry for the domain name to the API Gateway endpoint for the new Stack.
+7. Switch the DNS entry for the domain name to the API Gateway endpoint for the new Stack. See instructions [here](https://github.com/stac-utils/stac-server/blob/main/README.md#proxying-stac-server-through-cloudfront).
 
-Double-check that the `DeletionPolicy: Retain` is set on the old Stack for the Elasticsearch/OpenSearch resource, and then delete the old Stack.
+8. Double-check that the `DeletionPolicy: Retain` is set on the old Stack for the Elasticsearch/OpenSearch resource, and then delete the old Stack.
 
 #### Granting Access for Thumbnails
 

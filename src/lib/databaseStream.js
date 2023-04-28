@@ -4,7 +4,7 @@ import _stream from 'stream'
 import through2 from 'through2'
 import { dbClient, createIndex } from './databaseClient.js'
 
-import { convertIngestObjectToDbObject } from './ingest.js'
+import { combineDbObjectsIntoBulkOperations, convertIngestObjectToDbObject } from './ingest.js'
 
 import logger from './logger.js'
 
@@ -24,26 +24,7 @@ class SearchDatabaseWritableStream extends _stream.Writable {
 
   // Allows the flexibility to batch write to multiple indexes.
   transformRecords(chunks) {
-    const operations = chunks.reduce((/** @type {{}[]} */ bulkOperations,
-      /** @type {{ chunk: any; }} */ chunk) => {
-      const operation = {}
-      const { chunk: record } = chunk
-      operation[record.action] = {
-        _index: record.index,
-        _type: record.type,
-        _id: record.id
-      }
-      if (record.parent) {
-        operation[record.action]._parent = record.parent
-      }
-
-      bulkOperations.push(operation)
-      if (record.action !== 'delete') {
-        bulkOperations.push(record.body)
-      }
-      return bulkOperations
-    }, [])
-    return operations
+    return combineDbObjectsIntoBulkOperations(chunks.map((/** @type {{ chunk: any; }} */ chunk) => chunk.chunk))
   }
 
   // Write individual records with update/upsert

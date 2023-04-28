@@ -46,6 +46,27 @@ export async function convertIngestObjectToDbObject(
   }
 }
 
+export function combineDbObjectsIntoBulkOperations(records) {
+  const operations = records.reduce((/** @type {{}[]} */ bulkOperations, record) => {
+    const operation = {}
+    operation[record.action] = {
+      _index: record.index,
+      _type: record.type,
+      _id: record.id
+    }
+    if (record.parent) {
+      operation[record.action]._parent = record.parent
+    }
+
+    bulkOperations.push(operation)
+    if (record.action !== 'delete') {
+      bulkOperations.push(record.body)
+    }
+    return bulkOperations
+  }, [])
+  return operations
+}
+
 export async function ingestItems(items, stream) {
   const readable = new Readable({ objectMode: true })
   const { toDB, dbStream } = await stream()

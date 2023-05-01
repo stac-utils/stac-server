@@ -101,6 +101,19 @@ export async function writeRecordToDb(
   return result
 }
 
+export async function writeRecordsInBulkToDb(records) {
+  const body = combineDbObjectsIntoBulkOperations(records)
+  const client = await dbClient()
+  const result = await client.bulk({ body })
+  logger.debug('Result: %j', result)
+  const { errors } = result.body
+  if (errors) {
+    logger.error('Batch write had errors', errors)
+  } else {
+    logger.debug(`Wrote batch of documents size ${body.length / 2}`)
+  }
+}
+
 export async function ingestItems(items, stream) {
   const readable = new Readable({ objectMode: true })
   const { toDB, dbStream } = await stream()

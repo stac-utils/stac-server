@@ -5,9 +5,9 @@ import through2 from 'through2'
 import { dbClient } from './databaseClient.js'
 
 import {
-  combineDbObjectsIntoBulkOperations,
   convertIngestObjectToDbObject,
   writeRecordToDb,
+  writeRecordsInBulkToDb,
 } from './ingest.js'
 
 import logger from './logger.js'
@@ -22,11 +22,6 @@ class SearchDatabaseWritableStream extends _stream.Writable {
     this.config = config
 
     this.client = this.config.client
-  }
-
-  // Allows the flexibility to batch write to multiple indexes.
-  transformRecords(chunks) {
-    return combineDbObjectsIntoBulkOperations(chunks.map((/** @type {{ chunk: any; }} */ chunk) => chunk.chunk))
   }
 
   // Write individual records with update/upsert
@@ -47,17 +42,10 @@ class SearchDatabaseWritableStream extends _stream.Writable {
   /**
    * @override
    */
-  async _writev(records, next) {
-    const body = this.transformRecords(records)
+  async _writev(chunks, next) {
     try {
-      const result = await this.client.bulk({ body })
-      logger.debug('Result: %j', result)
-      const { errors } = result.body
-      if (errors) {
-        logger.error('Batch write had errors', errors)
-      } else {
-        logger.debug(`Wrote batch of documents size ${body.length / 2}`)
-      }
+      const records = chunks.map((/** @type {{ chunk: any; }} */ chunk) => chunk.chunk)
+      await writeRecordsInBulkToDb(records)
       next()
     } catch (err) {
       logger.error(err)

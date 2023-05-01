@@ -1,7 +1,6 @@
 /* eslint-disable import/prefer-default-export */
 import got from 'got' // eslint-disable-line import/no-unresolved
 import { createIndex } from '../../lib/databaseClient.js'
-import stream from '../../lib/databaseStream.js'
 import { ingestItems } from '../../lib/ingest.js'
 import getObjectJson from '../../lib/s3-utils.js'
 import logger from '../../lib/logger.js'
@@ -61,7 +60,7 @@ export const handler = async (event, _context) => {
     : [event]
 
   try {
-    await ingestItems(stacItems, stream)
+    await ingestItems(stacItems)
     logger.debug('Ingested %d items: %j', stacItems.length, stacItems)
   } catch (error) {
     logger.error(error)

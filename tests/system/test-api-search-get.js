@@ -5,7 +5,6 @@ import got from 'got' // eslint-disable-line import/no-unresolved
 import { deleteAllIndices, refreshIndices } from '../helpers/database.js'
 import { randomId } from '../helpers/utils.js'
 import { ingestItems } from '../../src/lib/ingest.js'
-import stream from '../../src/lib/databaseStream.js'
 import { setup, loadJson } from '../helpers/system-tests.js'
 
 test.before(async (t) => {
@@ -45,7 +44,7 @@ test('/search preserve bbox in next links', async (t) => {
     'LC80100102015082LGN00.json'
   ]
   const items = await Promise.all(fixtureFiles.map((x) => loadJson(x)))
-  await ingestItems(items, stream)
+  await ingestItems(items)
   await refreshIndices()
 
   const bbox = '-180,-90,180,90'
@@ -82,7 +81,7 @@ test('/search preserve bbox and datetime in next links', async (t) => {
     'LC80100102015082LGN00.json'
   ]
   const items = await Promise.all(fixtureFiles.map((x) => loadJson(x)))
-  await ingestItems(items, stream)
+  await ingestItems(items)
   await refreshIndices()
 
   const bbox = '-180,-90,180,90'

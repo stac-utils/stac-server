@@ -1,5 +1,3 @@
-import { Readable } from 'readable-stream'
-import pump from 'pump'
 import { getItemCreated } from './database.js'
 import { dbClient, createIndex } from './databaseClient.js'
 import logger from './logger.js'
@@ -114,30 +112,28 @@ export async function writeRecordsInBulkToDb(records) {
   }
 }
 
-export async function ingestItems(items, stream) {
-  const readable = new Readable({ objectMode: true })
-  const { toDB, dbStream } = await stream()
-  const promise = new Promise((resolve, reject) => {
-    pump(
-      readable,
-      toDB,
-      dbStream,
-      (error) => {
-        if (error) {
-          logger.error('Error ingesting', error)
-          reject(error)
-        } else {
-          logger.debug('Ingested item')
-          resolve(true)
-        }
-      }
-    )
-  })
-  items.forEach((item) => readable.push(item))
-  readable.push(null)
-  return promise
+async function asyncMapInSequence(objects, asyncFn) {
+  const results = []
+  for (const object of objects) {
+    try {
+      // This helper is inteneted to be used with the objects must be processed
+      // in sequence so we intentionally await each iteration.
+      // eslint-disable-next-line no-await-in-loop
+      const result = await asyncFn(object)
+      results.push(result)
+    } catch (error) {
+      results.push(error)
+    }
+  }
+  return results
 }
 
-export async function ingestItem(item, stream) {
-  return ingestItems([item], stream)
+export async function ingestItems(items) {
+  const records = await asyncMapInSequence(items, convertIngestObjectToDbObject)
+  const results = await asyncMapInSequence(records, writeRecordToDb)
+  return results
+}
+
+export async function ingestItem(item) {
+  return ingestItems([item])
 }

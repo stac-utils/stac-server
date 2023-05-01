@@ -1,6 +1,7 @@
 import { Readable } from 'readable-stream'
 import pump from 'pump'
 import { getItemCreated } from './database.js'
+import { dbClient, createIndex } from './databaseClient.js'
 import logger from './logger.js'
 
 const COLLECTIONS_INDEX = process.env['COLLECTIONS_INDEX'] || 'collections'
@@ -65,6 +66,39 @@ export function combineDbObjectsIntoBulkOperations(records) {
     return bulkOperations
   }, [])
   return operations
+}
+
+export async function writeRecordToDb(
+  /** @type {{ index: string; id: string; body: {}; }} */ record
+) {
+  const { index, id, body } = record
+  const client = await dbClient()
+
+  // is this needed or will update just fail anyway and move on?
+  if (index !== COLLECTIONS_INDEX) {
+    // if this isn't a collection check if index exists
+    const exists = await client.indices.exists({ index })
+    if (!exists.body) {
+      const msg = `Index ${index} does not exist, add before ingesting items`
+      logger.debug(msg)
+      throw new Error(msg)
+    }
+  }
+
+  const result = await client.index({
+    index,
+    type: '_doc',
+    id,
+    body
+  })
+
+  logger.debug(`Wrote document ${id}`)
+
+  // if this was a collection, then add a new index with collection name
+  if (index === COLLECTIONS_INDEX) {
+    await createIndex(id)
+  }
+  return result
 }
 
 export async function ingestItems(items, stream) {

@@ -2,13 +2,15 @@
 import _stream from 'stream'
 // @ts-ignore
 import through2 from 'through2'
-import { dbClient, createIndex } from './databaseClient.js'
+import { dbClient } from './databaseClient.js'
 
-import { combineDbObjectsIntoBulkOperations, convertIngestObjectToDbObject } from './ingest.js'
+import {
+  combineDbObjectsIntoBulkOperations,
+  convertIngestObjectToDbObject,
+  writeRecordToDb,
+} from './ingest.js'
 
 import logger from './logger.js'
-
-const COLLECTIONS_INDEX = process.env['COLLECTIONS_INDEX'] || 'collections'
 
 class SearchDatabaseWritableStream extends _stream.Writable {
   /**
@@ -33,35 +35,7 @@ class SearchDatabaseWritableStream extends _stream.Writable {
    */
   async _write(record, _enc, next) {
     try {
-      const { index, id, body } = record
-
-      // is this needed or will update just fail anyway and move on?
-      if (index !== COLLECTIONS_INDEX) {
-        // if this isn't a collection check if index exists
-        const exists = await this.client.indices.exists({ index })
-        if (!exists.body) {
-          const msg = `Index ${index} does not exist, add before ingesting items`
-          logger.debug(msg)
-          return next(
-            new Error(msg)
-          )
-        }
-      }
-
-      await this.client.index({
-        index,
-        type: '_doc',
-        id,
-        body
-      })
-
-      logger.debug(`Wrote document ${id}`)
-
-      // if this was a collection, then add a new index with collection name
-      if (index === COLLECTIONS_INDEX) {
-        await createIndex(id)
-      }
-
+      await writeRecordToDb(record)
       return next()
     } catch (err) {
       logger.error(err)

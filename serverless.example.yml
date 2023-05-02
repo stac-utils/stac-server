@@ -187,4 +187,3 @@ resources:
 
 plugins:
   - serverless-offline
-

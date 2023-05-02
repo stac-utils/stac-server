@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2023-05-02
+
+### Changed
+- Adds API Gateway ID to cloudwatch logs.
+- Logs the start of the request in case of Lambda timeout.
+
 ## [1.0.0] - 2023-04-24
 
 ### Changed
@@ -274,6 +280,8 @@ Initial release, forked from [sat-api](https://github.com/sat-utils/sat-api/tree
 
 Compliant with STAC 0.9.0
 
+[1.1.0]: https://github.com/stac-utils/stac-api/compare/v1.0.0...v1.1.0
+[1.0.0]: https://github.com/stac-utils/stac-api/compare/v0.8.1...v1.0.0
 [0.8.1]: https://github.com/stac-utils/stac-api/compare/v0.8.0...v0.8.1
 [0.8.0]: https://github.com/stac-utils/stac-api/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/stac-utils/stac-api/compare/v0.6.0...v0.7.0

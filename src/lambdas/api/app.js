@@ -22,7 +22,19 @@ const txnEnabled = process.env['ENABLE_TRANSACTIONS_EXTENSION'] === 'true'
 export const app = express()
 
 if (process.env['REQUEST_LOGGING_ENABLED'] !== 'false') {
-  app.use(morgan(process.env['REQUEST_LOGGING_FORMAT'] || 'tiny'))
+  app.use(
+    [
+      // Setting `immediate: true` allows us to log at request start
+      // in case the lambda times out it's helpful to have the request ID
+      // Using console out will allow us to capture the request ID from lambda
+      morgan('Request Start - :method :url',
+        { immediate: true, stream: { write: (message) => console.info(`${message}`) } }),
+      // Logs at the end of the request
+      // Using console out will allow us to capture the request ID from lambda
+      morgan(process.env['REQUEST_LOGGING_FORMAT'] || 'tiny',
+        { stream: { write: (message) => console.info(message) } })
+    ]
+  )
 }
 
 app.use(cors())

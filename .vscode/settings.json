@@ -17,4 +17,5 @@
   },
   "editor.tabSize": 2,
   "files.insertFinalNewline": true,
+  "serverlessIDE.telemetry.enableTelemetry": false,
 }

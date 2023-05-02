@@ -67,6 +67,9 @@ functions:
           method: ANY
           path: "{proxy+}"
           cors: true
+    tags:
+      key: responsibility
+      value: api
   ingest:
     description: stac-server Ingest Lambda
     handler: index.handler
@@ -78,6 +81,9 @@ functions:
       - sqs:
           arn:
             Fn::GetAtt: [ingestQueue, Arn]
+    tags:
+      key: responsibility
+      value: ingest
   # preHook:
   #   description: stac-server pre-hook Lambda
   #   handler: index.handler
@@ -85,6 +91,9 @@ functions:
   #   timeout: 25
   #   package:
   #     artifact: dist/pre-hook/pre-hook.zip
+  #   tags:
+  #     key: responsibility
+  #     value: api
 
   # postHook:
   #   description: stac-server post-hook Lambda
@@ -93,6 +102,9 @@ functions:
   #   timeout: 25
   #   package:
   #     artifact: dist/post-hook/post-hook.zip
+  #   tags:
+  #     key: responsibility
+  #     value: api
 
 resources:
   Description: A STAC API running on stac-server
@@ -101,10 +113,16 @@ resources:
       Type: "AWS::SNS::Topic"
       Properties:
         TopicName: ${self:service}-${self:provider.stage}-ingest
+        Tags:
+          - Key: responsibility
+            Value: ingest
     deadLetterQueue:
       Type: AWS::SQS::Queue
       Properties:
         QueueName: ${self:service}-${self:provider.stage}-dead-letter-queue
+        Tags:
+          - Key: responsibility
+            Value: ingest
     ingestQueue:
       Type: AWS::SQS::Queue
       Properties:
@@ -114,6 +132,9 @@ resources:
         RedrivePolicy:
           deadLetterTargetArn: !GetAtt deadLetterQueue.Arn
           maxReceiveCount: 2
+        Tags:
+          - Key: responsibility
+            Value: ingest
     ingestQueuePolicy:
       Type: AWS::SQS::QueuePolicy
       Properties:
@@ -166,3 +187,4 @@ resources:
 
 plugins:
   - serverless-offline
+

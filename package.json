@@ -64,7 +64,7 @@
     "@aws-sdk/client-secrets-manager": "^3.312.0",
     "@elastic/elasticsearch": "^7.9.0",
     "@mapbox/extent": "^0.4.0",
-    "@opensearch-project/opensearch": "^2.2.0",
+    "@opensearch-project/opensearch": "^2.2.1",
     "aws-os-connection": "^0.2.0",
     "better-npm-audit": "^3.7.3",
     "cors": "^2.8.5",

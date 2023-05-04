@@ -128,9 +128,18 @@ async function asyncMapInSequence(objects, asyncFn) {
   return results
 }
 
+function logErrorResults(results) {
+  results.forEach((result) => {
+    if (result instanceof Error) {
+      logger.error('Error while ingesting item', result)
+    }
+  })
+}
+
 export async function ingestItems(items) {
   const records = await asyncMapInSequence(items, convertIngestObjectToDbObject)
   const results = await asyncMapInSequence(records, writeRecordToDb)
+  logErrorResults(results)
   return results
 }
 

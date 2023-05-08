@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Changed
 
 - Remove node streams-based ingest code to prepare for post-ingest notifications
+- Use the type field to determin if ingest is collection or item
 
 ## [1.1.0] - 2023-05-02
 

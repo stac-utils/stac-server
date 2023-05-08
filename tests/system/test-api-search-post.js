@@ -8,7 +8,6 @@ import { deleteAllIndices, refreshIndices } from '../helpers/database.js'
 import { randomId } from '../helpers/utils.js'
 import { ingestItems } from '../../src/lib/ingest.js'
 
-import stream from '../../src/lib/databaseStream.js'
 import { loadJson, setup } from '../helpers/system-tests.js'
 
 const __filename = fileURLToPath(import.meta.url)
@@ -17,7 +16,7 @@ const intersectsGeometry = fs.readFileSync(path.resolve(__dirname, '../fixtures/
 
 const ingestEntities = async (fixtures) => {
   await ingestItems(
-    await Promise.all(fixtures.map((x) => loadJson(x))), stream
+    await Promise.all(fixtures.map((x) => loadJson(x)))
   )
   await refreshIndices()
 }

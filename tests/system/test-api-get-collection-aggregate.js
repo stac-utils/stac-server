@@ -5,7 +5,6 @@ import { randomId } from '../helpers/utils.js'
 import { setup, loadJson } from '../helpers/system-tests.js'
 import { deleteAllIndices, refreshIndices } from '../helpers/database.js'
 import { ingestItems } from '../../src/lib/ingest.js'
-import stream from '../../src/lib/databaseStream.js'
 
 const proto = randomId()
 const host = randomId()
@@ -24,9 +23,9 @@ const fixtureItems = [
 test.before(async (t) => {
   await deleteAllIndices()
   t.context = await setup()
-  await ingestItems(await Promise.all(fixtureCollections.map((x) => loadJson(x))), stream)
+  await ingestItems(await Promise.all(fixtureCollections.map((x) => loadJson(x))))
   await refreshIndices()
-  await ingestItems(await Promise.all(fixtureItems.map((x) => loadJson(x))), stream)
+  await ingestItems(await Promise.all(fixtureItems.map((x) => loadJson(x))))
   await refreshIndices()
 })
 

@@ -5,7 +5,6 @@ import fs from 'fs'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import { ingestItems } from '../../src/lib/ingest.js'
-import stream from '../../src/lib/databaseStream.js'
 
 const setup = () => {
   const dupOptions = {
@@ -42,7 +41,7 @@ test.skip('ingestItem passes item through transform stream', async (t) => {
 
   const firstItem = fs.readFileSync(path.resolve(__dirname, '../fixtures/stac/LC80100102015050LGN00.json'))
 
-  await ingestItems([firstItem], stream)
+  await ingestItems([firstItem])
   // @ts-ignore
   t.deepEqual(dbStream.queue[0], firstItem)
 })

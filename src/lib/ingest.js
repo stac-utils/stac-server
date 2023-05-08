@@ -142,7 +142,3 @@ export async function ingestItems(items) {
   logErrorResults(results)
   return results
 }
-
-export async function ingestItem(item) {
-  return ingestItems([item])
-}

@@ -6,13 +6,13 @@ const COLLECTIONS_INDEX = process.env['COLLECTIONS_INDEX'] || 'collections'
 
 export async function convertIngestObjectToDbObject(
   // eslint-disable-next-line max-len
-  /** @type {{ hasOwnProperty: (arg0: string) => any; collection: string; links: any[]; id: any; }} */ data
+  /** @type {{ hasOwnProperty: (arg0: string) => any; type: string, collection: string; links: any[]; id: any; }} */ data
 ) {
   let index = ''
   logger.debug('data', data)
-  if (data && data.hasOwnProperty('extent')) {
+  if (data && data.type === 'Collection') {
     index = COLLECTIONS_INDEX
-  } else if (data && data.hasOwnProperty('geometry')) {
+  } else if (data && data.type === 'Feature') {
     index = data.collection
   } else {
     return null

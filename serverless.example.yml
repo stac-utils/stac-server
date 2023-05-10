@@ -72,6 +72,8 @@ functions:
     handler: index.handler
     memorySize: 512
     timeout: 60
+    environment:
+      POST_INGEST_TOPIC_ARN: !Ref postIngestTopic
     package:
       artifact: dist/ingest/ingest.zip
     events:
@@ -101,6 +103,14 @@ resources:
       Type: "AWS::SNS::Topic"
       Properties:
         TopicName: ${self:service}-${self:provider.stage}-ingest
+    postIngestTopic:
+    # After a collection or item is ingested, the status of the ingest (success
+    # or failure) along with details of the collection or item are sent to this
+    # SNS topic. To take future action on items after they are ingested
+    # suscribe an endpoint to this topic
+      Type: AWS::SNS::Topic
+      Properties:
+        TopicName: ${self:service}-${self:provider.stage}-post-ingest
     deadLetterQueue:
       Type: AWS::SQS::Queue
       Properties:

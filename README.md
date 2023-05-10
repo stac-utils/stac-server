@@ -92,7 +92,6 @@ subgraph ingest[Ingest]
   ingestLambda[Ingest Lambda]
 
   ingestDeadLetterQueue[Ingest Dead Letter Queue]
-  failedIngestLambda[Failed Ingest Lambda]
 end
 
 users[Users]
@@ -111,7 +110,6 @@ ingestSnsTopic --> ingestQueue
 ingestQueue --> ingestLambda
 ingestLambda --> opensearch
 
-ingestDeadLetterQueue --> failedIngestLambda
 
 %% API workflow
 
@@ -936,7 +934,7 @@ Stac-server can also be subscribed to SNS Topics that publish complete STAC Item
 
 ### Ingest Errors
 
-Errors that occur during ingest will end up in the dead letter processing queue, where they are processed by the `stac-server-<stage>-failed-ingest` Lambda function. Currently all the failed-ingest Lambda does is log the error, see the CloudWatch log `/aws/lambda/stac-server-<stage>-failed-ingest` for errors.
+Errors that occur while consuming items from the ingest queue will end up in the dead letter processing queue.
 
 ## Supporting Cross-cluster Search and Replication
 

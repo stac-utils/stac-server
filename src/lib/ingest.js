@@ -1,6 +1,8 @@
 import { getItemCreated } from './database.js'
 import { dbClient, createIndex } from './databaseClient.js'
 import logger from './logger.js'
+import { publishRecordToSns } from './sns.js'
+import { isCollection, isItem } from './stac-utils.js'
 
 const COLLECTIONS_INDEX = process.env['COLLECTIONS_INDEX'] || 'collections'
 
@@ -10,12 +12,12 @@ export async function convertIngestObjectToDbObject(
 ) {
   let index = ''
   logger.debug('data', data)
-  if (data && data.type === 'Collection') {
+  if (isCollection(data)) {
     index = COLLECTIONS_INDEX
-  } else if (data && data.type === 'Feature') {
+  } else if (isItem(data)) {
     index = data.collection
   } else {
-    return null
+    throw new Error(`Expeccted data.type to be "Collection" or "Feature" not ${data.type}`)
   }
 
   // remove any hierarchy links in a non-mutating way
@@ -112,33 +114,40 @@ export async function writeRecordsInBulkToDb(records) {
   }
 }
 
-async function asyncMapInSequence(objects, asyncFn) {
-  const results = []
-  for (const object of objects) {
-    try {
-      // This helper is inteneted to be used with the objects must be processed
-      // in sequence so we intentionally await each iteration.
-      // eslint-disable-next-line no-await-in-loop
-      const result = await asyncFn(object)
-      results.push(result)
-    } catch (error) {
-      results.push(error)
-    }
-  }
-  return results
-}
-
-function logErrorResults(results) {
+function logIngestItemsResults(results) {
   results.forEach((result) => {
-    if (result instanceof Error) {
-      logger.error('Error while ingesting item', result)
+    if (result.error) {
+      logger.error('Error while ingesting item', result.error)
+    } else {
+      logger.debug('Ingested item %j', result)
     }
   })
 }
 
 export async function ingestItems(items) {
-  const records = await asyncMapInSequence(items, convertIngestObjectToDbObject)
-  const results = await asyncMapInSequence(records, writeRecordToDb)
-  logErrorResults(results)
+  const results = []
+  for (const record of items) {
+    let dbRecord
+    let result
+    let error
+    try {
+      // We are intentionally writing records one at a time in sequence so we
+      // disable this rule
+      // eslint-disable-next-line no-await-in-loop
+      dbRecord = await convertIngestObjectToDbObject(record)
+      // eslint-disable-next-line no-await-in-loop
+      result = await writeRecordToDb(dbRecord)
+    } catch (e) {
+      error = e
+    }
+    results.push({ record, dbRecord, result, error })
+  }
+  logIngestItemsResults(results)
   return results
+}
+
+export async function publishResultsToSns(results, topicArn) {
+  results.forEach((result) => {
+    publishRecordToSns(topicArn, result.record, result.error)
+  })
 }

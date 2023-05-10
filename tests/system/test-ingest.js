@@ -8,9 +8,9 @@ import { handler } from '../../src/lambdas/ingest/index.js'
 import { loadFixture, randomId } from '../helpers/utils.js'
 import { refreshIndices, deleteAllIndices } from '../helpers/database.js'
 import { sqsTriggerLambda, purgeQueue } from '../helpers/sqs.js'
-import { sns, s3 as _s3 } from '../../src/lib/aws-clients.js'
+import { sns, sqs, s3 as _s3 } from '../../src/lib/aws-clients.js'
 import { setup } from '../helpers/system-tests.js'
-import { ingestItemC, ingestFixtureC } from '../helpers/ingest.js'
+import { ingestItemC, ingestFixtureC, testPostIngestSNS } from '../helpers/ingest.js'
 
 test.before(async (t) => {
   await deleteAllIndices()
@@ -333,4 +333,77 @@ test('Mappings are correctly configured for non-default detected fields', async 
   t.deepEqual(item2.properties['proj:projjson'], ingestedItem2.properties['proj:projjson'])
 
   t.deepEqual(item2.properties['proj:centroid'], ingestedItem2.properties['proj:centroid'])
+})
+
+test('Ingested collection is published to post-ingest SNS topic', async (t) => {
+  const collection = await loadFixture(
+    'landsat-8-l1-collection.json',
+    { id: randomId('collection') }
+  )
+
+  const { message, attrs } = await testPostIngestSNS(t, collection)
+
+  t.is(message.record.id, collection.id)
+  t.is(attrs.collection.Value, collection.id)
+  t.is(attrs.ingestStatus.Value, 'successful')
+  t.is(attrs.recordType.Value, 'Collection')
+})
+
+test('Ingest collection failure is published to post-ingest SNS topic', async (t) => {
+  const { message, attrs } = await testPostIngestSNS(t, {
+    type: 'Collection',
+    id: 'badCollection'
+  })
+
+  t.is(message.record.id, 'badCollection')
+  t.is(attrs.collection.Value, 'badCollection')
+  t.is(attrs.ingestStatus.Value, 'failed')
+  t.is(attrs.recordType.Value, 'Collection')
+})
+
+async function ingestCollectionAndPurgePostIngestQueue(t) {
+  const { ingestFixture, postIngestQueueUrl } = t.context
+
+  const collection = await ingestFixture(
+    'landsat-8-l1-collection.json',
+    { id: randomId('collection') }
+  )
+
+  // Purging the post-ingest queue ensures that subsequent calls to testPostIngestSNS
+  // only see the message posted after the final ingest
+  await sqs().purgeQueue({ QueueUrl: postIngestQueueUrl }).promise()
+
+  return collection
+}
+
+test('Ingested item is published to post-ingest SNS topic', async (t) => {
+  const collection = await ingestCollectionAndPurgePostIngestQueue(t)
+
+  const item = await loadFixture(
+    'stac/ingest-item.json',
+    { id: randomId('item'), collection: collection.id }
+  )
+
+  const { message, attrs } = await testPostIngestSNS(t, item)
+
+  t.is(message.record.id, item.id)
+  t.deepEqual(message.record.links, item.links)
+  t.is(attrs.collection.Value, item.collection)
+  t.is(attrs.ingestStatus.Value, 'successful')
+  t.is(attrs.recordType.Value, 'Item')
+})
+
+test('Ingest item failure is published to post-ingest SNS topic', async (t) => {
+  const collection = await ingestCollectionAndPurgePostIngestQueue(t)
+
+  const { message, attrs } = await testPostIngestSNS(t, {
+    type: 'Feature',
+    id: 'badItem',
+    collection: collection.id
+  })
+
+  t.is(message.record.id, 'badItem')
+  t.is(attrs.collection.Value, collection.id)
+  t.is(attrs.ingestStatus.Value, 'failed')
+  t.is(attrs.recordType.Value, 'Item')
 })

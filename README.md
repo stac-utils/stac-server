@@ -90,6 +90,7 @@ subgraph ingest[Ingest]
   ingestSnsTopic[Ingest SNS Topic]
   ingestQueue[Ingest SQS Queue]
   ingestLambda[Ingest Lambda]
+  postIngestSnsTopic[Post-Ingest SNS Topic]
 
   ingestDeadLetterQueue[Ingest Dead Letter Queue]
 end
@@ -108,7 +109,9 @@ opensearch[(OpenSearch)]
 itemsForIngest --> ingestSnsTopic
 ingestSnsTopic --> ingestQueue
 ingestQueue --> ingestLambda
+ingestQueue --> ingestDeadLetterQueue
 ingestLambda --> opensearch
+ingestLambda --> postIngestSnsTopic
 
 
 %% API workflow
@@ -913,6 +916,17 @@ STAC Collections and Items are ingested by the `ingest` Lambda function, however
 ingestion will either fail (in the case of a single Item ingest) or if auto-creation of indexes is enabled (default) and multiple Items are ingested in bulk, the auto-created index will have incorrect mappings.
 
 If a collection or item is ingested, and an item with that id already exists in STAC, the new item will completely replace the old item.
+
+After a collection or item is ingested, the status of the ingest (success or failure) along with details of the collection or item are sent to a post-ingest SNS topic. To take action on items after they are ingested subscribe an endpoint to this topic.
+
+Messages published to the post-ingest SNS topic include the following atributes that can be used for filtering:
+
+| attribute    | type   | values                   |
+| ------------ | ------ | ------------------------ |
+| recordType   | String | `Collection` or `Item`   |
+| ingestStatus | String | `successful` or `failed` |
+| collection   | String |                          |
+
 
 ### Ingesting large items
 

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased] - TBD
 
+### Added
+
+- Publish ingest results to a post-ingest SNS topic
+
 ### Changed
 
 - Remove node streams-based ingest code to prepare for post-ingest notifications

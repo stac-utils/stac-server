@@ -6,6 +6,13 @@ import { isCollection, isItem } from './stac-utils.js'
 
 const COLLECTIONS_INDEX = process.env['COLLECTIONS_INDEX'] || 'collections'
 
+export class InvalidIngestError extends Error {
+  constructor(message) {
+    super(message)
+    this.name = 'InvalidIngestError'
+  }
+}
+
 export async function convertIngestObjectToDbObject(
   // eslint-disable-next-line max-len
   /** @type {{ hasOwnProperty: (arg0: string) => any; type: string, collection: string; links: any[]; id: any; }} */ data
@@ -17,11 +24,16 @@ export async function convertIngestObjectToDbObject(
   } else if (isItem(data)) {
     index = data.collection
   } else {
-    throw new Error(`Expeccted data.type to be "Collection" or "Feature" not ${data.type}`)
+    throw new InvalidIngestError(
+      `Expeccted data.type to be "Collection" or "Feature" not ${data.type}`
+    )
   }
 
   // remove any hierarchy links in a non-mutating way
   const hlinks = ['self', 'root', 'parent', 'child', 'collection', 'item', 'items']
+  if (!data.links) {
+    throw new InvalidIngestError('Expected a "links" proporty on the stac object')
+  }
   const links = data.links.filter(
     (/** @type {{ rel: string; }} */ link) => !hlinks.includes(link.rel)
   )
@@ -79,9 +91,7 @@ export async function writeRecordToDb(
     // if this isn't a collection check if index exists
     const exists = await client.indices.exists({ index })
     if (!exists.body) {
-      const msg = `Index ${index} does not exist, add before ingesting items`
-      logger.debug(msg)
-      throw new Error(msg)
+      throw new InvalidIngestError(`Index ${index} does not exist, add before ingesting items`)
     }
   }
 
@@ -117,7 +127,13 @@ export async function writeRecordsInBulkToDb(records) {
 function logIngestItemsResults(results) {
   results.forEach((result) => {
     if (result.error) {
-      logger.error('Error while ingesting item', result.error)
+      if (result.error instanceof InvalidIngestError) {
+        // Attempting to ingest invalid stac objects is not a system error so we
+        // log it as info and not error
+        logger.info('Invalid ingest item', result.error)
+      } else {
+        logger.error('Error while ingesting item', result.error)
+      }
     } else {
       logger.debug('Ingested item %j', result)
     }

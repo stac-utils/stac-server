@@ -1,5 +1,6 @@
 // @ts-nocheck
 
+import url from 'url'
 import test from 'ava'
 import nock from 'nock'
 import { DateTime } from 'luxon'
@@ -349,6 +350,28 @@ test('Ingested collection is published to post-ingest SNS topic', async (t) => {
   t.is(attrs.recordType.Value, 'Collection')
 })
 
+test('Ingested collection is published to post-ingest SNS topic with updated links', async (t) => {
+  const envBeforeTest = { ...process.env }
+  try {
+    const hostname = 'some-stac-server.com'
+    const endpoint = `https://${hostname}`
+    process.env['STAC_API_URL'] = endpoint
+
+    const collection = await loadFixture(
+      'landsat-8-l1-collection.json',
+      { id: randomId('collection') }
+    )
+
+    const { message } = await testPostIngestSNS(t, collection)
+
+    t.truthy(message.record.links)
+    t.true(message.record.links.every((/** @type {Link} */ link) => (
+      link.href && url.parse(link.href).hostname === hostname)))
+  } finally {
+    process.env = envBeforeTest
+  }
+})
+
 test('Ingest collection failure is published to post-ingest SNS topic', async (t) => {
   const { message, attrs } = await testPostIngestSNS(t, {
     type: 'Collection',
@@ -406,4 +429,50 @@ test('Ingest item failure is published to post-ingest SNS topic', async (t) => {
   t.is(attrs.collection.Value, collection.id)
   t.is(attrs.ingestStatus.Value, 'failed')
   t.is(attrs.recordType.Value, 'Item')
+})
+
+test('Ingested item is published to post-ingest SNS topic with updated links', async (t) => {
+  const envBeforeTest = { ...process.env }
+  try {
+    const hostname = 'some-stac-server.com'
+    const endpoint = `https://${hostname}`
+    process.env['STAC_API_URL'] = endpoint
+
+    const collection = await ingestCollectionAndPurgePostIngestQueue(t)
+
+    const item = await loadFixture(
+      'stac/ingest-item.json',
+      { id: randomId('item'), collection: collection.id }
+    )
+
+    const { message } = await testPostIngestSNS(t, item)
+
+    t.truthy(message.record.links)
+    t.true(message.record.links.every((/** @type {Link} */ link) => (
+      link.href && url.parse(link.href).hostname === hostname)))
+  } finally {
+    process.env = envBeforeTest
+  }
+})
+
+test('Ingested item facilure is published to post-ingest SNS topic without updated links', async (t) => {
+  const envBeforeTest = { ...process.env }
+  try {
+    const hostname = 'some-stac-server.com'
+    const endpoint = `https://${hostname}`
+    process.env['STAC_API_URL'] = endpoint
+
+    const item = await loadFixture(
+      'stac/ingest-item.json',
+      { id: randomId('item'), collection: 'INVALID COLLECTION' }
+    )
+
+    const { message } = await testPostIngestSNS(t, item)
+
+    t.truthy(message.record.links)
+    t.false(message.record.links.every((/** @type {Link} */ link) => (
+      link.href && url.parse(link.href).hostname === hostname)))
+  } finally {
+    process.env = envBeforeTest
+  }
 })

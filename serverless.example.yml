@@ -22,6 +22,9 @@ provider:
     # PRE_HOOK: ${self:service}-${self:provider.stage}-preHook
     # API_KEYS_SECRET_ID: ${self:service}-${self:provider.stage}-api-keys
     # POST_HOOK: ${self:service}-${self:provider.stage}-postHook
+    # If you will be subscribing to post-ingest SNS notifications make
+    # sure that STAC_API_URL is set so that links are updated correctly
+    STAC_API_URL: "https://some-stac-server.com"
   iam:
     role:
       statements:

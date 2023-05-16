@@ -1,4 +1,5 @@
 import { getItemCreated } from './database.js'
+import { addItemLinks, addCollectionLinks } from './api.js'
 import { dbClient, createIndex } from './databaseClient.js'
 import logger from './logger.js'
 import { publishRecordToSns } from './sns.js'
@@ -12,6 +13,8 @@ export class InvalidIngestError extends Error {
     this.name = 'InvalidIngestError'
   }
 }
+
+const hierarchyLinks = ['self', 'root', 'parent', 'child', 'collection', 'item', 'items']
 
 export async function convertIngestObjectToDbObject(
   // eslint-disable-next-line max-len
@@ -30,12 +33,11 @@ export async function convertIngestObjectToDbObject(
   }
 
   // remove any hierarchy links in a non-mutating way
-  const hlinks = ['self', 'root', 'parent', 'child', 'collection', 'item', 'items']
   if (!data.links) {
     throw new InvalidIngestError('Expected a "links" proporty on the stac object')
   }
   const links = data.links.filter(
-    (/** @type {{ rel: string; }} */ link) => !hlinks.includes(link.rel)
+    (/** @type {{ rel: string; }} */ link) => !hierarchyLinks.includes(link.rel)
   )
   const dbDataObject = { ...data, links }
 
@@ -162,8 +164,34 @@ export async function ingestItems(items) {
   return results
 }
 
+// Impure - mutates record
+function updateLinksWithinRecord(record) {
+  const endpoint = process.env['STAC_API_URL']
+  if (!endpoint) {
+    logger.info('STAC_API_URL not set, not updating links within ingested record')
+    return record
+  }
+  if (!isItem(record) && !isCollection(record)) {
+    logger.info('Record is not a collection or item, not updating links within ingested record')
+    return record
+  }
+
+  record.links = record.links.filter(
+    (/** @type {{ rel: string; }} */ link) => !hierarchyLinks.includes(link.rel)
+  )
+  if (isItem(record)) {
+    addItemLinks([record], endpoint)
+  } else if (isCollection(record)) {
+    addCollectionLinks([record], endpoint)
+  }
+  return record
+}
+
 export async function publishResultsToSns(results, topicArn) {
   results.forEach((result) => {
+    if (result.record && !result.error) {
+      updateLinksWithinRecord(result.record)
+    }
     publishRecordToSns(topicArn, result.record, result.error)
   })
 }

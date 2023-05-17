@@ -383,7 +383,7 @@ export const parsePath = function (inpath) {
 }
 
 // Impure - mutates results
-const addCollectionLinks = function (results, endpoint) {
+export const addCollectionLinks = function (results, endpoint) {
   results.forEach((result) => {
     const { id } = result
     let { links } = result
@@ -438,7 +438,7 @@ const addCollectionLinks = function (results, endpoint) {
 }
 
 // Impure - mutates results
-const addItemLinks = function (results, endpoint) {
+export const addItemLinks = function (results, endpoint) {
   results.forEach((result) => {
     let { links } = result
     const { id, collection } = result

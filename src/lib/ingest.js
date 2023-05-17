@@ -1,8 +1,20 @@
 import { getItemCreated } from './database.js'
+import { addItemLinks, addCollectionLinks } from './api.js'
 import { dbClient, createIndex } from './databaseClient.js'
 import logger from './logger.js'
+import { publishRecordToSns } from './sns.js'
+import { isCollection, isItem } from './stac-utils.js'
 
 const COLLECTIONS_INDEX = process.env['COLLECTIONS_INDEX'] || 'collections'
+
+export class InvalidIngestError extends Error {
+  constructor(message) {
+    super(message)
+    this.name = 'InvalidIngestError'
+  }
+}
+
+const hierarchyLinks = ['self', 'root', 'parent', 'child', 'collection', 'item', 'items']
 
 export async function convertIngestObjectToDbObject(
   // eslint-disable-next-line max-len
@@ -10,18 +22,22 @@ export async function convertIngestObjectToDbObject(
 ) {
   let index = ''
   logger.debug('data', data)
-  if (data && data.type === 'Collection') {
+  if (isCollection(data)) {
     index = COLLECTIONS_INDEX
-  } else if (data && data.type === 'Feature') {
+  } else if (isItem(data)) {
     index = data.collection
   } else {
-    return null
+    throw new InvalidIngestError(
+      `Expeccted data.type to be "Collection" or "Feature" not ${data.type}`
+    )
   }
 
   // remove any hierarchy links in a non-mutating way
-  const hlinks = ['self', 'root', 'parent', 'child', 'collection', 'item', 'items']
+  if (!data.links) {
+    throw new InvalidIngestError('Expected a "links" proporty on the stac object')
+  }
   const links = data.links.filter(
-    (/** @type {{ rel: string; }} */ link) => !hlinks.includes(link.rel)
+    (/** @type {{ rel: string; }} */ link) => !hierarchyLinks.includes(link.rel)
   )
   const dbDataObject = { ...data, links }
 
@@ -77,9 +93,7 @@ export async function writeRecordToDb(
     // if this isn't a collection check if index exists
     const exists = await client.indices.exists({ index })
     if (!exists.body) {
-      const msg = `Index ${index} does not exist, add before ingesting items`
-      logger.debug(msg)
-      throw new Error(msg)
+      throw new InvalidIngestError(`Index ${index} does not exist, add before ingesting items`)
     }
   }
 
@@ -112,33 +126,72 @@ export async function writeRecordsInBulkToDb(records) {
   }
 }
 
-async function asyncMapInSequence(objects, asyncFn) {
-  const results = []
-  for (const object of objects) {
-    try {
-      // This helper is inteneted to be used with the objects must be processed
-      // in sequence so we intentionally await each iteration.
-      // eslint-disable-next-line no-await-in-loop
-      const result = await asyncFn(object)
-      results.push(result)
-    } catch (error) {
-      results.push(error)
-    }
-  }
-  return results
-}
-
-function logErrorResults(results) {
+function logIngestItemsResults(results) {
   results.forEach((result) => {
-    if (result instanceof Error) {
-      logger.error('Error while ingesting item', result)
+    if (result.error) {
+      if (result.error instanceof InvalidIngestError) {
+        // Attempting to ingest invalid stac objects is not a system error so we
+        // log it as info and not error
+        logger.info('Invalid ingest item', result.error)
+      } else {
+        logger.error('Error while ingesting item', result.error)
+      }
+    } else {
+      logger.debug('Ingested item %j', result)
     }
   })
 }
 
 export async function ingestItems(items) {
-  const records = await asyncMapInSequence(items, convertIngestObjectToDbObject)
-  const results = await asyncMapInSequence(records, writeRecordToDb)
-  logErrorResults(results)
+  const results = []
+  for (const record of items) {
+    let dbRecord
+    let result
+    let error
+    try {
+      // We are intentionally writing records one at a time in sequence so we
+      // disable this rule
+      // eslint-disable-next-line no-await-in-loop
+      dbRecord = await convertIngestObjectToDbObject(record)
+      // eslint-disable-next-line no-await-in-loop
+      result = await writeRecordToDb(dbRecord)
+    } catch (e) {
+      error = e
+    }
+    results.push({ record, dbRecord, result, error })
+  }
+  logIngestItemsResults(results)
   return results
+}
+
+// Impure - mutates record
+function updateLinksWithinRecord(record) {
+  const endpoint = process.env['STAC_API_URL']
+  if (!endpoint) {
+    logger.info('STAC_API_URL not set, not updating links within ingested record')
+    return record
+  }
+  if (!isItem(record) && !isCollection(record)) {
+    logger.info('Record is not a collection or item, not updating links within ingested record')
+    return record
+  }
+
+  record.links = record.links.filter(
+    (/** @type {{ rel: string; }} */ link) => !hierarchyLinks.includes(link.rel)
+  )
+  if (isItem(record)) {
+    addItemLinks([record], endpoint)
+  } else if (isCollection(record)) {
+    addCollectionLinks([record], endpoint)
+  }
+  return record
+}
+
+export async function publishResultsToSns(results, topicArn) {
+  results.forEach((result) => {
+    if (result.record && !result.error) {
+      updateLinksWithinRecord(result.record)
+    }
+    publishRecordToSns(topicArn, result.record, result.error)
+  })
 }

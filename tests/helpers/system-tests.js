@@ -12,17 +12,26 @@ const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename) // eslint-disable-line no-unused-vars
 
 export const setupResources = async () => {
-  // Create Ingest SNS topic
+  // Create Ingest SNS topics
   const ingestTopicArn = await createTopic()
+  const postIngestTopicArn = await createTopic()
 
-  // Create SQS queue
+  // Create SQS queues
   const ingestQueueUrl = await createQueue()
   const ingestQueueArn = await getQueueArn(ingestQueueUrl)
+  const postIngestQueueUrl = await createQueue()
+  const postIngestQueueArn = await getQueueArn(postIngestQueueUrl)
 
-  // Subscribe SQS queue to SNS topic
+  // Subscribe SQS queue to ingest SNS topic
   await addSnsToSqsSubscription(
     ingestTopicArn,
     ingestQueueArn
+  )
+
+  // Subscribe SQS queue to post-ingest SNS topic
+  await addSnsToSqsSubscription(
+    postIngestTopicArn,
+    postIngestQueueArn
   )
 
   // Create ES collections index
@@ -32,7 +41,9 @@ export const setupResources = async () => {
 
   return {
     ingestQueueUrl,
-    ingestTopicArn
+    ingestTopicArn,
+    postIngestQueueUrl,
+    postIngestTopicArn
   }
 }
 
@@ -45,6 +56,8 @@ export const setupResources = async () => {
  * @property {ApiInstance} api
  * @property {string} ingestQueueUrl
  * @property {string} ingestTopicArn
+ * @property {string} postIngestQueueUrl
+ * @property {string} postIngestTopicArn
  */
 
 /**
@@ -54,14 +67,21 @@ export const setup = async () => {
   nock.disableNetConnect()
   nock.enableNetConnect(/127\.0\.0\.1|localhost/)
 
-  const { ingestQueueUrl, ingestTopicArn } = await setupResources()
+  const {
+    ingestQueueUrl,
+    ingestTopicArn,
+    postIngestQueueUrl,
+    postIngestTopicArn,
+  } = await setupResources()
 
   const api = await startApi()
 
   return {
     api,
     ingestQueueUrl,
-    ingestTopicArn
+    ingestTopicArn,
+    postIngestQueueUrl,
+    postIngestTopicArn
   }
 }
 

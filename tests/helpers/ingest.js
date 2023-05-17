@@ -1,4 +1,4 @@
-import { sns } from '../../src/lib/aws-clients.js'
+import { sns, sqs } from '../../src/lib/aws-clients.js'
 import { handler } from '../../src/lambdas/ingest/index.js'
 import { sqsTriggerLambda } from './sqs.js'
 import { refreshIndices } from './database.js'
@@ -73,3 +73,31 @@ export const ingestFixtureC = (ingestTopicArn, ingestQueueUrl) =>
     filename,
     overrides
   })
+
+export async function testPostIngestSNS(t, record) {
+  // @ts-ignore
+  process.env.POST_INGEST_TOPIC_ARN = t.context.postIngestTopicArn
+
+  await sns().publish({
+    TopicArn: t.context.ingestTopicArn,
+    Message: JSON.stringify(record)
+  }).promise()
+
+  await sqsTriggerLambda(t.context.ingestQueueUrl, handler)
+
+  const { Messages } = await sqs().receiveMessage({
+    QueueUrl: t.context.postIngestQueueUrl,
+    WaitTimeSeconds: 1
+  }).promise()
+
+  t.truthy(Messages, 'Post-ingest message not found in queue')
+  t.false(Messages && Messages.length > 1, 'More than one message in post-ingest queue')
+
+  const message = Messages && Messages.length > 0 ? Messages[0] : undefined
+  const messageBody = message && message.Body ? JSON.parse(message.Body) : undefined
+
+  return {
+    message: messageBody && messageBody.Message ? JSON.parse(messageBody.Message) : undefined,
+    attrs: messageBody ? messageBody.MessageAttributes : undefined
+  }
+}

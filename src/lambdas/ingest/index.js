@@ -1,7 +1,7 @@
 /* eslint-disable import/prefer-default-export */
 import got from 'got' // eslint-disable-line import/no-unresolved
 import { createIndex } from '../../lib/databaseClient.js'
-import { ingestItems } from '../../lib/ingest.js'
+import { ingestItems, publishResultsToSns } from '../../lib/ingest.js'
 import getObjectJson from '../../lib/s3-utils.js'
 import logger from '../../lib/logger.js'
 
@@ -60,8 +60,17 @@ export const handler = async (event, _context) => {
     : [event]
 
   try {
-    await ingestItems(stacItems)
+    const results = await ingestItems(stacItems)
     logger.debug('Ingested %d items: %j', stacItems.length, stacItems)
+
+    const postIngestTopicArn = process.env['POST_INGEST_TOPIC_ARN']
+
+    if (postIngestTopicArn) {
+      logger.debug('Publishing to post-ingest topic: %s', postIngestTopicArn)
+      publishResultsToSns(results, postIngestTopicArn)
+    } else {
+      logger.debug('Skkipping post-ingest notification since no topic is configured')
+    }
   } catch (error) {
     logger.error(error)
     throw (error)

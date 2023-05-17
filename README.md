@@ -90,9 +90,9 @@ subgraph ingest[Ingest]
   ingestSnsTopic[Ingest SNS Topic]
   ingestQueue[Ingest SQS Queue]
   ingestLambda[Ingest Lambda]
+  postIngestSnsTopic[Post-Ingest SNS Topic]
 
   ingestDeadLetterQueue[Ingest Dead Letter Queue]
-  failedIngestLambda[Failed Ingest Lambda]
 end
 
 users[Users]
@@ -109,9 +109,10 @@ opensearch[(OpenSearch)]
 itemsForIngest --> ingestSnsTopic
 ingestSnsTopic --> ingestQueue
 ingestQueue --> ingestLambda
+ingestQueue --> ingestDeadLetterQueue
 ingestLambda --> opensearch
+ingestLambda --> postIngestSnsTopic
 
-ingestDeadLetterQueue --> failedIngestLambda
 
 %% API workflow
 
@@ -916,6 +917,17 @@ ingestion will either fail (in the case of a single Item ingest) or if auto-crea
 
 If a collection or item is ingested, and an item with that id already exists in STAC, the new item will completely replace the old item.
 
+After a collection or item is ingested, the status of the ingest (success or failure) along with details of the collection or item are sent to a post-ingest SNS topic. To take action on items after they are ingested subscribe an endpoint to this topic.
+
+Messages published to the post-ingest SNS topic include the following atributes that can be used for filtering:
+
+| attribute    | type   | values                   |
+| ------------ | ------ | ------------------------ |
+| recordType   | String | `Collection` or `Item`   |
+| ingestStatus | String | `successful` or `failed` |
+| collection   | String |                          |
+
+
 ### Ingesting large items
 
 There is a 256 KB limit on the size of SQS messages. Larger items can by publishing a message to the `stac-server-<stage>-ingest` SNS topic in with the format:
@@ -936,7 +948,7 @@ Stac-server can also be subscribed to SNS Topics that publish complete STAC Item
 
 ### Ingest Errors
 
-Errors that occur during ingest will end up in the dead letter processing queue, where they are processed by the `stac-server-<stage>-failed-ingest` Lambda function. Currently all the failed-ingest Lambda does is log the error, see the CloudWatch log `/aws/lambda/stac-server-<stage>-failed-ingest` for errors.
+Errors that occur while consuming items from the ingest queue will end up in the dead letter processing queue.
 
 ## Supporting Cross-cluster Search and Replication
 

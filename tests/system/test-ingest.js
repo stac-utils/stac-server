@@ -348,6 +348,10 @@ test('Ingested collection is published to post-ingest SNS topic', async (t) => {
   t.is(attrs.collection.Value, collection.id)
   t.is(attrs.ingestStatus.Value, 'successful')
   t.is(attrs.recordType.Value, 'Collection')
+  const expectedStartOffsetValue = (new Date(collection.extent.temporal.interval[0][0]))
+    .getTime().toString()
+  t.is(expectedStartOffsetValue, attrs.startUnixEpochMsOffset.Value)
+  t.is(undefined, attrs.endUnixEpochMsOffset)
 })
 
 test('Ingested collection is published to post-ingest SNS topic with updated links', async (t) => {
@@ -382,6 +386,8 @@ test('Ingest collection failure is published to post-ingest SNS topic', async (t
   t.is(attrs.collection.Value, 'badCollection')
   t.is(attrs.ingestStatus.Value, 'failed')
   t.is(attrs.recordType.Value, 'Collection')
+  t.is(undefined, attrs.startUnixEpochMsOffset)
+  t.is(undefined, attrs.endUnixEpochMsOffset)
 })
 
 async function emptyPostIngestQueue(t) {
@@ -422,8 +428,14 @@ test('Ingested item is published to post-ingest SNS topic', async (t) => {
 
   const item = await loadFixture(
     'stac/ingest-item.json',
-    { id: randomId('item'), collection: collection.id }
+    {
+      id: randomId('item'),
+      collection: collection.id
+    }
   )
+
+  item.properties.start_datetime = '1955-11-05T13:00:00Z'
+  item.properties.end_datetime = '1985-11-05T13:00:00Z'
 
   const { message, attrs } = await testPostIngestSNS(t, item)
 
@@ -432,6 +444,10 @@ test('Ingested item is published to post-ingest SNS topic', async (t) => {
   t.is(attrs.collection.Value, item.collection)
   t.is(attrs.ingestStatus.Value, 'successful')
   t.is(attrs.recordType.Value, 'Item')
+  const expectedStartOffsetValue = (new Date(item.properties.start_datetime)).getTime().toString()
+  t.is(expectedStartOffsetValue, attrs.startUnixEpochMsOffset.Value)
+  const expectedEndOffsetValue = (new Date(item.properties.end_datetime)).getTime().toString()
+  t.is(expectedEndOffsetValue, attrs.endUnixEpochMsOffset.Value)
 })
 
 test('Ingest item failure is published to post-ingest SNS topic', async (t) => {

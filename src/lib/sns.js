@@ -1,6 +1,6 @@
 import { sns } from './aws-clients.js'
 import logger from './logger.js'
-import { isCollection, isItem } from './stac-utils.js'
+import { getStartAndEndDates, isCollection, isItem } from './stac-utils.js'
 
 const attrsFromPayload = function (payload) {
   let type = 'unknown'
@@ -13,7 +13,7 @@ const attrsFromPayload = function (payload) {
     collection = payload.record.collection || ''
   }
 
-  return {
+  const attributes = {
     recordType: {
       DataType: 'String',
       StringValue: type
@@ -25,8 +25,26 @@ const attrsFromPayload = function (payload) {
     collection: {
       DataType: 'String',
       StringValue: collection
+    },
+  }
+
+  const { startDate, endDate } = getStartAndEndDates(payload.record)
+
+  if (startDate) {
+    attributes.startUnixEpochMsOffset = {
+      DataType: 'Number',
+      StringValue: startDate.getTime().toString()
     }
   }
+
+  if (endDate) {
+    attributes.endUnixEpochMsOffset = {
+      DataType: 'Number',
+      StringValue: endDate.getTime().toString()
+    }
+  }
+
+  return attributes
 }
 
 /* eslint-disable-next-line import/prefer-default-export */

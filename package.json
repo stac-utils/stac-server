@@ -21,7 +21,7 @@
     "test:system": "./bin/system-tests.sh",
     "test:unit": "ava tests/unit/*.[tj]s",
     "typecheck": "tsc",
-    "audit-prod": "npx better-npm-audit audit --production --exclude GHSA-776f-qx25-q3cc",
+    "audit-prod": "npx better-npm-audit audit --production",
     "deploy": "sls deploy",
     "package": "sls package",
     "serve": "REQUEST_LOGGING_FORMAT=dev LOG_LEVEL=debug STAC_API_URL=http://localhost:3000 ENABLE_TRANSACTIONS_EXTENSION=true nodemon --esm ./src/lambdas/api/local.ts",

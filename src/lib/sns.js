@@ -28,17 +28,32 @@ const attrsFromPayload = function (payload) {
     },
   }
 
+  if (payload.record?.properties?.datetime) {
+    attributes.datetime = {
+      DataType: 'String',
+      StringValue: payload.record.properties.datetime
+    }
+  }
+
   const { startDate, endDate } = getStartAndEndDates(payload.record)
 
   if (startDate) {
-    attributes.startUnixEpochMsOffset = {
+    attributes.start_datetime = {
+      DataType: 'String',
+      StringValue: startDate.toISOString()
+    }
+    attributes.start_unix_epoch_ms_offset = {
       DataType: 'Number',
       StringValue: startDate.getTime().toString()
     }
   }
 
   if (endDate) {
-    attributes.endUnixEpochMsOffset = {
+    attributes.end_datetime = {
+      DataType: 'String',
+      StringValue: endDate.toISOString()
+    }
+    attributes.end_unix_epoch_ms_offset = {
       DataType: 'Number',
       StringValue: endDate.getTime().toString()
     }

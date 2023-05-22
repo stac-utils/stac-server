@@ -19,10 +19,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - Remove node streams-based ingest code to prepare for post-ingest notifications
 - Use the `type` field to determine if ingest is a Collection or Item
+- Only fine-grained access control is supported for connecting to OpenSearch.
+  "AWS Connection" mode is no longer supported.
 
 ## [1.1.0] - 2023-05-02
 
 ### Changed
+
 - Adds API Gateway ID to cloudwatch logs.
 - Logs the start of the request in case of Lambda timeout.
 

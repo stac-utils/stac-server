@@ -1,6 +1,6 @@
 import { sns } from './aws-clients.js'
 import logger from './logger.js'
-import { getStartAndEndDates, isCollection, isItem } from './stac-utils.js'
+import { getBBox, getStartAndEndDates, isCollection, isItem } from './stac-utils.js'
 
 const attrsFromPayload = function (payload) {
   let type = 'unknown'
@@ -26,6 +26,26 @@ const attrsFromPayload = function (payload) {
       DataType: 'String',
       StringValue: collection
     },
+  }
+
+  const bbox = getBBox(payload.record)
+  if (bbox) {
+    attributes['bbox.sw_lon'] = {
+      DataType: 'Number',
+      StringValue: bbox[0].toString(),
+    }
+    attributes['bbox.sw_lat'] = {
+      DataType: 'Number',
+      StringValue: bbox[1].toString(),
+    }
+    attributes['bbox.ne_lon'] = {
+      DataType: 'Number',
+      StringValue: bbox[2].toString(),
+    }
+    attributes['bbox.ne_lat'] = {
+      DataType: 'Number',
+      StringValue: bbox[3].toString(),
+    }
   }
 
   if (payload.record?.properties?.datetime) {

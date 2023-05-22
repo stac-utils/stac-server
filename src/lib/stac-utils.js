@@ -48,3 +48,15 @@ export function getStartAndEndDates(record) {
 
   return { startDate, endDate }
 }
+
+export function getBBox(record) {
+  if (isCollection(record)) {
+    return record.extent?.spatial?.bbox?.length > 0
+      ? record.extent.spatial.bbox[0]
+      : undefined
+  }
+  if (isItem(record)) {
+    return record.bbox || undefined
+  }
+  return undefined
+}

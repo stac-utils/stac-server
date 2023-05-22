@@ -348,6 +348,13 @@ test('Ingested collection is published to post-ingest SNS topic', async (t) => {
   t.is(attrs.collection.Value, collection.id)
   t.is(attrs.ingestStatus.Value, 'successful')
   t.is(attrs.recordType.Value, 'Collection')
+
+  const bbox = collection.extent.spatial.bbox[0]
+  t.is(bbox[0].toString(), attrs['bbox.sw_lon'].Value)
+  t.is(bbox[1].toString(), attrs['bbox.sw_lat'].Value)
+  t.is(bbox[2].toString(), attrs['bbox.ne_lon'].Value)
+  t.is(bbox[3].toString(), attrs['bbox.ne_lat'].Value)
+
   const expectedStartOffsetValue = (new Date(collection.extent.temporal.interval[0][0]))
     .getTime().toString()
   t.is(expectedStartOffsetValue, attrs.start_unix_epoch_ms_offset.Value)
@@ -451,6 +458,11 @@ test('Ingested item is published to post-ingest SNS topic', async (t) => {
   t.is(attrs.collection.Value, item.collection)
   t.is(attrs.ingestStatus.Value, 'successful')
   t.is(attrs.recordType.Value, 'Item')
+
+  t.is(item.bbox[0].toString(), attrs['bbox.sw_lon'].Value)
+  t.is(item.bbox[1].toString(), attrs['bbox.sw_lat'].Value)
+  t.is(item.bbox[2].toString(), attrs['bbox.ne_lon'].Value)
+  t.is(item.bbox[3].toString(), attrs['bbox.ne_lat'].Value)
 
   t.is(message.record.properties.datetime, attrs.datetime.Value)
 

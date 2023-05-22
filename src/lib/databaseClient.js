@@ -2,9 +2,6 @@ import { Client } from '@opensearch-project/opensearch'
 import { createAWSConnection as createAWSConnectionOS, awsGetCredentials } from 'aws-os-connection'
 
 import AWS from 'aws-sdk'
-import { Client as _Client } from '@elastic/elasticsearch'
-import { createAWSConnection as createAWSConnectionES, awsCredsifyAll
-} from '@acuris/aws-es-connection'
 
 import collectionsIndexConfiguration from '../../fixtures/collections.js'
 import itemsIndexConfiguration from '../../fixtures/items.js'
@@ -32,23 +29,11 @@ export async function connect() {
     const config = {
       node: 'http://localhost:9200'
     }
-    if (process.env['ES_COMPAT_MODE'] === 'true') {
-      client = new _Client(config)
-    } else {
-      client = new Client(config)
-    }
+    client = new Client(config)
   } else {
     const host = hostConfig.startsWith('http') ? hostConfig : `https://${hostConfig}`
 
-    if (process.env['ES_COMPAT_MODE'] === 'true') {
-      client = awsCredsifyAll(
-        new _Client({
-          node: host,
-          // @ts-ignore
-          Connection: createAWSConnectionES(AWS.config.credentials)
-        })
-      )
-    } else if (secretName) {
+    if (secretName) {
       const secretValue = await new AWS.SecretsManager()
         .getSecretValue({ SecretId: secretName }).promise()
       const { username, password } = JSON.parse(secretValue.SecretString || '')

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased] - TBD
 
+### Removed
+
+- Elasticsearch is no longer supported as a backend. Only OpenSearch is now supported.
+
 ### Added
 
 - Publish ingest results to a post-ingest SNS topic

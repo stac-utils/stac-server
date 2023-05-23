@@ -384,17 +384,35 @@ test('Ingest collection failure is published to post-ingest SNS topic', async (t
   t.is(attrs.recordType.Value, 'Collection')
 })
 
+async function emptyPostIngestQueue(t) {
+  // We initially tried calling
+  // await sqs().purgeQueue({ QueueUrl: postIngestQueueUrl }).promise()
+  // But at least one test would intermittently fail because of an additional
+  // message in the queue.
+  // The documentation for the purgeQueue method says:
+  //   "The message deletion process takes up to 60 seconds.
+  //    We recommend waiting for 60 seconds regardless of your queue's size."
+  let result
+  do {
+    // eslint-disable-next-line no-await-in-loop
+    result = await sqs().receiveMessage({
+      QueueUrl: t.context.postIngestQueueUrl,
+      WaitTimeSeconds: 1
+    }).promise()
+  } while (result.Message && result.Message.length > 0)
+}
+
 async function ingestCollectionAndPurgePostIngestQueue(t) {
-  const { ingestFixture, postIngestQueueUrl } = t.context
+  const { ingestFixture } = t.context
 
   const collection = await ingestFixture(
     'landsat-8-l1-collection.json',
     { id: randomId('collection') }
   )
 
-  // Purging the post-ingest queue ensures that subsequent calls to testPostIngestSNS
+  // Emptying the post-ingest queue ensures that subsequent calls to testPostIngestSNS
   // only see the message posted after the final ingest
-  await sqs().purgeQueue({ QueueUrl: postIngestQueueUrl }).promise()
+  await emptyPostIngestQueue(t)
 
   return collection
 }

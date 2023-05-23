@@ -6,6 +6,8 @@
   - [Overview](#overview)
   - [Architecture](#architecture)
   - [Migration](#migration)
+    - [0.x or 1.x -\> 2.x](#0x-or-1x---2x)
+      - [Fine-grained Access Control](#fine-grained-access-control)
     - [0.4.x -\> 0.5.x](#04x---05x)
       - [Elasticsearch to OpenSearch Migration](#elasticsearch-to-opensearch-migration)
       - [Preferred Elasticsearch to OpenSearch Migration Process](#preferred-elasticsearch-to-opensearch-migration-process)
@@ -19,8 +21,7 @@
     - [OpenSearch Configuration](#opensearch-configuration)
       - [Disable automatic index creation](#disable-automatic-index-creation-1)
       - [Create collection index](#create-collection-index)
-      - [Enable OpenSearch fine-grained access control](#enable-opensearch-fine-grained-access-control)
-        - [Configure OpenSearch for fine-grained access control](#configure-opensearch-for-fine-grained-access-control)
+      - [OpenSearch fine-grained access control](#opensearch-fine-grained-access-control)
         - [Option 1 - API method](#option-1---api-method)
         - [Option 2 - Dashboard method](#option-2---dashboard-method)
         - [Populating and accessing credentials](#populating-and-accessing-credentials)
@@ -59,7 +60,7 @@ Stac-server is an implementation of the [STAC API specification](https://github.
 | 0.3.x                  | 1.0.0        | 1.0.0-beta.2                |
 | 0.4.x                  | 1.0.0        | 1.0.0-beta.5                |
 | 0.5.x-0.8.x            | 1.0.0        | 1.0.0-rc.2                  |
-| 1.0.0                  | 1.0.0        | 1.0.0                       |
+| >=1.0.0                | 1.0.0        | 1.0.0                       |
 
 Currently, stac-server supports the following specifications:
 
@@ -70,14 +71,15 @@ Currently, stac-server supports the following specifications:
 - Query Extension
 - Fields Extension
 - Sort Extension
-- Aggregation Extension (experimental, work-in-progress)
+- Aggregation Extension (experimental)
 
 The following APIs are deployed instances of stac-server:
 
-| Name                                                       | STAC Version | STAC API Version | Description                         |
-| ---------------------------------------------------------- | ------------ | ---------------- | ----------------------------------- |
-| [Earth Search](https://earth-search.aws.element84.com/v0/) | 1.0.0-beta.2 | 0.9.0            | Catalog of some AWS Public Datasets |
-| [Landsat Look](https://landsatlook.usgs.gov/stac-server)   | 1.0.0        | 0.9.0            |                                     |
+| Name                                                          | STAC Version | STAC API Version | Description                              |
+| ------------------------------------------------------------- | ------------ | ---------------- | ---------------------------------------- |
+| [Earth Search v1](https://earth-search.aws.element84.com/v1/) | 1.0.0        | 1.0.0            | Catalog (v1) of some AWS Public Datasets |
+| [Earth Search v0](https://earth-search.aws.element84.com/v0/) | 1.0.0-beta.2 | 0.9.0            | Catalog (v0) of some AWS Public Datasets |
+| [Landsat Look](https://landsatlook.usgs.gov/stac-server)      | 1.0.0        | 0.9.0            |                                          |
 
 ## Architecture
 
@@ -123,6 +125,14 @@ apiLambda --> opensearch
 ```
 
 ## Migration
+
+### 0.x or 1.x -> 2.x
+
+#### Fine-grained Access Control
+
+As of 2.0.0, only OpenSearch is supported and only using fine-grained access control.
+It is recommended to follow the migration path to upgrade to fine-grained access control
+first and then upgrade to stac-server 2.x.
 
 ### 0.4.x -> 0.5.x
 
@@ -419,29 +429,44 @@ There are some settings that should be reviewed and updated as needeed in the se
 | PRE_HOOK                         | The name of a Lambda function to be called as the pre-hook.                                                                                                                                      | none                                                                                 |
 | POST_HOOK                        | The name of a Lambda function to be called as the post-hook.                                                                                                                                     | none                                                                                 |
 | ES_COMPAT_MODE                   | Enable Elasticsearch 7.10 compatibility mdoe within the server.                                                                                                                                  | false                                                                                |
-| OPENSEARCH_USERNAME              | The username to authenticate to OpenSearch with if fine-grained access control is enabled.                                                                                                       |                                                                                      |
-| OPENSEARCH_PASSWORD              | The password to authenticate to OpenSearch with if fine-grained access control is enabled.                                                                                                       |                                                                                      |
-| OPENSEARCH_CREDENTIALS_SECRET_ID | The AWS Secrets Manager secret to retrieve the username and password from, to authenticate to OpenSearch with if fine-grained access control is enabled.                                         |                                                                                      |
+| OPENSEARCH_CREDENTIALS_SECRET_ID | The AWS Secrets Manager secret use for the username and password to authenticate to OpenSearch.                                                                                                  |                                                                                      |
+| OPENSEARCH_USERNAME              | The username to authenticate to OpenSearch when AWS Secrets Manager is not used.                                                                                                                 |                                                                                      |
+| OPENSEARCH_PASSWORD              | The password to authenticate to OpenSearch when AWS Secrets Manager is not used.                                                                                                                 |                                                                                      |
 | COLLECTION_TO_INDEX_MAPPINGS     | A JSON object representing collection id to index name mappings if they do not have the same names.                                                                                              |                                                                                      |
 
 | ITEMS_INDICIES_NUM_OF_SHARDS                | Configure the number of shards for the indices that contain Items.                                                                                                                                  | none                                                                                |
 | ITEMS_INDICIES_NUM_OF_REPLICAS                | Configure the number of replicas for the indices that contain Items.                                                                                                                                                                              | none                                                                                |
+
+The preferred mechanism for populating the OpenSearch credentials to stac-server is to
+create a secret in AWS Secret Manager that contains the username and password.
+The recommended name for this Secret corresponds
+to the stac-server deployment as `{stage}/{service}/opensearch`, e.g.,
+`dev/my-stac-server/opensearch`.
+
+The Secret type should be "Other type of secret" and
+have two keys, `username` and `password`, with the appropriate
+values, e.g., `stac_server` and whatever you set as the password when creating that user.
 
 After reviewing the settings, build and deploy:
 
 ```shell
 npm install
 npm run build
-npm run deploy
+OPENSEARCH_MASTER_USER_PASSWORD='some-password' npm run deploy
 ```
 
 This will use the file `serverless.yml` and create a CloudFormation stack in the
 `us-west-2` region called `stac-server-dev`.
+
+After the initial deployment, the `MasterUserOptions` option in the serverless.yml file
+can be commented out so that OPENSEARCH_MASTER_USER_PASSWORD does not need to be passed
+at every deployment.
+
 To change the region or the stage name (from `dev`) provide arguments to the deploy command
 (note the additional `--` in the command, required by `npm` to provide arguments):
 
 ```shell
-npm run deploy -- --stage mystage --region eu-central-1
+OPENSEARCH_MASTER_USER_PASSWORD='some-password' npm run deploy -- --stage mystage --region eu-central-1
 ```
 
 Multiple deployments can be managed with multiple serverless config files and specified
@@ -461,39 +486,18 @@ It is recommended to disable the automatic index creation. This prevents the sit
 a group of Items are bulk indexed before the Collection in which they are contained has
 been created, and an OpenSearch index is created without the appropriate mappings.
 
-This requires installing the requests, requests_aws4auth, and boto3 python libraries, for example, with:
+This can either be done by calling the `/_cluster/settings` endpoint directly with the
+body:
 
-```shell
-pip install requests requests_aws4auth boto3
-```
-
-Then putting this code into a python file an running it:
-
-```python
-from requests_aws4auth import AWS4Auth
-import boto3
-import requests
-
-host = 'https://my-test-domain.us-east-1.es.amazonaws.com'
-path = '/_cluster/settings'
-region = 'us-west-2'
-
-credentials = boto3.Session().get_credentials()
-awsauth = AWS4Auth(credentials.access_key, credentials.secret_key, region, 'es', session_token=credentials.token)
-
-
-r = requests.put(
-  f'{host}{path}',
-  auth=awsauth,
-  json={
+```json
+  {
     "persistent": {
       "action.auto_create_index": "false"
     }
-  })
-
-print(r.status_code)
-print(r.text)
+  }
 ```
+
+or setting that configuration via the OpenSearch Dashboard.
 
 #### Create collection index
 
@@ -518,13 +522,10 @@ aws lambda invoke \
 
 Stac-server is now ready to ingest data!
 
-#### Enable OpenSearch fine-grained access control
+#### OpenSearch fine-grained access control
 
-There are two main reasons to enable fine-grained access control to OpenSearch.
-The default stac-server deployment controls access to the OpenSearch cluster using
-IAM permissions, which results in access to the cluster with full admin permissions.
-Additionally, using cross-cluster search or replication requires fine-grained access
-control is configured to connect the clusters.
+As of version 2.0.0, stac-server on"ly supports fine-grained access control to
+OpenSearch, and no longer supports "AWS Connection" mode.
 
 **Warning**: Unfortunately, fine-grained access control cannot be enabled on an
 existing OpenSearch
@@ -532,45 +533,10 @@ cluster through the serverless deploy, as this is a restriction of CloudFormatio
 which serverless uses. A migration process between the clusters must be performed similar
 to the Elasticsearch -> OpenSearch migration process.
 
-##### Configure OpenSearch for fine-grained access control
-
-Add this to the `AWS::OpenSearchService::Domain` resource:
-
-```yaml
-DomainEndpointOptions:
-  EnforceHTTPS: true
-NodeToNodeEncryptionOptions:
-  Enabled: true
-EncryptionAtRestOptions:
-  Enabled: true
-AdvancedSecurityOptions:
-    Enabled: true
-    InternalUserDatabaseEnabled: true
-    MasterUserOptions:
-      MasterUserName: admin
-      MasterUserPassword: ${env:OPENSEARCH_MASTER_USER_PASSWORD}
-AccessPolicies:
-  Version:                        "2012-10-17"
-  Statement:
-    - Effect:                     "Allow"
-      Principal:                  { "AWS": "*" }
-      Action:                     "es:ESHttp*"
-      Resource:                   "arn:aws:es:${aws:region}:${aws:accountId}:domain/${self:service}-${self:provider.stage}/*"
-```
-
 The AccessPolicies Statement will restrict the OpenSearch instance to only being accessible
 within AWS. This requires the user creation steps below be either executed from or proxied
 through an EC2 instance, or that the Access Policy be changed temporarily through the
 console in the domain's Security configuration to be "Only use fine-grained access control".
-
-Deploying now requires the `OPENSEARCH_MASTER_USER_PASSWORD` local shell environment
-variable be set so it can be set for the OpenSearch "master" user, e.g.:
-
-```shell
-OPENSEARCH_MASTER_USER_PASSWORD='some-password' npm run deploy
-```
-
-Redeploy the stack, and this will be updated without re-creating the cluster.
 
 The next step is to create the OpenSearch user and role to use for stac-server. This can
 either be done through the OpenSearch API or Dashboard.
@@ -927,7 +893,6 @@ Messages published to the post-ingest SNS topic include the following atributes 
 | ingestStatus | String | `successful` or `failed` |
 | collection   | String |                          |
 
-
 ### Ingesting large items
 
 There is a 256 KB limit on the size of SQS messages. Larger items can by publishing a message to the `stac-server-<stage>-ingest` SNS topic in with the format:
@@ -957,14 +922,14 @@ across the clusters, treating a remote cluster as if it were another group of no
 cluster, or configure indicies to be replicated (continuously copied) from from one
 cluster to another.
 
-Configuring either cross-cluster behavior requires [enabling fine-grained access control](#enable-opensearch-fine-grained-access-control).
+Configuring either cross-cluster behavior requires fine-grained access control.
 
 ### Cross-cluster Search
 
 The AWS documentation for cross-cluster search can be found
 [here](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/cross-cluster-search.html).
 
-1. [Enable fine-grained access control](#enable-opensearch-fine-grained-access-control)
+1. Ensure fine-grained access control is enabled.
 2. Create a connection between the source and destination OpenSearch domains.
 3. Ensure there is a `es:ESCrossClusterGet` action in the destination's access policy.
 4. In the source stac-server, create a Collection for each collection to be mapped. This
@@ -979,7 +944,7 @@ The AWS documentation for cross-cluster search can be found
 The AWS documentation for cross-cluster replication can be found
 [here](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/replication.html).
 
-1. [Enable fine-grained access control](#enable-opensearch-fine-grained-access-control)
+1. Ensure fine-grained access control is enabled (default as of v2.0.0)
 2. Create the replication connection in the source to the destination
 3. Create the collection in the source's stac-server instance
 

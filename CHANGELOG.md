@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Removed
 
 - Elasticsearch is no longer supported as a backend. Only OpenSearch is now supported.
+- Only fine-grained access control is supported for connecting to OpenSearch.
+  "AWS Connection" mode is no longer supported.
 
 ### Added
 
@@ -19,8 +21,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - Remove node streams-based ingest code to prepare for post-ingest notifications
 - Use the `type` field to determine if ingest is a Collection or Item
-- Only fine-grained access control is supported for connecting to OpenSearch.
-  "AWS Connection" mode is no longer supported.
 
 ## [1.1.0] - 2023-05-02
 

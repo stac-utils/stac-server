@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Added
 
 - Publish ingest results to a post-ingest SNS topic
+- Add datetime and bbox attributes to post-ingest SNS messages
 
 ### Changed
 

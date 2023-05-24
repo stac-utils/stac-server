@@ -1,6 +1,6 @@
 import { sns } from './aws-clients.js'
 import logger from './logger.js'
-import { isCollection, isItem } from './stac-utils.js'
+import { getBBox, getStartAndEndDates, isCollection, isItem } from './stac-utils.js'
 
 const attrsFromPayload = function (payload) {
   let type = 'unknown'
@@ -13,7 +13,7 @@ const attrsFromPayload = function (payload) {
     collection = payload.record.collection || ''
   }
 
-  return {
+  const attributes = {
     recordType: {
       DataType: 'String',
       StringValue: type
@@ -25,8 +25,61 @@ const attrsFromPayload = function (payload) {
     collection: {
       DataType: 'String',
       StringValue: collection
+    },
+  }
+
+  const bbox = getBBox(payload.record)
+  if (bbox) {
+    attributes['bbox.sw_lon'] = {
+      DataType: 'Number',
+      StringValue: bbox[0].toString(),
+    }
+    attributes['bbox.sw_lat'] = {
+      DataType: 'Number',
+      StringValue: bbox[1].toString(),
+    }
+    attributes['bbox.ne_lon'] = {
+      DataType: 'Number',
+      StringValue: bbox[2].toString(),
+    }
+    attributes['bbox.ne_lat'] = {
+      DataType: 'Number',
+      StringValue: bbox[3].toString(),
     }
   }
+
+  if (payload.record?.properties?.datetime) {
+    attributes.datetime = {
+      DataType: 'String',
+      StringValue: payload.record.properties.datetime
+    }
+  }
+
+  const { startDate, endDate } = getStartAndEndDates(payload.record)
+
+  if (startDate) {
+    attributes.start_datetime = {
+      DataType: 'String',
+      StringValue: startDate.toISOString()
+    }
+    attributes.start_unix_epoch_ms_offset = {
+      DataType: 'Number',
+      StringValue: startDate.getTime().toString()
+    }
+  }
+
+  if (endDate) {
+    attributes.end_datetime = {
+      DataType: 'String',
+      StringValue: endDate.toISOString()
+    }
+    attributes.end_unix_epoch_ms_offset = {
+      DataType: 'Number',
+      StringValue: endDate.getTime().toString()
+    }
+  }
+
+  return attributes
 }
 
 /* eslint-disable-next-line import/prefer-default-export */

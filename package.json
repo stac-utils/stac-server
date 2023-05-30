@@ -119,7 +119,7 @@
     "serverless": "^3.30.1",
     "serverless-offline": "^12.0.4",
     "shins": "^2.6.0",
-    "sinon": "^15.0.4",
+    "sinon": "^15.1.0",
     "ts-node": "^10.9.1",
     "tslib": "^2.5.0",
     "typescript": "^5.0.4",

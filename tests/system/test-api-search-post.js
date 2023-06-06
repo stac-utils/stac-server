@@ -447,3 +447,69 @@ test('/search preserve bbox in prev and next links', async (t) => {
   t.is(linkRel(response, 'next').body.datetime, datetime)
   t.deepEqual(linkRel(response, 'next').body.bbox, bbox)
 })
+
+test('/search Query Extension', async (t) => {
+  let response = null
+
+  // 3 items, 2 with platform landsat-8, 1 with platform2
+
+  response = await t.context.api.client.post('search', {
+    json: {}
+  })
+  t.is(response.features.length, 3)
+
+  response = await t.context.api.client.post('search', {
+    json: {
+      query: {
+        platform: {
+          eq: 'landsat-8'
+        }
+      }
+    }
+  })
+  t.is(response.features.length, 2)
+
+  response = await t.context.api.client.post('search', {
+    json: {
+      query: {
+        platform: {
+          neq: 'landsat-8'
+        }
+      }
+    }
+  })
+  t.is(response.features.length, 1)
+
+  response = await t.context.api.client.post('search', {
+    json: {
+      query: {
+        platform: {
+          startsWith: 'land'
+        }
+      }
+    }
+  })
+  t.is(response.features.length, 2)
+
+  response = await t.context.api.client.post('search', {
+    json: {
+      query: {
+        platform: {
+          endsWith: '-8'
+        }
+      }
+    }
+  })
+  t.is(response.features.length, 2)
+
+  response = await t.context.api.client.post('search', {
+    json: {
+      query: {
+        platform: {
+          contains: 'ndsa'
+        }
+      }
+    }
+  })
+  t.is(response.features.length, 2)
+})

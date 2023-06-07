@@ -84,7 +84,7 @@
   },
   "devDependencies": {
     "@ava/typescript": "^4.0.0",
-    "@stoplight/spectral-cli": "^6.6.0",
+    "@stoplight/spectral-cli": "^6.8.0",
     "@tsconfig/node16": "^1.0.3",
     "@types/aws-lambda": "^8.10.115",
     "@types/cors": "^2.8.13",

@@ -512,4 +512,45 @@ test('/search Query Extension', async (t) => {
     }
   })
   t.is(response.features.length, 2)
+
+  response = await t.context.api.client.post('search', {
+    json: {
+      query: {
+        platform: {
+          contains: 'ndsa',
+          endsWith: '-8',
+          startsWith: 'land',
+        }
+      }
+    }
+  })
+  t.is(response.features.length, 2)
+
+  response = await t.context.api.client.post('search', {
+    json: {
+      query: {
+        platform: {
+          contains: 'ndsa',
+          endsWith: '-8',
+          startsWith: 'land',
+        },
+        'eo:cloud_cover': {
+          eq: 0.54,
+        }
+      }
+    }
+  })
+  t.is(response.features.length, 1)
+
+  response = await t.context.api.client.post('search', {
+    json: {
+      query: {
+        platform: {
+          contains: 'ndsa',
+          neq: 'landsat-8'
+        }
+      }
+    }
+  })
+  t.is(response.features.length, 0)
 })

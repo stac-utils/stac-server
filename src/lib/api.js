@@ -2,6 +2,7 @@ import { pickBy, assign, get as getNested } from 'lodash-es'
 import extent from '@mapbox/extent'
 import { DateTime } from 'luxon'
 import AWS from 'aws-sdk'
+import geojsonhint from '@mapbox/geojsonhint'
 import { isIndexNotFoundError } from './database.js'
 import logger from './logger.js'
 
@@ -617,6 +618,19 @@ const searchItems = async function (collectionId, queryParameters, backend, endp
 
   logger.debug('Search parameters: %j', searchParams)
 
+  try { // Attempt to catch invalid geometry before querying Search
+    const hints = geometry ? geojsonhint.hint(geometry, {}) : []
+
+    if (hints.length > 0) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify(hints[0]['message'])
+      }
+    }
+  } catch (e) {
+    logger.error(e)
+  }
+
   let esResponse
   try {
     esResponse = await backend.search(searchParams, page, limit)
@@ -631,7 +645,40 @@ const searchItems = async function (collectionId, queryParameters, backend, endp
         results: []
       }
     } else {
-      throw error
+      try {
+        // Parse some types of geometry errors from Search
+        // @ts-ignore
+        const reason1 = error['meta']['body']['error']['caused_by'][0]['reason']
+        return {
+          statusCode: 400,
+          body: reason1
+        }
+      } catch (e1) {
+        // Parse other types of geometry errors from Search
+        try {
+          if (JSON.stringify(error).includes('failed to create query')) {
+            // @ts-ignore
+            const reason2 = error['meta']['body']['error']['root_cause'][0]['reason']
+            return {
+              statusCode: 400,
+              body: reason2
+            }
+          }
+        } catch (e2) {
+          // Flatten response, looking for generic Search error verbage
+          try {
+            if (JSON.stringify(error).includes('failed to create query')) {
+              return {
+                statusCode: 400,
+                body: 'Query failed. Please verify you are submitting a queryable payload.'
+              }
+            }
+          } catch (e3) {
+            // Unable to parse/identify the Search error, raise a 500 error
+            throw error
+          }
+        }
+      }
     }
   }
 

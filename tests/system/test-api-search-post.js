@@ -13,6 +13,11 @@ import { loadJson, setup } from '../helpers/system-tests.js'
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename) // eslint-disable-line no-unused-vars
 const intersectsGeometry = fs.readFileSync(path.resolve(__dirname, '../fixtures/stac/intersectsGeometry.json'), 'utf8')
+const badGeometry1 = fs.readFileSync(path.resolve(__dirname, '../fixtures/geomeetry/badIntersectsGeometry1.json'), 'utf8')
+const badGeometry2 = fs.readFileSync(path.resolve(__dirname, '../fixtures/geomeetry/badIntersectsGeometry2.json'), 'utf8')
+const badGeometry3 = fs.readFileSync(path.resolve(__dirname, '../fixtures/geomeetry/badIntersectsGeometry3.json'), 'utf8')
+const badGeometry4 = fs.readFileSync(path.resolve(__dirname, '../fixtures/geomeetry/badIntersectsGeometry4.json'), 'utf8')
+const badGeometry5 = fs.readFileSync(path.resolve(__dirname, '../fixtures/geomeetry/badIntersectsGeometry5.json'), 'utf8')
 
 const ingestEntities = async (fixtures) => {
   await ingestItems(
@@ -416,6 +421,19 @@ test('/search preserve intersects geometry in next link', async (t) => {
   const nextLink = linkRel(response, 'next')
   t.is(nextLink.body.datetime, datetime)
   t.deepEqual(nextLink.body.intersects, intersectsGeometry)
+})
+
+test('POST /search using bad geometry, expecting useful error messages', async (t) => {
+  const response = await t.context.api.client.post('search', {
+    json: {
+      intersects: badGeometry1//,
+      //limit: 2
+    }
+  })
+  t.is(response.statusCode, 400)
+  //t.is(response.features.length, 2)
+  //t.is(response.links.length, 2)
+  //t.truthy(linkRel(response, 'next'))
 })
 
 test('/search preserve bbox in prev and next links', async (t) => {

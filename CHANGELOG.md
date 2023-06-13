@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Publish ingest results to a post-ingest SNS topic
 - Add datetime and bbox attributes to post-ingest SNS messages
 - Support for Query Extension operators neq, startsWith, endsWith, and contains.
+- Validate intersects geometry before sending to Search + better response parsing.
 
 ### Changed
 

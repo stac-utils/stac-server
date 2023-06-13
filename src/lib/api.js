@@ -2,6 +2,7 @@ import { pickBy, assign, get as getNested } from 'lodash-es'
 import extent from '@mapbox/extent'
 import { DateTime } from 'luxon'
 import AWS from 'aws-sdk'
+import geojsonhint from '@mapbox/geojsonhint'
 import { isIndexNotFoundError } from './database.js'
 import logger from './logger.js'
 
@@ -617,6 +618,19 @@ const searchItems = async function (collectionId, queryParameters, backend, endp
 
   logger.debug('Search parameters: %j', searchParams)
 
+  try { // Attempt to catch invalid geometry before querying Search
+    const hints = geometry ? geojsonhint.hint(geometry, {}) : []
+
+    if (hints.length > 0) {
+      return {
+        statusCode: 400,
+        body: hints.map(({ message }) => ({ message }))
+      }
+    }
+  } catch (e) {
+    logger.error(e)
+  }
+
   let esResponse
   try {
     esResponse = await backend.search(searchParams, page, limit)
@@ -631,7 +645,28 @@ const searchItems = async function (collectionId, queryParameters, backend, endp
         results: []
       }
     } else {
-      throw error
+      try {
+        // @ts-ignore
+        const e = error['meta']['body']['error']
+
+        let errorMessage
+        if ('caused_by' in e) { // Parse certain types of geometry errors from Search
+          errorMessage = e['caused_by'].map(({ message }) => ({ message }))
+        } else if ('root_cause' in e) { // Parse other types of geometry errors from Search
+          errorMessage = e['root_cause'].map(({ reason }) => ({ reason }))
+        } else if (JSON.stringify(error).includes('failed to create query')) {
+          errorMessage = 'Query failed. Please verify a valid query payload.'
+        } else {
+          throw error
+        }
+
+        return {
+          statusCode: 400,
+          body: errorMessage
+        }
+      } catch (_) {
+        throw error
+      }
     }
   }
 

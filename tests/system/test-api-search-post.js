@@ -14,6 +14,8 @@ const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename) // eslint-disable-line no-unused-vars
 const intersectsGeometry = fs.readFileSync(path.resolve(__dirname, '../fixtures/stac/intersectsGeometry.json'), 'utf8')
 
+const fixture = (filepath) => fs.readFileSync(path.resolve(__dirname, filepath), 'utf8')
+
 const ingestEntities = async (fixtures) => {
   await ingestItems(
     await Promise.all(fixtures.map((x) => loadJson(x)))
@@ -416,6 +418,64 @@ test('/search preserve intersects geometry in next link', async (t) => {
   const nextLink = linkRel(response, 'next')
   t.is(nextLink.body.datetime, datetime)
   t.deepEqual(nextLink.body.intersects, intersectsGeometry)
+})
+
+test('POST /search using bad geometry, expecting useful error messages', async (t) => {
+  let response = null
+
+  response = await t.context.api.client.post('search', {
+    json: {
+      intersects: fixture('../fixtures/geometry/badGeoUnclosed.json')
+    }
+  })
+  t.is(response.statusCode, 400)
+  t.deepEqual(response.body, [{ message: 'the first and last positions in a LinearRing of coordinates must be the same' }])
+
+  response = await t.context.api.client.post('search', {
+    json: {
+      intersects: fixture('../fixtures/geometry/badGeoRightHandRule.json')
+    }
+  })
+  t.is(response.statusCode, 400)
+  t.deepEqual(response.body, [{ message: 'Polygons and MultiPolygons should follow the right-hand rule' }])
+
+  response = await t.context.api.client.post('search', {
+    json: {
+      intersects: fixture('../fixtures/geometry/badGeoFourPoints.json')
+    }
+  })
+  t.is(response.statusCode, 400)
+  t.deepEqual(response.body, [
+    {
+      reason: 'failed to create query: at least 4 polygon points required'
+    },
+    {
+      reason: 'failed to create query: at least 4 polygon points required'
+    }
+  ])
+
+  response = await t.context.api.client.post('search', {
+    json: {
+      intersects: fixture('../fixtures/geometry/badGeoDuplicateConsecutive.json')
+    }
+  })
+  t.is(response.statusCode, 400)
+  t.deepEqual(response.body, [
+    {
+      reason: 'failed to create query: Provided shape has duplicate consecutive coordinates at: (POINT (100.0 1.0))'
+    },
+    {
+      reason: 'failed to create query: Provided shape has duplicate consecutive coordinates at: (POINT (100.0 1.0))'
+    }
+  ])
+
+  response = await t.context.api.client.post('search', {
+    json: {
+      intersects: fixture('../fixtures/geometry/badGeoRightHandRule2.json')
+    }
+  })
+  t.is(response.statusCode, 400)
+  t.deepEqual(response.body, [{ message: 'Polygons and MultiPolygons should follow the right-hand rule' }])
 })
 
 test('/search preserve bbox in prev and next links', async (t) => {

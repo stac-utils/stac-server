@@ -624,7 +624,7 @@ const searchItems = async function (collectionId, queryParameters, backend, endp
     if (hints.length > 0) {
       return {
         statusCode: 400,
-        body: JSON.stringify(hints[0]['message'])
+        body: hints.map(({ message }) => ({ message }))
       }
     }
   } catch (e) {
@@ -646,38 +646,26 @@ const searchItems = async function (collectionId, queryParameters, backend, endp
       }
     } else {
       try {
-        // Parse some types of geometry errors from Search
         // @ts-ignore
-        const reason1 = error['meta']['body']['error']['caused_by'][0]['reason']
+        const e = error['meta']['body']['error']
+
+        let errorMessage
+        if ('caused_by' in e) { // Parse certain types of geometry errors from Search
+          errorMessage = e['caused_by'].map(({ message }) => ({ message }))
+        } else if ('root_cause' in e) { // Parse other types of geometry errors from Search
+          errorMessage = e['root_cause'].map(({ reason }) => ({ reason }))
+        } else if (JSON.stringify(error).includes('failed to create query')) {
+          errorMessage = 'Query failed. Please verify a valid query payload.'
+        } else {
+          throw error
+        }
+
         return {
           statusCode: 400,
-          body: reason1
+          body: errorMessage
         }
-      } catch (e1) {
-        // Parse other types of geometry errors from Search
-        try {
-          if (JSON.stringify(error).includes('failed to create query')) {
-            // @ts-ignore
-            const reason2 = error['meta']['body']['error']['root_cause'][0]['reason']
-            return {
-              statusCode: 400,
-              body: reason2
-            }
-          }
-        } catch (e2) {
-          // Flatten response, looking for generic Search error verbage
-          try {
-            if (JSON.stringify(error).includes('failed to create query')) {
-              return {
-                statusCode: 400,
-                body: 'Query failed. Please verify you are submitting a queryable payload.'
-              }
-            }
-          } catch (e3) {
-            // Unable to parse/identify the Search error, raise a 500 error
-            throw error
-          }
-        }
+      } catch (_) {
+        throw error
       }
     }
   }

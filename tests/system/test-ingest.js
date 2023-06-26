@@ -348,6 +348,22 @@ test('Ingested collection is published to post-ingest SNS topic', async (t) => {
   t.is(attrs.collection.Value, collection.id)
   t.is(attrs.ingestStatus.Value, 'successful')
   t.is(attrs.recordType.Value, 'Collection')
+
+  const bbox = collection.extent.spatial.bbox[0]
+  t.is(bbox[0].toString(), attrs['bbox.sw_lon'].Value)
+  t.is(bbox[1].toString(), attrs['bbox.sw_lat'].Value)
+  t.is(bbox[2].toString(), attrs['bbox.ne_lon'].Value)
+  t.is(bbox[3].toString(), attrs['bbox.ne_lat'].Value)
+
+  const expectedStartOffsetValue = (new Date(collection.extent.temporal.interval[0][0]))
+    .getTime().toString()
+  t.is(expectedStartOffsetValue, attrs.start_unix_epoch_ms_offset.Value)
+  t.is(
+    (new Date(collection.extent.temporal.interval[0][0])).toISOString(),
+    attrs.start_datetime.Value
+  )
+  t.is(undefined, attrs.end_unix_epoch_ms_offset)
+  t.is(undefined, attrs.end_datetime)
 })
 
 test('Ingested collection is published to post-ingest SNS topic with updated links', async (t) => {
@@ -382,19 +398,41 @@ test('Ingest collection failure is published to post-ingest SNS topic', async (t
   t.is(attrs.collection.Value, 'badCollection')
   t.is(attrs.ingestStatus.Value, 'failed')
   t.is(attrs.recordType.Value, 'Collection')
+  t.is(undefined, attrs.start_unix_epoch_ms_offset)
+  t.is(undefined, attrs.start_datetime)
+  t.is(undefined, attrs.end_unix_epoch_ms_offset)
+  t.is(undefined, attrs.end_datetime)
 })
 
+async function emptyPostIngestQueue(t) {
+  // We initially tried calling
+  // await sqs().purgeQueue({ QueueUrl: postIngestQueueUrl }).promise()
+  // But at least one test would intermittently fail because of an additional
+  // message in the queue.
+  // The documentation for the purgeQueue method says:
+  //   "The message deletion process takes up to 60 seconds.
+  //    We recommend waiting for 60 seconds regardless of your queue's size."
+  let result
+  do {
+    // eslint-disable-next-line no-await-in-loop
+    result = await sqs().receiveMessage({
+      QueueUrl: t.context.postIngestQueueUrl,
+      WaitTimeSeconds: 1
+    }).promise()
+  } while (result.Message && result.Message.length > 0)
+}
+
 async function ingestCollectionAndPurgePostIngestQueue(t) {
-  const { ingestFixture, postIngestQueueUrl } = t.context
+  const { ingestFixture } = t.context
 
   const collection = await ingestFixture(
     'landsat-8-l1-collection.json',
     { id: randomId('collection') }
   )
 
-  // Purging the post-ingest queue ensures that subsequent calls to testPostIngestSNS
+  // Emptying the post-ingest queue ensures that subsequent calls to testPostIngestSNS
   // only see the message posted after the final ingest
-  await sqs().purgeQueue({ QueueUrl: postIngestQueueUrl }).promise()
+  await emptyPostIngestQueue(t)
 
   return collection
 }
@@ -404,8 +442,14 @@ test('Ingested item is published to post-ingest SNS topic', async (t) => {
 
   const item = await loadFixture(
     'stac/ingest-item.json',
-    { id: randomId('item'), collection: collection.id }
+    {
+      id: randomId('item'),
+      collection: collection.id
+    }
   )
+
+  item.properties.start_datetime = '1955-11-05T13:00:00.000Z'
+  item.properties.end_datetime = '1985-11-05T13:00:00.000Z'
 
   const { message, attrs } = await testPostIngestSNS(t, item)
 
@@ -414,6 +458,21 @@ test('Ingested item is published to post-ingest SNS topic', async (t) => {
   t.is(attrs.collection.Value, item.collection)
   t.is(attrs.ingestStatus.Value, 'successful')
   t.is(attrs.recordType.Value, 'Item')
+
+  t.is(item.bbox[0].toString(), attrs['bbox.sw_lon'].Value)
+  t.is(item.bbox[1].toString(), attrs['bbox.sw_lat'].Value)
+  t.is(item.bbox[2].toString(), attrs['bbox.ne_lon'].Value)
+  t.is(item.bbox[3].toString(), attrs['bbox.ne_lat'].Value)
+
+  t.is(message.record.properties.datetime, attrs.datetime.Value)
+
+  const expectedStartOffsetValue = (new Date(item.properties.start_datetime)).getTime().toString()
+  t.is(expectedStartOffsetValue, attrs.start_unix_epoch_ms_offset.Value)
+  t.is(item.properties.start_datetime, attrs.start_datetime.Value)
+
+  const expectedEndOffsetValue = (new Date(item.properties.end_datetime)).getTime().toString()
+  t.is(expectedEndOffsetValue, attrs.end_unix_epoch_ms_offset.Value)
+  t.is(item.properties.end_datetime, attrs.end_datetime.Value)
 })
 
 test('Ingest item failure is published to post-ingest SNS topic', async (t) => {

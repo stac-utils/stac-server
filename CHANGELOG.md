@@ -14,11 +14,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Added
 
 - Publish ingest results to a post-ingest SNS topic
+- Add datetime and bbox attributes to post-ingest SNS messages
+- Support for Query Extension operators neq, startsWith, endsWith, and contains.
+- Validate intersects geometry before sending to Search + better response parsing.
 
 ### Changed
 
 - Remove node streams-based ingest code to prepare for post-ingest notifications
 - Use the `type` field to determine if ingest is a Collection or Item
+- Aggregations `grid_code_frequency` and `grid_code_landsat_frequency` are no longer
+  restricted to 2000 buckets
 
 ## [1.1.0] - 2023-05-02
 

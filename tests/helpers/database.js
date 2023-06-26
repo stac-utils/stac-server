@@ -12,7 +12,6 @@ export const createCollectionsIndex = async () => {
  */
 export const refreshIndices = async () => {
   const client = await connect()
-  // @ts-expect-error client can be of two types with the same API
   await client.indices.refresh({ index: '_all' })
 }
 
@@ -21,7 +20,6 @@ export const refreshIndices = async () => {
  */
 export const deleteAllIndices = async () => {
   const client = await connect()
-  // @ts-expect-error client can be of two types with the same API
   await client.indices.delete({ index: '_all' })
   await refreshIndices()
 }

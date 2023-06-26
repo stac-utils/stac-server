@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Removed
 
 - Elasticsearch is no longer supported as a backend. Only OpenSearch is now supported.
+- Only fine-grained access control is supported for connecting to OpenSearch.
+  "AWS Connection" mode is no longer supported.
 
 ### Added
 
@@ -28,6 +30,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [1.1.0] - 2023-05-02
 
 ### Changed
+
 - Adds API Gateway ID to cloudwatch logs.
 - Logs the start of the request in case of Lambda timeout.
 

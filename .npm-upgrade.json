@@ -1,9 +1,5 @@
 {
   "ignore": {
-    "@acuris/aws-es-connection": {
-      "versions": "^2",
-      "reason": "deprecated feature, leave as-is"
-    },
     "@types/node": {
       "versions": "^18",
       "reason": "using 16"

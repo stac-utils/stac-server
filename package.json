@@ -60,13 +60,10 @@
     "url": "https://github.com/stac-utils/stac-server/issues"
   },
   "dependencies": {
-    "@acuris/aws-es-connection": "^1.1.0",
     "@aws-sdk/client-secrets-manager": "^3.341.0",
     "@mapbox/extent": "^0.4.0",
     "@mapbox/geojsonhint": "^3.1.1",
     "@opensearch-project/opensearch": "^2.2.1",
-    "aws-os-connection": "^0.2.0",
-    "better-npm-audit": "^3.7.3",
     "cors": "^2.8.5",
     "express": "^4.18.2",
     "got": "^13.0.0",
@@ -101,6 +98,7 @@
     "aws-event-mocks": "^0.0.0",
     "aws-sdk": "^2.1369.0",
     "aws-sdk-client-mock": "^2.1.1",
+    "better-npm-audit": "^3.7.3",
     "c8": "^7.13.0",
     "copy-webpack-plugin": "^11.0.0",
     "crypto-random-string": "^5.0.0",

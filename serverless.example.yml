@@ -17,6 +17,7 @@ provider:
     OPENSEARCH_HOST:
       Fn::GetAtt: [OpenSearchInstance, DomainEndpoint]
     ENABLE_TRANSACTIONS_EXTENSION: false
+    OPENSEARCH_CREDENTIALS_SECRET_ID: ${self:service}-${self:provider.stage}-opensearch-user-creds
     # comment STAC_API_ROOTPATH if deployed with a custom domain
     STAC_API_ROOTPATH: "/${self:provider.stage}"
     # PRE_HOOK: ${self:service}-${self:provider.stage}-preHook
@@ -42,6 +43,9 @@ provider:
         - Effect: Allow
           Action: s3:GetObject
           Resource: 'arn:aws:s3:::usgs-landsat/*'
+        - Effect: Allow
+          Resource: arn:aws:secretsmanager:${aws:region}:${aws:accountId}:secret:${self:provider.environment.OPENSEARCH_CREDENTIALS_SECRET_ID}-*
+          Action: secretsmanager:GetSecretValue
         # - Effect: Allow
         #   Action: lambda:InvokeFunction
         #   Resource: arn:aws:lambda:${aws:region}:${aws:accountId}:function:${self:service}-${self:provider.stage}-preHook
@@ -170,6 +174,26 @@ resources:
         EngineVersion: OpenSearch_2.5
         DomainEndpointOptions:
           EnforceHTTPS: true
+        NodeToNodeEncryptionOptions:
+          Enabled: true
+        EncryptionAtRestOptions:
+          Enabled: true
+        AdvancedSecurityOptions:
+          Enabled: true # enables fine-grained access control
+          InternalUserDatabaseEnabled: true
+          # When deploying to a new environment for this first time, the master user
+          # must be set. Uncomment this, deploy, and then re-comment it before deploying
+          # again to an existing deployment
+          MasterUserOptions:
+            MasterUserName: admin
+            MasterUserPassword: ${env:OPENSEARCH_MASTER_USER_PASSWORD}
+          AccessPolicies:
+            Version:                        "2012-10-17"
+            Statement:
+              - Effect:                     "Allow"
+                Principal:                  { "AWS": "*" }
+                Action:                     "es:ESHttp*"
+                Resource:                   "arn:aws:es:${aws:region}:${aws:accountId}:domain/${self:service}-${self:provider.stage}/*"
   Outputs:
     OpenSearchEndpoint:
       Value:

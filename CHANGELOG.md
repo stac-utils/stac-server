@@ -18,6 +18,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - Remove node streams-based ingest code to prepare for post-ingest notifications
 - Use the `type` field to determine if ingest is a Collection or Item
+- Aggregations `grid_code_frequency` and `grid_code_landsat_frequency` are no longer
+  restricted to 2000 buckets
 
 ## [1.1.0] - 2023-05-02
 

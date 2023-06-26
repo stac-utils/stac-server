@@ -553,14 +553,12 @@ const ALL_AGGREGATIONS = {
   grid_code_frequency: {
     terms: {
       field: 'properties.grid:code',
-      size: 2000,
       missing: 'none',
     }
   },
   grid_code_landsat_frequency: {
     terms: {
       field: 'properties.landsat:wrs_type',
-      size: 2000,
       missing: 'none',
       script: {
         lang: 'painless',

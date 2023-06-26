@@ -1,4 +1,4 @@
-import { s3 } from './aws-clients'
+import { s3 } from './aws-clients.js'
 
 const getObjectBody = async (s3Location: {bucket: string, key: string}) => {
   try {

@@ -188,7 +188,7 @@ function updateLinksWithinRecord(record) {
 }
 
 export async function publishResultsToSns(results, topicArn) {
-  await Promise.all(results.map(async (result) => {
+  await Promise.allSettled(results.map(async (result) => {
     if (result.record && !result.error) {
       updateLinksWithinRecord(result.record)
     }

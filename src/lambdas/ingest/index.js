@@ -67,7 +67,7 @@ export const handler = async (event, _context) => {
 
     if (postIngestTopicArn) {
       logger.debug('Publishing to post-ingest topic: %s', postIngestTopicArn)
-      publishResultsToSns(results, postIngestTopicArn)
+      await publishResultsToSns(results, postIngestTopicArn)
     } else {
       logger.debug('Skkipping post-ingest notification since no topic is configured')
     }

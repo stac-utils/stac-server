@@ -187,11 +187,11 @@ function updateLinksWithinRecord(record) {
   return record
 }
 
-export function publishResultsToSns(results, topicArn) {
-  results.forEach(async (result) => {
+export async function publishResultsToSns(results, topicArn) {
+  await Promise.all(results.map(async (result) => {
     if (result.record && !result.error) {
       updateLinksWithinRecord(result.record)
     }
     await publishRecordToSns(topicArn, result.record, result.error)
-  })
+  }))
 }

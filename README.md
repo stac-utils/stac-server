@@ -139,9 +139,11 @@ first and then upgrade to stac-server 2.x.
 #### Enabling Post-ingest SNS publishing
 
 stac-server now has the ability to publish all ingested entities (Items and Collections)
-to an SNS topic. Follow these stesp to add this to an exisiting deployment. These
+to an SNS topic. Follow these steps to add this to an existing deployment. These
 configurations are also in the serverless.example.yml file, so reference that if it is
 unclear exactly where to add this in your config.
+
+The following changes should be added to the serverless.yml file.
 
 Explicitly set the provider/environment setting for STAC_API_URL so the ingested entities
 published to the topic will have their link hrefs set correctly. If this is not set,

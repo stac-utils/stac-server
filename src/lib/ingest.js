@@ -28,13 +28,13 @@ export async function convertIngestObjectToDbObject(
     index = data.collection
   } else {
     throw new InvalidIngestError(
-      `Expeccted data.type to be "Collection" or "Feature" not ${data.type}`
+      `Expected data.type to be "Collection" or "Feature" not ${data.type}`
     )
   }
 
   // remove any hierarchy links in a non-mutating way
   if (!data.links) {
-    throw new InvalidIngestError('Expected a "links" proporty on the stac object')
+    throw new InvalidIngestError('Expected a "links" property on the stac object')
   }
   const links = data.links.filter(
     (/** @type {{ rel: string; }} */ link) => !hierarchyLinks.includes(link.rel)
@@ -187,11 +187,11 @@ function updateLinksWithinRecord(record) {
   return record
 }
 
-export function publishResultsToSns(results, topicArn) {
-  results.forEach(async (result) => {
+export async function publishResultsToSns(results, topicArn) {
+  await Promise.allSettled(results.map(async (result) => {
     if (result.record && !result.error) {
       updateLinksWithinRecord(result.record)
     }
     await publishRecordToSns(topicArn, result.record, result.error)
-  })
+  }))
 }

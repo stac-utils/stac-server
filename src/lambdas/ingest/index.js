@@ -53,6 +53,7 @@ export const handler = async (event, _context) => {
 
   if (event.create_indices) {
     await createIndex('collections')
+    return
   }
 
   const stacItems = isSqsEvent(event)
@@ -67,9 +68,9 @@ export const handler = async (event, _context) => {
 
     if (postIngestTopicArn) {
       logger.debug('Publishing to post-ingest topic: %s', postIngestTopicArn)
-      publishResultsToSns(results, postIngestTopicArn)
+      await publishResultsToSns(results, postIngestTopicArn)
     } else {
-      logger.debug('Skkipping post-ingest notification since no topic is configured')
+      logger.debug('Skipping post-ingest notification since no topic is configured')
     }
   } catch (error) {
     logger.error(error)

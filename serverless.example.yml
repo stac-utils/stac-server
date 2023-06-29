@@ -29,10 +29,10 @@ provider:
   iam:
     role:
       statements:
-        - Effect: "Allow"
+        - Effect: Allow
           Resource: "arn:aws:es:${aws:region}:${aws:accountId}:domain/*"
           Action: "es:*"
-        - Effect: "Allow"
+        - Effect: Allow
           Action:
             - sqs:GetQueueUrl
             - sqs:SendMessage
@@ -41,8 +41,13 @@ provider:
           Resource:
             Fn::GetAtt: [ingestQueue, Arn]
         - Effect: Allow
+          Action:
+            - sns:Publish
+          Resource:
+            Fn::GetAtt: [postIngestTopic, Arn]
+        - Effect: Allow
           Action: s3:GetObject
-          Resource: 'arn:aws:s3:::usgs-landsat/*'
+          Resource: "arn:aws:s3:::usgs-landsat/*"
         - Effect: Allow
           Resource: arn:aws:secretsmanager:${aws:region}:${aws:accountId}:secret:${self:provider.environment.OPENSEARCH_CREDENTIALS_SECRET_ID}-*
           Action: secretsmanager:GetSecretValue
@@ -107,14 +112,14 @@ resources:
   Description: A STAC API running on stac-server
   Resources:
     ingestTopic:
-      Type: "AWS::SNS::Topic"
+      Type: AWS::SNS::Topic
       Properties:
         TopicName: ${self:service}-${self:provider.stage}-ingest
     postIngestTopic:
-    # After a collection or item is ingested, the status of the ingest (success
-    # or failure) along with details of the collection or item are sent to this
-    # SNS topic. To take future action on items after they are ingested
-    # suscribe an endpoint to this topic
+      # After a collection or item is ingested, the status of the ingest (success
+      # or failure) along with details of the collection or item are sent to this
+      # SNS topic. To take future action on items after they are ingested
+      # suscribe an endpoint to this topic
       Type: AWS::SNS::Topic
       Properties:
         TopicName: ${self:service}-${self:provider.stage}-post-ingest
@@ -156,7 +161,7 @@ resources:
         TopicArn: !Ref ingestTopic
     OpenSearchInstance:
       Type: AWS::OpenSearchService::Domain
-      DeletionPolicy : Retain
+      DeletionPolicy: Retain
       UpdateReplacePolicy: Retain
       UpdatePolicy:
         EnableVersionUpgrade: true
@@ -187,13 +192,13 @@ resources:
           MasterUserOptions:
             MasterUserName: admin
             MasterUserPassword: ${env:OPENSEARCH_MASTER_USER_PASSWORD}
-          AccessPolicies:
-            Version:                        "2012-10-17"
-            Statement:
-              - Effect:                     "Allow"
-                Principal:                  { "AWS": "*" }
-                Action:                     "es:ESHttp*"
-                Resource:                   "arn:aws:es:${aws:region}:${aws:accountId}:domain/${self:service}-${self:provider.stage}/*"
+        AccessPolicies:
+          Version: "2012-10-17"
+          Statement:
+            - Effect: "Allow"
+              Principal: { "AWS": "*" }
+              Action: "es:ESHttp*"
+              Resource: "arn:aws:es:${aws:region}:${aws:accountId}:domain/${self:service}-${self:provider.stage}/*"
   Outputs:
     OpenSearchEndpoint:
       Value:

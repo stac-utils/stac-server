@@ -575,7 +575,7 @@ const buildPaginationLinks = function (limit, parameters, bbox, intersects, endp
 }
 
 const searchItems = async function (collectionId, queryParameters, backend, endpoint, httpMethod) {
-  logger.debug('Query parameters: %j', queryParameters)
+  logger.debug('Search parameters (unprocessed): %j', queryParameters)
   const {
     next,
     bbox,
@@ -616,7 +616,7 @@ const searchItems = async function (collectionId, queryParameters, backend, endp
     collectionEndpoint = `${endpoint}/collections/${collectionId}`
   }
 
-  logger.debug('Search parameters: %j', searchParams)
+  logger.info('Search parameters (processed): %j', searchParams)
 
   try { // Attempt to catch invalid geometry before querying Search
     const hints = geometry ? geojsonhint.hint(geometry, {}) : []
@@ -724,7 +724,7 @@ const agg = function (esAggs, name, dataType) {
 const aggregate = async function (
   collectionId, queryParameters, backend, endpoint, httpMethod
 ) {
-  logger.debug('Aggregate parameters: %j', queryParameters)
+  logger.debug('Aggregate parameters (unprocessed): %j', queryParameters)
 
   const {
     bbox,
@@ -764,7 +764,7 @@ const aggregate = async function (
     }
   }
 
-  logger.debug('Aggregate parameters: %j', searchParams)
+  logger.info('Aggregate parameters (processed): %j', searchParams)
 
   const aggregationsRequested = extractAggregations(queryParameters)
 

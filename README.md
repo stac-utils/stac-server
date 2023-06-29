@@ -8,6 +8,7 @@
   - [Migration](#migration)
     - [0.x or 1.x -\> 2.x](#0x-or-1x---2x)
       - [Fine-grained Access Control](#fine-grained-access-control)
+      - [Enabling Post-ingest SNS publishing](#enabling-post-ingest-sns-publishing)
     - [0.4.x -\> 0.5.x](#04x---05x)
       - [Elasticsearch to OpenSearch Migration](#elasticsearch-to-opensearch-migration)
       - [Preferred Elasticsearch to OpenSearch Migration Process](#preferred-elasticsearch-to-opensearch-migration-process)
@@ -134,6 +135,47 @@ apiLambda --> opensearch
 As of 2.0.0, only OpenSearch is supported and only using fine-grained access control.
 It is recommended to follow the migration path to upgrade to fine-grained access control
 first and then upgrade to stac-server 2.x.
+
+#### Enabling Post-ingest SNS publishing
+
+stac-server now has the ability to publish all ingested entities (Items and Collections)
+to an SNS topic. Follow these stesp to add this to an exisiting deployment. These
+configurations are also in the serverless.example.yml file, so reference that if it is
+unclear exactly where to add this in your config.
+
+Explicitly set the provider/environment setting for STAC_API_URL so the ingested entities
+published to the topic will have their link hrefs set correctly. If this is not set,
+the entities will still be published, with with incorrect link hrefs.
+
+```text
+STAC_API_URL: "https://some-stac-server.com"
+```
+
+Add the SNS topic resource:
+
+```text
+postIngestTopic:
+  Type: AWS::SNS::Topic
+  Properties:
+    TopicName: ${self:service}-${self:provider.stage}-post-ingest
+```
+
+For the `ingest` Lambda resource definition, configure the ARN to publish to by adding:
+
+```text
+environment:
+  POST_INGEST_TOPIC_ARN: !Ref postIngestTopic
+```
+
+Add IAM permissions with the statement:
+
+```text
+- Effect: Allow
+  Action:
+    - sns:Publish
+  Resource:
+    Fn::GetAtt: [postIngestTopic, TopicArn]
+```
 
 ### 0.4.x -> 0.5.x
 
@@ -521,11 +563,9 @@ aws lambda invoke \
   /dev/stdout
 ```
 
-Stac-server is now ready to ingest data!
-
 #### OpenSearch fine-grained access control
 
-As of version 2.0.0, stac-server on"ly supports fine-grained access control to
+As of version 2.0.0, stac-server only supports fine-grained access control to
 OpenSearch, and no longer supports "AWS Connection" mode.
 
 **Warning**: Unfortunately, fine-grained access control cannot be enabled on an
@@ -634,8 +674,8 @@ so that stac-server can access them.
 The preferred mechanism for populating the OpenSearch credentials to stac-server is to
 create a secret in AWS Secret Manager that contains the username and password. The
 recommended name for this Secret corresponds
-to the stac-server deployment as `{stage}/{service}/opensearch`, e.g.,
-`dev/my-stac-server/opensearch`.
+to the stac-server deployment as `${service}-${stage}-opensearch-user-creds`, e.g.,
+`my-stac-server-dev-opensearch-user-creds`.
 
 The Secret type should be "Other type of secret" and
 have two keys, `username` and `password`, with the appropriate
@@ -645,14 +685,14 @@ Add the `OPENSEARCH_CREDENTIALS_SECRET_ID` variable to the serverless.yml sectio
 `environment`:
 
 ```yaml
-OPENSEARCH_CREDENTIALS_SECRET_ID: ${self:provider.stage}/${self:service}/opensearch
+OPENSEARCH_CREDENTIALS_SECRET_ID: ${self:service}-${self:provider.stage}-opensearch-user-creds
 ```
 
 Add to the IAM Role Statements:
 
 ```yaml
-- Effect: "Allow"
-  Resource: "arn:aws:secretsmanager:${aws:region}:${aws:accountId}:secret:${self:provider.stage}/${self:service}/opensearch-*"
+- Effect: Allow
+  Resource: arn:aws:secretsmanager:${aws:region}:${aws:accountId}:secret:${self:provider.environment.OPENSEARCH_CREDENTIALS_SECRET_ID}-*
   Action: "secretsmanager:GetSecretValue"
 ```
 
@@ -673,6 +713,8 @@ OPENSEARCH_PASSWORD: xxxxxxxxxxx
 
 Setting these as environment variables can also be useful when running stac-server
 locally.
+
+Stac-server is now ready to ingest data!
 
 ### Proxying Stac-server through CloudFront
 

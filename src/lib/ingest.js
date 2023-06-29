@@ -28,13 +28,13 @@ export async function convertIngestObjectToDbObject(
     index = data.collection
   } else {
     throw new InvalidIngestError(
-      `Expeccted data.type to be "Collection" or "Feature" not ${data.type}`
+      `Expected data.type to be "Collection" or "Feature" not ${data.type}`
     )
   }
 
   // remove any hierarchy links in a non-mutating way
   if (!data.links) {
-    throw new InvalidIngestError('Expected a "links" proporty on the stac object')
+    throw new InvalidIngestError('Expected a "links" property on the stac object')
   }
   const links = data.links.filter(
     (/** @type {{ rel: string; }} */ link) => !hierarchyLinks.includes(link.rel)

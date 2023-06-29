@@ -53,6 +53,7 @@ export const handler = async (event, _context) => {
 
   if (event.create_indices) {
     await createIndex('collections')
+    return
   }
 
   const stacItems = isSqsEvent(event)

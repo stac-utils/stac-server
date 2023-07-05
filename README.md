@@ -843,16 +843,8 @@ stac-server does not use SQL.
 ### API Gateway Logging
 
 The example serverless.yml config contains disabled configuration for setting up
-API Gateway logging of API requests, like:
-
-```yaml
-logs:
-  restApi:
-    executionLogging: false
-    fullExecutionData: false
-    accessLogging: false
-    format: '{"requestId":"$context.requestId","ip":"$context.identity.sourceIp","caller":"$context.identity.caller","useragent" : "$context.identity.userAgent","requestTime":"$context.requestTime","httpMethod":"$context.httpMethod","resourcePath":"$context.resourcePath","status":"$context.status","protocol":"$context.protocol","responseLength":"$context.responseLength"}'
- ```
+API Gateway logging of API requests. More information about these configuration can be
+found in the [Serverless Framework API Gateway Documentation](https://www.serverless.com/framework/docs/providers/aws/events/apigateway#logs).
 
 The `executionLogging` setting causes logging of the actual execution of the API Gateway
 endpoints and backing Lambda, with `fullExecutionData` causing the entire request and

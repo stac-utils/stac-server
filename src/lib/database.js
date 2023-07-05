@@ -554,6 +554,7 @@ const ALL_AGGREGATIONS = {
     terms: {
       field: 'properties.grid:code',
       missing: 'none',
+      size: 10000,
     }
   },
   grid_code_landsat_frequency: {
@@ -565,7 +566,8 @@ const ALL_AGGREGATIONS = {
         source: "return 'WRS' + _value + '-' + "
           + "doc['properties.landsat:wrs_path'].value + "
           + "doc['properties.landsat:wrs_row'].value"
-      }
+      },
+      size: 10000,
     }
   },
   sun_elevation_frequency: {

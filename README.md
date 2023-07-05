@@ -29,6 +29,7 @@
     - [Proxying Stac-server through CloudFront](#proxying-stac-server-through-cloudfront)
     - [Locking down transaction endpoints](#locking-down-transaction-endpoints)
     - [AWS WAF Rule Conflicts](#aws-waf-rule-conflicts)
+    - [API Gateway Logging](#api-gateway-logging)
   - [Queryables](#queryables)
   - [Aggregation](#aggregation)
   - [Ingesting Data](#ingesting-data)
@@ -838,6 +839,27 @@ This is also triggered when using pystac_client with no filtering parameters.
 
 The fix is to disable the WAF SQL injection rule, which is unnecessary because
 stac-server does not use SQL.
+
+### API Gateway Logging
+
+The example serverless.yml config contains disabled configuration for setting up
+API Gateway logging of API requests, like:
+
+```yaml
+logs:
+  restApi:
+    executionLogging: false
+    fullExecutionData: false
+    accessLogging: false
+    format: '{"requestId":"$context.requestId","ip":"$context.identity.sourceIp","caller":"$context.identity.caller","useragent" : "$context.identity.userAgent","requestTime":"$context.requestTime","httpMethod":"$context.httpMethod","resourcePath":"$context.resourcePath","status":"$context.status","protocol":"$context.protocol","responseLength":"$context.responseLength"}'
+ ```
+
+The `executionLogging` setting causes logging of the actual execution of the API Gateway
+endpoints and backing Lambda, with `fullExecutionData` causing the entire request and
+response to be logged to CloudWatch, which can be expensive.
+
+The `accessLogging` setting logs the values specified in `format` to CloudWatch, which
+can be useful for computing metrics on usage for the API.
 
 ## Queryables
 

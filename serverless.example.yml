@@ -8,6 +8,12 @@ provider:
   # uncomment this if using a bucket that already exists for deployment files
   # deploymentBucket:
   #   name: my-deployment-bucket
+  logs:
+    restApi:
+      executionLogging: false
+      fullExecutionData: false
+      accessLogging: false
+      format: '{"requestId":"$context.requestId","ip":"$context.identity.sourceIp","caller":"$context.identity.caller","useragent" : "$context.identity.userAgent","requestTime":"$context.requestTime","httpMethod":"$context.httpMethod","resourcePath":"$context.resourcePath","status":"$context.status","protocol":"$context.protocol","responseLength":"$context.responseLength"}'
   environment:
     STAC_ID: "stac-server"
     STAC_TITLE: "STAC API"

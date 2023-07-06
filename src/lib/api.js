@@ -2,7 +2,7 @@ import { pickBy, assign, get as getNested } from 'lodash-es'
 import extent from '@mapbox/extent'
 import { DateTime } from 'luxon'
 import AWS from 'aws-sdk'
-import geojsonhint from '@mapbox/geojsonhint'
+// import geojsonhint from '@mapbox/geojsonhint'
 import { isIndexNotFoundError } from './database.js'
 import logger from './logger.js'
 
@@ -618,18 +618,18 @@ const searchItems = async function (collectionId, queryParameters, backend, endp
 
   logger.info('Search parameters (processed): %j', searchParams)
 
-  try { // Attempt to catch invalid geometry before querying Search
-    const hints = geometry ? geojsonhint.hint(geometry, {}) : []
+  // try { // Attempt to catch invalid geometry before querying Search
+  //   const hints = geometry ? geojsonhint.hint(geometry, {}) : []
 
-    if (hints.length > 0) {
-      return {
-        statusCode: 400,
-        body: hints.map(({ message }) => ({ message }))
-      }
-    }
-  } catch (e) {
-    logger.error(e)
-  }
+  //   if (hints.length > 0) {
+  //     return {
+  //       statusCode: 400,
+  //       body: hints.map(({ message }) => ({ message }))
+  //     }
+  //   }
+  // } catch (e) {
+  //   logger.error(e)
+  // }
 
   let esResponse
   try {

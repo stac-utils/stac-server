@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased] - TBD
 
+### Fixed
+
+- Aggregations 'grid_code_frequency' and 'grid_code_landsat_frequency' were inadvertently
+  configured to only return 10 results, now they return all results.
+
 ### Added
 
 - Added API Gateway logging config to example serverless.yml config.

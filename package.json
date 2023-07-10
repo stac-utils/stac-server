@@ -98,7 +98,7 @@
     "ava": "^5.3.1",
     "aws-event-mocks": "^0.0.0",
     "aws-sdk": "^2.1404.0",
-    "aws-sdk-client-mock": "^2.1.1",
+    "aws-sdk-client-mock": "^3.0.0",
     "better-npm-audit": "^3.7.3",
     "c8": "^8.0.0",
     "copy-webpack-plugin": "^11.0.0",

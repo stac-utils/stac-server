@@ -587,14 +587,16 @@ either be done through the OpenSearch API or Dashboard.
 
 ##### Option 1 - API method
 
-This assumes the master username is `admin` and creats a user with the name `stac_server`.
+This assumes the master username is `admin` and creates a user with the name `stac_server`.
+Environment variables `HOST` and `OPENSEARCH_MASTER_USER_PASSWORD` should be set in the
+shell environment.
 
 Create the Role:
 
 ```shell
 curl -X "PUT" "${HOST}/_plugins/_security/api/roles/stac_server_role" \
      -H 'Content-Type: application/json; charset=utf-8' \
-     -u 'admin:xxxxxxxx' \
+     -u "admin:${OPENSEARCH_MASTER_USER_PASSWORD}" \
      -d $'{
   "cluster_permissions": [
     "cluster_composite_ops",
@@ -629,7 +631,7 @@ Create the User:
 ```shell
 curl -X "PUT" "${HOST}/_plugins/_security/api/internalusers/stac_server" \
      -H 'Content-Type: application/json; charset=utf-8' \
-     -u 'admin:xxxxxxxx' \
+     -u "admin:${OPENSEARCH_MASTER_USER_PASSWORD}" \
      -d $'{ "password": "xxx" }'
 ```
 
@@ -640,7 +642,7 @@ Map the Role to the User:
 ```shell
 curl -X "PUT" "${HOST}/_plugins/_security/api/rolesmapping/stac_server_role" \
      -H 'Content-Type: application/json; charset=utf-8' \
-     -u 'admin:xxxxxxxx' \
+     -u "admin:${OPENSEARCH_MASTER_USER_PASSWORD}"  \
      -d $'{
   "users": [
     "stac_server"

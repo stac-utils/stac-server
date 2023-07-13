@@ -631,20 +631,24 @@ const searchItems = async function (collectionId, queryParameters, backend, endp
         },
         results: []
       }
-    } else {
+    // @ts-ignore
+    } else if (error?.meta?.statusCode === 400) {
       // @ts-ignore
-      const e = error['meta']['body']['error']
+      const e = error?.meta?.body?.error
 
+      // only serialize part of the error message,
+      // as error.meta.meta.connection will leak the OpenSearch URL
       let errorMessage
       if ('caused_by' in e) {
-        errorMessage = JSON.stringify(e['caused_by']['reason'])
-      } else if (JSON.stringify(error).includes('failed to create query')) {
-        errorMessage = `Query failed. Please verify a valid query payload. ${JSON.stringify(error)}`
+        errorMessage = JSON.stringify(e?.caused_by?.reason)
+      } else if (JSON.stringify(e).includes('failed to create query')) {
+        errorMessage = `Query failed with invalid parameters: ${JSON.stringify(e)}`
       } else {
-        throw error
+        errorMessage = `Unknown error: ${JSON.stringify(e)}`
       }
-
       throw new ValidationError(errorMessage)
+    } else {
+      throw error
     }
   }
 

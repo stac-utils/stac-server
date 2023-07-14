@@ -14,7 +14,7 @@ const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename) // eslint-disable-line no-unused-vars
 const intersectsGeometry = fs.readFileSync(path.resolve(__dirname, '../fixtures/stac/intersectsGeometry.json'), 'utf8')
 
-// const fixture = (filepath) => fs.readFileSync(path.resolve(__dirname, filepath), 'utf8')
+const fixture = (filepath) => fs.readFileSync(path.resolve(__dirname, filepath), 'utf8')
 
 const ingestEntities = async (fixtures) => {
   await ingestItems(
@@ -420,68 +420,92 @@ test('/search preserve intersects geometry in next link', async (t) => {
   t.deepEqual(nextLink.body.intersects, intersectsGeometry)
 })
 
-// test('POST /search using bad geometry, expecting useful error messages', async (t) => {
-//   let response = null
+test('POST /search - polygon wound incorrectly, but should succeeed', async (t) => {
+  const response = await t.context.api.client.post('search', {
+    json: {
+      intersects: fixture('../fixtures/geometry/polygonWoundCCW.json')
+    }
+  })
+  t.is(response.features.length, 0)
+})
 
-//   response = await t.context.api.client.post('search', {
-//     json: {
-//       intersects: fixture('../fixtures/geometry/badGeoUnclosed.json')
-//     }
-//   })
-//   t.is(response.statusCode, 400)
-//   t.deepEqual(response.body,
-//  [{ message: 'the first and last positions in a LinearRing of coordinates must be the same' }])
+test('POST /search - failure when polygon is unclosed', async (t) => {
+  const error = await t.throwsAsync(async () => t.context.api.client.post('search', {
+    json: {
+      intersects: fixture('../fixtures/geometry/badGeoUnclosed.json')
+    }
+  }))
+  t.is(error.response.statusCode, 400)
+  t.is(error.response.body.code, 'BadRequest')
+  t.regex(error.response.body.description,
+    /.*invalid LinearRing found \(coordinates are not closed\).*/)
+})
 
-//   response = await t.context.api.client.post('search', {
-//     json: {
-//       intersects: fixture('../fixtures/geometry/badGeoRightHandRule.json')
-//     }
-//   })
-//   t.is(response.statusCode, 400)
-//   t.deepEqual(response.body,
-// [{ message: 'Polygons and MultiPolygons should follow the right-hand rule' }])
+test('POST /search - failure when ambigous winding', async (t) => {
+  // The right-hand rule part is ok (see:
+  // https://github.com/stac-utils/stac-server/issues/549) but there's
+  // coinciding points.
+  const error = await t.throwsAsync(async () => t.context.api.client.post('search', {
+    json: {
+      intersects: fixture('../fixtures/geometry/badGeoRightHandRule.json')
+    }
+  }))
+  t.is(error.response.statusCode, 400)
+  t.is(error.response.body.code, 'BadRequest')
+  t.regex(error.response.body.description,
+    /.*failed to create query: Cannot determine orientation: edges adjacent to.*/)
+})
 
-//   response = await t.context.api.client.post('search', {
-//     json: {
-//       intersects: fixture('../fixtures/geometry/badGeoFourPoints.json')
-//     }
-//   })
-//   t.is(response.statusCode, 400)
-//   t.deepEqual(response.body, [
-//     {
-//       reason: 'failed to create query: at least 4 polygon points required'
-//     },
-//     {
-//       reason: 'failed to create query: at least 4 polygon points required'
-//     }
-//   ])
+test('POST /search - failure when ambigous winding 2', async (t) => {
+  // The right-hand rule part is ok (see:
+  // https://github.com/stac-utils/stac-server/issues/549) but there's
+  // coinciding points.
+  const error = await t.throwsAsync(async () => t.context.api.client.post('search', {
+    json: {
+      intersects: fixture('../fixtures/geometry/badGeoRightHandRule2.json')
+    }
+  }))
+  t.is(error.response.statusCode, 400)
+  t.is(error.response.body.code, 'BadRequest')
+  t.regex(error.response.body.description,
+    /.*failed to create query: Cannot determine orientation: edges adjacent to.*/)
+})
 
-//   response = await t.context.api.client.post('search', {
-//     json: {
-//       intersects: fixture('../fixtures/geometry/badGeoDuplicateConsecutive.json')
-//     }
-//   })
-//   t.is(response.statusCode, 400)
-//   t.deepEqual(response.body, [
-//     {
-//       reason: 'failed to create query:
-// Provided shape has duplicate consecutive coordinates at: (POINT (100.0 1.0))'
-//     },
-//     {
-//       reason: 'failed to create query:
-// Provided shape has duplicate consecutive coordinates at: (POINT (100.0 1.0))'
-//     }
-//   ])
+test('POST /search - failure when Polygon only has 4 points ', async (t) => {
+  const error = await t.throwsAsync(async () => t.context.api.client.post('search', {
+    json: {
+      intersects: fixture('../fixtures/geometry/badGeoFourPoints.json')
+    }
+  }))
+  t.is(error.response.statusCode, 400)
+  t.is(error.response.body.code, 'BadRequest')
+  t.regex(error.response.body.description,
+    /.*failed to create query: at least 4 polygon points required.*/)
+})
 
-//   response = await t.context.api.client.post('search', {
-//     json: {
-//       intersects: fixture('../fixtures/geometry/badGeoRightHandRule2.json')
-//     }
-//   })
-//   t.is(response.statusCode, 400)
-//   t.deepEqual(response.body,
-// [{ message: 'Polygons and MultiPolygons should follow the right-hand rule' }])
-// })
+test('POST /search - failure when shape has duplicate consecutive coordinates', async (t) => {
+  const error = await t.throwsAsync(async () => t.context.api.client.post('search', {
+    json: {
+      intersects: fixture('../fixtures/geometry/badGeoDuplicateConsecutive.json')
+    }
+  }))
+  t.is(error.response.statusCode, 400)
+  t.is(error.response.body.code, 'BadRequest')
+  t.regex(error.response.body.description,
+    /.*Provided shape has duplicate consecutive coordinates at.*/)
+})
+
+test('POST /search - failure when MultiPolygon has only 4 points', async (t) => {
+  const error = await t.throwsAsync(async () => t.context.api.client.post('search', {
+    json: {
+      intersects: fixture('../fixtures/geometry/badGeoFourPointsMultiPolygon.json')
+    }
+  }))
+  t.is(error.response.statusCode, 400)
+  t.is(error.response.body.code, 'BadRequest')
+  t.regex(error.response.body.description,
+    /.*failed to create query: at least 4 polygon points required.*/)
+})
 
 test('/search preserve bbox in prev and next links', async (t) => {
   const bbox = [-180, -90, 180, 90]

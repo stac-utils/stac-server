@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- Simplify the error handling around geometry errors.
+- When an OpenSearch request returns a 400 status code, use this same status code with a meaningful error message in the stac-server response, instead of always returning a 500 error.
+
 ## [2.2.2] - 2023-07-06
 
 ### Changed

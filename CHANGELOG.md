@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Changed
 
 - Simplify the error handling around geometry errors.
+- When an OpenSearch request returns a 400 status code, use this same status code with a meaningful error message in the stac-server response, instead of always returning a 500 error.
 
 ## [2.2.2] - 2023-07-06
 

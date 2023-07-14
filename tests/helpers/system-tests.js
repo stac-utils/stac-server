@@ -48,7 +48,7 @@ export const setupResources = async () => {
 }
 
 /**
- * @typedef {import('./api').ApiInstance} ApiInstance
+ * @typedef {import('./api.js').ApiInstance} ApiInstance
  */
 
 /**

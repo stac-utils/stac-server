@@ -8,6 +8,27 @@
   - [Migration](#migration)
     - [0.x or 1.x -\> 2.x](#0x-or-1x---2x)
       - [Fine-grained Access Control](#fine-grained-access-control)
+<<<<<<< HEAD
+=======
+      - [Enabling Post-ingest SNS publishing](#enabling-post-ingest-sns-publishing)
+>>>>>>> main
+    - [0.4.x -\> 0.5.x](#04x---05x)
+      - [Elasticsearch to OpenSearch Migration](#elasticsearch-to-opensearch-migration)
+      - [Preferred Elasticsearch to OpenSearch Migration Process](#preferred-elasticsearch-to-opensearch-migration-process)
+      - [Granting Access for Thumbnails](#granting-access-for-thumbnails)
+    - [0.3.x -\> 0.4.x](#03x---04x)
+      - [Elasticsearch upgrade from 7.9 to 7.10](#elasticsearch-upgrade-from-79-to-710)
+      - [Disable automatic index creation](#disable-automatic-index-creation)
+      - [Validate index mappings](#validate-index-mappings)
+- [stac-server](#stac-server)
+- [\<\<\<\<\<\<\< HEAD](#-head)
+  - [Overview](#overview)
+  - [Architecture](#architecture)
+  - [Migration](#migration)
+    - [0.x or 1.x -\> 2.x](#0x-or-1x---2x)
+      - [Fine-grained Access Control](#fine-grained-access-control)
+- [\<\<\<\<\<\<\< HEAD](#-head-1)
+      - [Enabling Post-ingest SNS publishing](#enabling-post-ingest-sns-publishing)
     - [0.4.x -\> 0.5.x](#04x---05x)
       - [Elasticsearch to OpenSearch Migration](#elasticsearch-to-opensearch-migration)
       - [Preferred Elasticsearch to OpenSearch Migration Process](#preferred-elasticsearch-to-opensearch-migration-process)
@@ -28,6 +49,7 @@
     - [Proxying Stac-server through CloudFront](#proxying-stac-server-through-cloudfront)
     - [Locking down transaction endpoints](#locking-down-transaction-endpoints)
     - [AWS WAF Rule Conflicts](#aws-waf-rule-conflicts)
+    - [API Gateway Logging](#api-gateway-logging)
   - [Queryables](#queryables)
   - [Aggregation](#aggregation)
   - [Ingesting Data](#ingesting-data)
@@ -135,6 +157,52 @@ As of 2.0.0, only OpenSearch is supported and only using fine-grained access con
 It is recommended to follow the migration path to upgrade to fine-grained access control
 first and then upgrade to stac-server 2.x.
 
+<<<<<<< HEAD
+=======
+#### Enabling Post-ingest SNS publishing
+
+stac-server now has the ability to publish all ingested entities (Items and Collections)
+to an SNS topic. Follow these steps to add this to an existing deployment. These
+configurations are also in the serverless.example.yml file, so reference that if it is
+unclear exactly where to add this in your config.
+
+The following changes should be added to the serverless.yml file.
+
+Explicitly set the provider/environment setting for STAC_API_URL so the ingested entities
+published to the topic will have their link hrefs set correctly. If this is not set,
+the entities will still be published, with with incorrect link hrefs.
+
+```text
+STAC_API_URL: "https://some-stac-server.com"
+```
+
+Add the SNS topic resource:
+
+```text
+postIngestTopic:
+  Type: AWS::SNS::Topic
+  Properties:
+    TopicName: ${self:service}-${self:provider.stage}-post-ingest
+```
+
+For the `ingest` Lambda resource definition, configure the ARN to publish to by adding:
+
+```text
+environment:
+  POST_INGEST_TOPIC_ARN: !Ref postIngestTopic
+```
+
+Add IAM permissions with the statement:
+
+```text
+- Effect: Allow
+  Action:
+    - sns:Publish
+  Resource:
+    Fn::GetAtt: [postIngestTopic, TopicArn]
+```
+
+>>>>>>> main
 ### 0.4.x -> 0.5.x
 
 #### Elasticsearch to OpenSearch Migration
@@ -521,11 +589,9 @@ aws lambda invoke \
   /dev/stdout
 ```
 
-Stac-server is now ready to ingest data!
-
 #### OpenSearch fine-grained access control
 
-As of version 2.0.0, stac-server on"ly supports fine-grained access control to
+As of version 2.0.0, stac-server only supports fine-grained access control to
 OpenSearch, and no longer supports "AWS Connection" mode.
 
 **Warning**: Unfortunately, fine-grained access control cannot be enabled on an
@@ -544,14 +610,16 @@ either be done through the OpenSearch API or Dashboard.
 
 ##### Option 1 - API method
 
-This assumes the master username is `admin` and creats a user with the name `stac_server`.
+This assumes the master username is `admin` and creates a user with the name `stac_server`.
+Environment variables `HOST` and `OPENSEARCH_MASTER_USER_PASSWORD` should be set in the
+shell environment.
 
 Create the Role:
 
 ```shell
 curl -X "PUT" "${HOST}/_plugins/_security/api/roles/stac_server_role" \
      -H 'Content-Type: application/json; charset=utf-8' \
-     -u 'admin:xxxxxxxx' \
+     -u "admin:${OPENSEARCH_MASTER_USER_PASSWORD}" \
      -d $'{
   "cluster_permissions": [
     "cluster_composite_ops",
@@ -586,7 +654,7 @@ Create the User:
 ```shell
 curl -X "PUT" "${HOST}/_plugins/_security/api/internalusers/stac_server" \
      -H 'Content-Type: application/json; charset=utf-8' \
-     -u 'admin:xxxxxxxx' \
+     -u "admin:${OPENSEARCH_MASTER_USER_PASSWORD}" \
      -d $'{ "password": "xxx" }'
 ```
 
@@ -597,7 +665,7 @@ Map the Role to the User:
 ```shell
 curl -X "PUT" "${HOST}/_plugins/_security/api/rolesmapping/stac_server_role" \
      -H 'Content-Type: application/json; charset=utf-8' \
-     -u 'admin:xxxxxxxx' \
+     -u "admin:${OPENSEARCH_MASTER_USER_PASSWORD}"  \
      -d $'{
   "users": [
     "stac_server"
@@ -634,8 +702,8 @@ so that stac-server can access them.
 The preferred mechanism for populating the OpenSearch credentials to stac-server is to
 create a secret in AWS Secret Manager that contains the username and password. The
 recommended name for this Secret corresponds
-to the stac-server deployment as `{stage}/{service}/opensearch`, e.g.,
-`dev/my-stac-server/opensearch`.
+to the stac-server deployment as `${service}-${stage}-opensearch-user-creds`, e.g.,
+`my-stac-server-dev-opensearch-user-creds`.
 
 The Secret type should be "Other type of secret" and
 have two keys, `username` and `password`, with the appropriate
@@ -645,14 +713,14 @@ Add the `OPENSEARCH_CREDENTIALS_SECRET_ID` variable to the serverless.yml sectio
 `environment`:
 
 ```yaml
-OPENSEARCH_CREDENTIALS_SECRET_ID: ${self:provider.stage}/${self:service}/opensearch
+OPENSEARCH_CREDENTIALS_SECRET_ID: ${self:service}-${self:provider.stage}-opensearch-user-creds
 ```
 
 Add to the IAM Role Statements:
 
 ```yaml
-- Effect: "Allow"
-  Resource: "arn:aws:secretsmanager:${aws:region}:${aws:accountId}:secret:${self:provider.stage}/${self:service}/opensearch-*"
+- Effect: Allow
+  Resource: arn:aws:secretsmanager:${aws:region}:${aws:accountId}:secret:${self:provider.environment.OPENSEARCH_CREDENTIALS_SECRET_ID}-*
   Action: "secretsmanager:GetSecretValue"
 ```
 
@@ -673,6 +741,8 @@ OPENSEARCH_PASSWORD: xxxxxxxxxxx
 
 Setting these as environment variables can also be useful when running stac-server
 locally.
+
+Stac-server is now ready to ingest data!
 
 ### Proxying Stac-server through CloudFront
 
@@ -794,6 +864,19 @@ This is also triggered when using pystac_client with no filtering parameters.
 
 The fix is to disable the WAF SQL injection rule, which is unnecessary because
 stac-server does not use SQL.
+
+### API Gateway Logging
+
+The example serverless.yml config contains disabled configuration for setting up
+API Gateway logging of API requests. More information about these configuration can be
+found in the [Serverless Framework API Gateway Documentation](https://www.serverless.com/framework/docs/providers/aws/events/apigateway#logs).
+
+The `executionLogging` setting causes logging of the actual execution of the API Gateway
+endpoints and backing Lambda, with `fullExecutionData` causing the entire request and
+response to be logged to CloudWatch, which can be expensive.
+
+The `accessLogging` setting logs the values specified in `format` to CloudWatch, which
+can be useful for computing metrics on usage for the API.
 
 ## Queryables
 

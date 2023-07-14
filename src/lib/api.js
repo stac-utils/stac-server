@@ -2,6 +2,7 @@ import { pickBy, assign, get as getNested } from 'lodash-es'
 import extent from '@mapbox/extent'
 import { DateTime } from 'luxon'
 import AWS from 'aws-sdk'
+// import geojsonhint from '@mapbox/geojsonhint'
 import { isIndexNotFoundError } from './database.js'
 import logger from './logger.js'
 
@@ -574,7 +575,7 @@ const buildPaginationLinks = function (limit, parameters, bbox, intersects, endp
 }
 
 const searchItems = async function (collectionId, queryParameters, backend, endpoint, httpMethod) {
-  logger.debug('Query parameters: %j', queryParameters)
+  logger.debug('Search parameters (unprocessed): %j', queryParameters)
   const {
     next,
     bbox,
@@ -615,7 +616,7 @@ const searchItems = async function (collectionId, queryParameters, backend, endp
     collectionEndpoint = `${endpoint}/collections/${collectionId}`
   }
 
-  logger.debug('Search parameters: %j', searchParams)
+  logger.info('Search parameters (processed): %j', searchParams)
 
   let esResponse
   try {
@@ -630,6 +631,22 @@ const searchItems = async function (collectionId, queryParameters, backend, endp
         },
         results: []
       }
+    // @ts-ignore
+    } else if (error?.meta?.statusCode === 400) {
+      // @ts-ignore
+      const e = error?.meta?.body?.error
+
+      // only serialize part of the error message,
+      // as error.meta.meta.connection will leak the OpenSearch URL
+      let errorMessage
+      if ('caused_by' in e) {
+        errorMessage = JSON.stringify(e?.caused_by?.reason)
+      } else if (JSON.stringify(e).includes('failed to create query')) {
+        errorMessage = `Query failed with invalid parameters: ${JSON.stringify(e)}`
+      } else {
+        errorMessage = `Unknown error: ${JSON.stringify(e)}`
+      }
+      throw new ValidationError(errorMessage)
     } else {
       throw error
     }
@@ -689,7 +706,7 @@ const agg = function (esAggs, name, dataType) {
 const aggregate = async function (
   collectionId, queryParameters, backend, endpoint, httpMethod
 ) {
-  logger.debug('Aggregate parameters: %j', queryParameters)
+  logger.debug('Aggregate parameters (unprocessed): %j', queryParameters)
 
   const {
     bbox,
@@ -729,7 +746,7 @@ const aggregate = async function (
     }
   }
 
-  logger.debug('Aggregate parameters: %j', searchParams)
+  logger.info('Aggregate parameters (processed): %j', searchParams)
 
   const aggregationsRequested = extractAggregations(queryParameters)
 

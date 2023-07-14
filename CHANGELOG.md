@@ -5,7 +5,50 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [Unreleased] - TBD
+## [2.2.3] - 2023-07-14
+
+### Changed
+
+- Simplify the error handling around geometry errors.
+- When an OpenSearch request returns a 400 status code, use this same status code with a meaningful error message in the stac-server response, instead of always returning a 500 error.
+
+## [2.2.2] - 2023-07-06
+
+### Changed
+
+- Revert validation of Search intersects geometry added in 2.0.0, as it was too strict
+  and rejected some usable geometries.
+
+## [2.2.1] - 2023-07-06
+
+### Fixed
+
+- Aggregations 'grid_code_frequency' and 'grid_code_landsat_frequency' were inadvertently
+  configured to only return 10 results, now they return all results.
+
+### Added
+
+- Added API Gateway logging config to example serverless.yml config.
+
+## [2.2.0] - 2023-07-03
+
+### Changed
+
+- Search parameters are now logged at info instead of debug.
+
+## [2.1.0] - 2023-06-29
+
+### Fixed
+
+- Post-ingest SNS topic was not being published to when deployed as a Lambda.
+
+## [2.0.0] - 2023-06-26
+
+### Removed
+
+- Elasticsearch is no longer supported as a backend. Only OpenSearch is now supported.
+- Only fine-grained access control is supported for connecting to OpenSearch.
+  "AWS Connection" mode is no longer supported.
 
 ### Removed
 
@@ -16,11 +59,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Added
 
 - Publish ingest results to a post-ingest SNS topic
+- Add datetime and bbox attributes to post-ingest SNS messages
+- Support for Query Extension operators neq, startsWith, endsWith, and contains.
+- Validate intersects geometry before sending to Search + better response parsing.
 
 ### Changed
 
 - Remove node streams-based ingest code to prepare for post-ingest notifications
 - Use the `type` field to determine if ingest is a Collection or Item
+- Aggregations `grid_code_frequency` and `grid_code_landsat_frequency` are no longer
+  restricted to 2000 buckets
 
 ## [1.1.0] - 2023-05-02
 
@@ -298,6 +346,13 @@ Initial release, forked from [sat-api](https://github.com/sat-utils/sat-api/tree
 
 Compliant with STAC 0.9.0
 
+[Unreleased]: https://github.com/stac-utils/stac-api/compare/v2.2.3...main
+[2.2.3]: https://github.com/stac-utils/stac-api/compare/v2.2.2...v2.2.3
+[2.2.2]: https://github.com/stac-utils/stac-api/compare/v2.2.1...v2.2.2
+[2.2.1]: https://github.com/stac-utils/stac-api/compare/v2.2.0...v2.2.1
+[2.2.0]: https://github.com/stac-utils/stac-api/compare/v2.1.0...v2.2.0
+[2.1.0]: https://github.com/stac-utils/stac-api/compare/v2.0.0...v2.1.0
+[2.0.0]: https://github.com/stac-utils/stac-api/compare/v1.1.0...v2.0.0
 [1.1.0]: https://github.com/stac-utils/stac-api/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/stac-utils/stac-api/compare/v0.8.1...v1.0.0
 [0.8.1]: https://github.com/stac-utils/stac-api/compare/v0.8.0...v0.8.1

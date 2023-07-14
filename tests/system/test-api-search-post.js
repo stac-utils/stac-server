@@ -14,6 +14,8 @@ const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename) // eslint-disable-line no-unused-vars
 const intersectsGeometry = fs.readFileSync(path.resolve(__dirname, '../fixtures/stac/intersectsGeometry.json'), 'utf8')
 
+const fixture = (filepath) => fs.readFileSync(path.resolve(__dirname, filepath), 'utf8')
+
 const ingestEntities = async (fixtures) => {
   await ingestItems(
     await Promise.all(fixtures.map((x) => loadJson(x)))
@@ -418,6 +420,93 @@ test('/search preserve intersects geometry in next link', async (t) => {
   t.deepEqual(nextLink.body.intersects, intersectsGeometry)
 })
 
+test('POST /search - polygon wound incorrectly, but should succeeed', async (t) => {
+  const response = await t.context.api.client.post('search', {
+    json: {
+      intersects: fixture('../fixtures/geometry/polygonWoundCCW.json')
+    }
+  })
+  t.is(response.features.length, 0)
+})
+
+test('POST /search - failure when polygon is unclosed', async (t) => {
+  const error = await t.throwsAsync(async () => t.context.api.client.post('search', {
+    json: {
+      intersects: fixture('../fixtures/geometry/badGeoUnclosed.json')
+    }
+  }))
+  t.is(error.response.statusCode, 400)
+  t.is(error.response.body.code, 'BadRequest')
+  t.regex(error.response.body.description,
+    /.*invalid LinearRing found \(coordinates are not closed\).*/)
+})
+
+test('POST /search - failure when ambigous winding', async (t) => {
+  // The right-hand rule part is ok (see:
+  // https://github.com/stac-utils/stac-server/issues/549) but there's
+  // coinciding points.
+  const error = await t.throwsAsync(async () => t.context.api.client.post('search', {
+    json: {
+      intersects: fixture('../fixtures/geometry/badGeoRightHandRule.json')
+    }
+  }))
+  t.is(error.response.statusCode, 400)
+  t.is(error.response.body.code, 'BadRequest')
+  t.regex(error.response.body.description,
+    /.*failed to create query: Cannot determine orientation: edges adjacent to.*/)
+})
+
+test('POST /search - failure when ambigous winding 2', async (t) => {
+  // The right-hand rule part is ok (see:
+  // https://github.com/stac-utils/stac-server/issues/549) but there's
+  // coinciding points.
+  const error = await t.throwsAsync(async () => t.context.api.client.post('search', {
+    json: {
+      intersects: fixture('../fixtures/geometry/badGeoRightHandRule2.json')
+    }
+  }))
+  t.is(error.response.statusCode, 400)
+  t.is(error.response.body.code, 'BadRequest')
+  t.regex(error.response.body.description,
+    /.*failed to create query: Cannot determine orientation: edges adjacent to.*/)
+})
+
+test('POST /search - failure when Polygon only has 4 points ', async (t) => {
+  const error = await t.throwsAsync(async () => t.context.api.client.post('search', {
+    json: {
+      intersects: fixture('../fixtures/geometry/badGeoFourPoints.json')
+    }
+  }))
+  t.is(error.response.statusCode, 400)
+  t.is(error.response.body.code, 'BadRequest')
+  t.regex(error.response.body.description,
+    /.*failed to create query: at least 4 polygon points required.*/)
+})
+
+test('POST /search - failure when shape has duplicate consecutive coordinates', async (t) => {
+  const error = await t.throwsAsync(async () => t.context.api.client.post('search', {
+    json: {
+      intersects: fixture('../fixtures/geometry/badGeoDuplicateConsecutive.json')
+    }
+  }))
+  t.is(error.response.statusCode, 400)
+  t.is(error.response.body.code, 'BadRequest')
+  t.regex(error.response.body.description,
+    /.*Provided shape has duplicate consecutive coordinates at.*/)
+})
+
+test('POST /search - failure when MultiPolygon has only 4 points', async (t) => {
+  const error = await t.throwsAsync(async () => t.context.api.client.post('search', {
+    json: {
+      intersects: fixture('../fixtures/geometry/badGeoFourPointsMultiPolygon.json')
+    }
+  }))
+  t.is(error.response.statusCode, 400)
+  t.is(error.response.body.code, 'BadRequest')
+  t.regex(error.response.body.description,
+    /.*failed to create query: at least 4 polygon points required.*/)
+})
+
 test('/search preserve bbox in prev and next links', async (t) => {
   const bbox = [-180, -90, 180, 90]
 
@@ -446,4 +535,111 @@ test('/search preserve bbox in prev and next links', async (t) => {
   t.is(response.links.length, 2)
   t.is(linkRel(response, 'next').body.datetime, datetime)
   t.deepEqual(linkRel(response, 'next').body.bbox, bbox)
+})
+
+test('/search Query Extension', async (t) => {
+  let response = null
+
+  // 3 items, 2 with platform landsat-8, 1 with platform2
+
+  response = await t.context.api.client.post('search', {
+    json: {}
+  })
+  t.is(response.features.length, 3)
+
+  response = await t.context.api.client.post('search', {
+    json: {
+      query: {
+        platform: {
+          eq: 'landsat-8'
+        }
+      }
+    }
+  })
+  t.is(response.features.length, 2)
+
+  response = await t.context.api.client.post('search', {
+    json: {
+      query: {
+        platform: {
+          neq: 'landsat-8'
+        }
+      }
+    }
+  })
+  t.is(response.features.length, 1)
+
+  response = await t.context.api.client.post('search', {
+    json: {
+      query: {
+        platform: {
+          startsWith: 'land'
+        }
+      }
+    }
+  })
+  t.is(response.features.length, 2)
+
+  response = await t.context.api.client.post('search', {
+    json: {
+      query: {
+        platform: {
+          endsWith: '-8'
+        }
+      }
+    }
+  })
+  t.is(response.features.length, 2)
+
+  response = await t.context.api.client.post('search', {
+    json: {
+      query: {
+        platform: {
+          contains: 'ndsa'
+        }
+      }
+    }
+  })
+  t.is(response.features.length, 2)
+
+  response = await t.context.api.client.post('search', {
+    json: {
+      query: {
+        platform: {
+          contains: 'ndsa',
+          endsWith: '-8',
+          startsWith: 'land',
+        }
+      }
+    }
+  })
+  t.is(response.features.length, 2)
+
+  response = await t.context.api.client.post('search', {
+    json: {
+      query: {
+        platform: {
+          contains: 'ndsa',
+          endsWith: '-8',
+          startsWith: 'land',
+        },
+        'eo:cloud_cover': {
+          eq: 0.54,
+        }
+      }
+    }
+  })
+  t.is(response.features.length, 1)
+
+  response = await t.context.api.client.post('search', {
+    json: {
+      query: {
+        platform: {
+          contains: 'ndsa',
+          neq: 'landsat-8'
+        }
+      }
+    }
+  })
+  t.is(response.features.length, 0)
 })

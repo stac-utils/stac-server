@@ -74,36 +74,99 @@ export function buildDatetimeQuery(parameters) {
 
 function buildQuery(parameters) {
   const eq = 'eq'
+  const neq = 'neq'
   const inop = 'in'
+  const startsWith = 'startsWith'
+  const endsWith = 'endsWith'
+  const contains = 'contains'
+
   const { query, intersects, collections, ids } = parameters
+
   let filterQueries = []
+  let mustNotQueries = []
+
   if (query) {
     // Using reduce rather than map as we don't currently support all
     // stac query operators.
     filterQueries = Object.keys(query).reduce((accumulator, property) => {
       const operatorsObject = query[property]
       const operators = Object.keys(operatorsObject)
+
+      // eq
       if (operators.includes(eq)) {
-        const termQuery = {
+        accumulator.push({
           term: {
             [`properties.${property}`]: operatorsObject.eq
           }
-        }
-        accumulator.push(termQuery)
-      } else if (operators.includes(inop)) {
-        const termsQuery = {
+        })
+      }
+
+      // in
+      if (operators.includes(inop)) {
+        accumulator.push({
           terms: {
             [`properties.${property}`]: operatorsObject.in
           }
-        }
-        accumulator.push(termsQuery)
+        })
       }
+
+      // startsWith
+      if (operators.includes(startsWith)) {
+        accumulator.push({
+          prefix: {
+            [`properties.${property}`]: {
+              value: operatorsObject.startsWith
+            }
+          }
+        })
+      }
+
+      // endsWith
+      if (operators.includes(endsWith)) {
+        accumulator.push({
+          wildcard: {
+            [`properties.${property}`]: {
+              value: `*${operatorsObject.endsWith}`
+            }
+          }
+        })
+      }
+
+      // contains
+      if (operators.includes(contains)) {
+        accumulator.push({
+          wildcard: {
+            [`properties.${property}`]: {
+              value: `*${operatorsObject.contains}*`
+            }
+          }
+        })
+      }
+
+      // lt, lte, gt, gte
       const rangeQuery = buildRangeQuery(property, operators, operatorsObject)
       if (rangeQuery) {
         accumulator.push(rangeQuery)
       }
+
       return accumulator
     }, filterQueries)
+
+    mustNotQueries = Object.keys(query).reduce((accumulator, property) => {
+      const operatorsObject = query[property]
+      const operators = Object.keys(operatorsObject)
+
+      // neq
+      if (operators.includes(neq)) {
+        accumulator.push({
+          term: {
+            [`properties.${property}`]: operatorsObject.neq
+          }
+        })
+      }
+
+      return accumulator
+    }, mustNotQueries)
   }
 
   if (ids) {
@@ -133,15 +196,14 @@ function buildQuery(parameters) {
   const datetimeQuery = buildDatetimeQuery(parameters)
   if (datetimeQuery instanceof Error) {
     throw datetimeQuery
-  }
-
-  if (datetimeQuery) {
+  } else if (datetimeQuery) {
     filterQueries.push(datetimeQuery)
   }
 
   return {
     query: {
       bool: {
+        must_not: mustNotQueries,
         filter: filterQueries
       }
     }
@@ -491,21 +553,21 @@ const ALL_AGGREGATIONS = {
   grid_code_frequency: {
     terms: {
       field: 'properties.grid:code',
-      size: 2000,
       missing: 'none',
+      size: 10000,
     }
   },
   grid_code_landsat_frequency: {
     terms: {
       field: 'properties.landsat:wrs_type',
-      size: 2000,
       missing: 'none',
       script: {
         lang: 'painless',
         source: "return 'WRS' + _value + '-' + "
           + "doc['properties.landsat:wrs_path'].value + "
           + "doc['properties.landsat:wrs_row'].value"
-      }
+      },
+      size: 10000,
     }
   },
   sun_elevation_frequency: {

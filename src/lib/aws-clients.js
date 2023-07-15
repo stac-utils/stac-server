@@ -9,7 +9,7 @@ const useLocalStack = () => {
   return process.env['NODE_ENV'] === 'test'
 }
 
-const localStackEndpoint = () => process.env[localStackEndpointEnvVar] || 'http://localhost:4566'
+const localStackEndpoint = () => process.env[localStackEndpointEnvVar] || 'http://127.0.0.1:4566'
 
 const localStackParams = () => ({
   credentials: {

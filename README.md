@@ -6,28 +6,10 @@
   - [Overview](#overview)
   - [Architecture](#architecture)
   - [Migration](#migration)
+    - [2.4.x](#24x)
+      - [Node 18 update](#node-18-update)
     - [0.x or 1.x -\> 2.x](#0x-or-1x---2x)
       - [Fine-grained Access Control](#fine-grained-access-control)
-<<<<<<< HEAD
-=======
-      - [Enabling Post-ingest SNS publishing](#enabling-post-ingest-sns-publishing)
->>>>>>> main
-    - [0.4.x -\> 0.5.x](#04x---05x)
-      - [Elasticsearch to OpenSearch Migration](#elasticsearch-to-opensearch-migration)
-      - [Preferred Elasticsearch to OpenSearch Migration Process](#preferred-elasticsearch-to-opensearch-migration-process)
-      - [Granting Access for Thumbnails](#granting-access-for-thumbnails)
-    - [0.3.x -\> 0.4.x](#03x---04x)
-      - [Elasticsearch upgrade from 7.9 to 7.10](#elasticsearch-upgrade-from-79-to-710)
-      - [Disable automatic index creation](#disable-automatic-index-creation)
-      - [Validate index mappings](#validate-index-mappings)
-- [stac-server](#stac-server)
-- [\<\<\<\<\<\<\< HEAD](#-head)
-  - [Overview](#overview)
-  - [Architecture](#architecture)
-  - [Migration](#migration)
-    - [0.x or 1.x -\> 2.x](#0x-or-1x---2x)
-      - [Fine-grained Access Control](#fine-grained-access-control)
-- [\<\<\<\<\<\<\< HEAD](#-head-1)
       - [Enabling Post-ingest SNS publishing](#enabling-post-ingest-sns-publishing)
     - [0.4.x -\> 0.5.x](#04x---05x)
       - [Elasticsearch to OpenSearch Migration](#elasticsearch-to-opensearch-migration)
@@ -149,6 +131,18 @@ apiLambda --> opensearch
 
 ## Migration
 
+### 2.4.x
+
+#### Node 18 update
+
+The default Lambda deployment environment is now Node 18. The major difference between
+the Node 16 and Node 18 Lambda environment is that the Node 16 env includes AWS SDK
+for JS v2, and Node 18 includes v3. This code has been updated to use v3, so the
+Node 18 environment must be used, or the build must be modified to install the v3 libraries.
+
+To update the deployment to use Node 18, modify the serverless config file value
+`provider.runtime` to be `nodejs18.x` and the application re-deployed.
+
 ### 0.x or 1.x -> 2.x
 
 #### Fine-grained Access Control
@@ -157,8 +151,6 @@ As of 2.0.0, only OpenSearch is supported and only using fine-grained access con
 It is recommended to follow the migration path to upgrade to fine-grained access control
 first and then upgrade to stac-server 2.x.
 
-<<<<<<< HEAD
-=======
 #### Enabling Post-ingest SNS publishing
 
 stac-server now has the ability to publish all ingested entities (Items and Collections)
@@ -202,7 +194,6 @@ Add IAM permissions with the statement:
     Fn::GetAtt: [postIngestTopic, TopicArn]
 ```
 
->>>>>>> main
 ### 0.4.x -> 0.5.x
 
 #### Elasticsearch to OpenSearch Migration

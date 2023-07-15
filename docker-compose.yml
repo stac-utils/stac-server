@@ -8,7 +8,7 @@ services:
     volumes:
       - ./opensearch/config/opensearch.yml:/usr/share/opensearch/config/opensearch.yml
   localstack:
-    image: localstack/localstack
+    image: localstack/localstack:2.1.0
     ports:
       - "127.0.0.1:4566:4566"
     environment:

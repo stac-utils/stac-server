@@ -28,7 +28,7 @@ jobs:
           cache-dependency-path: package.json
       - uses: ankane/setup-opensearch@v1
         with:
-          opensearch-version: 2.5
+          opensearch-version: 2.7
       - name: Upgrade npm
         run: npm install -g npm@latest
       - name: Install dependencies

@@ -11,6 +11,19 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - Default to OpenSearch 2.7
 
+### Added
+
+- redocly devDependency for docs build
+
+### Removed
+
+- Unused devDependencies for old docs build
+- Old `./docs` directory and out of date docs
+
+### Fixed
+
+- STAC API Docs now build and deploy to GitHub Pages using redocly
+
 ## [2.2.3] - 2023-07-14
 
 ### Changed

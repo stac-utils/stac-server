@@ -1,4 +1,5 @@
 import { Client } from '@opensearch-project/opensearch'
+import { createAWSConnection as createAWSConnectionOS, awsGetCredentials } from 'aws-os-connection'
 
 import AWS from 'aws-sdk'
 
@@ -40,11 +41,11 @@ export async function connect() {
     } else if (envUsername && envPassword) {
       client = createClientWithUsernameAndPassword(host, envUsername, envPassword)
     } else {
-      throw new Error(
-        'Could not find credentials for OpenSearch: '
-        + 'either "OPENSEARCH_CREDENTIALS_SECRET_ID"  or both "OPENSEARCH_USERNAME" and '
-        + '"OPENSEARCH_PASSWORD" must be defined'
-      )
+      // authenticate with IAM, fine-grained perms not enabled
+      client = new Client({
+        ...createAWSConnectionOS(await awsGetCredentials()),
+        node: host
+      })
     }
   }
 

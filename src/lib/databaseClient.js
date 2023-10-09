@@ -27,7 +27,7 @@ export async function connect() {
   if (!hostConfig) {
     // use local client
     const config = {
-      node: 'http://localhost:9200'
+      node: 'http://127.0.0.1:9200'
     }
     client = new Client(config)
   } else {

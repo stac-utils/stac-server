@@ -63,7 +63,7 @@
   "dependencies": {
     "@aws-sdk/client-secrets-manager": "^3.359.0",
     "@mapbox/extent": "^0.4.0",
-    "@opensearch-project/opensearch": "^2.2.1",
+    "@opensearch-project/opensearch": "^2.4.0",
     "aws-os-connection": "^0.2.0",
     "cors": "^2.8.5",
     "express": "^4.18.2",

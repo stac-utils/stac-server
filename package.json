@@ -21,7 +21,7 @@
     "test:system": "./bin/system-tests.sh",
     "test:unit": "ava tests/unit/*.[tj]s",
     "typecheck": "tsc",
-    "audit-prod": "npx better-npm-audit audit --production -x 1091470",
+    "audit-prod": "npx better-npm-audit audit --production",
     "deploy": "sls deploy",
     "sls-remove": "sls remove",
     "package": "sls package",

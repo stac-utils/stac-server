@@ -6,8 +6,9 @@
   - [Overview](#overview)
   - [Architecture](#architecture)
   - [Migration](#migration)
-    - [2.4.x](#24x)
+    - [Unreleased](#unreleased)
       - [Node 18 update](#node-18-update)
+      - [OpenSearch Version 2.7](#opensearch-version-27)
     - [0.x or 1.x -\> 2.x](#0x-or-1x---2x)
       - [Fine-grained Access Control](#fine-grained-access-control)
       - [Enabling Post-ingest SNS publishing](#enabling-post-ingest-sns-publishing)
@@ -131,7 +132,7 @@ apiLambda --> opensearch
 
 ## Migration
 
-### 2.4.x
+### Unreleased
 
 #### Node 18 update
 
@@ -142,6 +143,11 @@ Node 18 environment must be used, or the build must be modified to install the v
 
 To update the deployment to use Node 18, modify the serverless config file value
 `provider.runtime` to be `nodejs18.x` and the application re-deployed.
+
+#### OpenSearch Version 2.7
+
+- Update the `EngineVersion` setting in the serverless config file to `OpenSearch_2.7`
+  and re-deploy
 
 ### 0.x or 1.x -> 2.x
 

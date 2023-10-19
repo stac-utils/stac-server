@@ -28,9 +28,9 @@ jobs:
           cache-dependency-path: package.json
       - uses: ankane/setup-opensearch@v1
         with:
-          opensearch-version: 2.5
+          opensearch-version: 2.7
       - name: Upgrade npm
-        run: npm install -g npm@latest
+        run: npm install -g npm@8.19.4
       - name: Install dependencies
         run: npm install
       - name: Eslint

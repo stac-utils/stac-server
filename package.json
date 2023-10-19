@@ -1,7 +1,7 @@
 {
   "displayName": "stac-server",
   "description": "A STAC API running on stac-server",
-  "version": "2.2.3",
+  "version": "2.3.0",
   "repository": "https://github.com/stac-utils/stac-server",
   "author": "Alireza Jazayeri, Matthew Hanson <matt.a.hanson@gmail.com>, Sean Harkins",
   "license": "MIT",
@@ -63,6 +63,7 @@
   "dependencies": {
     "@mapbox/extent": "^0.4.0",
     "@opensearch-project/opensearch": "^2.2.1",
+    "aws-os-connection": "^0.2.0",
     "cors": "^2.8.5",
     "express": "^4.18.2",
     "got": "^13.0.0",
@@ -114,7 +115,7 @@
     "nock": "^13.3.1",
     "nodemon": "^3.0.1",
     "pre-commit": "^1.2.2",
-    "prettier": "^2.8.8",
+    "prettier": "^3.0.2",
     "prettier-eslint": "^15.0.1",
     "prettier-eslint-cli": "^7.1.0",
     "proxyquire": "^2.1.3",

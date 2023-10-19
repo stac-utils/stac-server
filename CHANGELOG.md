@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Fix OpenAPI spec version from 1.0.0-rc.4 to 1.0.0
 - Update fields, sort, and query extensions to v1.0.0
 - Update transaction extension to v1.0.0-rc.3
+- Default to OpenSearch 2.9
 
 ## [2.3.0] - 2023-09-12
 

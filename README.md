@@ -6,7 +6,9 @@
   - [Overview](#overview)
   - [Architecture](#architecture)
   - [Migration](#migration)
-    - [2.4.x](#24x)
+    - [Unreleased](#unreleased)
+      - [OpenSearch Version 2.9](#opensearch-version-29)
+    - [2.3.0](#230)
       - [OpenSearch Version 2.7](#opensearch-version-27)
     - [0.x or 1.x -\> 2.x](#0x-or-1x---2x)
       - [Fine-grained Access Control](#fine-grained-access-control)
@@ -131,7 +133,14 @@ apiLambda --> opensearch
 
 ## Migration
 
-### 2.4.x
+### Unreleased
+
+#### OpenSearch Version 2.9
+
+- Update the `EngineVersion` setting in the serverless config file to `OpenSearch_2.9`
+  and re-deploy
+
+### 2.3.0
 
 #### OpenSearch Version 2.7
 

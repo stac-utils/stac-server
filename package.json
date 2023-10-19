@@ -85,6 +85,8 @@
     "zod": "^3.22.4"
   },
   "devDependencies": {
+    "@ava/typescript": "^4.0.0",
+    "@stoplight/spectral-cli": "^6.8.0",
     "@tsconfig/node18": "^18.2.2",
     "@types/aws-lambda": "^8.10.119",
     "@types/cors": "^2.8.13",

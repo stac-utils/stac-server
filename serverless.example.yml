@@ -198,15 +198,6 @@ resources:
           MasterUserOptions:
             MasterUserName: admin
             MasterUserPassword: ${env:OPENSEARCH_MASTER_USER_PASSWORD}
-<<<<<<< HEAD
-          AccessPolicies:
-            Version:                        "2012-10-17"
-            Statement:
-              - Effect:                     "Allow"
-                Principal:                  { "AWS": "*" }
-                Action:                     "es:ESHttp*"
-                Resource:                   "arn:aws:es:${aws:region}:${aws:accountId}:domain/${self:service}-${self:provider.stage}/*"
-=======
         AccessPolicies:
           Version: "2012-10-17"
           Statement:
@@ -214,7 +205,6 @@ resources:
               Principal: { "AWS": "*" }
               Action: "es:ESHttp*"
               Resource: "arn:aws:es:${aws:region}:${aws:accountId}:domain/${self:service}-${self:provider.stage}/*"
->>>>>>> main
   Outputs:
     OpenSearchEndpoint:
       Value:

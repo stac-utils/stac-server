@@ -7,7 +7,10 @@
   - [Architecture](#architecture)
   - [Migration](#migration)
     - [Unreleased](#unreleased)
+<<<<<<< HEAD
       - [Node 18 update](#node-18-update)
+=======
+>>>>>>> origin/main
       - [OpenSearch Version 2.9](#opensearch-version-29)
     - [2.3.0](#230)
       - [OpenSearch Version 2.7](#opensearch-version-27)
@@ -136,6 +139,7 @@ apiLambda --> opensearch
 
 ### Unreleased
 
+<<<<<<< HEAD
 #### Node 18 update
 
 The default Lambda deployment environment is now Node 18. The major difference between
@@ -146,6 +150,8 @@ Node 18 environment must be used, or the build must be modified to install the v
 To update the deployment to use Node 18, modify the serverless config file value
 `provider.runtime` to be `nodejs18.x` and the application re-deployed.
 
+=======
+>>>>>>> origin/main
 #### OpenSearch Version 2.9
 
 - Update the `EngineVersion` setting in the serverless config file to `OpenSearch_2.9`

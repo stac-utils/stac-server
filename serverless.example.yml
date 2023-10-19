@@ -50,7 +50,7 @@ provider:
           Action:
             - sns:Publish
           Resource:
-            Fn::GetAtt: [postIngestTopic, Arn]
+            Fn::GetAtt: [postIngestTopic, TopicArn]
         - Effect: Allow
           Action: s3:GetObject
           Resource: "arn:aws:s3:::usgs-landsat/*"

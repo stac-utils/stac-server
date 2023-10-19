@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Update fields, sort, and query extensions to v1.0.0
 - Update transaction extension to v1.0.0-rc.3
 - Default to OpenSearch 2.9
+- Replace geo_shape mapping for proj:geometry field with object, as this fails when
+  the geometry is not a valid GeoJSON shape, e.g., coordinate points are not lat/lon.
 
 ## [2.3.0] - 2023-09-12
 

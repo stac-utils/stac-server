@@ -91,7 +91,7 @@
     "@types/luxon": "^3.3.3",
     "@types/memorystream": "^0.3.3",
     "@types/morgan": "^1.9.7",
-    "@types/node": "^16.18.9",
+    "@types/node": "^20.8.9",
     "@types/sinon": "^10.0.20",
     "@typescript-eslint/eslint-plugin": "^6.8.0",
     "@typescript-eslint/parser": "^6.8.0",

@@ -97,7 +97,7 @@
     "@typescript-eslint/parser": "^6.8.0",
     "ava": "^5.3.1",
     "aws-event-mocks": "^0.0.0",
-    "aws-sdk": "^2.1476.0",
+    "aws-sdk": "^2.1488.0",
     "aws-sdk-client-mock": "^3.0.0",
     "better-npm-audit": "^3.7.3",
     "c8": "^8.0.1",

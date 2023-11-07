@@ -557,19 +557,6 @@ const ALL_AGGREGATIONS = {
       size: 10000,
     }
   },
-  grid_code_landsat_frequency: {
-    terms: {
-      field: 'properties.landsat:wrs_type',
-      missing: 'none',
-      script: {
-        lang: 'painless',
-        source: "return 'WRS' + _value + '-' + "
-          + "doc['properties.landsat:wrs_path'].value + "
-          + "doc['properties.landsat:wrs_row'].value"
-      },
-      size: 10000,
-    }
-  },
   sun_elevation_frequency: {
     histogram: {
       field: 'properties.view:sun_elevation',

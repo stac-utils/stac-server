@@ -33,7 +33,6 @@ const ALL_AGGREGATION_NAMES = DEFAULT_AGGREGATIONS.map((x) => x.name).concat(
   [
     'collection_frequency',
     'grid_code_frequency',
-    'grid_code_landsat_frequency',
     'grid_geohex_frequency',
     'grid_geohash_frequency',
     'grid_geotile_frequency',
@@ -833,7 +832,6 @@ const aggregate = async function (
     const otherAggregations = new Map([
       ['collection_frequency', 'string'],
       ['grid_code_frequency', 'string'],
-      ['grid_code_landsat_frequency', 'string'],
       ['grid_geohex_frequency', 'string'],
       ['grid_geohash_frequency', 'string'],
       ['grid_geotile_frequency', 'string'],

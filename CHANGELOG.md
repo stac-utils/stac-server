@@ -16,6 +16,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Replace geo_shape mapping for proj:geometry field with object, as this fails when
   the geometry is not a valid GeoJSON shape, e.g., coordinate points are not lat/lon.
 
+### Removed
+
+- Removed support for grid_code_landsat_frequency aggregation.
+
 ## [2.3.0] - 2023-09-12
 
 ### Changed

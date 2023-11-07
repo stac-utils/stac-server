@@ -945,7 +945,6 @@ Available aggregations are:
 - datetime_min (earliest Item.Properties.datetime)
 - datetime_max (latest Item.Properties.datetime)
 - grid_code_frequency (Item.Properties.grid:code)
-- grid_code_landsat_frequency (synthesized from Item.Properties.landsat:wrs_path and Item.Properties.landsat:wrs_row)
 - sun_elevation_frequency (Item.Properties.view:sun_elevation)
 - sun_azimuth_frequency (Item.Properties.view:sun_azimuth)
 - off_nadir_frequency (Item.Properties.view:off_nadir)

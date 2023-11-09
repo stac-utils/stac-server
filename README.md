@@ -8,6 +8,7 @@
   - [Migration](#migration)
     - [Unreleased](#unreleased)
       - [Node 18 update](#node-18-update)
+    - [2.4.0](#240)
       - [OpenSearch Version 2.9](#opensearch-version-29)
     - [2.3.0](#230)
       - [OpenSearch Version 2.7](#opensearch-version-27)
@@ -145,6 +146,8 @@ Node 18 environment must be used, or the build must be modified to install the v
 
 To update the deployment to use Node 18, modify the serverless config file value
 `provider.runtime` to be `nodejs18.x` and the application re-deployed.
+
+### 2.4.0
 
 #### OpenSearch Version 2.9
 

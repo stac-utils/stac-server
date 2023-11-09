@@ -11,6 +11,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - Use AWS SDK for JavaScript v3 instead of v2
 - Use Node 18 by default (with AWS SDK v3 preinstalled, instead of v2)
+
+## [2.4.0] - 2023-11-08
+
+### Changed
+
 - Fix OpenAPI spec version from 1.0.0-rc.4 to 1.0.0
 - Update fields, sort, and query extensions to v1.0.0
 - Update transaction extension to v1.0.0-rc.3
@@ -369,7 +374,8 @@ Initial release, forked from [sat-api](https://github.com/sat-utils/sat-api/tree
 
 Compliant with STAC 0.9.0
 
-[Unreleased]: https://github.com/stac-utils/stac-api/compare/v2.3.0...main
+[Unreleased]: https://github.com/stac-utils/stac-api/compare/v2.4.0...main
+[2.4.0]: https://github.com/stac-utils/stac-api/compare/v2.3.0...v2.4.0
 [2.3.0]: https://github.com/stac-utils/stac-api/compare/v2.2.3...v2.3.0
 [2.2.3]: https://github.com/stac-utils/stac-api/compare/v2.2.2...v2.2.3
 [2.2.2]: https://github.com/stac-utils/stac-api/compare/v2.2.1...v2.2.2

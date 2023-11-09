@@ -6,7 +6,7 @@
   - [Overview](#overview)
   - [Architecture](#architecture)
   - [Migration](#migration)
-    - [Unreleased](#unreleased)
+    - [3.0.0](#300)
       - [Node 18 update](#node-18-update)
     - [2.4.0](#240)
       - [OpenSearch Version 2.9](#opensearch-version-29)
@@ -135,7 +135,7 @@ apiLambda --> opensearch
 
 ## Migration
 
-### Unreleased
+### 3.0.0
 
 #### Node 18 update
 

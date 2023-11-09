@@ -1,7 +1,7 @@
 import { Client } from '@opensearch-project/opensearch'
 import { createAWSConnection as createAWSConnectionOS, awsGetCredentials } from 'aws-os-connection'
 
-import AWS from 'aws-sdk'
+import { SecretsManager, GetSecretValueCommand } from '@aws-sdk/client-secrets-manager'
 
 import collectionsIndexConfiguration from '../../fixtures/collections.js'
 import itemsIndexConfiguration from '../../fixtures/items.js'
@@ -34,8 +34,9 @@ export async function connect() {
     const host = hostConfig.startsWith('http') ? hostConfig : `https://${hostConfig}`
 
     if (secretName) {
-      const secretValue = await new AWS.SecretsManager()
-        .getSecretValue({ SecretId: secretName }).promise()
+      const secretValue = await new SecretsManager({}).send(
+        new GetSecretValueCommand({ SecretId: secretName })
+      )
       const { username, password } = JSON.parse(secretValue.SecretString || '')
       client = createClientWithUsernameAndPassword(host, username, password)
     } else if (envUsername && envPassword) {

@@ -54,7 +54,7 @@ test('The ingest lambda supports ingesting a collection published to SNS', async
   await sns().publish({
     TopicArn: ingestTopicArn,
     Message: JSON.stringify(collection)
-  }).promise()
+  })
 
   await sqsTriggerLambda(ingestQueueUrl, handler)
 
@@ -87,18 +87,18 @@ test('The ingest lambda supports ingesting a collection sourced from S3', async 
     CreateBucketConfiguration: {
       LocationConstraint: 'us-west-2'
     }
-  }).promise()
+  })
 
   await s3.putObject({
     Bucket: sourceBucket,
     Key: sourceKey,
     Body: JSON.stringify(collection)
-  }).promise()
+  })
 
   await sns().publish({
     TopicArn: ingestTopicArn,
     Message: JSON.stringify({ href: `s3://${sourceBucket}/${sourceKey}` })
-  }).promise()
+  })
 
   await sqsTriggerLambda(ingestQueueUrl, handler)
 
@@ -125,7 +125,7 @@ test('The ingest lambda supports ingesting a collection sourced from http', asyn
   await sns().publish({
     TopicArn: ingestTopicArn,
     Message: JSON.stringify({ href: 'http://source.local/my-file.dat' })
-  }).promise()
+  })
 
   await sqsTriggerLambda(ingestQueueUrl, handler)
 
@@ -406,7 +406,7 @@ test('Ingest collection failure is published to post-ingest SNS topic', async (t
 
 async function emptyPostIngestQueue(t) {
   // We initially tried calling
-  // await sqs().purgeQueue({ QueueUrl: postIngestQueueUrl }).promise()
+  // await sqs().purgeQueue({ QueueUrl: postIngestQueueUrl })
   // But at least one test would intermittently fail because of an additional
   // message in the queue.
   // The documentation for the purgeQueue method says:
@@ -418,7 +418,7 @@ async function emptyPostIngestQueue(t) {
     result = await sqs().receiveMessage({
       QueueUrl: t.context.postIngestQueueUrl,
       WaitTimeSeconds: 1
-    }).promise()
+    })
   } while (result.Message && result.Message.length > 0)
 }
 

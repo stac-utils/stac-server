@@ -3,6 +3,10 @@
     "@types/node": {
       "versions": "20",
       "reason": ""
+    },
+    "typescript": {
+      "versions": "5.2.2",
+      "reason": "conflict with other dependency"
     }
   }
 }

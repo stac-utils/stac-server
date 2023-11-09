@@ -6,7 +6,7 @@ const getObjectBody = async (s3Location) => {
     const result = await s3().getObject({
       Bucket: s3Location.bucket,
       Key: s3Location.key
-    }).promise()
+    })
 
     if (result.Body === undefined) {
       throw new Error(`Body of ${s3Location.url} is undefined`)
@@ -21,6 +21,7 @@ const getObjectBody = async (s3Location) => {
   }
 }
 
-const getObjectText = (s3Location) => getObjectBody(s3Location).then((b) => b.toString())
+const getObjectText = (s3Location) => getObjectBody(s3Location).then((b) =>
+  b.transformToString())
 
 export default (s3Location) => getObjectText(s3Location).then(JSON.parse)

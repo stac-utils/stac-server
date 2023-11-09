@@ -38,7 +38,7 @@ export default [
   {
     proj_geometry: {
       match: 'proj:geometry',
-      mapping: { type: 'object' }
+      mapping: { type: 'object', enabled: false }
     }
   },
   {

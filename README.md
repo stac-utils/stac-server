@@ -6,7 +6,7 @@
   - [Overview](#overview)
   - [Architecture](#architecture)
   - [Migration](#migration)
-    - [Unreleased](#unreleased)
+    - [2.4.0](#240)
       - [OpenSearch Version 2.9](#opensearch-version-29)
     - [2.3.0](#230)
       - [OpenSearch Version 2.7](#opensearch-version-27)
@@ -133,7 +133,7 @@ apiLambda --> opensearch
 
 ## Migration
 
-### Unreleased
+### 2.4.0
 
 #### OpenSearch Version 2.9
 

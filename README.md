@@ -56,6 +56,7 @@
     - [Running System and Integration Tests](#running-system-and-integration-tests)
     - [Updating the OpenAPI specification](#updating-the-openapi-specification)
   - [About](#about)
+  - [License](#license)
 
 ## Overview
 
@@ -1261,3 +1262,11 @@ and fix any errors or warnings.
 ## About
 
 [stac-server](https://github.com/stac-utils/stac-server) was forked from [sat-api](https://github.com/sat-utils/sat-api). Stac-server is for STAC versions 0.9.0+, while sat-api exists for versions of STAC prior to 0.9.0.
+
+## License
+
+stac-server is licensed under [The MIT License](https://opensource.org/license/mit/).
+Copyright for portions of stac-server are held by Development Seed (2016) as
+part of project [sat-api](https://github.com/sat-utils/sat-api)
+[original license](https://github.com/sat-utils/sat-api/blob/master/LICENSE). All other
+copyright for stac-server is held by Element 84, Inc (2020).

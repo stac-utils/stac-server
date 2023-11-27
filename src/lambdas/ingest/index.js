@@ -1,6 +1,6 @@
 /* eslint-disable import/prefer-default-export */
 import got from 'got' // eslint-disable-line import/no-unresolved
-import { createIndex } from '../../lib/databaseClient.js'
+import { createIndex } from '../../lib/database-client.js'
 import { ingestItems, publishResultsToSns } from '../../lib/ingest.js'
 import getObjectJson from '../../lib/s3-utils.js'
 import logger from '../../lib/logger.js'

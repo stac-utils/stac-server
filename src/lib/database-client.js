@@ -1,6 +1,8 @@
 import { Client } from '@opensearch-project/opensearch'
-import { createAWSConnection as createAWSConnectionOS, awsGetCredentials } from 'aws-os-connection'
 
+// eslint-disable-next-line import/no-unresolved
+import { AwsSigv4Signer } from '@opensearch-project/opensearch/aws'
+import { defaultProvider } from '@aws-sdk/credential-provider-node'
 import { SecretsManager, GetSecretValueCommand } from '@aws-sdk/client-secrets-manager'
 
 import collectionsIndexConfiguration from '../../fixtures/collections.js'
@@ -13,6 +15,17 @@ function createClientWithUsernameAndPassword(host, username, password) {
   const protocolAndHost = host.split('://')
   return new Client({
     node: `${protocolAndHost[0]}://${username}:${password}@${protocolAndHost[1]}`
+  })
+}
+
+function createClientWithAwsAuth(host) {
+  return new Client({
+    ...AwsSigv4Signer({
+      region: process.env['AWS_REGION'] || 'us-west-2',
+      service: host.endsWith('aoss.amazonaws.com') ? 'aoss' : 'es',
+      getCredentials: () => defaultProvider()(),
+    }),
+    node: host
   })
 }
 
@@ -42,11 +55,7 @@ export async function connect() {
     } else if (envUsername && envPassword) {
       client = createClientWithUsernameAndPassword(host, envUsername, envPassword)
     } else {
-      // authenticate with IAM, fine-grained perms not enabled
-      client = new Client({
-        ...createAWSConnectionOS(await awsGetCredentials()),
-        node: host
-      })
+      client = createClientWithAwsAuth(host)
     }
   }
 

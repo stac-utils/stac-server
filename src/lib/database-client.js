@@ -86,7 +86,10 @@ export async function createIndex(index) {
       logger.info(`Created index ${index}`)
       logger.debug('Mapping: %j', indexConfiguration)
     } catch (error) {
-      logger.debug(`Error creating index '${index}'`, error)
+      logger.error(`Error creating index '${index}'`, error)
+      throw error
     }
+  } else {
+    logger.error(`${index} already exists.`)
   }
 }

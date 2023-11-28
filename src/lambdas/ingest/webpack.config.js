@@ -19,9 +19,6 @@ export default {
     filename: 'index.js',
     path: resolve(__dirname, '..', '..', '..', 'dist', 'ingest')
   },
-  externals: [
-    'aws-sdk'
-  ],
   devtool,
   resolve: {
     extensions: ["", ".webpack.js", ".web.js", ".ts", ".js"],

@@ -12,11 +12,7 @@ const setup = () => {
     promise: () => (Promise.resolve(true))
   })
   ECS.prototype.runTask = runTask
-  const AWS = {
-    ECS
-  }
   const lambda = proxyquire('../../src/lambdas/ingest/', {
-    'aws-sdk': AWS
   })
   return {
     ingest,

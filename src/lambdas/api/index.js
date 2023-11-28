@@ -64,7 +64,7 @@ const logZodParseError = (data, error) => {
 }
 
 /**
- * @param {Lambda} lambda
+ * @param {any} lambda
  * @param {string} preHook
  * @param {APIGatewayProxyEvent} payload
  * @returns {Promise<APIGatewayProxyEvent|APIGatewayProxyResult>}
@@ -111,7 +111,7 @@ const invokePreHook = async (lambda, preHook, payload) => {
 }
 
 /**
- * @param {Lambda} lambda
+ * @param {any} lambda
  * @param {string} postHook
  * @param {APIGatewayProxyResult} payload
  * @returns {Promise<APIGatewayProxyResult>}

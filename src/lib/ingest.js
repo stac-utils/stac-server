@@ -1,6 +1,6 @@
 import { getItemCreated } from './database.js'
 import { addItemLinks, addCollectionLinks } from './api.js'
-import { dbClient, createIndex } from './databaseClient.js'
+import { dbClient, createIndex } from './database-client.js'
 import logger from './logger.js'
 import { publishRecordToSns } from './sns.js'
 import { isCollection, isItem } from './stac-utils.js'

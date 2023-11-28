@@ -7,8 +7,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased] - TBD
 
+### Added
+
+- Added support for AWS IAM authentication to AWS OpenSearch Serverless
+
 ### Changed
 
+- Replaced use of aws-os-connection library for AWS IAM authentication with support
+  in opensearch-js.
 - Default to OpenSearch 2.11
 
 ## [3.0.0] - 2023-11-09
@@ -380,7 +386,7 @@ Initial release, forked from [sat-api](https://github.com/sat-utils/sat-api/tree
 
 Compliant with STAC 0.9.0
 
-<!-- [Unreleased]: https://github.com/stac-utils/stac-api/compare/v2.4.0...main -->
+[Unreleased]: https://github.com/stac-utils/stac-api/compare/v2.4.0...main
 [3.0.0]: https://github.com/stac-utils/stac-api/compare/v2.4.0...v3.0.0
 [2.4.0]: https://github.com/stac-utils/stac-api/compare/v2.3.0...v2.4.0
 [2.3.0]: https://github.com/stac-utils/stac-api/compare/v2.2.3...v2.3.0

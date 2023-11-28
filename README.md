@@ -6,6 +6,8 @@
   - [Overview](#overview)
   - [Architecture](#architecture)
   - [Migration](#migration)
+    - [3.1.0](#310)
+      - [OpenSearch Version 2.11](#opensearch-version-211)
     - [3.0.0](#300)
       - [Node 18 update](#node-18-update)
     - [2.4.0](#240)
@@ -135,6 +137,13 @@ apiLambda --> opensearch
 ```
 
 ## Migration
+
+### 3.1.0
+
+#### OpenSearch Version 2.11
+
+- Update the `EngineVersion` setting in the serverless config file to `OpenSearch_2.11`
+  and re-deploy
 
 ### 3.0.0
 

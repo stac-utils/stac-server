@@ -15,10 +15,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - Replaced use of aws-os-connection library for AWS IAM authentication with support
   in opensearch-js.
-<<<<<<< HEAD
 - Default to OpenSearch 2.11
-=======
->>>>>>> 86500f7 (add support for IAM auth to OpenSearch Serverless)
 
 ## [3.0.0] - 2023-11-09
 

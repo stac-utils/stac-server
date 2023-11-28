@@ -129,6 +129,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Removed
 
+- Child link relations removed from root (landing page).
 - POST /aggregate endpoints were removed, as they didn't work correctly.
 
 ### Added

@@ -20,7 +20,7 @@ const eventFromQueue = async (ingestQueueUrl) => {
   const { Messages } = await _sqs().receiveMessage({
     QueueUrl: ingestQueueUrl,
     WaitTimeSeconds: 1
-  }).promise()
+  })
 
   return {
     Records: Messages.map((m) => sqsMessageToRecord(m))
@@ -37,7 +37,7 @@ export const sqsTriggerLambda = async (sqsUrl, handler, _context = {}) => {
  * @returns {Promise<void>}
  */
 export const purgeQueue = async (url) => {
-  await _sqs().purgeQueue({ QueueUrl: url }).promise()
+  await _sqs().purgeQueue({ QueueUrl: url })
 }
 
 /**
@@ -48,7 +48,7 @@ export const createQueue = async () => {
 
   const { QueueUrl } = await sqs.createQueue({
     QueueName: randomId('queue')
-  }).promise()
+  })
 
   if (QueueUrl) return QueueUrl
 
@@ -65,7 +65,7 @@ export const getQueueArn = async (queueUrl) => {
   const getQueueAttributesResult = await sqs.getQueueAttributes({
     QueueUrl: queueUrl,
     AttributeNames: ['QueueArn']
-  }).promise()
+  })
 
   if (
     isUndefined(getQueueAttributesResult.Attributes)

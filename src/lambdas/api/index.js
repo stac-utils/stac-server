@@ -8,7 +8,7 @@
 
 import { z } from 'zod'
 import serverless from 'serverless-http'
-import { Lambda } from 'aws-sdk'
+import { Lambda } from '@aws-sdk/client-lambda'
 import { app } from './app.js'
 import _default from './types.js'
 import logger from '../../lib/logger.js'
@@ -70,20 +70,20 @@ const logZodParseError = (data, error) => {
  * @returns {Promise<APIGatewayProxyEvent|APIGatewayProxyResult>}
  */
 const invokePreHook = async (lambda, preHook, payload) => {
-  /** @type {Lambda.InvocationResponse} */
+  /** @type {import("@aws-sdk/client-lambda").InvocationResponse} */
   let invocationResponse
   try {
     invocationResponse = await lambda.invoke({
       FunctionName: preHook,
       Payload: JSON.stringify(payload)
-    }).promise()
+    })
   } catch (error) {
     logger.error('Failed to invoke pre-hook lambda:', error)
     return internalServerError
   }
 
   // I've never seen this happen but, according to the TypeScript type definitions
-  // provided by AWS, `Lambda.InvocationResponse.Payload` could be `undefined`.
+  // provided by AWS, `InvocationResponse.Payload` could be `undefined`.
   if (invocationResponse.Payload === undefined) {
     logger.error('Undefined Payload returned from pre-hook lambda')
     return internalServerError
@@ -117,20 +117,20 @@ const invokePreHook = async (lambda, preHook, payload) => {
  * @returns {Promise<APIGatewayProxyResult>}
  */
 const invokePostHook = async (lambda, postHook, payload) => {
-  /** @type {Lambda.InvocationResponse} */
+  /** @type {import("@aws-sdk/client-lambda").InvocationResponse} */
   let invocationResponse
   try {
     invocationResponse = await lambda.invoke({
       FunctionName: postHook,
       Payload: JSON.stringify(payload)
-    }).promise()
+    })
   } catch (error) {
     logger.error('Failed to invoke post-hook lambda:', error)
     return internalServerError
   }
 
   // I've never seen this happen but, according to the TypeScript type definitions
-  // provided by AWS, `Lambda.InvocationResponse.Payload` could be `undefined`.
+  // provided by AWS, `InvocationResponse.Payload` could be `undefined`.
   if (invocationResponse.Payload === undefined) {
     logger.error('Undefined Payload returned from post-hook lambda')
     return internalServerError

@@ -1,4 +1,4 @@
-import { dbClient as _client, createIndex } from './databaseClient.js'
+import { dbClient as _client, createIndex } from './database-client.js'
 import logger from './logger.js'
 
 const COLLECTIONS_INDEX = process.env['COLLECTIONS_INDEX'] || 'collections'

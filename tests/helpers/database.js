@@ -1,4 +1,4 @@
-import { connect, createIndex } from '../../src/lib/databaseClient.js'
+import { connect, createIndex } from '../../src/lib/database-client.js'
 
 /**
  * @returns {Promise<void>}

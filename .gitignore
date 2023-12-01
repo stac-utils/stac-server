@@ -18,3 +18,4 @@ _book
 serverless*.yml
 !serverless.example.yml
 tsconfig.tsbuildinfo
+docs/

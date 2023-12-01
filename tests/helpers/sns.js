@@ -9,7 +9,7 @@ export const createTopic = async () => {
 
   const { TopicArn } = await sns.createTopic({
     Name: randomId('topic')
-  }).promise()
+  })
 
   if (TopicArn) return TopicArn
 
@@ -26,5 +26,5 @@ export const addSnsToSqsSubscription = async (topicArn, queueArn) => {
     TopicArn: topicArn,
     Protocol: 'sqs',
     Endpoint: queueArn
-  }).promise()
+  })
 }

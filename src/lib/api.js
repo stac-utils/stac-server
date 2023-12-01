@@ -1,8 +1,9 @@
 import { pickBy, assign, get as getNested } from 'lodash-es'
 import extent from '@mapbox/extent'
 import { DateTime } from 'luxon'
-import AWS from 'aws-sdk'
-// import geojsonhint from '@mapbox/geojsonhint'
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
+import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3'
+
 import { isIndexNotFoundError } from './database.js'
 import logger from './logger.js'
 
@@ -1194,11 +1195,15 @@ const getItemThumbnail = async function (collectionId, itemId, backend) {
     const withoutProtocol = thumbnailAsset.href.substring(5) // chop off s3://
     const [bucket, ...keyArray] = withoutProtocol.split('/')
     const key = keyArray.join('/')
-    location = new AWS.S3({ region }).getSignedUrl('getObject', {
+
+    const client = new S3Client({ region })
+    const command = new GetObjectCommand({
       Bucket: bucket,
       Key: key,
-      Expires: 60 * 5, // expiry in seconds
       RequestPayer: 'requester'
+    })
+    location = await getSignedUrl(client, command, {
+      expiresIn: 60 * 5, // expiry in seconds
     })
   } else {
     return new Error('Thumbnail not found')

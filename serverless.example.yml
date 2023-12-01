@@ -2,7 +2,7 @@ service: stac-server
 
 provider:
   name: aws
-  runtime: nodejs16.x
+  runtime: nodejs18.x
   stage: ${opt:stage, 'dev'}
   region: ${opt:region, 'us-west-2'}
   # uncomment this if using a bucket that already exists for deployment files
@@ -50,7 +50,7 @@ provider:
           Action:
             - sns:Publish
           Resource:
-            Fn::GetAtt: [postIngestTopic, Arn]
+            Fn::GetAtt: [postIngestTopic, TopicArn]
         - Effect: Allow
           Action: s3:GetObject
           Resource: "arn:aws:s3:::usgs-landsat/*"
@@ -182,7 +182,7 @@ resources:
           InstanceCount: 1
           DedicatedMasterEnabled: false
           ZoneAwarenessEnabled: false
-        EngineVersion: OpenSearch_2.7
+        EngineVersion: OpenSearch_2.11
         DomainEndpointOptions:
           EnforceHTTPS: true
         NodeToNodeEncryptionOptions:

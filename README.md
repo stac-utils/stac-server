@@ -6,7 +6,13 @@
   - [Overview](#overview)
   - [Architecture](#architecture)
   - [Migration](#migration)
-    - [2.4.x](#24x)
+    - [3.1.0](#310)
+      - [OpenSearch Version 2.11](#opensearch-version-211)
+    - [3.0.0](#300)
+      - [Node 18 update](#node-18-update)
+    - [2.4.0](#240)
+      - [OpenSearch Version 2.9](#opensearch-version-29)
+    - [2.3.0](#230)
       - [OpenSearch Version 2.7](#opensearch-version-27)
     - [0.x or 1.x -\> 2.x](#0x-or-1x---2x)
       - [Fine-grained Access Control](#fine-grained-access-control)
@@ -52,6 +58,7 @@
     - [Running System and Integration Tests](#running-system-and-integration-tests)
     - [Updating the OpenAPI specification](#updating-the-openapi-specification)
   - [About](#about)
+  - [License](#license)
 
 ## Overview
 
@@ -131,7 +138,33 @@ apiLambda --> opensearch
 
 ## Migration
 
-### 2.4.x
+### 3.1.0
+
+#### OpenSearch Version 2.11
+
+- Update the `EngineVersion` setting in the serverless config file to `OpenSearch_2.11`
+  and re-deploy
+
+### 3.0.0
+
+#### Node 18 update
+
+The default Lambda deployment environment is now Node 18. The major difference between
+the Node 16 and Node 18 Lambda environment is that the Node 16 env includes AWS SDK
+for JS v2, and Node 18 includes v3. This code has been updated to use v3, so the
+Node 18 environment must be used, or the build must be modified to install the v3 libraries.
+
+To update the deployment to use Node 18, modify the serverless config file value
+`provider.runtime` to be `nodejs18.x` and the application re-deployed.
+
+### 2.4.0
+
+#### OpenSearch Version 2.9
+
+- Update the `EngineVersion` setting in the serverless config file to `OpenSearch_2.9`
+  and re-deploy
+
+### 2.3.0
 
 #### OpenSearch Version 2.7
 
@@ -1238,3 +1271,10 @@ and fix any errors or warnings.
 ## About
 
 [stac-server](https://github.com/stac-utils/stac-server) was forked from [sat-api](https://github.com/sat-utils/sat-api). Stac-server is for STAC versions 0.9.0+, while sat-api exists for versions of STAC prior to 0.9.0.
+
+## License
+
+stac-server is licensed under [The MIT License](https://opensource.org/license/mit/).
+Copyright for portions of stac-server is held by Development Seed (2016) as
+part of project [sat-api](https://github.com/sat-utils/sat-api)
+[original license](https://github.com/sat-utils/sat-api/blob/master/LICENSE). Copyright for all changes to stac-server since the fork date is held by Element 84, Inc (2020).

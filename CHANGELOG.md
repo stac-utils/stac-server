@@ -5,11 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [Unreleased] - TBD
-
-### Changed
-
-- Default to OpenSearch 2.7
+## Unreleased - TBD
 
 ### Added
 
@@ -23,6 +19,56 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Fixed
 
 - STAC API Docs now build and deploy to GitHub Pages using redocly
+
+## [3.2.0] - 2023-11-29
+
+### Added
+
+- Better error handling when create_index fails.
+
+### Fixed
+
+- Removed usages of aws-sdk that were missed in 3.0.0.
+
+## [3.1.0] - 2023-11-28
+
+### Added
+
+- Added support for AWS IAM authentication to AWS OpenSearch Serverless
+
+### Changed
+
+- Replaced use of aws-os-connection library for AWS IAM authentication with support
+  in opensearch-js.
+- Default to OpenSearch 2.11
+
+## [3.0.0] - 2023-11-09
+
+### Changed
+
+- Use AWS SDK for JavaScript v3 instead of v2
+- Use Node 18 by default (with AWS SDK v3 preinstalled, instead of v2)
+
+## [2.4.0] - 2023-11-08
+
+### Changed
+
+- Fix OpenAPI spec version from 1.0.0-rc.4 to 1.0.0
+- Update fields, sort, and query extensions to v1.0.0
+- Update transaction extension to v1.0.0-rc.3
+- Default to OpenSearch 2.9
+- Replace geo_shape mapping for proj:geometry field with object, as this fails when
+  the geometry is not a valid GeoJSON shape, e.g., coordinate points are not lat/lon.
+
+## [2.3.0] - 2023-09-12
+
+### Changed
+
+- Default to OpenSearch 2.7
+
+### Added
+
+- "AWS Connection" mode support has been re-added.
 
 ## [2.2.3] - 2023-07-14
 
@@ -62,6 +108,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Post-ingest SNS topic was not being published to when deployed as a Lambda.
 
 ## [2.0.0] - 2023-06-26
+
+### Removed
+
+- Elasticsearch is no longer supported as a backend. Only OpenSearch is now supported.
+- Only fine-grained access control is supported for connecting to OpenSearch.
+  "AWS Connection" mode is no longer supported.
 
 ### Removed
 
@@ -359,7 +411,12 @@ Initial release, forked from [sat-api](https://github.com/sat-utils/sat-api/tree
 
 Compliant with STAC 0.9.0
 
-[Unreleased]: https://github.com/stac-utils/stac-api/compare/v2.2.3...main
+<!-- [Unreleased]: https://github.com/stac-utils/stac-api/compare/v2.4.0...main -->
+[3.2.0]: https://github.com/stac-utils/stac-api/compare/v3.1.0...v3.2.0
+[3.1.0]: https://github.com/stac-utils/stac-api/compare/v3.0.0...v3.1.0
+[3.0.0]: https://github.com/stac-utils/stac-api/compare/v2.4.0...v3.0.0
+[2.4.0]: https://github.com/stac-utils/stac-api/compare/v2.3.0...v2.4.0
+[2.3.0]: https://github.com/stac-utils/stac-api/compare/v2.2.3...v2.3.0
 [2.2.3]: https://github.com/stac-utils/stac-api/compare/v2.2.2...v2.2.3
 [2.2.2]: https://github.com/stac-utils/stac-api/compare/v2.2.1...v2.2.2
 [2.2.1]: https://github.com/stac-utils/stac-api/compare/v2.2.0...v2.2.1

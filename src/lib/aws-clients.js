@@ -1,4 +1,6 @@
-import AWS from 'aws-sdk'
+import { S3 } from '@aws-sdk/client-s3'
+import { SNS } from '@aws-sdk/client-sns'
+import { SQS } from '@aws-sdk/client-sqs'
 
 const localStackEndpointEnvVar = 'LOCAL_STACK_ENDPOINT'
 
@@ -7,7 +9,7 @@ const useLocalStack = () => {
   return process.env['NODE_ENV'] === 'test'
 }
 
-const localStackEndpoint = () => process.env[localStackEndpointEnvVar] || 'http://localhost:4566'
+const localStackEndpoint = () => process.env[localStackEndpointEnvVar] || 'http://127.0.0.1:4566'
 
 const localStackParams = () => ({
   credentials: {
@@ -21,12 +23,12 @@ const localStackParams = () => ({
 export const s3 = (options = {}) => {
   const localStackOverrides = {
     ...localStackParams(),
-    s3ForcePathStyle: true
+    forcePathStyle: true
   }
 
   const overrides = useLocalStack() ? localStackOverrides : {}
 
-  return new AWS.S3({
+  return new S3({
     ...overrides,
     ...options
   })
@@ -35,7 +37,7 @@ export const s3 = (options = {}) => {
 export const sns = (options = {}) => {
   const overrides = useLocalStack() ? localStackParams() : {}
 
-  return new AWS.SNS({
+  return new SNS({
     ...overrides,
     ...options
   })
@@ -44,7 +46,7 @@ export const sns = (options = {}) => {
 export const sqs = (options = {}) => {
   const overrides = useLocalStack() ? localStackParams() : {}
 
-  return new AWS.SQS({
+  return new SQS({
     ...overrides,
     ...options
   })

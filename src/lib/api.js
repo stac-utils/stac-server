@@ -1,8 +1,9 @@
 import { pickBy, assign, get as getNested } from 'lodash-es'
 import extent from '@mapbox/extent'
 import { DateTime } from 'luxon'
-import AWS from 'aws-sdk'
-// import geojsonhint from '@mapbox/geojsonhint'
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
+import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3'
+
 import { isIndexNotFoundError } from './database.js'
 import logger from './logger.js'
 
@@ -883,12 +884,12 @@ const getConformance = async function (txnEnabled) {
     `${foundationPrefix}/collections`,
     `${foundationPrefix}/ogcapi-features`,
     `${foundationPrefix}/item-search`,
-    'https://api.stacspec.org/v1.0.0-rc.3/ogcapi-features#fields',
-    'https://api.stacspec.org/v1.0.0-rc.2/ogcapi-features#sort',
-    'https://api.stacspec.org/v1.0.0-rc.2/ogcapi-features#query',
-    'https://api.stacspec.org/v1.0.0-rc.3/item-search#fields',
-    'https://api.stacspec.org/v1.0.0-rc.2/item-search#sort',
-    'https://api.stacspec.org/v1.0.0-rc.2/item-search#query',
+    'https://api.stacspec.org/v1.0.0/ogcapi-features#fields',
+    'https://api.stacspec.org/v1.0.0/ogcapi-features#sort',
+    'https://api.stacspec.org/v1.0.0/ogcapi-features#query',
+    'https://api.stacspec.org/v1.0.0/item-search#fields',
+    'https://api.stacspec.org/v1.0.0/item-search#sort',
+    'https://api.stacspec.org/v1.0.0/item-search#query',
     'https://api.stacspec.org/v0.3.0/aggregation',
     'http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/core',
     'http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/oas30',
@@ -896,7 +897,7 @@ const getConformance = async function (txnEnabled) {
   ]
 
   if (txnEnabled) {
-    conformsTo.push('https://api.stacspec.org/v1.0.0-rc.2/ogcapi-features/extensions/transaction')
+    conformsTo.push('https://api.stacspec.org/v1.0.0-rc.3/ogcapi-features/extensions/transaction')
   }
 
   return { conformsTo }
@@ -1196,11 +1197,15 @@ const getItemThumbnail = async function (collectionId, itemId, backend) {
     const withoutProtocol = thumbnailAsset.href.substring(5) // chop off s3://
     const [bucket, ...keyArray] = withoutProtocol.split('/')
     const key = keyArray.join('/')
-    location = new AWS.S3({ region }).getSignedUrl('getObject', {
+
+    const client = new S3Client({ region })
+    const command = new GetObjectCommand({
       Bucket: bucket,
       Key: key,
-      Expires: 60 * 5, // expiry in seconds
       RequestPayer: 'requester'
+    })
+    location = await getSignedUrl(client, command, {
+      expiresIn: 60 * 5, // expiry in seconds
     })
   } else {
     return new Error('Thumbnail not found')

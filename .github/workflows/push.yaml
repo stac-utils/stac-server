@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     services:
       localstack:
-        image: localstack/localstack
+        image: localstack/localstack:3
         env:
           SERVICES: s3,sns,sqs
         ports:
@@ -28,9 +28,9 @@ jobs:
           cache-dependency-path: package.json
       - uses: ankane/setup-opensearch@v1
         with:
-          opensearch-version: 2.7
+          opensearch-version: 2.11
       - name: Upgrade npm
-        run: npm install -g npm@latest
+        run: npm install -g npm@8.19.4
       - name: Install dependencies
         run: npm install
       - name: Eslint

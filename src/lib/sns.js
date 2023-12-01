@@ -90,7 +90,7 @@ export async function publishRecordToSns(topicArn, record, error) {
       Message: JSON.stringify(payload),
       TopicArn: topicArn,
       MessageAttributes: attrsFromPayload(payload)
-    }).promise()
+    })
     logger.info(`Wrote record ${record.id} to ${topicArn}`)
   } catch (err) {
     logger.error(`Failed to write record ${record.id} to ${topicArn}: ${err}`)

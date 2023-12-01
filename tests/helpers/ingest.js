@@ -19,7 +19,7 @@ export const ingestItem = async (params) => {
   await sns().publish({
     TopicArn: params.ingestTopicArn,
     Message: JSON.stringify(params.item)
-  }).promise()
+  })
 
   await sqsTriggerLambda(params.ingestQueueUrl, handler)
 
@@ -81,14 +81,14 @@ export async function testPostIngestSNS(t, record) {
   await sns().publish({
     TopicArn: t.context.ingestTopicArn,
     Message: JSON.stringify(record)
-  }).promise()
+  })
 
   await sqsTriggerLambda(t.context.ingestQueueUrl, handler)
 
   const { Messages } = await sqs().receiveMessage({
     QueueUrl: t.context.postIngestQueueUrl,
     WaitTimeSeconds: 1
-  }).promise()
+  })
 
   t.truthy(Messages, 'Post-ingest message not found in queue')
   t.false(Messages && Messages.length > 1, 'More than one message in post-ingest queue')

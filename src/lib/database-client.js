@@ -1,6 +1,9 @@
 import { Client } from '@opensearch-project/opensearch'
 
-import AWS from 'aws-sdk'
+// eslint-disable-next-line import/no-unresolved
+import { AwsSigv4Signer } from '@opensearch-project/opensearch/aws'
+import { defaultProvider } from '@aws-sdk/credential-provider-node'
+import { SecretsManager, GetSecretValueCommand } from '@aws-sdk/client-secrets-manager'
 
 import collectionsIndexConfiguration from '../../fixtures/collections.js'
 import itemsIndexConfiguration from '../../fixtures/items.js'
@@ -15,6 +18,17 @@ function createClientWithUsernameAndPassword(host, username, password) {
   })
 }
 
+function createClientWithAwsAuth(host) {
+  return new Client({
+    ...AwsSigv4Signer({
+      region: process.env['AWS_REGION'] || 'us-west-2',
+      service: host.endsWith('aoss.amazonaws.com') ? 'aoss' : 'es',
+      getCredentials: () => defaultProvider()(),
+    }),
+    node: host
+  })
+}
+
 // Connect to a search database instance
 export async function connect() {
   let client
@@ -26,25 +40,22 @@ export async function connect() {
   if (!hostConfig) {
     // use local client
     const config = {
-      node: 'http://localhost:9200'
+      node: 'http://127.0.0.1:9200'
     }
     client = new Client(config)
   } else {
     const host = hostConfig.startsWith('http') ? hostConfig : `https://${hostConfig}`
 
     if (secretName) {
-      const secretValue = await new AWS.SecretsManager()
-        .getSecretValue({ SecretId: secretName }).promise()
+      const secretValue = await new SecretsManager({}).send(
+        new GetSecretValueCommand({ SecretId: secretName })
+      )
       const { username, password } = JSON.parse(secretValue.SecretString || '')
       client = createClientWithUsernameAndPassword(host, username, password)
     } else if (envUsername && envPassword) {
       client = createClientWithUsernameAndPassword(host, envUsername, envPassword)
     } else {
-      throw new Error(
-        'Could not find credentials for OpenSearch: '
-        + 'either "OPENSEARCH_CREDENTIALS_SECRET_ID"  or both "OPENSEARCH_USERNAME" and '
-        + '"OPENSEARCH_PASSWORD" must be defined'
-      )
+      client = createClientWithAwsAuth(host)
     }
   }
 
@@ -75,7 +86,10 @@ export async function createIndex(index) {
       logger.info(`Created index ${index}`)
       logger.debug('Mapping: %j', indexConfiguration)
     } catch (error) {
-      logger.debug(`Error creating index '${index}'`, error)
+      logger.error(`Error creating index '${index}'`, error)
+      throw error
     }
+  } else {
+    logger.error(`${index} already exists.`)
   }
 }

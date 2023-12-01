@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## Unreleased - TBD
+
+### Added
+
+- redocly devDependency for docs build
+
+### Removed
+
+- Unused devDependencies for old docs build
+- Old `./docs` directory and out of date docs
+
+### Fixed
+
+- STAC API Docs now build and deploy to GitHub Pages using redocly
+
 ## [3.2.0] - 2023-11-29
 
 ### Added

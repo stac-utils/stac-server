@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - Unused devDependencies for old docs build
 - Old `./docs` directory and out of date docs
+- Removed support for grid_code_landsat_frequency aggregation.
 
 ### Fixed
 

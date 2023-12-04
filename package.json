@@ -89,7 +89,7 @@
     "@ava/typescript": "^4.1.0",
     "@stoplight/spectral-cli": "^6.11.0",
     "@tsconfig/node18": "^18.2.2",
-    "@types/aws-lambda": "^8.10.129",
+    "@types/aws-lambda": "^8.10.130",
     "@types/cors": "^2.8.17",
     "@types/express": "^4.17.21",
     "@types/http-errors": "^2.0.4",

@@ -74,7 +74,7 @@ export const ingestFixtureC = (ingestTopicArn, ingestQueueUrl) =>
     overrides
   })
 
-export async function testPostIngestSNS(t, record) {
+export async function testPostIngestSNS(t, record, shouldError = false) {
   // @ts-ignore
   process.env.POST_INGEST_TOPIC_ARN = t.context.postIngestTopicArn
 
@@ -83,7 +83,13 @@ export async function testPostIngestSNS(t, record) {
     Message: JSON.stringify(record)
   })
 
-  await sqsTriggerLambda(t.context.ingestQueueUrl, handler)
+  try {
+    await sqsTriggerLambda(t.context.ingestQueueUrl, handler)
+  } catch (e) {
+    if (!shouldError) {
+      t.fail('Ingest had error, but should not have.')
+    }
+  }
 
   const { Messages } = await sqs().receiveMessage({
     QueueUrl: t.context.postIngestQueueUrl,

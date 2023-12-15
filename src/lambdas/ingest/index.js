@@ -61,8 +61,16 @@ export const handler = async (event, _context) => {
     : [event]
 
   try {
+    logger.debug('Attempting to ingest %d items', stacItems.length)
+
     const results = await ingestItems(stacItems)
-    logger.debug('Ingested %d items: %j', stacItems.length, stacItems)
+
+    const errorCount = results.filter((result) => result.error).length
+    if (errorCount) {
+      logger.debug('There were %d errors ingesting %d items', errorCount, stacItems.length)
+    } else {
+      logger.debug('Ingested %d items', results.length)
+    }
 
     const postIngestTopicArn = process.env['POST_INGEST_TOPIC_ARN']
 
@@ -72,6 +80,8 @@ export const handler = async (event, _context) => {
     } else {
       logger.debug('Skipping post-ingest notification since no topic is configured')
     }
+
+    if (errorCount) throw new Error('There was at least one error ingesting items.')
   } catch (error) {
     logger.error(error)
     throw (error)

@@ -132,7 +132,7 @@ function logIngestItemsResults(results) {
       if (result.error instanceof InvalidIngestError) {
         // Attempting to ingest invalid stac objects is not a system error so we
         // log it as info and not error
-        logger.info('Invalid ingest item', result.error)
+        logger.warn('Invalid ingest item', result.error)
       } else {
         logger.error('Error while ingesting item', result.error)
       }

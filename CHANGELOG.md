@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Changed
 
+- Ingest lambda will return a failure if there are errors during ingesting. Previously,
+  errors would only be logged and the lambda would always return a success response.
 - Landing page (/) and collections endpoint (/collections) now return a 500 if
   create_indices has not been run or cannot connect to database.
 

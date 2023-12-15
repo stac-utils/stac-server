@@ -392,7 +392,7 @@ test('Ingest collection failure is published to post-ingest SNS topic', async (t
   const { message, attrs } = await testPostIngestSNS(t, {
     type: 'Collection',
     id: 'badCollection'
-  })
+  }, true)
 
   t.is(message.record.id, 'badCollection')
   t.is(attrs.collection.Value, 'badCollection')
@@ -482,7 +482,7 @@ test('Ingest item failure is published to post-ingest SNS topic', async (t) => {
     type: 'Feature',
     id: 'badItem',
     collection: collection.id
-  })
+  }, true)
 
   t.is(message.record.id, 'badItem')
   t.is(attrs.collection.Value, collection.id)
@@ -514,7 +514,7 @@ test('Ingested item is published to post-ingest SNS topic with updated links', a
   }
 })
 
-test('Ingested item facilure is published to post-ingest SNS topic without updated links', async (t) => {
+test('Ingested item failure is published to post-ingest SNS topic without updated links', async (t) => {
   const envBeforeTest = { ...process.env }
   try {
     const hostname = 'some-stac-server.com'
@@ -526,7 +526,7 @@ test('Ingested item facilure is published to post-ingest SNS topic without updat
       { id: randomId('item'), collection: 'INVALID COLLECTION' }
     )
 
-    const { message } = await testPostIngestSNS(t, item)
+    const { message } = await testPostIngestSNS(t, item, true)
 
     t.truthy(message.record.links)
     t.false(message.record.links.every((/** @type {Link} */ link) => (

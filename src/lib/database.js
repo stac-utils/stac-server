@@ -417,8 +417,10 @@ async function getCollections(page = 1, limit = 100) {
     return response.body.hits.hits.map((r) => (r._source))
   } catch (e) {
     logger.error('Failure getting collections, maybe none exist?', e)
+    return new Error('Collections not found. This is likely '
+    + 'because the server has not been initialized with create_indices, '
+    + 'cannot connect to the database, or cannot authenticate to the database.')
   }
-  return null
 }
 
 async function populateCollectionToIndexMapping() {

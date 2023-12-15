@@ -976,6 +976,15 @@ const getGlobalAggregations = async (endpoint = '') => {
 }
 
 const getCatalog = async function (txnEnabled, backend, endpoint = '') {
+  const collectionsOrError = await backend.getCollections(1, COLLECTION_LIMIT)
+  if (collectionsOrError instanceof Error) {
+    return collectionsOrError
+  }
+
+  const catalog = collectionsToCatalogLinks(collectionsOrError, endpoint)
+
+  catalog.conformsTo = (await getConformance(txnEnabled)).conformsTo
+
   const links = [
     {
       rel: 'self',
@@ -1046,10 +1055,7 @@ const getCatalog = async function (txnEnabled, backend, endpoint = '') {
     })
   }
 
-  const collections = await backend.getCollections(1, COLLECTION_LIMIT) || []
-  const catalog = collectionsToCatalogLinks(collections, endpoint)
   catalog.links = links.concat(catalog.links)
-  catalog.conformsTo = (await getConformance(txnEnabled)).conformsTo
 
   return catalog
 }
@@ -1063,17 +1069,18 @@ const deleteUnusedFields = (collection) => {
 const getCollections = async function (backend, endpoint = '') {
   // TODO: implement proper pagination, as this will only return up to
   // COLLECTION_LIMIT collections
-  const collections = await backend.getCollections(1, COLLECTION_LIMIT)
+  const collectionsOrError = await backend.getCollections(1, COLLECTION_LIMIT)
+  if (collectionsOrError instanceof Error) {
+    return collectionsOrError
+  }
 
-  if (collections == null) return new Error('Collections not found')
-
-  for (const collection of collections) {
+  for (const collection of collectionsOrError) {
     deleteUnusedFields(collection)
   }
 
-  const linkedCollections = addCollectionLinks(collections, endpoint)
+  const linkedCollections = addCollectionLinks(collectionsOrError, endpoint)
   const resp = {
-    collections,
+    collections: collectionsOrError,
     links: [
       {
         rel: 'self',

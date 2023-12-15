@@ -9,7 +9,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Changed
 
-- Collections endpoint (/collections) now returns a 404 if create_indices has not been run.
+- Landing page (/) and collections endpoint (/collections) now return a 500 if
+  create_indices has not been run or cannot connect to database.
 
 ## [3.3.0] - 2023-12-04
 

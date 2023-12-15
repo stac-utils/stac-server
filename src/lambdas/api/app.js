@@ -43,7 +43,9 @@ app.use(addEndpoint)
 
 app.get('/', async (req, res, next) => {
   try {
-    res.json(await api.getCatalog(txnEnabled, database, req.endpoint))
+    const response = await api.getCatalog(txnEnabled, database, req.endpoint)
+    if (response instanceof Error) next(createError(500, response.message))
+    else res.json(response)
   } catch (error) {
     next(error)
   }
@@ -143,7 +145,9 @@ app.get('/aggregations', async (req, res, next) => {
 
 app.get('/collections', async (req, res, next) => {
   try {
-    res.json(await api.getCollections(database, req.endpoint))
+    const response = await api.getCollections(database, req.endpoint)
+    if (response instanceof Error) next(createError(500, response.message))
+    else res.json(response)
   } catch (error) {
     next(error)
   }
@@ -445,7 +449,7 @@ app.use(
       break
     default:
       logger.error(err)
-      res.json({ code: 'InternalServerError', description: 'Internal Server Error' })
+      res.json({ code: 'InternalServerError', description: err.message })
       break
     }
   })

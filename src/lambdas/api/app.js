@@ -143,7 +143,9 @@ app.get('/aggregations', async (req, res, next) => {
 
 app.get('/collections', async (req, res, next) => {
   try {
-    res.json(await api.getCollections(database, req.endpoint))
+    const response = await api.getCollections(database, req.endpoint)
+    if (response instanceof Error) next(createError(404))
+    else res.json(response)
   } catch (error) {
     next(error)
   }

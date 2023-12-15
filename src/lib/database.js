@@ -418,7 +418,7 @@ async function getCollections(page = 1, limit = 100) {
   } catch (e) {
     logger.error('Failure getting collections, maybe none exist?', e)
   }
-  return []
+  return null
 }
 
 async function populateCollectionToIndexMapping() {

@@ -69,7 +69,7 @@
     "@aws-sdk/s3-request-presigner": "^3.474.0",
     "@mapbox/extent": "^0.4.0",
     "@opensearch-project/opensearch": "^2.4.0",
-    "@redocly/cli": "^1.5.0",
+    "@redocly/cli": "^1.6.0",
     "cors": "^2.8.5",
     "express": "^4.18.2",
     "got": "^13.0",

@@ -549,27 +549,29 @@ const buildPaginationLinks = function (limit, parameters, bbox, intersects, endp
 
     const lastItem = items[items.length - 1]
 
-    const nextKeys = sortby ? Object.keys(sortby) : ['properties.datetime', 'id', 'collection']
+    const nextKeys = sortby ? sortby.map((x) => x.field)
+      : ['properties.datetime', 'id', 'collection']
 
     const next = nextKeys.map((k) => getNested(lastItem, k)).join(',')
 
-    const nextParams = pickBy(assign(parameters, { bbox, intersects, limit, next }))
-
-    const link = {
-      rel: 'next',
-      title: 'Next page of Items',
-      method: httpMethod,
-      type: 'application/geo+json'
+    if (next) {
+      const link = {
+        rel: 'next',
+        title: 'Next page of Items',
+        method: httpMethod,
+        type: 'application/geo+json'
+      }
+      const nextParams = pickBy(assign(parameters, { bbox, intersects, limit, next }))
+      if (httpMethod === 'GET') {
+        const nextQueryParameters = dictToURI(nextParams)
+        link.href = `${endpoint}?${nextQueryParameters}`
+      } else if (httpMethod === 'POST') {
+        link.href = endpoint
+        link.merge = false
+        link.body = nextParams
+      }
+      return [link]
     }
-    if (httpMethod === 'GET') {
-      const nextQueryParameters = dictToURI(nextParams)
-      link.href = `${endpoint}?${nextQueryParameters}`
-    } else if (httpMethod === 'POST') {
-      link.href = endpoint
-      link.merge = false
-      link.body = nextParams
-    }
-    return [link]
   }
   return []
 }

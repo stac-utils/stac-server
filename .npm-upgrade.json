@@ -7,6 +7,14 @@
     "typescript": {
       "versions": "5.2.2",
       "reason": "conflict with other dependency"
+    },
+    "got": {
+      "versions": "14.0.0",
+      "reason": ""
+    },
+    "ava": {
+      "versions": "6.0.1",
+      "reason": ""
     }
   }
 }

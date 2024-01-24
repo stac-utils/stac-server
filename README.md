@@ -524,15 +524,8 @@ There are some settings that should be reviewed and updated as needeed in the se
 | ITEMS_INDICIES_NUM_OF_SHARDS     | Configure the number of shards for the indices that contain Items.                                                                                                                               | none                                                                                 |
 | ITEMS_INDICIES_NUM_OF_REPLICAS   | Configure the number of replicas for the indices that contain Items.                                                                                                                             | none                                                                                 |
 
-The preferred mechanism for populating the OpenSearch credentials to stac-server is to
-create a secret in AWS Secret Manager that contains the username and password.
-The recommended name for this Secret corresponds
-to the stac-server deployment as `{stage}/{service}/opensearch`, e.g.,
-`dev/my-stac-server/opensearch`.
-
-The Secret type should be "Other type of secret" and
-have two keys, `username` and `password`, with the appropriate
-values, e.g., `stac_server` and whatever you set as the password when creating that user.
+Additionally, the credential for OpenSearch must be configured, as decribed in the
+section [Populating and accessing credentials](#populating-and-accessing-credentials).
 
 After reviewing the settings, build and deploy:
 
@@ -576,12 +569,13 @@ been created, and an OpenSearch index is created without the appropriate mapping
 This can either be done by calling the `/_cluster/settings` endpoint directly with the
 body:
 
-```json
-  {
-    "persistent": {
-      "action.auto_create_index": "false"
-    }
-  }
+This can either be done by calling the `/_cluster/settings` endpoint directly:
+
+```shell
+curl -X "PUT" "${HOST}/_cluster/settings" \
+     -H 'Content-Type: application/json; charset=utf-8' \
+     -u "admin:${OPENSEARCH_MASTER_USER_PASSWORD}" \
+     -d '{"persistent": {"action.auto_create_index": "false"}}'
 ```
 
 or setting that configuration via the OpenSearch Dashboard.

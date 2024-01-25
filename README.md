@@ -566,9 +566,6 @@ It is recommended to disable the automatic index creation. This prevents the sit
 a group of Items are bulk indexed before the Collection in which they are contained has
 been created, and an OpenSearch index is created without the appropriate mappings.
 
-This can either be done by calling the `/_cluster/settings` endpoint directly with the
-body:
-
 This can either be done by calling the `/_cluster/settings` endpoint directly:
 
 ```shell

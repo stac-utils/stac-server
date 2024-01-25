@@ -29,12 +29,12 @@
   - [Deployment](#deployment)
     - [OpenSearch Configuration](#opensearch-configuration)
       - [Disable automatic index creation](#disable-automatic-index-creation-1)
-      - [Create collection index](#create-collection-index)
       - [OpenSearch fine-grained access control](#opensearch-fine-grained-access-control)
         - [Option 1 - API method](#option-1---api-method)
         - [Option 2 - Dashboard method](#option-2---dashboard-method)
         - [Populating and accessing credentials](#populating-and-accessing-credentials)
-    - [Proxying Stac-server through CloudFront](#proxying-stac-server-through-cloudfront)
+      - [Create collection index](#create-collection-index)
+    - [Proxying stac-server through CloudFront](#proxying-stac-server-through-cloudfront)
     - [Locking down transaction endpoints](#locking-down-transaction-endpoints)
     - [AWS WAF Rule Conflicts](#aws-waf-rule-conflicts)
     - [API Gateway Logging](#api-gateway-logging)
@@ -524,15 +524,8 @@ There are some settings that should be reviewed and updated as needeed in the se
 | ITEMS_INDICIES_NUM_OF_SHARDS     | Configure the number of shards for the indices that contain Items.                                                                                                                               | none                                                                                 |
 | ITEMS_INDICIES_NUM_OF_REPLICAS   | Configure the number of replicas for the indices that contain Items.                                                                                                                             | none                                                                                 |
 
-The preferred mechanism for populating the OpenSearch credentials to stac-server is to
-create a secret in AWS Secret Manager that contains the username and password.
-The recommended name for this Secret corresponds
-to the stac-server deployment as `{stage}/{service}/opensearch`, e.g.,
-`dev/my-stac-server/opensearch`.
-
-The Secret type should be "Other type of secret" and
-have two keys, `username` and `password`, with the appropriate
-values, e.g., `stac_server` and whatever you set as the password when creating that user.
+Additionally, the credential for OpenSearch must be configured, as decribed in the
+section [Populating and accessing credentials](#populating-and-accessing-credentials).
 
 After reviewing the settings, build and deploy:
 
@@ -573,44 +566,21 @@ It is recommended to disable the automatic index creation. This prevents the sit
 a group of Items are bulk indexed before the Collection in which they are contained has
 been created, and an OpenSearch index is created without the appropriate mappings.
 
-This can either be done by calling the `/_cluster/settings` endpoint directly with the
-body:
+This can either be done by calling the `/_cluster/settings` endpoint directly:
 
-```json
-  {
-    "persistent": {
-      "action.auto_create_index": "false"
-    }
-  }
+```shell
+curl -X "PUT" "${HOST}/_cluster/settings" \
+     -H 'Content-Type: application/json; charset=utf-8' \
+     -u "admin:${OPENSEARCH_MASTER_USER_PASSWORD}" \
+     -d '{"persistent": {"action.auto_create_index": "false"}}'
 ```
 
 or setting that configuration via the OpenSearch Dashboard.
 
-#### Create collection index
-
-The `collection` index must be created, which stores the metadata about each Collection.
-Invoke the `stac-server-<stage>-ingest` Lambda function with a payload of:
-
-```json
-{
-  "create_indices": true
-}
-```
-
-This can be done with the [AWS CLI Version 2](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html).
-
-```shell
-aws lambda invoke \
-  --function-name stac-server-dev-ingest \
-  --cli-binary-format raw-in-base64-out \
-  --payload '{ "create_indices": true }' \
-  /dev/stdout
-```
-
 #### OpenSearch fine-grained access control
 
-As of version 2.0.0, stac-server only supports fine-grained access control to
-OpenSearch, and no longer supports "AWS Connection" mode.
+stac-server supports either fine-grained access control or AWS IAM authentication to
+OpenSearch. This section describes how to configure fine-grained access control.
 
 **Warning**: Unfortunately, fine-grained access control cannot be enabled on an
 existing OpenSearch
@@ -760,9 +730,30 @@ OPENSEARCH_PASSWORD: xxxxxxxxxxx
 Setting these as environment variables can also be useful when running stac-server
 locally.
 
-Stac-server is now ready to ingest data!
+stac-server is now ready to ingest data!
 
-### Proxying Stac-server through CloudFront
+#### Create collection index
+
+The `collection` index must be created, which stores the metadata about each Collection.
+Invoke the `stac-server-<stage>-ingest` Lambda function with a payload of:
+
+```json
+{
+  "create_indices": true
+}
+```
+
+This can be done with the [AWS CLI Version 2](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html).
+
+```shell
+aws lambda invoke \
+  --function-name stac-server-dev-ingest \
+  --cli-binary-format raw-in-base64-out \
+  --payload '{ "create_indices": true }' \
+  /dev/stdout
+```
+
+### Proxying stac-server through CloudFront
 
 The API Gateway URL associated with the deployed stac-server instance may not be the URL that you ultimately wish to expose to your API users. AWS CloudFront can be used to proxy to a more human readable URL. In order to accomplish this:
 

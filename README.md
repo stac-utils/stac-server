@@ -932,17 +932,27 @@ the collection for which the aggregations are available, e.g.:
       "frequency_distribution_data_type": "string"
     },
     {
-      "name": "grid_geohex_frequency",
+      "name": "centroid_geohash_grid_frequency",
       "data_type": "frequency_distribution",
       "frequency_distribution_data_type": "string"
     },
     {
-      "name": "grid_geohash_frequency",
+      "name": "centroid_geohex_grid_frequency",
       "data_type": "frequency_distribution",
       "frequency_distribution_data_type": "string"
     },
     {
-      "name": "grid_geotile_frequency",
+      "name": "centroid_geotile_grid_frequency",
+      "data_type": "frequency_distribution",
+      "frequency_distribution_data_type": "string"
+    },
+      {
+      "name": "geometry_geohash_grid_frequency",
+      "data_type": "frequency_distribution",
+      "frequency_distribution_data_type": "string"
+    },
+    {
+      "name": "geometry_geotile_grid_frequency",
       "data_type": "frequency_distribution",
       "frequency_distribution_data_type": "string"
     }
@@ -958,13 +968,18 @@ Available aggregations are:
 - datetime_frequency (Item.Properties.datetime, monthly interval)
 - datetime_min (earliest Item.Properties.datetime)
 - datetime_max (latest Item.Properties.datetime)
-- grid_code_frequency (Item.Properties.grid:code)
 - sun_elevation_frequency (Item.Properties.view:sun_elevation)
 - sun_azimuth_frequency (Item.Properties.view:sun_azimuth)
 - off_nadir_frequency (Item.Properties.view:off_nadir)
-- grid_geohex_frequency ([GeoHex grid](https://opensearch.org/docs/2.4/opensearch/geohexgrid-agg/) on Item.Properties.proj:centroid)
-- grid_geohash_frequency ([geohash grid](https://opensearch.org/docs/2.4/opensearch/bucket-agg/#geo_distance-geohash_grid) on Item.Properties.proj:centroid)
-- grid_geotile_frequency (geotile on Item.Properties.proj:centroid)
+- grid_code_frequency (Item.Properties.grid:code)
+- grid_geohash_frequency ([geohash grid](https://opensearch.org/docs/latest/aggregations/bucket/geohash-grid/) on Item.Properties.proj:centroid) (Deprecated)
+- grid_geohex_frequency ([geohex grid](https://opensearch.org/docs/latest/aggregations/bucket/geohex-grid/) on Item.Properties.proj:centroid) (Deprecated)
+- grid_geotile_frequency ([geotile grid](https://opensearch.org/docs/latest/aggregations/bucket/geotile-grid/) on Item.Properties.proj:centroid) (Deprecated)
+- centroid_geohash_grid_frequency ([geohash grid](https://opensearch.org/docs/latest/aggregations/bucket/geohash-grid/)  on Item.Properties.proj:centroid)
+- centroid_geohex_grid_frequency ([geohex grid](https://opensearch.org/docs/latest/aggregations/bucket/geohex-grid/) on Item.Properties.proj:centroid)
+- centroid_geotile_grid_frequency (geotile on Item.Properties.proj:centroid)
+- geometry_geohash_grid_frequency ([geohash grid](https://opensearch.org/docs/latest/aggregations/bucket/geohash-grid/) on Item.geometry)
+- geometry_geotile_grid_frequency ([geotile grid](https://opensearch.org/docs/latest/aggregations/bucket/geotile-grid/) on Item.geometry)
 
 ## Ingesting Data
 

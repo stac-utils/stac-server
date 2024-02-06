@@ -13,8 +13,8 @@
       "reason": ""
     },
     "ava": {
-      "versions": "6.0.1",
-      "reason": ""
+      "versions": "6",
+      "reason": "breaks test running"
     }
   }
 }

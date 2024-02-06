@@ -153,7 +153,14 @@ test('GET /aggregate with geoaggregations', async (t) => {
             'total_count',
             'grid_geohex_frequency',
             'grid_geotile_frequency',
-            'grid_geohash_frequency'] }
+            'grid_geohash_frequency',
+            'centroid_geohash_grid_frequency',
+            'centroid_geohex_grid_frequency',
+            'centroid_geotile_grid_frequency',
+            'geometry_geohash_grid_frequency',
+            // 'geometry_geohex_grid_frequency'
+            'geometry_geotile_grid_frequency',
+          ] }
       ),
       resolveBodyOnly: false,
       headers: {
@@ -174,16 +181,6 @@ test('GET /aggregate with geoaggregations', async (t) => {
     buckets: [{
       data_type: 'string',
       frequency: 2,
-      key: '80cdfffffffffff',
-    }],
-    data_type: 'frequency_distribution',
-    name: 'grid_geohex_frequency',
-    overflow: 0,
-  },
-  {
-    buckets: [{
-      data_type: 'string',
-      frequency: 2,
       key: 'j',
     }],
     data_type: 'frequency_distribution',
@@ -194,12 +191,89 @@ test('GET /aggregate with geoaggregations', async (t) => {
     buckets: [{
       data_type: 'string',
       frequency: 2,
+      key: '80cdfffffffffff',
+    }],
+    data_type: 'frequency_distribution',
+    name: 'grid_geohex_frequency',
+    overflow: 0,
+  },
+
+  {
+    buckets: [{
+      data_type: 'string',
+      frequency: 2,
       key: '0/0/0',
     }],
     data_type: 'frequency_distribution',
     name: 'grid_geotile_frequency',
     overflow: 0,
   },
+  {
+    buckets: [
+      {
+        data_type: 'string',
+        frequency: 2,
+        key: 'j',
+      },
+    ],
+    data_type: 'frequency_distribution',
+    name: 'centroid_geohash_grid_frequency',
+    overflow: 0,
+  },
+  {
+    buckets: [
+      {
+        data_type: 'string',
+        frequency: 2,
+        key: '80cdfffffffffff',
+      },
+    ],
+    data_type: 'frequency_distribution',
+    name: 'centroid_geohex_grid_frequency',
+    overflow: 0,
+  },
+  {
+    buckets: [
+      {
+        data_type: 'string',
+        frequency: 2,
+        key: '0/0/0',
+      },
+    ],
+    data_type: 'frequency_distribution',
+    name: 'centroid_geotile_grid_frequency',
+    overflow: 0,
+  },
+  {
+    buckets: [
+      {
+        data_type: 'string',
+        frequency: 2,
+        key: 'j',
+      },
+      {
+        data_type: 'string',
+        frequency: 2,
+        key: 'f',
+      },
+    ],
+    data_type: 'frequency_distribution',
+    name: 'geometry_geohash_grid_frequency',
+    overflow: 0,
+  },
+  {
+    buckets: [
+      {
+        data_type: 'string',
+        frequency: 4,
+        key: '0/0/0',
+      },
+    ],
+    data_type: 'frequency_distribution',
+    name: 'geometry_geotile_grid_frequency',
+    overflow: 0,
+  },
+
   ]))
 
   t.deepEqual(response.body.links, [
@@ -261,32 +335,37 @@ test('GET /aggregate with geoaggregations with precision', async (t) => {
     value: 4
   },
   {
-    buckets: [{
-      data_type: 'string',
-      frequency: 1,
-      key: '8acd5d4d8a0ffff',
-    }, {
-      data_type: 'string',
-      frequency: 1,
-      key: '8acd5b701887fff',
-    }],
+    buckets: [
+      {
+        data_type: 'string',
+        frequency: 1,
+        key: 'jxw7rxty',
+      },
+      {
+        data_type: 'string',
+        frequency: 1,
+        key: 'jxr4dd07',
+      },
+    ],
     data_type: 'frequency_distribution',
-    name: 'grid_geohex_frequency',
+    name: 'grid_geohash_frequency',
     overflow: 0,
   },
   {
-    buckets: [{
-      data_type: 'string',
-      frequency: 1,
-      key: 'jxw7rxty',
-    },
-    {
-      data_type: 'string',
-      frequency: 1,
-      key: 'jxr4dd07',
-    }],
+    buckets: [
+      {
+        data_type: 'string',
+        frequency: 1,
+        key: '8acd5d4d8a0ffff',
+      },
+      {
+        data_type: 'string',
+        frequency: 1,
+        key: '8acd5b701887fff',
+      },
+    ],
     data_type: 'frequency_distribution',
-    name: 'grid_geohash_frequency',
+    name: 'grid_geohex_frequency',
     overflow: 0,
   },
   {

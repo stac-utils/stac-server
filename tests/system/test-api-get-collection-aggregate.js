@@ -69,7 +69,7 @@ test('GET /collections/{collectionId}/aggregate with aggregations param', async 
     {
       searchParams: new URLSearchParams(
         { aggregations:
-          ['total_count', 'datetime_frequency', 'grid_geohex_frequency'] }
+          ['total_count', 'datetime_frequency', 'centroid_geohex_grid_frequency'] }
       ),
       resolveBodyOnly: false,
       headers: {
@@ -93,7 +93,7 @@ test('GET /collections/{collectionId}/aggregate with aggregations param', async 
       key: '80cdfffffffffff',
     }],
     data_type: 'frequency_distribution',
-    name: 'grid_geohex_frequency',
+    name: 'centroid_geohex_grid_frequency',
     overflow: 0,
   },
   {
@@ -106,6 +106,7 @@ test('GET /collections/{collectionId}/aggregate with aggregations param', async 
     }],
     overflow: 0
   }])
+
   t.deepEqual(response.body.links, [
     {
       rel: 'self',

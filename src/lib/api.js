@@ -34,9 +34,15 @@ const ALL_AGGREGATION_NAMES = DEFAULT_AGGREGATIONS.map((x) => x.name).concat(
   [
     'collection_frequency',
     'grid_code_frequency',
-    'grid_geohex_frequency',
     'grid_geohash_frequency',
+    'grid_geohex_frequency',
     'grid_geotile_frequency',
+    'centroid_geohash_grid_frequency',
+    'centroid_geohex_grid_frequency',
+    'centroid_geotile_grid_frequency',
+    'geometry_geohash_grid_frequency',
+    // 'geometry_geohex_grid_frequency',
+    'geometry_geotile_grid_frequency',
     'platform_frequency',
     'sun_elevation_frequency',
     'sun_azimuth_frequency',
@@ -769,23 +775,66 @@ const aggregate = async function (
     }
   }
 
+  const maxGeohashPrecision = 12
+  const maxGeohexPrecision = 15
+  const maxGeotilePrecision = 29
+
+  // the "grid_*" aggregation names are now deprecated
   const geohashPrecision = extractPrecision(
     queryParameters,
     'grid_geohash_frequency_precision',
     1,
-    12
+    maxGeohashPrecision
   )
   const geohexPrecision = extractPrecision(
     queryParameters,
     'grid_geohex_frequency_precision',
     0,
-    15
+    maxGeohexPrecision
   )
   const geotilePrecision = extractPrecision(
     queryParameters,
     'grid_geotile_frequency_precision',
     0,
-    29
+    maxGeotilePrecision
+  )
+
+  const centroidGeohashGridPrecision = extractPrecision(
+    queryParameters,
+    'centroid_geohash_grid_frequency_precision',
+    1,
+    maxGeohashPrecision
+  )
+  const centroidGeohexGridPrecision = extractPrecision(
+    queryParameters,
+    'centroid_geohex_grid_frequency_precision',
+    0,
+    maxGeohexPrecision
+  )
+  const centroidGeotileGridPrecision = extractPrecision(
+    queryParameters,
+    'centroid_geotile_grid_frequency_precision',
+    0,
+    maxGeotilePrecision
+  )
+
+  const geometryGeohashGridPrecision = extractPrecision(
+    queryParameters,
+    'geometry_geohash_grid_frequency_precision',
+    1,
+    maxGeohashPrecision
+  )
+  // const geometryGeohexGridPrecision = extractPrecision(
+  //   queryParameters,
+  //   'geometry_geohex_grid_frequency_precision',
+  //   0,
+  //   maxGeohexPrecision
+  // )
+  const geometryGeotileGridPrecision = extractPrecision(
+    queryParameters,
+    'geometry_geotile_grid_frequency_precision',
+    0,
+    maxGeotilePrecision
   )
 
   let dbResponse
@@ -795,7 +844,13 @@ const aggregate = async function (
       searchParams,
       geohashPrecision,
       geohexPrecision,
-      geotilePrecision
+      geotilePrecision,
+      centroidGeohashGridPrecision,
+      centroidGeohexGridPrecision,
+      centroidGeotileGridPrecision,
+      geometryGeohashGridPrecision,
+      // geometryGeohexGridPrecision,
+      geometryGeotileGridPrecision,
     )
   } catch (error) {
     if (!isIndexNotFoundError(error)) {
@@ -835,9 +890,15 @@ const aggregate = async function (
     const otherAggregations = new Map([
       ['collection_frequency', 'string'],
       ['grid_code_frequency', 'string'],
-      ['grid_geohex_frequency', 'string'],
       ['grid_geohash_frequency', 'string'],
+      ['grid_geohex_frequency', 'string'],
       ['grid_geotile_frequency', 'string'],
+      ['centroid_geohash_grid_frequency', 'string'],
+      ['centroid_geohex_grid_frequency', 'string'],
+      ['centroid_geotile_grid_frequency', 'string'],
+      ['geometry_geohash_grid_frequency', 'string'],
+      // ['geometry_geohex_grid_frequency', 'string'],
+      ['geometry_geotile_grid_frequency', 'string'],
       ['platform_frequency', 'string'],
       ['sun_elevation_frequency', 'string'],
       ['sun_azimuth_frequency', 'string'],

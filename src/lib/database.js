@@ -585,16 +585,28 @@ const ALL_AGGREGATIONS = {
  * @param {number} geohashPrecision
  * @param {number} geohexPrecision
  * @param {number} geotilePrecision
+ * @param {any} centroidGeohashGridPrecision
+ * @param {any} centroidGeohexGridPrecision
+ * @param {any} centroidGeotileGridPrecision
+ * @param {any} geometryGeohashGridPrecision
+ * @param {any} geometryGeotileGridPrecision
  * @returns {Promise<Object>}
  */
 async function aggregate(
   aggregations, parameters,
-  geohashPrecision, geohexPrecision, geotilePrecision
+  geohashPrecision, geohexPrecision, geotilePrecision,
+  centroidGeohashGridPrecision,
+  centroidGeohexGridPrecision,
+  centroidGeotileGridPrecision,
+  geometryGeohashGridPrecision,
+  // geometryGeohexGridPrecision,
+  geometryGeotileGridPrecision,
 ) {
   const searchParams = await constructSearchParams(parameters)
   searchParams.body.size = 0
 
-  logger.debug('Aggregations : %j', aggregations)
+  logger.debug('Aggregations: %j', aggregations)
+
   // include all aggregations specified
   // this will ignore aggregations with the wrong names
   searchParams.body.aggs = Object.keys(ALL_AGGREGATIONS).reduce((o, k) => {
@@ -602,14 +614,7 @@ async function aggregate(
     return o
   }, {})
 
-  if (aggregations.includes('grid_geohex_frequency')) {
-    searchParams.body.aggs.grid_geohex_frequency = {
-      geohex_grid: {
-        field: 'properties.proj:centroid',
-        precision: geohexPrecision
-      }
-    }
-  }
+  // deprecated centroid
 
   if (aggregations.includes('grid_geohash_frequency')) {
     searchParams.body.aggs.grid_geohash_frequency = {
@@ -620,11 +625,78 @@ async function aggregate(
     }
   }
 
+  if (aggregations.includes('grid_geohex_frequency')) {
+    searchParams.body.aggs.grid_geohex_frequency = {
+      geohex_grid: {
+        field: 'properties.proj:centroid',
+        precision: geohexPrecision
+      }
+    }
+  }
+
   if (aggregations.includes('grid_geotile_frequency')) {
     searchParams.body.aggs.grid_geotile_frequency = {
       geotile_grid: {
         field: 'properties.proj:centroid',
         precision: geotilePrecision
+      }
+    }
+  }
+
+  // centroid
+
+  if (aggregations.includes('centroid_geohash_grid_frequency')) {
+    searchParams.body.aggs.centroid_geohash_grid_frequency = {
+      geohash_grid: {
+        field: 'properties.proj:centroid',
+        precision: centroidGeohashGridPrecision
+      }
+    }
+  }
+
+  if (aggregations.includes('centroid_geohex_grid_frequency')) {
+    searchParams.body.aggs.centroid_geohex_grid_frequency = {
+      geohex_grid: {
+        field: 'properties.proj:centroid',
+        precision: centroidGeohexGridPrecision
+      }
+    }
+  }
+
+  if (aggregations.includes('centroid_geotile_grid_frequency')) {
+    searchParams.body.aggs.centroid_geotile_grid_frequency = {
+      geotile_grid: {
+        field: 'properties.proj:centroid',
+        precision: centroidGeotileGridPrecision
+      }
+    }
+  }
+
+  // geometry
+
+  if (aggregations.includes('geometry_geohash_grid_frequency')) {
+    searchParams.body.aggs.geometry_geohash_grid_frequency = {
+      geohash_grid: {
+        field: 'geometry',
+        precision: geometryGeohashGridPrecision,
+      }
+    }
+  }
+
+  // if (aggregations.includes('geometry_geohex_grid_frequency')) {
+  //   searchParams.body.aggs.geometry_geohex_grid_frequency = {
+  //     geohex_grid: {
+  //       field: 'geometry',
+  //       precision: geometryGeohexGridPrecision
+  //     }
+  //   }
+  // }
+
+  if (aggregations.includes('geometry_geotile_grid_frequency')) {
+    searchParams.body.aggs.geometry_geotile_grid_frequency = {
+      geotile_grid: {
+        field: 'geometry',
+        precision: geometryGeotileGridPrecision
       }
     }
   }

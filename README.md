@@ -6,6 +6,7 @@
   - [Overview](#overview)
   - [Architecture](#architecture)
   - [Migration](#migration)
+    - [Warnings](#warnings)
     - [3.1.0](#310)
       - [OpenSearch Version 2.11](#opensearch-version-211)
     - [3.0.0](#300)
@@ -137,6 +138,21 @@ apiLambda --> opensearch
 ```
 
 ## Migration
+
+### Warnings
+
+- When upgrading to at least OpenSearch 2.7, there seems to be some low-level problem
+  in the Lucene data storage that is a problem with indicies created in some but not all
+  versions older
+  than 2.7. Indicies created on the latest version in Fall of 2023 were not affected, but
+  indices created is some previous version or versions are.
+  After upgrading to 2.7, items may fail with the message reason "cannot
+  change field \"geometry\" from doc values type=NONE to inconsistent doc values
+  type=BINARY". There is no publicly-available information about this being a problem.
+  The solution is to create a new index by creating a new collection with a different
+  name, reindex the existing index into the newly-created index, delete and re-created
+  the existing index by creating a collection, and reindex back into the index.
+
 
 ### 3.1.0
 

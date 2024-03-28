@@ -71,7 +71,7 @@
     "@opensearch-project/opensearch": "^2.5.0",
     "@redocly/cli": "^1.8.2",
     "cors": "^2.8.5",
-    "express": "^4.18.2",
+    "express": "^4.19.2",
     "got": "^13.0",
     "http-errors": "^2.0.0",
     "lodash-es": "^4.17.21",

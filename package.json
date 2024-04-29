@@ -99,7 +99,7 @@
     "@types/node": "^18.11",
     "@types/sinon": "^17.0.3",
     "@typescript-eslint/eslint-plugin": "^6.21.0",
-    "@typescript-eslint/parser": "^6.21.0",
+    "@typescript-eslint/parser": "^7.7.1",
     "ava": "^5.3",
     "aws-event-mocks": "^0.0.0",
     "aws-sdk-client-mock": "^3.0.1",

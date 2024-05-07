@@ -26,7 +26,7 @@ export default [
   {
     proj_projjson: {
       match: 'proj:projjson',
-      mapping: { type: 'object', enabled: 'false' }
+      mapping: { type: 'object', enabled: false }
     }
   },
   {
@@ -38,6 +38,12 @@ export default [
   {
     proj_geometry: {
       match: 'proj:geometry',
+      mapping: { type: 'object', enabled: false }
+    }
+  },
+  {
+    proj_transform: {
+      match: 'proj:transform',
       mapping: { type: 'object', enabled: false }
     }
   },

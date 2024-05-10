@@ -539,6 +539,7 @@ There are some settings that should be reviewed and updated as needeed in the se
 | COLLECTION_TO_INDEX_MAPPINGS     | A JSON object representing collection id to index name mappings if they do not have the same names.                                                                                              |                                                                                      |
 | ITEMS_INDICIES_NUM_OF_SHARDS     | Configure the number of shards for the indices that contain Items.                                                                                                                               | none                                                                                 |
 | ITEMS_INDICIES_NUM_OF_REPLICAS   | Configure the number of replicas for the indices that contain Items.                                                                                                                             | none                                                                                 |
+| CORS_ORIGIN                      | Configure the value to send for the CORS Access-Control-Allow-Origin header.                                                                                                                     | `*`                                                                                  |
 
 Additionally, the credential for OpenSearch must be configured, as decribed in the
 section [Populating and accessing credentials](#populating-and-accessing-credentials).

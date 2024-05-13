@@ -16,7 +16,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 
-- Allow CORS Access-Control-Allow-Origin header to be configured with `CORS_ORIGIN` setting
+- Allow the following CORS headers to be configured with configuration variables:
+  - Access-Control-Allow-Origin: `CORS_ORIGIN`
+  - Access-Control-Allow-Credentials: `CORS_CREDENTIALS`
+  - Access-Control-Allow-Methods: `CORS_METHODS`
+  - Access-Control-Allow-Headers: `CORS_HEADERS`
 
 ## [3.6.0] - 2024-02-07
 

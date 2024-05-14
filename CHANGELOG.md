@@ -7,22 +7,30 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
-## Fixed
+### Fixed
 
 - For the first item indexed in a new collection, if all values in the
   `proj:transform` array were integers, the values were typed as integers,
   which would then cause an error for subsequent items that had float values
   in the array.
 
+### Added
+
+- Allow the following CORS headers to be configured with configuration variables:
+  - Access-Control-Allow-Origin: `CORS_ORIGIN`
+  - Access-Control-Allow-Credentials: `CORS_CREDENTIALS`
+  - Access-Control-Allow-Methods: `CORS_METHODS`
+  - Access-Control-Allow-Headers: `CORS_HEADERS`
+
 ## [3.6.0] - 2024-02-07
 
-## Changed
+### Changed
 
 - Deprecated `grid_geohex_frequency`, `grid_geohash_frequency`, and
   `grid_geotile_frequency` aggregations in favor of new `centroid_geohash_grid_frequency`,
   `centroid_geohex_grid_frequency`, and `centroid_geotile_grid_frequency` aggregations
 
-## Added
+### Added
 
 - Added `geometry_geohash_grid_frequency` and `geometry_geotile_grid_frequency` that
   aggregate over the geometry of each Item rather than the centroid. Note that the geohex aggregation `geometry_geohex_grid_frequency` is **not** implemented, as OpenSearch 2.11

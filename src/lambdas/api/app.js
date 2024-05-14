@@ -37,8 +37,15 @@ if (process.env['REQUEST_LOGGING_ENABLED'] !== 'false') {
   )
 }
 
-app.use(cors())
+app.use(cors({
+  origin: process.env['CORS_ORIGIN'] || '*',
+  credentials: process.env['CORS_CREDENTIALS'] === 'true',
+  methods: process.env['CORS_METHODS'] || 'GET,HEAD,PUT,PATCH,POST,DELETE', // default
+  allowedHeaders: process.env['CORS_HEADERS'] || '',
+}))
+
 app.use(express.json({ limit: '1mb' }))
+
 app.use(addEndpoint)
 
 app.get('/', async (req, res, next) => {

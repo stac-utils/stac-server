@@ -31,7 +31,9 @@ provider:
     # POST_HOOK: ${self:service}-${self:provider.stage}-postHook
     # If you will be subscribing to post-ingest SNS notifications make
     # sure that STAC_API_URL is set so that links are updated correctly
-    STAC_API_URL: "https://some-stac-server.com"
+    STAC_API_URL: "https://some-stac-server.example.com"
+    CORS_ORIGIN: "https://ui.example.com"
+    CORS_CREDENTIALS: true
   iam:
     role:
       statements:

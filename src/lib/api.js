@@ -952,9 +952,13 @@ const getConformance = async function (txnEnabled) {
     'https://api.stacspec.org/v1.0.0/item-search#sort',
     'https://api.stacspec.org/v1.0.0/item-search#query',
     'https://api.stacspec.org/v0.3.0/aggregation',
+    'https://api.stacspec.org/v1.0.0/item-search#filter',
     'http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/core',
     'http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/oas30',
-    'http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/geojson'
+    'http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/geojson',
+    'http://www.opengis.net/spec/ogcapi-features-3/1.0/conf/filter',
+    'http://www.opengis.net/spec/cql2/1.0/conf/basic-cql2',
+    'http://www.opengis.net/spec/cql2/1.0/conf/cql2-json'
   ]
 
   if (txnEnabled) {

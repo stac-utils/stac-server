@@ -601,15 +601,10 @@ const searchItems = async function (collectionId, queryParameters, backend, endp
     next,
     bbox,
     intersects
-    // query_,
-    // filter_
   } = queryParameters
   if (bbox && intersects) {
     throw new ValidationError('Expected bbox OR intersects, not both')
   }
-  // if (query_ && filter_) {
-  //   throw new ValidationError('Expected query OR filter, not both')
-  // }
   const datetime = extractDatetime(queryParameters)
   const bboxGeometry = extractBbox(queryParameters, httpMethod)
   const intersectsGeometry = extractIntersects(queryParameters)

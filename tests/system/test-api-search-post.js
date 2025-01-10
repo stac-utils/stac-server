@@ -655,7 +655,7 @@ test('/search Filter Extension - Null filter', async (t) => {
   t.is(response.features.length, 3)
 })
 
-test.only('/search Filter Extension - Comparison Operators', async (t) => {
+test('/search Filter Extension - Comparison Operators', async (t) => {
   // 3 items, 2 with platform landsat-8, 1 with platform2
 
   let response = null

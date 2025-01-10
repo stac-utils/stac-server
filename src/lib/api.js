@@ -264,6 +264,19 @@ const extractStacQuery = function (params) {
   return stacQuery
 }
 
+const extractCql2Filter = function (params) {
+  let cql2Filter
+  const { filter } = params
+  if (filter) {
+    if (typeof filter !== 'object') {
+      throw new ValidationError('Invalid filter value, must be a JSON object')
+    } else {
+      cql2Filter = { ...filter }
+    }
+  }
+  return cql2Filter
+}
+
 const extractSortby = function (params) {
   let sortbyRules
   const { sortby } = params
@@ -588,10 +601,15 @@ const searchItems = async function (collectionId, queryParameters, backend, endp
     next,
     bbox,
     intersects
+    // query_,
+    // filter_
   } = queryParameters
   if (bbox && intersects) {
     throw new ValidationError('Expected bbox OR intersects, not both')
   }
+  // if (query_ && filter_) {
+  //   throw new ValidationError('Expected query OR filter, not both')
+  // }
   const datetime = extractDatetime(queryParameters)
   const bboxGeometry = extractBbox(queryParameters, httpMethod)
   const intersectsGeometry = extractIntersects(queryParameters)
@@ -599,6 +617,7 @@ const searchItems = async function (collectionId, queryParameters, backend, endp
 
   const sortby = extractSortby(queryParameters)
   const query = extractStacQuery(queryParameters)
+  const filter = extractCql2Filter(queryParameters)
   const fields = extractFields(queryParameters)
   const ids = extractIds(queryParameters)
   const collections = extractCollectionIds(queryParameters)
@@ -609,6 +628,7 @@ const searchItems = async function (collectionId, queryParameters, backend, endp
     datetime,
     intersects: geometry,
     query,
+    filter,
     sortby,
     fields,
     ids,

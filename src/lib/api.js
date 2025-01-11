@@ -268,8 +268,9 @@ const extractCql2Filter = function (params) {
   let cql2Filter
   const { filter } = params
   if (filter) {
-    if (typeof filter !== 'object') {
-      throw new ValidationError('Invalid filter value, must be a JSON object')
+    if (typeof filter === 'string') {
+      const parsed = JSON.parse(filter)
+      cql2Filter = parsed
     } else {
       cql2Filter = { ...filter }
     }

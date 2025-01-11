@@ -537,10 +537,8 @@ test('/search preserve bbox in prev and next links', async (t) => {
   t.deepEqual(linkRel(response, 'next').body.bbox, bbox)
 })
 
-test('/search Query Extension', async (t) => {
+test('/search query extension', async (t) => {
   let response = null
-
-  // 3 items, 2 with platform landsat-8, 1 with platform2
 
   response = await t.context.api.client.post('search', {
     json: {}
@@ -644,20 +642,14 @@ test('/search Query Extension', async (t) => {
   t.is(response.features.length, 0)
 })
 
-test('/search Filter Extension - Null filter', async (t) => {
-  // 3 items, 2 with platform landsat-8, 1 with platform2
-
-  let response = null
-
-  response = await t.context.api.client.post('search', {
+test('/search filter extension - empty filter', async (t) => {
+  const response = await t.context.api.client.post('search', {
     json: {}
   })
   t.is(response.features.length, 3)
 })
 
-test('/search Filter Extension - Comparison Operators', async (t) => {
-  // 3 items, 2 with platform landsat-8, 1 with platform2
-
+test('/search filter extension - comparison operators', async (t) => {
   let response = null
 
   // equal
@@ -786,9 +778,7 @@ test('/search Filter Extension - Comparison Operators', async (t) => {
   t.is(response.features.length, 3)
 })
 
-test('/search Filter Extension - Logical Operators', async (t) => {
-  // 3 items, 2 with platform landsat-8, 1 with platform2
-
+test('/search filter extension - logical operators', async (t) => {
   let response = null
 
   // and
@@ -931,12 +921,8 @@ test('/search Filter Extension - Logical Operators', async (t) => {
   t.is(response.features.length, 0)
 })
 
-test('/search Filter Extension - Timestamps', async (t) => {
-  // 3 items, 2 with platform landsat-8, 1 with platform2
-
-  let response = null
-
-  response = await t.context.api.client.post('search', {
+test('/search filter extension - handles timestamps', async (t) => {
+  const response = await t.context.api.client.post('search', {
     json: {
       filter: {
         op: '>',
@@ -952,10 +938,8 @@ test('/search Filter Extension - Timestamps', async (t) => {
   t.is(response.features.length, 1)
 })
 
-test('/search Combined Item Search and Filter and Query Extensions', async (t) => {
-  let response = null
-
-  response = await t.context.api.client.post('search', {
+test('/search filter, query, and item search in single request', async (t) => {
+  const response = await t.context.api.client.post('search', {
     json: {
       collections: ['landsat-8-l1'],
       query: {

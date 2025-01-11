@@ -659,7 +659,7 @@ test('/search filter extension - comparison operators', async (t) => {
         op: '=',
         args: [
           {
-            property: 'platform'
+            property: 'properties.platform'
           },
           'landsat-8'
         ]
@@ -675,7 +675,7 @@ test('/search filter extension - comparison operators', async (t) => {
         op: '<>',
         args: [
           {
-            property: 'platform'
+            property: 'properties.platform'
           },
           'landsat-8'
         ]
@@ -691,7 +691,7 @@ test('/search filter extension - comparison operators', async (t) => {
         op: 'isNull',
         args: [
           {
-            property: 'landsat:product_id'
+            property: 'properties.landsat:product_id'
           }
         ]
       }
@@ -705,7 +705,7 @@ test('/search filter extension - comparison operators', async (t) => {
         op: 'isNull',
         args: [
           {
-            property: 'gsd'
+            property: 'properties.gsd'
           }
         ]
       }
@@ -720,7 +720,7 @@ test('/search filter extension - comparison operators', async (t) => {
         op: '<',
         args: [
           {
-            property: 'eo:cloud_cover'
+            property: 'properties.eo:cloud_cover'
           },
           8.0
         ]
@@ -736,7 +736,7 @@ test('/search filter extension - comparison operators', async (t) => {
         op: '<=',
         args: [
           {
-            property: 'eo:cloud_cover'
+            property: 'properties.eo:cloud_cover'
           },
           0.54
         ]
@@ -752,7 +752,7 @@ test('/search filter extension - comparison operators', async (t) => {
         op: '>',
         args: [
           {
-            property: 'eo:cloud_cover'
+            property: 'properties.eo:cloud_cover'
           },
           0.54
         ]
@@ -768,7 +768,7 @@ test('/search filter extension - comparison operators', async (t) => {
         op: '>=',
         args: [
           {
-            property: 'eo:cloud_cover'
+            property: 'properties.eo:cloud_cover'
           },
           0.54
         ]
@@ -791,7 +791,7 @@ test('/search filter extension - logical operators', async (t) => {
             op: '>',
             args: [
               {
-                property: 'eo:cloud_cover'
+                property: 'properties.eo:cloud_cover'
               },
               0.54
             ]
@@ -800,7 +800,7 @@ test('/search filter extension - logical operators', async (t) => {
             op: '<',
             args: [
               {
-                property: 'eo:cloud_cover'
+                property: 'properties.eo:cloud_cover'
               },
               8.0
             ]
@@ -820,7 +820,7 @@ test('/search filter extension - logical operators', async (t) => {
             op: '>=',
             args: [
               {
-                property: 'eo:cloud_cover'
+                property: 'properties.eo:cloud_cover'
               },
               0.54
             ]
@@ -829,7 +829,7 @@ test('/search filter extension - logical operators', async (t) => {
             op: '<',
             args: [
               {
-                property: 'eo:cloud_cover'
+                property: 'properties.eo:cloud_cover'
               },
               8.0
             ]
@@ -850,7 +850,7 @@ test('/search filter extension - logical operators', async (t) => {
             op: '>',
             args: [
               {
-                property: 'eo:cloud_cover'
+                property: 'properties.eo:cloud_cover'
               },
               0.54
             ]
@@ -859,7 +859,7 @@ test('/search filter extension - logical operators', async (t) => {
             op: '<',
             args: [
               {
-                property: 'eo:cloud_cover'
+                property: 'properties.eo:cloud_cover'
               },
               8.0
             ]
@@ -880,7 +880,7 @@ test('/search filter extension - logical operators', async (t) => {
             op: '>',
             args: [
               {
-                property: 'eo:cloud_cover'
+                property: 'properties.eo:cloud_cover'
               },
               0.54
             ]
@@ -900,7 +900,7 @@ test('/search filter extension - logical operators', async (t) => {
             op: '>',
             args: [
               {
-                property: 'eo:cloud_cover'
+                property: 'properties.eo:cloud_cover'
               },
               0.54
             ]
@@ -909,7 +909,7 @@ test('/search filter extension - logical operators', async (t) => {
             op: '<',
             args: [
               {
-                property: 'eo:cloud_cover'
+                property: 'properties.eo:cloud_cover'
               },
               8.0
             ]
@@ -922,13 +922,32 @@ test('/search filter extension - logical operators', async (t) => {
 })
 
 test('/search filter extension - handles timestamps', async (t) => {
-  const response = await t.context.api.client.post('search', {
+  let response = null
+
+  response = await t.context.api.client.post('search', {
     json: {
       filter: {
         op: '>',
         args: [
           {
-            property: 'datetime'
+            property: 'properties.datetime'
+          },
+          {
+            timestamp: '2015-02-20T00:00:00Z'
+          }
+        ]
+      }
+    }
+  })
+  t.is(response.features.length, 1)
+
+  response = await t.context.api.client.post('search', {
+    json: {
+      filter: {
+        op: '>',
+        args: [
+          {
+            property: 'properties.datetime'
           },
           '2015-02-20T00:00:00Z'
         ]
@@ -951,7 +970,7 @@ test('/search filter, query, and item search in single request', async (t) => {
         op: '>',
         args: [
           {
-            property: 'eo:cloud_cover'
+            property: 'properties.eo:cloud_cover'
           },
           0.54
         ]

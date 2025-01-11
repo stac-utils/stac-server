@@ -198,12 +198,7 @@ function buildFilterExtQuery(filter) {
     '>=': 'gte'
   }
 
-  const unprefixed = ['id', 'collection', 'geometry', 'bbox']
-
-  let cql2Field = filter.args[0].property
-  if (!unprefixed.includes(cql2Field)) {
-    cql2Field = `properties.${cql2Field}`
-  }
+  const cql2Field = filter.args[0].property
 
   let cql2Value = filter.args[1]
   if (typeof cql2Value === 'object' && cql2Value.timestamp) {

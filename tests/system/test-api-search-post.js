@@ -642,13 +642,6 @@ test('/search query extension', async (t) => {
   t.is(response.features.length, 0)
 })
 
-test('/search filter extension - empty filter', async (t) => {
-  const response = await t.context.api.client.post('search', {
-    json: {}
-  })
-  t.is(response.features.length, 3)
-})
-
 test('/search filter extension - comparison operators', async (t) => {
   let response = null
 

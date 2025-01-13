@@ -266,7 +266,20 @@ const extractStacQuery = function (params) {
 
 const extractCql2Filter = function (params) {
   let cql2Filter
-  const { filter } = params
+  const { 'filter-lang': filterLang, 'filter-crs': filterCrs, filter } = params
+
+  if (filterLang && filterLang !== 'cql2-json') {
+    throw new ValidationError(
+      `filter-lang must be "cql2-json". Supplied value: ${filterLang}`
+    )
+  }
+
+  if (filterCrs && filterCrs !== 'http://www.opengis.net/def/crs/OGC/1.3/CRS84') {
+    throw new ValidationError(
+      `filter-crs must be "http://www.opengis.net/def/crs/OGC/1.3/CRS84". Supplied value: ${filterCrs}`
+    )
+  }
+
   if (filter) {
     if (typeof filter === 'string') {
       const parsed = JSON.parse(filter)

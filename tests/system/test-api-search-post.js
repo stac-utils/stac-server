@@ -537,7 +537,7 @@ test('/search preserve bbox in prev and next links', async (t) => {
   t.deepEqual(linkRel(response, 'next').body.bbox, bbox)
 })
 
-test('/search query extension', async (t) => {
+test('/search - query extension', async (t) => {
   let response = null
 
   response = await t.context.api.client.post('search', {
@@ -642,7 +642,7 @@ test('/search query extension', async (t) => {
   t.is(response.features.length, 0)
 })
 
-test('/search filter extension - comparison operators', async (t) => {
+test('/search - filter extension - comparison operators', async (t) => {
   let response = null
 
   // equal
@@ -771,7 +771,7 @@ test('/search filter extension - comparison operators', async (t) => {
   t.is(response.features.length, 3)
 })
 
-test('/search filter extension - logical operators', async (t) => {
+test('/search - filter extension - logical operators', async (t) => {
   let response = null
 
   // and
@@ -914,7 +914,7 @@ test('/search filter extension - logical operators', async (t) => {
   t.is(response.features.length, 0)
 })
 
-test('/search filter extension - handles timestamps', async (t) => {
+test('/search - filter extension - handles timestamps', async (t) => {
   let response = null
 
   response = await t.context.api.client.post('search', {
@@ -950,7 +950,7 @@ test('/search filter extension - handles timestamps', async (t) => {
   t.is(response.features.length, 1)
 })
 
-test('/search filter, query, and item search in single request', async (t) => {
+test('/search - filter, query, and item search in single request', async (t) => {
   const response = await t.context.api.client.post('search', {
     json: {
       collections: ['landsat-8-l1'],
@@ -971,4 +971,50 @@ test('/search filter, query, and item search in single request', async (t) => {
     }
   })
   t.is(response.features.length, 1)
+})
+
+test('/search - filter extension - failure with incorrect filter-lang', async (t) => {
+  const error = await t.throwsAsync(
+    t.context.api.client.post('search', {
+      json: {
+        'filter-lang': 'not-cql2-json',
+        filter: {
+          op: '>',
+          args: [
+            {
+              property: 'properties.eo:cloud_cover'
+            },
+            0.54
+          ]
+        }
+      }
+    })
+  )
+  t.is(error.response.statusCode, 400)
+  t.is(error.response.body.code, 'BadRequest')
+  t.regex(error.response.body.description,
+    /.*filter-lang must be "cql2-json".*/)
+})
+
+test('/search - filter extension - failure with incorrect filter-crs', async (t) => {
+  const error = await t.throwsAsync(
+    t.context.api.client.post('search', {
+      json: {
+        'filter-crs': 'not-crs84-url',
+        filter: {
+          op: '>',
+          args: [
+            {
+              property: 'properties.eo:cloud_cover'
+            },
+            0.54
+          ]
+        }
+      }
+    })
+  )
+  t.is(error.response.statusCode, 400)
+  t.is(error.response.body.code, 'BadRequest')
+  t.regex(error.response.body.description,
+    /.*filter-crs must be "http:\/\/www.opengis.net\/def\/crs\/OGC\/1.3\/CRS84".*/)
 })

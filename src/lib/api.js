@@ -757,6 +757,7 @@ const aggregate = async function (
   const intersectsGeometry = extractIntersects(queryParameters)
   const geometry = intersectsGeometry || bboxGeometry
   const query = extractStacQuery(queryParameters)
+  const filter = extractCql2Filter(queryParameters)
   const ids = extractIds(queryParameters)
   const collections = extractCollectionIds(queryParameters)
 
@@ -764,6 +765,7 @@ const aggregate = async function (
     datetime,
     intersects: geometry,
     query,
+    filter,
     ids,
     collections,
   })
@@ -980,8 +982,10 @@ const getConformance = async function (txnEnabled) {
     'https://api.stacspec.org/v1.0.0/item-search#fields',
     'https://api.stacspec.org/v1.0.0/item-search#sort',
     'https://api.stacspec.org/v1.0.0/item-search#query',
-    'https://api.stacspec.org/v0.3.0/aggregation',
     'https://api.stacspec.org/v1.0.0/item-search#filter',
+    'https://api.stacspec.org/v0.3.0/aggregation',
+    'https://api.stacspec.org/v0.3.0/aggregation#query',
+    'https://api.stacspec.org/v0.3.0/aggregation#filter',
     'http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/core',
     'http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/oas30',
     'http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/geojson',

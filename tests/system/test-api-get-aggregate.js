@@ -420,3 +420,83 @@ test('GET /aggregate with geoaggregations with invalid precision', async (t) => 
     description: 'Invalid precision value for grid_geohex_frequency_precision, must be a number between 0 and 15 inclusive'
   })
 })
+
+test('GET /aggregate with aggregations and query params', async (t) => {
+  const fixtureFiles = [
+    'collection.json',
+    'LC80100102015050LGN00.json',
+    'LC80100102015082LGN00.json'
+  ]
+  const items = await Promise.all(fixtureFiles.map((x) => loadJson(x)))
+  await ingestItems(items)
+  await refreshIndices()
+
+  const response = await t.context.api.client.get(
+    'aggregate',
+    {
+      searchParams: new URLSearchParams(
+        { aggregations: ['total_count'],
+          query: JSON.stringify({
+            'eo:cloud_cover': {
+              gt: 0.54
+            }
+          })
+        }
+      ),
+      resolveBodyOnly: false,
+      headers: {
+        'X-Forwarded-Proto': proto,
+        'X-Forwarded-Host': host
+      }
+    }
+  )
+
+  t.is(response.statusCode, 200)
+  t.deepEqual(response.body.aggregations, [{
+    name: 'total_count',
+    data_type: 'integer',
+    value: 1
+  }])
+})
+
+test('GET /aggregate with aggregations and filter params', async (t) => {
+  const fixtureFiles = [
+    'collection.json',
+    'LC80100102015050LGN00.json',
+    'LC80100102015082LGN00.json'
+  ]
+  const items = await Promise.all(fixtureFiles.map((x) => loadJson(x)))
+  await ingestItems(items)
+  await refreshIndices()
+
+  const response = await t.context.api.client.get(
+    'aggregate',
+    {
+      searchParams: new URLSearchParams(
+        { aggregations: ['total_count'],
+          filter: JSON.stringify({
+            op: '>',
+            args: [
+              {
+                property: 'properties.eo:cloud_cover'
+              },
+              0.54
+            ]
+          })
+        }
+      ),
+      resolveBodyOnly: false,
+      headers: {
+        'X-Forwarded-Proto': proto,
+        'X-Forwarded-Host': host
+      }
+    }
+  )
+
+  t.is(response.statusCode, 200)
+  t.deepEqual(response.body.aggregations, [{
+    name: 'total_count',
+    data_type: 'integer',
+    value: 1
+  }])
+})

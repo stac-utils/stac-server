@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Added
+
+- Minimum implementation (basic-cql2 conformance class) of the filter extension for the
+  `search` and `aggregate` endpoints. Only CQL2 JSON is supported.
+
 ## [3.8.0] - 2024-05-29
 
 ### Changed

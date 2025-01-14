@@ -973,6 +973,32 @@ test('/search - filter, query, and item search in single request', async (t) => 
   t.is(response.features.length, 1)
 })
 
+test('/search - filter extension - with top level field filtering', async (t) => {
+  const response = await t.context.api.client.post('search', {
+    json: {
+      filter: {
+        op: 'and',
+        args: [
+          {
+            op: '=',
+            args: [
+              {
+                property: 'properties.eo:cloud_cover'
+              },
+              0.54
+            ]
+          },
+          {
+            op: '=',
+            args: [{ property: 'collection' }, 'collection2']
+          }
+        ]
+      }
+    }
+  })
+  t.is(response.features.length, 1)
+})
+
 test('/search - filter extension - failure with incorrect filter-lang', async (t) => {
   const error = await t.throwsAsync(
     t.context.api.client.post('search', {

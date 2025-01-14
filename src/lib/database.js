@@ -4,6 +4,26 @@ import logger from './logger.js'
 
 const COLLECTIONS_INDEX = process.env['COLLECTIONS_INDEX'] || 'collections'
 const DEFAULT_INDICES = ['*', '-.*', '-collections']
+const LOGICAL_OP = {
+  AND: 'and',
+  OR: 'or',
+  NOT: 'not'
+}
+const COMPARISON_OP = {
+  EQ: '=',
+  NEQ: '<>',
+  LT: '<',
+  LTE: '<=',
+  GT: '>',
+  GTE: '>=',
+  IS_NULL: 'isNull'
+}
+const RANGE_TRANSLATION = {
+  '<': 'lt',
+  '<=': 'lte',
+  '>': 'gt',
+  '>=': 'gte'
+}
 
 let collectionToIndexMapping = null
 let unrestrictedIndices = null
@@ -175,29 +195,6 @@ function buildQueryExtQuery(query) {
 }
 
 function buildFilterExtQuery(filter) {
-  const LogicalOp = {
-    AND: 'and',
-    OR: 'or',
-    NOT: 'not'
-  }
-
-  const ComparisonOp = {
-    EQ: '=',
-    NEQ: '<>',
-    LT: '<',
-    LTE: '<=',
-    GT: '>',
-    GTE: '>=',
-    IS_NULL: 'isNull'
-  }
-
-  const RangeTranslation = {
-    '<': 'lt',
-    '<=': 'lte',
-    '>': 'gt',
-    '>=': 'gte'
-  }
-
   const cql2Field = filter.args[0].property
 
   let cql2Value = filter.args[1]
@@ -207,19 +204,19 @@ function buildFilterExtQuery(filter) {
 
   switch (filter.op) {
   // recursive cases
-  case LogicalOp.AND:
+  case LOGICAL_OP.AND:
     return {
       bool: {
         filter: filter.args.map(buildFilterExtQuery)
       }
     }
-  case LogicalOp.OR:
+  case LOGICAL_OP.OR:
     return {
       bool: {
         should: filter.args.map(buildFilterExtQuery)
       }
     }
-  case LogicalOp.NOT:
+  case LOGICAL_OP.NOT:
     return {
       bool: {
         must_not: filter.args.map(buildFilterExtQuery)
@@ -227,13 +224,13 @@ function buildFilterExtQuery(filter) {
     }
 
   // direct cases
-  case ComparisonOp.EQ:
+  case COMPARISON_OP.EQ:
     return {
       term: {
         [cql2Field]: cql2Value
       }
     }
-  case ComparisonOp.NEQ:
+  case COMPARISON_OP.NEQ:
     return {
       bool: {
         must_not: [
@@ -245,7 +242,7 @@ function buildFilterExtQuery(filter) {
         ]
       }
     }
-  case ComparisonOp.IS_NULL:
+  case COMPARISON_OP.IS_NULL:
     return {
       bool: {
         must_not: [
@@ -259,14 +256,14 @@ function buildFilterExtQuery(filter) {
     }
 
   // range cases
-  case ComparisonOp.LT:
-  case ComparisonOp.LTE:
-  case ComparisonOp.GT:
-  case ComparisonOp.GTE:
+  case COMPARISON_OP.LT:
+  case COMPARISON_OP.LTE:
+  case COMPARISON_OP.GT:
+  case COMPARISON_OP.GTE:
     return {
       range: {
         [cql2Field]: {
-          [RangeTranslation[filter.op]]: cql2Value
+          [RANGE_TRANSLATION[filter.op]]: cql2Value
         }
       }
     }

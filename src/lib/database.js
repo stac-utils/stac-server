@@ -316,7 +316,7 @@ function buildItemSearchQuery(parameters) {
   }
 }
 
-function buildQuery(parameters) {
+function buildOpenSearchQuery(parameters) {
   const { query, filter, intersects, collections, ids } = parameters
 
   let cql2Query = {}
@@ -626,7 +626,7 @@ export async function constructSearchParams(parameters, page, limit) {
   if (id) {
     body = buildIdQuery(id)
   } else {
-    body = buildQuery(parameters)
+    body = buildOpenSearchQuery(parameters)
     body.sort = buildSort(parameters) // sort applied to the id query causes hang???
     body.search_after = buildSearchAfter(parameters)
   }

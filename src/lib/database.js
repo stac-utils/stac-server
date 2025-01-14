@@ -320,12 +320,12 @@ function buildQuery(parameters) {
   const { query, filter, intersects, collections, ids } = parameters
 
   let cql2Query = {}
-  let stacQlQuery = {}
+  let stacqlQuery = {}
   let itemSearchQuery = {}
   const osQuery = { bool: {} }
 
   if (query) {
-    stacQlQuery = buildQueryExtQuery(query)
+    stacqlQuery = buildQueryExtQuery(query)
   }
 
   if (filter) {
@@ -342,7 +342,7 @@ function buildQuery(parameters) {
 
   const combinedFilter = [
     ...(cql2Query.bool?.filter || []),
-    ...(stacQlQuery.bool?.filter || []),
+    ...(stacqlQuery.bool?.filter || []),
     ...(itemSearchQuery.bool?.filter || [])
   ]
   const combinedShould = [
@@ -350,7 +350,7 @@ function buildQuery(parameters) {
   ]
   const combinedMustNot = [
     ...(cql2Query.bool?.must_not || []),
-    ...(stacQlQuery.bool?.must_not || []),
+    ...(stacqlQuery.bool?.must_not || []),
   ]
 
   if (!isEmpty(combinedFilter)) {

@@ -771,10 +771,9 @@ test('/search - filter extension - comparison operators', async (t) => {
   t.is(response.features.length, 3)
 })
 
-test('/search - filter extension - logical operators', async (t) => {
+test('/search - filter extension - AND logical operator', async (t) => {
   let response = null
 
-  // and
   response = await t.context.api.client.post('search', {
     json: {
       filter: {
@@ -832,8 +831,11 @@ test('/search - filter extension - logical operators', async (t) => {
     }
   })
   t.is(response.features.length, 2)
+})
 
-  // or
+test.only('/search - filter extension - OR logical operator', async (t) => {
+  let response = null
+
   response = await t.context.api.client.post('search', {
     json: {
       filter: {
@@ -863,7 +865,45 @@ test('/search - filter extension - logical operators', async (t) => {
   })
   t.is(response.features.length, 3)
 
-  // not
+  // Test case for an OpenSearch query with `filter` and `should` keys directly under a
+  // `bool` key. In this case, OpenSearch uses a default `minimum_should_match` value of
+  // 0, meaning that no matches in the specified `or` list are required. We test here that
+  // `minimum_should_match` is set to 1, therefore requiring at least one of the
+  // conditions in the `or` list to be met.
+  response = await t.context.api.client.post('search', {
+    json: {
+      collections: ['landsat-8-l1'],
+      filter: {
+        op: 'or',
+        args: [
+          {
+            op: '>',
+            args: [
+              {
+                property: 'properties.eo:cloud_cover'
+              },
+              10.0
+            ]
+          },
+          {
+            op: '<',
+            args: [
+              {
+                property: 'properties.eo:cloud_cover'
+              },
+              0.5
+            ]
+          }
+        ]
+      }
+    }
+  })
+  t.is(response.features.length, 0)
+})
+
+test('/search - filter extension - NOT logical operator', async (t) => {
+  let response = null
+
   response = await t.context.api.client.post('search', {
     json: {
       filter: {

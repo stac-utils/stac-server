@@ -213,7 +213,8 @@ function buildFilterExtQuery(filter) {
   case LOGICAL_OP.OR:
     return {
       bool: {
-        should: filter.args.map(buildFilterExtQuery)
+        should: filter.args.map(buildFilterExtQuery),
+        minimum_should_match: 1
       }
     }
   case LOGICAL_OP.NOT:
@@ -358,6 +359,7 @@ function buildOpenSearchQuery(parameters) {
   }
   if (!isEmpty(combinedShould)) {
     osQuery.bool.should = combinedShould
+    osQuery.bool.minimum_should_match = 1
   }
   if (!isEmpty(combinedMustNot)) {
     osQuery.bool.must_not = combinedMustNot

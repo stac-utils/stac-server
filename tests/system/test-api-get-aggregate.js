@@ -478,7 +478,7 @@ test('GET /aggregate with aggregations and filter params', async (t) => {
             op: '>',
             args: [
               {
-                property: 'properties.eo:cloud_cover'
+                property: 'eo:cloud_cover'
               },
               0.54
             ]

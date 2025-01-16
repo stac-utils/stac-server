@@ -24,6 +24,12 @@ const RANGE_TRANSLATION = {
   '>': 'gt',
   '>=': 'gte'
 }
+const UNPREFIXED_FIELDS = [
+  'id',
+  'collection',
+  'geometry',
+  'bbox'
+]
 
 let collectionToIndexMapping = null
 let unrestrictedIndices = null
@@ -195,7 +201,10 @@ function buildQueryExtQuery(query) {
 }
 
 function buildFilterExtQuery(filter) {
-  const cql2Field = filter.args[0].property
+  let cql2Field = filter.args[0].property
+  if (!UNPREFIXED_FIELDS.includes(cql2Field)) {
+    cql2Field = `properties.${cql2Field}`
+  }
 
   let cql2Value = filter.args[1]
   if (typeof cql2Value === 'object' && cql2Value.timestamp) {

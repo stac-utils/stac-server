@@ -133,7 +133,7 @@ test('/search filter, query, and item search in single request', async (t) => {
         op: '>',
         args: [
           {
-            property: 'properties.eo:cloud_cover'
+            property: 'eo:cloud_cover'
           },
           0.54
         ]

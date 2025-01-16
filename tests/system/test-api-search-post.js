@@ -1040,22 +1040,20 @@ test('/search - filter extension - with top level field filtering', async (t) =>
 })
 
 test('/search - filter extension - failure with incorrect filter-lang', async (t) => {
-  const error = await t.throwsAsync(
-    t.context.api.client.post('search', {
-      json: {
-        'filter-lang': 'not-cql2-json',
-        filter: {
-          op: '>',
-          args: [
-            {
-              property: 'eo:cloud_cover'
-            },
-            0.54
-          ]
-        }
+  const error = await t.throwsAsync(async () => t.context.api.client.post('search', {
+    json: {
+      'filter-lang': 'not-cql2-json',
+      filter: {
+        op: '>',
+        args: [
+          {
+            property: 'eo:cloud_cover'
+          },
+          0.54
+        ]
       }
-    })
-  )
+    }
+  }))
   t.is(error.response.statusCode, 400)
   t.is(error.response.body.code, 'BadRequest')
   t.regex(error.response.body.description,
@@ -1063,22 +1061,20 @@ test('/search - filter extension - failure with incorrect filter-lang', async (t
 })
 
 test('/search - filter extension - failure with incorrect filter-crs', async (t) => {
-  const error = await t.throwsAsync(
-    t.context.api.client.post('search', {
-      json: {
-        'filter-crs': 'not-crs84-url',
-        filter: {
-          op: '>',
-          args: [
-            {
-              property: 'eo:cloud_cover'
-            },
-            0.54
-          ]
-        }
+  const error = await t.throwsAsync(async () => t.context.api.client.post('search', {
+    json: {
+      'filter-crs': 'not-crs84-url',
+      filter: {
+        op: '>',
+        args: [
+          {
+            property: 'eo:cloud_cover'
+          },
+          0.54
+        ]
       }
-    })
-  )
+    }
+  }))
   t.is(error.response.statusCode, 400)
   t.is(error.response.body.code, 'BadRequest')
   t.regex(error.response.body.description,

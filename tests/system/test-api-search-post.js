@@ -833,7 +833,7 @@ test('/search - filter extension - AND logical operator', async (t) => {
   t.is(response.features.length, 2)
 })
 
-test.only('/search - filter extension - OR logical operator', async (t) => {
+test('/search - filter extension - OR logical operator', async (t) => {
   let response = null
 
   response = await t.context.api.client.post('search', {
@@ -868,8 +868,8 @@ test.only('/search - filter extension - OR logical operator', async (t) => {
   // Test case for an OpenSearch query with `filter` and `should` keys directly under a
   // `bool` key. In this case, OpenSearch uses a default `minimum_should_match` value of
   // 0, meaning that no matches in the specified `or` list are required. We test here that
-  // `minimum_should_match` is set to 1, therefore requiring at least one of the
-  // conditions in the `or` list to be met.
+  // `minimum_should_match` has been set to 1, with the effect of requiring at least one
+  // of the conditions in the `or` list to be met.
   response = await t.context.api.client.post('search', {
     json: {
       collections: ['landsat-8-l1'],

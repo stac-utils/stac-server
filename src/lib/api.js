@@ -1017,6 +1017,17 @@ const getGlobalQueryables = async (endpoint = '') => ({
   additionalProperties: true
 })
 
+const validateAdditionalProperties = (queryables) => {
+  if ('additionalProperties' in queryables) {
+    const additionalProperties = queryables.additionalProperties
+    if (additionalProperties !== true) {
+      throw new ValidationError(
+        `Unsupported additionalProperties value: "${additionalProperties}". Must be set to "true".`
+      )
+    }
+  }
+}
+
 const getCollectionQueryables = async (collectionId, backend, endpoint = '') => {
   const collection = await backend.getCollection(collectionId)
 
@@ -1024,6 +1035,7 @@ const getCollectionQueryables = async (collectionId, backend, endpoint = '') => 
     return collection
   }
   const queryables = collection.queryables || { ...DEFAULT_QUERYABLES }
+  validateAdditionalProperties(queryables)
   queryables.$id = `${endpoint}/collections/${collectionId}/queryables`
   queryables.title = `Queryables for Collection ${collectionId}`
   return queryables

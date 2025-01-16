@@ -1,0 +1,41 @@
+{
+    "id": "landsat-8-l1-incorrect-queryables",
+    "type": "Collection",
+    "stac_version": "1.0.0",
+    "description": "Landat-8 L1 Collection-1 imagery radiometrically calibrated and orthorectified using gound points and Digital Elevation Model (DEM) data to correct relief displacement.",
+    "links": [],
+    "stac_extensions": [],
+    "title": "Landsat-8 L1 Collection-1",
+    "extent": {
+        "spatial": {
+            "bbox": [
+                [
+                    -180,
+                    -90,
+                    180,
+                    90
+                ]
+            ]
+        },
+        "temporal": {
+            "interval": [
+                [
+                    "2013-06-01T00:00:00Z",
+                    null
+                ]
+            ]
+        }
+    },
+    "queryables": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$id": "",
+        "type": "object",
+        "title": "",
+        "properties": {
+            "eo:cloud_cover": {
+                "$ref": "https://stac-extensions.github.io/eo/v1.0.0/schema.json#/definitions/fields/properties/eo:cloud_cover"
+            }
+        },
+        "additionalProperties": false
+    }
+}

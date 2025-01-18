@@ -1,4 +1,5 @@
 <!-- omit from toc -->
+
 # stac-server
 
 ![push event badge](https://github.com/stac-utils/stac-server/workflows/Push%20Event/badge.svg)
@@ -40,6 +41,8 @@
   - [AWS WAF Rule Conflicts](#aws-waf-rule-conflicts)
   - [API Gateway Logging](#api-gateway-logging)
 - [Queryables](#queryables)
+  - [Filter Extension](#filter-extension)
+  - [Query Extension](#query-extension)
 - [Aggregation](#aggregation)
 - [Ingesting Data](#ingesting-data)
   - [Ingesting large items](#ingesting-large-items)
@@ -81,6 +84,7 @@ Currently, stac-server supports the following specifications:
 - STAC API - Collections
 - STAC API - Item Search
 - Query Extension
+- Filter Extension
 - Fields Extension
 - Sort Extension
 - Aggregation Extension (experimental)
@@ -152,7 +156,6 @@ apiLambda --> opensearch
   The solution is to create a new index by creating a new collection with a different
   name, reindex the existing index into the newly-created index, delete and re-created
   the existing index by creating a collection, and reindex back into the index.
-
 
 ### 3.1.0
 
@@ -247,7 +250,7 @@ are three options if you have an existing deployment that uses Elasticsearch:
 
 1. Use stac-server in compatibility mode
    1. Add to serverless.yml environment variables `ES_COMPAT_MODE: "true"` and retain the
-   existing Elasticsearch 7.10 resource description.
+      existing Elasticsearch 7.10 resource description.
 2. Manage the Elasticsearch/OpenSearch domain outside the stac-server serverless deployment.
    1. With the 0.4.x stac-server code, add `DeletionPolicy: Retain` to the `AWS::Elasticsearch::Domain` resource
    2. Deploy the stack to update this property in the deployed CloudFormation Stack.
@@ -284,19 +287,18 @@ the OpenSearch domain into it.
 1. With the 0.4.x codebase, change the serverless.yml file to add `DeletionPolicy: Retain` and `UpdateReplacePolicy: Retain` to the `AWS::Elasticsearch::Domain` definition at the same level as the `Type` and deploy. See instructions for deploying [here](https://github.com/stac-utils/stac-server/blob/main/README.md#deployment).
 
 ```yaml
-  Type: AWS::Elasticsearch::Domain
-  DeletionPolicy: Retain
-  UpdateReplacePolicy: Retain
-  Properties:
-    . . .
+Type: AWS::Elasticsearch::Domain
+DeletionPolicy: Retain
+UpdateReplacePolicy: Retain
+Properties: . . .
 ```
 
 2. The existing Elasticsearch domain must be manually migrated to OpenSearch. Prior to
-re-deploying the stack, use the AWS Console to manually upgrade the
-Elasticsearch domain (`Actions->Upgrade`) to OpenSearch 1.3. Select "Enable
-compatibility mode" to support the existing stac-server 0.4.x code using the Elasticsearch
-JavaScript client library (@elastic/elasticsearch version 7.9.0). After this upgrade to
-OpenSearch 1.3, then upgrade the domain to OpenSearch 2.5.
+   re-deploying the stack, use the AWS Console to manually upgrade the
+   Elasticsearch domain (`Actions->Upgrade`) to OpenSearch 1.3. Select "Enable
+   compatibility mode" to support the existing stac-server 0.4.x code using the Elasticsearch
+   JavaScript client library (@elastic/elasticsearch version 7.9.0). After this upgrade to
+   OpenSearch 1.3, then upgrade the domain to OpenSearch 2.5.
 
 3. Create a clone of the stac-server 0.5.x code. Copy and update the serverless.yml file used for the 0.4.0 deployment with these changes:
 
@@ -307,20 +309,20 @@ OpenSearch 1.3, then upgrade the domain to OpenSearch 2.5.
   - `InstanceType` values have changed, e.g., t3.small.elasticsearch is now t3.small.search
   - `ElasticsearchVersion` is replaced with `EngineVersion` and set to `OpenSearch_2.5`
 - `EsEndpoint` should be renamed to `OpenSearchEndpoint` and the exported name suffixed
-    with `-os-endpoint` instead of `-es-endpoint`
+  with `-os-endpoint` instead of `-es-endpoint`
 - Environment variable `STAC_API_VERSION` should be removed to instead defer to the current default version
 
 - The `DomainName` value
-**must** remain the same as it is for the current deployment so
-the CloudFormation deployment will import the existing resource. Instead of a parameterized
-value of `${self:service}-${self:provider.stage}` as in the example serverless.yml file,
-it would have a hard-coded service name and `-es` suffix, e.g., `my-stac-server-${self:provider.stage}-es`.
+  **must** remain the same as it is for the current deployment so
+  the CloudFormation deployment will import the existing resource. Instead of a parameterized
+  value of `${self:service}-${self:provider.stage}` as in the example serverless.yml file,
+  it would have a hard-coded service name and `-es` suffix, e.g., `my-stac-server-${self:provider.stage}-es`.
 
 - Note: these changes can be checked against the [serverless.example.yml](https://github.com/stac-utils/stac-server/blob/main/serverless.example.yml) file.
 
 4. Run `npm run package` to generate the CloudFormation templates in the `.serverless` directory.
-Extract from the file `.serverless/cloudformation-template-update-stack.json` a template
-that only has the OpenSearchInstance resource in it. For example:
+   Extract from the file `.serverless/cloudformation-template-update-stack.json` a template
+   that only has the OpenSearchInstance resource in it. For example:
 
 ```json
 {
@@ -358,7 +360,7 @@ that only has the OpenSearchInstance resource in it. For example:
 ```
 
 5. Within CloudFormation, choose `Create stack` and `With existing resources (import resources)`.
-Upload the template that contains only the OpenSearch resource. Choose a new stack name for this similar to the old one, e.g., `my-stac-server-2-{deploy-stage}` and update `service` name in the serverless.yml file with this name without the deploy stage e.g., `my-stac-server-2`. When prompted for the name of the OpenSearch Domain, put in the name of the existing one, e.g., `my-stac-server-dev-es`.
+   Upload the template that contains only the OpenSearch resource. Choose a new stack name for this similar to the old one, e.g., `my-stac-server-2-{deploy-stage}` and update `service` name in the serverless.yml file with this name without the deploy stage e.g., `my-stac-server-2`. When prompted for the name of the OpenSearch Domain, put in the name of the existing one, e.g., `my-stac-server-dev-es`.
 
 6. Deploy the new stack with `npm run deploy -- --stage {deploy-stage}`. This should appear as an update to the CloudFormation stack that was just created manually, and should use the existing OpenSearch domain.
 
@@ -463,10 +465,10 @@ stac-server supports both GET and POST Search requests.
 An Item Search with GET:
 
 ```shell
-curl "${HOST}/search?collections=sentinel-2-l2a,sentinel-2-l1c&bbox=10,10,15,15&query=%7B%22eo%3Acloud_cover%22%3A%7B%22gte%22%3A0,%22lte%22%3A5%7D%7D&sortby=-properties.datetime"
+curl "${HOST}/search?collections=sentinel-2-l2a,sentinel-2-l1c&bbox=10,10,15,15&query=%7B%22eo%3Acloud_cover%22%3A%7B%22gte%22%3A0%2C%22lte%22%3A5%7D%7D&filter=%7B%22op%22%3A%22%3C%22%2C%22args%22%3A%5B%7B%22property%22%3A%22view%3Asun_elevation%22%7D%2C50%5D%7D&sortby=-properties.datetime"
 ```
 
-Notice that the `query` parameter is a URL-encoded JSON value.
+Notice that the `query` and `filter` parameters are URL-encoded JSON values.
 
 An Item Search with POST:
 
@@ -490,6 +492,13 @@ curl -X "POST" "${HOST}/search" \
       "lte": 5
     }
   },
+  "filter": {
+    "op": "<",
+    "args": [
+      "property": "view:sun_elevation"
+    ],
+    50
+  }
   "sortby": {
     "field": "properties.datetime",
     "direction": "desc"
@@ -697,7 +706,7 @@ Note that several of the indices permissions in `cluster_composite_ops` action g
 are required to
 be applyed to the Cluster permissions. Confusingly, the `cluster_all` action group does
 not have those permissions in it because they are `indices` permissions rather than
-`cluster` permissions. This is all very confusing!  [This issue](https://github.com/opensearch-project/security/issues/2336) has been filed against
+`cluster` permissions. This is all very confusing! [This issue](https://github.com/opensearch-project/security/issues/2336) has been filed against
 the OpenSearch Security Plugin to request improvements to the documentation.
 
 Add the user `stac_server` as a mapped user to this role.
@@ -729,7 +738,7 @@ Add to the IAM Role Statements:
 ```yaml
 - Effect: Allow
   Resource: arn:aws:secretsmanager:${aws:region}:${aws:accountId}:secret:${self:provider.environment.OPENSEARCH_CREDENTIALS_SECRET_ID}-*
-  Action: "secretsmanager:GetSecretValue"
+  Action: 'secretsmanager:GetSecretValue'
 ```
 
 If desired, the resource ARN can be replaced with the exact ARN for the Secret instead of
@@ -817,40 +826,36 @@ If you wanted to deploy STAC Server in a way which ensures certain endpoints hav
 
 ```json
 {
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Effect": "Allow",
-            "Principal": "*",
-            "Action": "execute-api:Invoke",
-            "Resource": [
-                "arn:aws:execute-api:us-west-2:123456789123:ab1c23def/v1/POST/search",
-                "arn:aws:execute-api:us-west-2:123456789123:ab1c23def/v1/POST/search/*",
-                "arn:aws:execute-api:us-west-2:123456789123:ab1c23def/v1/GET/search/*",
-                "arn:aws:execute-api:us-west-2:123456789123:ab1c23defi/v1/GET/*"
-            ]
-        },
-        {
-            "Effect": "Allow",
-            "Principal": "*",
-            "Action": "execute-api:Invoke",
-            "Resource": [
-                "arn:aws:execute-api:us-west-2:123456789123:ab1c23def/v1/POST/collections/*/items",
-                "arn:aws:execute-api:us-west-2:123456789123:ab1c23def/v1/PUT/collections/*/items/*",
-                "arn:aws:execute-api:us-west-2:123456789123:ab1c23def/v1/PATCH/collections/*/items/*",
-                "arn:aws:execute-api:us-west-2:123456789123:ab1c23def/v1/DELETE/collections/*/items/*"
-            ],
-            "Condition": {
-                "IpAddress": {
-                    "aws:sourceIp": [
-                        "94.61.192.106",
-                        "204.176.50.129",
-                        "11.27.65.78"
-                    ]
-                }
-            }
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": "*",
+      "Action": "execute-api:Invoke",
+      "Resource": [
+        "arn:aws:execute-api:us-west-2:123456789123:ab1c23def/v1/POST/search",
+        "arn:aws:execute-api:us-west-2:123456789123:ab1c23def/v1/POST/search/*",
+        "arn:aws:execute-api:us-west-2:123456789123:ab1c23def/v1/GET/search/*",
+        "arn:aws:execute-api:us-west-2:123456789123:ab1c23defi/v1/GET/*"
+      ]
+    },
+    {
+      "Effect": "Allow",
+      "Principal": "*",
+      "Action": "execute-api:Invoke",
+      "Resource": [
+        "arn:aws:execute-api:us-west-2:123456789123:ab1c23def/v1/POST/collections/*/items",
+        "arn:aws:execute-api:us-west-2:123456789123:ab1c23def/v1/PUT/collections/*/items/*",
+        "arn:aws:execute-api:us-west-2:123456789123:ab1c23def/v1/PATCH/collections/*/items/*",
+        "arn:aws:execute-api:us-west-2:123456789123:ab1c23def/v1/DELETE/collections/*/items/*"
+      ],
+      "Condition": {
+        "IpAddress": {
+          "aws:sourceIp": ["94.61.192.106", "204.176.50.129", "11.27.65.78"]
         }
-    ]
+      }
+    }
+  ]
 }
 ```
 
@@ -858,24 +863,20 @@ The first statement in the Resource Policy above grants access to STAC API endpo
 
 ```json
 {
-    "Effect": "Deny",
-    "Principal": "*",
-    "Action": "execute-api:Invoke",
-    "Resource": [
-        "arn:aws:execute-api:us-west-2:123456789123:ab1c23def/v1/POST/collections/*/items",
-        "arn:aws:execute-api:us-west-2:123456789123:ab1c23def/v1/PUT/collections/*/items/*",
-        "arn:aws:execute-api:us-west-2:123456789123:ab1c23def/v1/PATCH/collections/*/items/*",
-        "arn:aws:execute-api:us-west-2:123456789123:ab1c23def/v1/DELETE/collections/*/items/*"
-    ],
-    "Condition": {
-        "NotIpAddress": {
-            "aws:sourceIp": [
-                "94.61.192.106",
-                "204.176.50.129",
-                "11.27.65.78"
-            ]
-        }
+  "Effect": "Deny",
+  "Principal": "*",
+  "Action": "execute-api:Invoke",
+  "Resource": [
+    "arn:aws:execute-api:us-west-2:123456789123:ab1c23def/v1/POST/collections/*/items",
+    "arn:aws:execute-api:us-west-2:123456789123:ab1c23def/v1/PUT/collections/*/items/*",
+    "arn:aws:execute-api:us-west-2:123456789123:ab1c23def/v1/PATCH/collections/*/items/*",
+    "arn:aws:execute-api:us-west-2:123456789123:ab1c23def/v1/DELETE/collections/*/items/*"
+  ],
+  "Condition": {
+    "NotIpAddress": {
+      "aws:sourceIp": ["94.61.192.106", "204.176.50.129", "11.27.65.78"]
     }
+  }
 }
 ```
 
@@ -909,20 +910,61 @@ can be useful for computing metrics on usage for the API.
 
 ## Queryables
 
-STAC API supports the Query Extension. Unlike the Filter Extension (which is not supported),
-the Query Extension does not (yet) define a mechanism to advertise which terms may be
-used in expressions. However, an optional defintion may be added to it soon that defines
-queryables endpoints the same as used with Filter Extension. To define these for a Collection,
-add a field `queryables` with the value as the JSON Schema definition of the queryables
-for that collection. This will be used for a collection's queryables resource, and removed
-from the Collection entity whenever that is returned.
+The Filter Extension defines a
+[Queryables](https://docs.ogc.org/is/19-079r2/19-079r2.html#queryables) resource for
+discovering properties that may be used to construct filter expressions. Queryables for
+each Collection are served from the `/collections/{collectionId}/queryables` endpoint.
+Root-level (global to all Collections) queryables are served from the `/queryables`
+endpoint.
 
-A non-configurable root-level queryables definition is defined with no named terms but
-`additionalProperties` set to `true`.
+Collection queryables are defined in stac-server by adding a `queryables` field to the
+Collection JSON object with the value being the JSON Schema definition of the queryables
+for that Collection. The content of this `queryables` field is extracted from the
+Collection object and served from the Collection's queryables endpoint, but is removed
+from the Collection object when the Collection itself is served from the
+`/collections/{collectionId}` endpoint. Stac-server's root-level queryables resource is
+not configurable and currently does not advertise any queryable properties. Likewise, if a
+Collection does not define a `queryables` field, no queryable properties are advertised
+for that Collection. For reference, here is a queryables JSON Schema definition that does
+not advertise any queryables properties (note the empty `properties` field):
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://stac-api.example.com/queryables",
+  "type": "object",
+  "title": "Queryables for Example STAC API",
+  "description": "Queryable names for the example STAC API Item Search filter.",
+  "properties": {},
+  "additionalProperties": true
+}
+```
+
+### Filter Extension
+
+Stac-server currently implements the Filter Extension such that the `id`, `collection`,
+`geometry`, and `bbox` Item fields and all fields in the `properties` object of an Item
+are always available as filter terms for a Collection, regardless of whether a Collection
+defines a `queryables` field or not. This behavior aligns with a value of `true` for the
+`additionalProperties` field in the queryables definition. Stac-server currently
+_requires_ `additionalProperties` to be `true`; a value of `false`, which would restrict
+filtering to only those `properties` defined in a Collection's queryable schema, is not
+supported and will raise an error. Thus, adding a `queryables` field to a Collection is
+informative only - it does not change the behavior of a filter.
+
+Note that when creating a filter expression that uses fields from the `properties` object
+in an Item, the fields should not be prefixed, e.g., use `eo:cloud_cover`, not
+`properties.eo:cloud_cover`, in the filter expression.
+
+### Query Extension
+
+Unlike the Filter Extension, the Query Extension does not (yet) define a mechanism to
+advertise which terms may be used in expressions. However, an optional definition may be
+added to it soon that defines queryables endpoints the same as used with Filter Extension.
 
 ## Aggregation
 
-STAC API supports the [Aggregation Extension](https://github.com/stac-api-extensions/aggregation). This allows the definition of per-collection aggregations that can be
+Stac-server supports the [Aggregation Extension](https://github.com/stac-api-extensions/aggregation). This allows the definition of per-collection aggregations that can be
 calculated, dependent on the relevant fields being available in the STAC Items in that
 Collection. A field named `aggregations` should be added to the Collection object for
 the collection for which the aggregations are available, e.g.:
@@ -995,7 +1037,7 @@ Available aggregations are:
 - grid_geohash_frequency ([geohash grid](https://opensearch.org/docs/latest/aggregations/bucket/geohash-grid/) on Item.Properties.proj:centroid) (Deprecated)
 - grid_geohex_frequency ([geohex grid](https://opensearch.org/docs/latest/aggregations/bucket/geohex-grid/) on Item.Properties.proj:centroid) (Deprecated)
 - grid_geotile_frequency ([geotile grid](https://opensearch.org/docs/latest/aggregations/bucket/geotile-grid/) on Item.Properties.proj:centroid) (Deprecated)
-- centroid_geohash_grid_frequency ([geohash grid](https://opensearch.org/docs/latest/aggregations/bucket/geohash-grid/)  on Item.Properties.proj:centroid)
+- centroid_geohash_grid_frequency ([geohash grid](https://opensearch.org/docs/latest/aggregations/bucket/geohash-grid/) on Item.Properties.proj:centroid)
 - centroid_geohex_grid_frequency ([geohex grid](https://opensearch.org/docs/latest/aggregations/bucket/geohex-grid/) on Item.Properties.proj:centroid)
 - centroid_geotile_grid_frequency (geotile on Item.Properties.proj:centroid)
 - geometry_geohash_grid_frequency ([geohash grid](https://opensearch.org/docs/latest/aggregations/bucket/geohash-grid/) on Item.geometry)
@@ -1036,7 +1078,7 @@ The `s3://`, `http://`, and `https://` protocols are supported for remote ingest
 
 Stac-server can also be subscribed to SNS Topics that publish complete STAC Items as their message. This provides a way to keep stac-server up to date with new data. Use the AWS Lambda console for the function `stac-server-<stage>-subscibe-to-sns` to subscribe to an SNS Topic for which you have the full ARN and permission to subscribe to. This could be an SNS Topic you created yourself to publish STAC records to, or a publicly available one, such as for [Sentinel](https://github.com/sat-utils/sat-stac-sentinel).
 
-*Note*, that adding the subscription via the topic page does not seem to work. Instead, add a trigger on Lambda edit page.
+_Note_, that adding the subscription via the topic page does not seem to work. Instead, add a trigger on Lambda edit page.
 
 ### Ingest Errors
 
@@ -1238,7 +1280,7 @@ When the system tests run, they:
 Before running the system tests, make sure to start OpenSearch using:
 
 ```shell
-docker-compose up -d
+docker compose up -d
 ```
 
 Running these tests requires the timeout utility is installed. On Linux,

@@ -96,6 +96,7 @@ paths:
         - $ref: '#/components/parameters/limit'
         - $ref: '#/components/parameters/bbox'
         - $ref: '#/components/parameters/datetime'
+        - $ref: '#/components/parameters/query'
         - $ref: '#/components/parameters/filter'
         - $ref: '#/components/parameters/filter-lang'
         - $ref: '#/components/parameters/filter-crs'
@@ -2126,7 +2127,6 @@ components:
         **Extension:** Query
 
         Query for properties in items.
-        Use the JSON form of the query used in POST.
       required: false
       schema:
         type: string

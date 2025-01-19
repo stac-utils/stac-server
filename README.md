@@ -83,10 +83,12 @@ Currently, stac-server supports the following specifications:
 - STAC API - Features
 - STAC API - Collections
 - STAC API - Item Search
+- Context Extension
+- Sort Extension
+- Fields Extension
 - Query Extension
 - Filter Extension
-- Fields Extension
-- Sort Extension
+- Transaction Extension
 - Aggregation Extension (experimental)
 
 The following APIs are deployed instances of stac-server:

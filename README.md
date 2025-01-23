@@ -945,9 +945,9 @@ not advertise any queryables properties (note the empty `properties` field):
 ### Filter Extension
 
 Stac-server currently implements the Filter Extension such that the `id`, `collection`,
-`geometry`, and `bbox` Item fields and all fields in the `properties` object of an Item
-are always available as filter terms for a Collection, regardless of whether a Collection
-defines a `queryables` field or not. This behavior aligns with a value of `true` for the
+and `geometry` Item fields and all fields in the `properties` object of an Item are always
+available as filter terms for a Collection, regardless of whether a Collection defines a
+`queryables` field or not. This behavior aligns with a value of `true` for the
 `additionalProperties` field in the queryables definition. Stac-server currently
 _requires_ `additionalProperties` to be `true`; a value of `false`, which would restrict
 filtering to only those `properties` defined in a Collection's queryable schema, is not
@@ -956,7 +956,11 @@ informative only - it does not change the behavior of a filter.
 
 Note that when creating a filter expression that uses fields from the `properties` object
 in an Item, the fields **must not** be prefixed, e.g., use `eo:cloud_cover` instead of
-`properties.eo:cloud_cover` in the filter expression.
+`properties.eo:cloud_cover` in the filter expression. Care must be taken that terms used
+in a filter expression exactly match the field names in the Item `properties` object.
+There is no validation that filter expression terms are correct, so if you search for a
+field that doesn't exist in an Item's `properties` object, that Item will never be
+matched.
 
 ### Query Extension
 

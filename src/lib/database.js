@@ -28,7 +28,6 @@ const UNPREFIXED_FIELDS = [
   'id',
   'collection',
   'geometry',
-  'bbox'
 ]
 
 let collectionToIndexMapping = null

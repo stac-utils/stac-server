@@ -955,8 +955,8 @@ supported and will raise an error. Thus, adding a `queryables` field to a Collec
 informative only - it does not change the behavior of a filter.
 
 Note that when creating a filter expression that uses fields from the `properties` object
-in an Item, the fields should not be prefixed, e.g., use `eo:cloud_cover`, not
-`properties.eo:cloud_cover`, in the filter expression.
+in an Item, the fields **must not** be prefixed, e.g., use `eo:cloud_cover` instead of
+`properties.eo:cloud_cover` in the filter expression.
 
 ### Query Extension
 

@@ -1,8 +1,35 @@
+import { isEmpty } from 'lodash-es'
 import { dbClient as _client, createIndex } from './database-client.js'
 import logger from './logger.js'
 
 const COLLECTIONS_INDEX = process.env['COLLECTIONS_INDEX'] || 'collections'
 const DEFAULT_INDICES = ['*', '-.*', '-collections']
+const LOGICAL_OP = {
+  AND: 'and',
+  OR: 'or',
+  NOT: 'not'
+}
+const COMPARISON_OP = {
+  EQ: '=',
+  NEQ: '<>',
+  LT: '<',
+  LTE: '<=',
+  GT: '>',
+  GTE: '>=',
+  IS_NULL: 'isNull'
+}
+const RANGE_TRANSLATION = {
+  '<': 'lt',
+  '<=': 'lte',
+  '>': 'gt',
+  '>=': 'gte'
+}
+const UNPREFIXED_FIELDS = [
+  'id',
+  'collection',
+  'geometry',
+  'bbox'
+]
 
 let collectionToIndexMapping = null
 let unrestrictedIndices = null
@@ -72,102 +99,194 @@ export function buildDatetimeQuery(parameters) {
   return dateQuery
 }
 
-function buildQuery(parameters) {
+function buildQueryExtQuery(query) {
   const eq = 'eq'
-  const neq = 'neq'
   const inop = 'in'
   const startsWith = 'startsWith'
   const endsWith = 'endsWith'
   const contains = 'contains'
-
-  const { query, intersects, collections, ids } = parameters
-
   let filterQueries = []
+
+  // Using reduce rather than map as we don't currently support all
+  // stac query operators.
+  filterQueries = Object.keys(query).reduce((accumulator, property) => {
+    const operatorsObject = query[property]
+    const operators = Object.keys(operatorsObject)
+
+    // eq
+    if (operators.includes(eq)) {
+      accumulator.push({
+        term: {
+          [`properties.${property}`]: operatorsObject.eq
+        }
+      })
+    }
+
+    // in
+    if (operators.includes(inop)) {
+      accumulator.push({
+        terms: {
+          [`properties.${property}`]: operatorsObject.in
+        }
+      })
+    }
+
+    // startsWith
+    if (operators.includes(startsWith)) {
+      accumulator.push({
+        prefix: {
+          [`properties.${property}`]: {
+            value: operatorsObject.startsWith
+          }
+        }
+      })
+    }
+
+    // endsWith
+    if (operators.includes(endsWith)) {
+      accumulator.push({
+        wildcard: {
+          [`properties.${property}`]: {
+            value: `*${operatorsObject.endsWith}`
+          }
+        }
+      })
+    }
+
+    // contains
+    if (operators.includes(contains)) {
+      accumulator.push({
+        wildcard: {
+          [`properties.${property}`]: {
+            value: `*${operatorsObject.contains}*`
+          }
+        }
+      })
+    }
+
+    // lt, lte, gt, gte
+    const rangeQuery = buildRangeQuery(property, operators, operatorsObject)
+    if (rangeQuery) {
+      accumulator.push(rangeQuery)
+    }
+
+    return accumulator
+  }, filterQueries)
+
+  const neq = 'neq'
   let mustNotQueries = []
 
-  if (query) {
-    // Using reduce rather than map as we don't currently support all
-    // stac query operators.
-    filterQueries = Object.keys(query).reduce((accumulator, property) => {
-      const operatorsObject = query[property]
-      const operators = Object.keys(operatorsObject)
+  mustNotQueries = Object.keys(query).reduce((accumulator, property) => {
+    const operatorsObject = query[property]
+    const operators = Object.keys(operatorsObject)
 
-      // eq
-      if (operators.includes(eq)) {
-        accumulator.push({
-          term: {
-            [`properties.${property}`]: operatorsObject.eq
-          }
-        })
-      }
+    // neq
+    if (operators.includes(neq)) {
+      accumulator.push({
+        term: {
+          [`properties.${property}`]: operatorsObject.neq
+        }
+      })
+    }
 
-      // in
-      if (operators.includes(inop)) {
-        accumulator.push({
-          terms: {
-            [`properties.${property}`]: operatorsObject.in
-          }
-        })
-      }
+    return accumulator
+  }, mustNotQueries)
 
-      // startsWith
-      if (operators.includes(startsWith)) {
-        accumulator.push({
-          prefix: {
-            [`properties.${property}`]: {
-              value: operatorsObject.startsWith
-            }
-          }
-        })
-      }
-
-      // endsWith
-      if (operators.includes(endsWith)) {
-        accumulator.push({
-          wildcard: {
-            [`properties.${property}`]: {
-              value: `*${operatorsObject.endsWith}`
-            }
-          }
-        })
-      }
-
-      // contains
-      if (operators.includes(contains)) {
-        accumulator.push({
-          wildcard: {
-            [`properties.${property}`]: {
-              value: `*${operatorsObject.contains}*`
-            }
-          }
-        })
-      }
-
-      // lt, lte, gt, gte
-      const rangeQuery = buildRangeQuery(property, operators, operatorsObject)
-      if (rangeQuery) {
-        accumulator.push(rangeQuery)
-      }
-
-      return accumulator
-    }, filterQueries)
-
-    mustNotQueries = Object.keys(query).reduce((accumulator, property) => {
-      const operatorsObject = query[property]
-      const operators = Object.keys(operatorsObject)
-
-      // neq
-      if (operators.includes(neq)) {
-        accumulator.push({
-          term: {
-            [`properties.${property}`]: operatorsObject.neq
-          }
-        })
-      }
-
-      return accumulator
-    }, mustNotQueries)
+  return {
+    bool: {
+      filter: filterQueries,
+      must_not: mustNotQueries
+    }
   }
+}
+
+function buildFilterExtQuery(filter) {
+  let cql2Field = filter.args[0].property
+  if (!UNPREFIXED_FIELDS.includes(cql2Field)) {
+    cql2Field = `properties.${cql2Field}`
+  }
+
+  let cql2Value = filter.args[1]
+  if (typeof cql2Value === 'object' && cql2Value.timestamp) {
+    cql2Value = cql2Value.timestamp
+  }
+
+  switch (filter.op) {
+  // recursive cases
+  case LOGICAL_OP.AND:
+    return {
+      bool: {
+        filter: filter.args.map(buildFilterExtQuery)
+      }
+    }
+  case LOGICAL_OP.OR:
+    return {
+      bool: {
+        should: filter.args.map(buildFilterExtQuery),
+        minimum_should_match: 1
+      }
+    }
+  case LOGICAL_OP.NOT:
+    return {
+      bool: {
+        must_not: filter.args.map(buildFilterExtQuery)
+      }
+    }
+
+  // direct cases
+  case COMPARISON_OP.EQ:
+    return {
+      term: {
+        [cql2Field]: cql2Value
+      }
+    }
+  case COMPARISON_OP.NEQ:
+    return {
+      bool: {
+        must_not: [
+          {
+            term: {
+              [cql2Field]: cql2Value
+            }
+          }
+        ]
+      }
+    }
+  case COMPARISON_OP.IS_NULL:
+    return {
+      bool: {
+        must_not: [
+          {
+            exists: {
+              field: cql2Field
+            }
+          }
+        ]
+      }
+    }
+
+  // range cases
+  case COMPARISON_OP.LT:
+  case COMPARISON_OP.LTE:
+  case COMPARISON_OP.GT:
+  case COMPARISON_OP.GTE:
+    return {
+      range: {
+        [cql2Field]: {
+          [RANGE_TRANSLATION[filter.op]]: cql2Value
+        }
+      }
+    }
+
+  // should not get here
+  default:
+    throw new Error(`Unknown filter operation: ${filter.op}`)
+  }
+}
+
+function buildItemSearchQuery(parameters) {
+  const { intersects, collections, ids } = parameters
+  const filterQueries = []
 
   if (ids) {
     filterQueries.push({
@@ -201,13 +320,65 @@ function buildQuery(parameters) {
   }
 
   return {
-    query: {
-      bool: {
-        must_not: mustNotQueries,
-        filter: filterQueries
-      }
+    bool: {
+      filter: filterQueries,
     }
   }
+}
+
+function buildOpenSearchQuery(parameters) {
+  const { query, filter, intersects, collections, ids } = parameters
+
+  let cql2Query = {}
+  let stacqlQuery = {}
+  let itemSearchQuery = {}
+  const osQuery = { bool: {} }
+
+  if (query) {
+    stacqlQuery = buildQueryExtQuery(query)
+  }
+
+  if (filter) {
+    cql2Query = buildFilterExtQuery(filter)
+    // non-recursive results can be bare
+    if (!cql2Query.bool) {
+      cql2Query = { bool: { filter: [cql2Query] } }
+    }
+  }
+
+  if (intersects || collections || ids) {
+    itemSearchQuery = buildItemSearchQuery(parameters)
+  }
+
+  const combinedFilter = [
+    ...(cql2Query.bool?.filter || []),
+    ...(stacqlQuery.bool?.filter || []),
+    ...(itemSearchQuery.bool?.filter || [])
+  ]
+  const combinedShould = [
+    ...(cql2Query.bool?.should || []),
+  ]
+  const combinedMustNot = [
+    ...(cql2Query.bool?.must_not || []),
+    ...(stacqlQuery.bool?.must_not || []),
+  ]
+
+  if (!isEmpty(combinedFilter)) {
+    osQuery.bool.filter = combinedFilter
+  }
+  if (!isEmpty(combinedShould)) {
+    osQuery.bool.should = combinedShould
+    osQuery.bool.minimum_should_match = 1
+  }
+  if (!isEmpty(combinedMustNot)) {
+    osQuery.bool.must_not = combinedMustNot
+  }
+
+  if (isEmpty(osQuery.bool)) {
+    return { query: { match_all: {} } }
+  }
+
+  return { query: osQuery }
 }
 
 function buildIdQuery(id) {
@@ -466,7 +637,7 @@ export async function constructSearchParams(parameters, page, limit) {
   if (id) {
     body = buildIdQuery(id)
   } else {
-    body = buildQuery(parameters)
+    body = buildOpenSearchQuery(parameters)
     body.sort = buildSort(parameters) // sort applied to the id query causes hang???
     body.search_after = buildSearchAfter(parameters)
   }

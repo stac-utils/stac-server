@@ -22,7 +22,7 @@ paths:
     get:
       tags:
         - Features
-      summary: landing page
+      summary: Landing page
       description: >-
         The landing page provides links to the sub-resources.
       operationId: getLandingPage
@@ -35,7 +35,7 @@ paths:
     get:
       tags:
         - Features
-      summary: the feature collections in the dataset
+      summary: Get the feature collections in the dataset
       description: >-
         A body of Feature Collections that belong or are used together with additional links.
 
@@ -50,7 +50,7 @@ paths:
     get:
       tags:
         - Features
-      summary: describe the feature collection with id `collectionId`
+      summary: Describe the feature collection with Id `collectionId`
       description: >-
         A single Feature Collection for the given if `collectionId`.
 
@@ -69,7 +69,7 @@ paths:
     get:
       tags:
         - Features
-      summary: information about specifications that this API conforms to
+      summary: Get information about specifications this API conforms to
       description: |-
         A list of all conformance classes specified in a standard that the
         server conforms to.
@@ -83,7 +83,7 @@ paths:
     get:
       tags:
         - Features
-      summary: fetch features
+      summary: Fetch features
       description: |-
         Fetch features of the feature collection with id `collectionId`.
 
@@ -96,6 +96,10 @@ paths:
         - $ref: '#/components/parameters/limit'
         - $ref: '#/components/parameters/bbox'
         - $ref: '#/components/parameters/datetime'
+        - $ref: '#/components/parameters/query'
+        - $ref: '#/components/parameters/filter'
+        - $ref: '#/components/parameters/filter-lang'
+        - $ref: '#/components/parameters/filter-crs'
       responses:
         '200':
           $ref: '#/components/responses/Features'
@@ -108,7 +112,7 @@ paths:
     parameters:
       - $ref: '#/components/parameters/collectionId'
     post:
-      summary: add a new STAC Item to a collection
+      summary: Add a new STAC Item to a collection
       description: create a new STAC Item in a specific collection
       operationId: postFeature
       tags:
@@ -154,7 +158,7 @@ paths:
     get:
       tags:
         - Transaction
-      summary: fetch a single feature
+      summary: Fetch a single feature
       description: |-
         Fetch the feature with id `featureId` in the feature collection
         with id `collectionId`.
@@ -173,7 +177,7 @@ paths:
       - $ref: '#/components/parameters/collectionId'
       - $ref: '#/components/parameters/featureId'
     put:
-      summary: update an existing feature by Id with a complete item definition
+      summary: Update an existing feature by Id with a complete item definition
       description: >-
         Use this method to update an existing feature. Requires the entire GeoJSON  description be submitted.
       operationId: updateFeature
@@ -211,7 +215,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/exception'
     patch:
-      summary: update an existing feature by Id with a partial item definition
+      summary: Update an existing feature by Id with a partial item definition
       description: >-
         Use this method to update an existing feature. Requires a GeoJSON fragment (containing the fields to be updated) be submitted.
       operationId: patchFeature
@@ -245,7 +249,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/exception'
     delete:
-      summary: delete an existing feature by Id
+      summary: Delete an existing feature by Id
       description: Use this method to delete an existing feature.
       operationId: deleteFeature
       tags:
@@ -269,7 +273,7 @@ paths:
                 $ref: '#/components/schemas/exception'
   /search:
     get:
-      summary: Search STAC items with simple filtering.
+      summary: Search STAC items with simple filtering
       operationId: getItemSearch
       description: |-
         Retrieve Items matching filters. Intended as a shorthand API for simple
@@ -292,6 +296,10 @@ paths:
         - $ref: '#/components/parameters/collectionsArray'
         - $ref: '#/components/parameters/fields'
         - $ref: '#/components/parameters/sortby'
+        - $ref: '#/components/parameters/query'
+        - $ref: '#/components/parameters/filter'
+        - $ref: '#/components/parameters/filter-lang'
+        - $ref: '#/components/parameters/filter-crs'
       responses:
         '200':
           description: A feature collection.
@@ -300,14 +308,14 @@ paths:
               schema:
                 allOf:
                   - $ref: '#/components/schemas/itemCollection'
-                  - $ref: '#/components/schemas/schemas-itemCollection'
+                  - $ref: '#/components/schemas/context'
             text/html:
               schema:
                 type: string
         default:
           $ref: '#/components/responses/Error'
     post:
-      summary: Search STAC items with full-featured filtering.
+      summary: Search STAC items with full-featured filtering
       operationId: postItemSearch
       description: |-
         Retrieve items matching filters. Intended as the standard, full-featured
@@ -326,18 +334,50 @@ paths:
             schema:
               allOf:
                 - $ref: '#/components/schemas/searchBody'
-                - $ref: '#/components/schemas/schemas-searchBody'
-                - $ref: '#/components/schemas/openapi_components-schemas-searchBody'
       responses:
         '200':
           description: A feature collection.
           content:
             application/geo+json:
               schema:
-                $ref: '#/components/schemas/itemCollection'
+                allOf:
+                  - $ref: '#/components/schemas/itemCollection'
+                  - $ref: '#/components/schemas/context'
             text/html:
               schema:
                 type: string
+        default:
+          $ref: '#/components/responses/Error'
+  /queryables:
+    get:
+      summary: Get the JSON Schema defining the list of variable terms that can be used in CQL2 expressions
+      operationId: getQueryables
+      description: |-
+        This endpoint returns a list of variable terms that can be used in CQL2 expressions. The
+        precise definition of this can be found in the OGC API - Features - Part 3: Filtering and the
+        Common Query Language (CQL2) specification.
+      tags:
+        - Item Search
+      responses:
+        '200':
+          $ref: '#/components/responses/Queryables'
+        default:
+          $ref: '#/components/responses/Error'
+  /collections/{collectionId}/queryables:
+    get:
+      summary: Get the JSON Schema defining the list of variable terms that can be used in CQL2 expressions
+      operationId: getQueryablesForCollection
+      description: |-
+        This endpoint returns a list of variable terms that can be used in CQL2 expressions. The
+        precise definition of this can be found in the OGC API - Features - Part 3: Filtering and the
+        Common Query Language (CQL) specification.
+      parameters:
+        - $ref: '#/components/parameters/collectionId'
+      tags:
+        - Features
+      responses:
+        '200':
+          $ref: '#/components/responses/Queryables'
         default:
           $ref: '#/components/responses/Error'
 components:
@@ -858,6 +898,9 @@ components:
               https://scihub.copernicus.eu/twiki/pub/SciHubWebPortal/TermsConditions/Sentinel_Data_Terms_and_Conditions.pdf
             title: >-
               Legal notice on the use of Copernicus Sentinel Data and Service Information
+          - rel: queryables
+            href: http://cool-sat.com/collections/Sentinel-2/queryables
+            title: queryables for this collection
     featureCollectionGeoJSON:
       allOf:
         - $ref: '#/components/schemas/schemas-featureCollectionGeoJSON'
@@ -1318,6 +1361,10 @@ components:
         - $ref: '#/components/schemas/collectionsFilter'
         - $ref: '#/components/schemas/idsFilter'
         - $ref: '#/components/schemas/limitFilter'
+        - $ref: '#/components/schemas/fieldsFilter'
+        - $ref: '#/components/schemas/sortFilter'
+        - $ref: '#/components/schemas/queryFilter'
+        - $ref: '#/components/schemas/filterFilter'
     limit:
       type: integer
       minimum: 1
@@ -1428,7 +1475,7 @@ components:
         - 39.5
         - -105
         - 40.5
-    schemas-itemCollection:
+    context:
       type: object
       description: >-
         **Extension:** Context
@@ -1479,7 +1526,7 @@ components:
         exclude:
           - geometry
           - properties.datetime
-    schemas-searchBody:
+    fieldsFilter:
       type: object
       x-stac-api-fragment: fields
       description: |-
@@ -1513,7 +1560,7 @@ components:
           direction: asc
         - field: id
           direction: desc
-    openapi_components-schemas-searchBody:
+    sortFilter:
       type: object
       x-stac-api-fragment: sort
       description: |-
@@ -1523,6 +1570,132 @@ components:
       properties:
         sortby:
           $ref: '#/components/schemas/sortby'
+    queryFilter:
+      type: object
+      x-stac-api-fragment: query
+      description: |-
+        **Extension:** Query
+
+        Allows users to query properties for specific values
+      properties:
+        query:
+          $ref: '#/components/schemas/query'
+    query:
+      type: object
+      description: Define which properties to query and the operations to apply
+      additionalProperties:
+        $ref: '#/components/schemas/queryProp'
+      example:
+        eo:cloud_cover:
+          gt: 8
+          lt: 50
+        platform:
+          eq: 'landsat-8'
+        datetime:
+          gte: '2018-02-12T00:00:00Z'
+          lte: '2018-03-18T12:31:12Z'
+        pl:item_type:
+          startsWith: PSScene
+        product:
+          in:
+            - foo
+            - bar
+            - baz
+        eo:gsd:
+          in:
+            - 10
+            - 20
+    queryProp:
+      description: Apply query operations to a specific property
+      anyOf:
+        - description: if the object doesn't contain any of the operators, it is equivalent to using the equals operator
+        - type: object
+          description: Match using an operator
+          properties:
+            eq:
+              description: Find items with a property that is equal to the specified value. For strings, a case-insensitive comparison must be performed.
+              nullable: true
+              oneOf:
+                - type: string
+                - type: number
+                - type: boolean
+            neq:
+              description: Find items that *don't* contain the specified value. For strings, a case-insensitive comparison must be performed.
+              nullable: true
+              oneOf:
+                - type: string
+                - type: number
+                - type: boolean
+            gt:
+              description: Find items with a property value greater than the specified value.
+              oneOf:
+                - type: string
+                  format: date-time
+                - type: number
+            lt:
+              description: Find items with a property value less than the specified value.
+              oneOf:
+                - type: string
+                  format: date-time
+                - type: number
+            gte:
+              description: Find items with a property value greater than or equal the specified value.
+              oneOf:
+                - type: string
+                  format: date-time
+                - type: number
+            lte:
+              description: Find items with a property value less than or equal the specified value.
+              oneOf:
+                - type: string
+                  format: date-time
+                - type: number
+            startsWith:
+              description: Find items with a property that begins with the specified string. A case-insensitive comparison must be performed.
+              type: string
+            endsWith:
+              description: Find items with a property that ends with the specified string. A case-insensitive comparison must be performed.
+              type: string
+            contains:
+              description: Find items with a property that contains the specified literal string, e.g., matches ".*<STRING>.*". A case-insensitive comparison must be performed.
+              type: string
+            in:
+              description: Find items with a property that equals at least one entry in the specified array. A case-insensitive comparison must be performed.
+              type: array
+              items:
+                oneOf:
+                  - type: string
+                  - type: number
+    filterFilter:
+      type: object
+      x-stac-api-fragment: filter
+      description: |-
+        **Extension:** Filter
+
+        A filter for properties in Items.
+      allOf: # Combines the searchBody of Item-filter and the inline model
+        - $ref: 'https://api.stacspec.org/v1.0.0/item-search/openapi.yaml#/components/schemas/searchBody'
+      properties:
+        filter:
+          $ref: '#/components/schemas/filter-cql2-json'
+        filter-lang:
+          $ref: '#/components/schemas/filter-lang'
+        filter-crs:
+          $ref: '#/components/schemas/filter-crs'
+    filter-cql2-json:
+      $ref: 'https://raw.githubusercontent.com/opengeospatial/ogcapi-features/master/cql2/standard/schema/cql2.yml#/components/schemas/booleanExpression'
+    filter-lang:
+      description: |
+        The CQL2 filter encoding that the 'filter' value uses.
+      type: string
+      default: 'cql2-json'
+    filter-crs:
+      description: |
+        The coordinate reference system (CRS) used by spatial literals in the 'filter' value.  The only value that STAC APIs must
+        accept is 'http://www.opengis.net/def/crs/OGC/1.3/CRS84'.
+      type: string
+      format: uri
+      default: 'http://www.opengis.net/def/crs/OGC/1.3/CRS84'
   responses:
     LandingPage:
       description: |-
@@ -1563,6 +1736,10 @@ components:
                 rel: child
                 type: application/json
                 title: Sentinel 2 Catalog
+              - href: http://data.example.org/queryables
+                rel: queryables
+                type: application/json
+                title: queryables for entire catalog
     Error:
       description: An error occurred.
       content:
@@ -1720,6 +1897,12 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/exception'
+    Queryables:
+      description: A JSON Schema defining the Queryables allowed in CQL2 expressions
+      content:
+        application/schema+json:
+          schema:
+            type: object
   parameters:
     collectionId:
       name: collectionId
@@ -1936,3 +2119,48 @@ components:
         example: +id,-properties.eo:cloud_cover
       style: form
       explode: false
+    query:
+      name: query
+      x-stac-api-fragment: query
+      in: query
+      description: |-
+        **Extension:** Query
+
+        Query for properties in items.
+      required: false
+      schema:
+        type: string
+    filter:
+      name: filter
+      x-stac-api-fragment: filter
+      in: query
+      description: |-
+        **Extension:** Filter
+
+        A CQL2 filter expression for filtering items.
+      required: false
+      schema:
+        oneOf:
+          - $ref: '#/components/schemas/filter-cql2-json'
+    filter-lang:
+      name: filter-lang
+      x-stac-api-fragment: filter
+      in: query
+      description: |-
+        **Extension:** Filter
+
+        The CQL2 filter encoding that the 'filter' value uses. Only 'cql2-json' is supported.
+      required: false
+      schema:
+        $ref: '#/components/schemas/filter-lang'
+    filter-crs:
+      name: filter-crs
+      x-stac-api-fragment: filter
+      in: query
+      description: |-
+        **Extension:** Filter
+
+        The CRS used by spatial predicates in the filter parameter. Only 'http://www.opengis.net/def/crs/OGC/1.3/CRS84' is supported.
+      required: false
+      schema:
+        $ref: '#/components/schemas/filter-crs'

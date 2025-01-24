@@ -537,10 +537,8 @@ test('/search preserve bbox in prev and next links', async (t) => {
   t.deepEqual(linkRel(response, 'next').body.bbox, bbox)
 })
 
-test('/search Query Extension', async (t) => {
+test('/search - query extension', async (t) => {
   let response = null
-
-  // 3 items, 2 with platform landsat-8, 1 with platform2
 
   response = await t.context.api.client.post('search', {
     json: {}
@@ -642,4 +640,443 @@ test('/search Query Extension', async (t) => {
     }
   })
   t.is(response.features.length, 0)
+})
+
+test('/search - filter extension - comparison operators', async (t) => {
+  let response = null
+
+  // equal
+  response = await t.context.api.client.post('search', {
+    json: {
+      filter: {
+        op: '=',
+        args: [
+          {
+            property: 'platform'
+          },
+          'landsat-8'
+        ]
+      }
+    }
+  })
+  t.is(response.features.length, 2)
+
+  // not equal
+  response = await t.context.api.client.post('search', {
+    json: {
+      filter: {
+        op: '<>',
+        args: [
+          {
+            property: 'platform'
+          },
+          'landsat-8'
+        ]
+      }
+    }
+  })
+  t.is(response.features.length, 1)
+
+  // is null
+  response = await t.context.api.client.post('search', {
+    json: {
+      filter: {
+        op: 'isNull',
+        args: [
+          {
+            property: 'landsat:product_id'
+          }
+        ]
+      }
+    }
+  })
+  t.is(response.features.length, 3)
+
+  response = await t.context.api.client.post('search', {
+    json: {
+      filter: {
+        op: 'isNull',
+        args: [
+          {
+            property: 'gsd'
+          }
+        ]
+      }
+    }
+  })
+  t.is(response.features.length, 2)
+
+  // less than
+  response = await t.context.api.client.post('search', {
+    json: {
+      filter: {
+        op: '<',
+        args: [
+          {
+            property: 'eo:cloud_cover'
+          },
+          8.0
+        ]
+      }
+    }
+  })
+  t.is(response.features.length, 2)
+
+  // less than or equal
+  response = await t.context.api.client.post('search', {
+    json: {
+      filter: {
+        op: '<=',
+        args: [
+          {
+            property: 'eo:cloud_cover'
+          },
+          0.54
+        ]
+      }
+    }
+  })
+  t.is(response.features.length, 2)
+
+  // greater than
+  response = await t.context.api.client.post('search', {
+    json: {
+      filter: {
+        op: '>',
+        args: [
+          {
+            property: 'eo:cloud_cover'
+          },
+          0.54
+        ]
+      }
+    }
+  })
+  t.is(response.features.length, 1)
+
+  // greater than or equal
+  response = await t.context.api.client.post('search', {
+    json: {
+      filter: {
+        op: '>=',
+        args: [
+          {
+            property: 'eo:cloud_cover'
+          },
+          0.54
+        ]
+      }
+    }
+  })
+  t.is(response.features.length, 3)
+})
+
+test('/search - filter extension - AND logical operator', async (t) => {
+  let response = null
+
+  response = await t.context.api.client.post('search', {
+    json: {
+      filter: {
+        op: 'and',
+        args: [
+          {
+            op: '>',
+            args: [
+              {
+                property: 'eo:cloud_cover'
+              },
+              0.54
+            ]
+          },
+          {
+            op: '<',
+            args: [
+              {
+                property: 'eo:cloud_cover'
+              },
+              8.0
+            ]
+          }
+        ]
+      }
+    }
+  })
+  t.is(response.features.length, 0)
+
+  response = await t.context.api.client.post('search', {
+    json: {
+      filter: {
+        op: 'and',
+        args: [
+          {
+            op: '>=',
+            args: [
+              {
+                property: 'eo:cloud_cover'
+              },
+              0.54
+            ]
+          },
+          {
+            op: '<',
+            args: [
+              {
+                property: 'eo:cloud_cover'
+              },
+              8.0
+            ]
+          }
+        ]
+      }
+    }
+  })
+  t.is(response.features.length, 2)
+})
+
+test('/search - filter extension - OR logical operator', async (t) => {
+  let response = null
+
+  response = await t.context.api.client.post('search', {
+    json: {
+      filter: {
+        op: 'or',
+        args: [
+          {
+            op: '>',
+            args: [
+              {
+                property: 'eo:cloud_cover'
+              },
+              0.54
+            ]
+          },
+          {
+            op: '<',
+            args: [
+              {
+                property: 'eo:cloud_cover'
+              },
+              8.0
+            ]
+          }
+        ]
+      }
+    }
+  })
+  t.is(response.features.length, 3)
+
+  // Test case for an OpenSearch query with `filter` and `should` keys directly under a
+  // `bool` key. In this case, OpenSearch uses a default `minimum_should_match` value of
+  // 0, meaning that no matches in the specified `or` list are required. We test here that
+  // `minimum_should_match` has been set to 1, with the effect of requiring at least one
+  // of the conditions in the `or` list to be met.
+  response = await t.context.api.client.post('search', {
+    json: {
+      collections: ['landsat-8-l1'],
+      filter: {
+        op: 'or',
+        args: [
+          {
+            op: '>',
+            args: [
+              {
+                property: 'eo:cloud_cover'
+              },
+              10.0
+            ]
+          },
+          {
+            op: '<',
+            args: [
+              {
+                property: 'eo:cloud_cover'
+              },
+              0.5
+            ]
+          }
+        ]
+      }
+    }
+  })
+  t.is(response.features.length, 0)
+})
+
+test('/search - filter extension - NOT logical operator', async (t) => {
+  let response = null
+
+  response = await t.context.api.client.post('search', {
+    json: {
+      filter: {
+        op: 'not',
+        args: [
+          {
+            op: '>',
+            args: [
+              {
+                property: 'eo:cloud_cover'
+              },
+              0.54
+            ]
+          }
+        ]
+      }
+    }
+  })
+  t.is(response.features.length, 2)
+
+  response = await t.context.api.client.post('search', {
+    json: {
+      filter: {
+        op: 'not',
+        args: [
+          {
+            op: '>',
+            args: [
+              {
+                property: 'eo:cloud_cover'
+              },
+              0.54
+            ]
+          },
+          {
+            op: '<',
+            args: [
+              {
+                property: 'eo:cloud_cover'
+              },
+              8.0
+            ]
+          }
+        ]
+      }
+    }
+  })
+  t.is(response.features.length, 0)
+})
+
+test('/search - filter extension - handles timestamps', async (t) => {
+  let response = null
+
+  response = await t.context.api.client.post('search', {
+    json: {
+      filter: {
+        op: '>',
+        args: [
+          {
+            property: 'datetime'
+          },
+          {
+            timestamp: '2015-02-20T00:00:00Z'
+          }
+        ]
+      }
+    }
+  })
+  t.is(response.features.length, 1)
+
+  response = await t.context.api.client.post('search', {
+    json: {
+      filter: {
+        op: '>',
+        args: [
+          {
+            property: 'datetime'
+          },
+          '2015-02-20T00:00:00Z'
+        ]
+      }
+    }
+  })
+  t.is(response.features.length, 1)
+})
+
+test('/search - filter, query, and item search in single request', async (t) => {
+  const response = await t.context.api.client.post('search', {
+    json: {
+      collections: ['landsat-8-l1'],
+      query: {
+        'view:sun_elevation': {
+          gt: 20
+        }
+      },
+      filter: {
+        op: '>',
+        args: [
+          {
+            property: 'eo:cloud_cover'
+          },
+          0.54
+        ]
+      }
+    }
+  })
+  t.is(response.features.length, 1)
+})
+
+test('/search - filter extension - with top level field filtering', async (t) => {
+  const response = await t.context.api.client.post('search', {
+    json: {
+      filter: {
+        op: 'and',
+        args: [
+          {
+            op: '=',
+            args: [
+              {
+                property: 'eo:cloud_cover'
+              },
+              0.54
+            ]
+          },
+          {
+            op: '=',
+            args: [{ property: 'collection' }, 'collection2']
+          }
+        ]
+      }
+    }
+  })
+  t.is(response.features.length, 1)
+})
+
+test('/search - filter extension - failure with incorrect filter-lang', async (t) => {
+  const error = await t.throwsAsync(async () => t.context.api.client.post('search', {
+    json: {
+      'filter-lang': 'not-cql2-json',
+      filter: {
+        op: '>',
+        args: [
+          {
+            property: 'eo:cloud_cover'
+          },
+          0.54
+        ]
+      }
+    }
+  }))
+  t.is(error.response.statusCode, 400)
+  t.is(error.response.body.code, 'BadRequest')
+  t.regex(error.response.body.description,
+    /.*filter-lang must be "cql2-json".*/)
+})
+
+test('/search - filter extension - failure with incorrect filter-crs', async (t) => {
+  const error = await t.throwsAsync(async () => t.context.api.client.post('search', {
+    json: {
+      'filter-crs': 'not-crs84-url',
+      filter: {
+        op: '>',
+        args: [
+          {
+            property: 'eo:cloud_cover'
+          },
+          0.54
+        ]
+      }
+    }
+  }))
+  t.is(error.response.statusCode, 400)
+  t.is(error.response.body.code, 'BadRequest')
+  t.regex(error.response.body.description,
+    /.*filter-crs must be "http:\/\/www.opengis.net\/def\/crs\/OGC\/1.3\/CRS84".*/)
 })

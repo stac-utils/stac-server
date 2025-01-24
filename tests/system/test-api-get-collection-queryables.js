@@ -87,3 +87,27 @@ test('GET /collection/:collectionId/queryables for non-existent collection retur
 
   t.is(response.statusCode, 404)
 })
+
+test.only('GET /collection/:collectionId/queryables for collection with unsupported queryables fails', async (t) => {
+  const collection = await loadFixture(
+    'stac/collection-with-incorrect-queryables.json',
+    { id: t.context.collectionId }
+  )
+
+  await ingestItem({
+    ingestQueueUrl: t.context.ingestQueueUrl,
+    ingestTopicArn: t.context.ingestTopicArn,
+    item: collection
+  })
+
+  const { collectionId } = t.context
+
+  const error = await t.throwsAsync(
+    async () => t.context.api.client.get(`collections/${collectionId}/queryables`,
+      { resolveBodyOnly: false })
+  )
+
+  t.is(error.response.statusCode, 400)
+  t.regex(error.response.body.description,
+    /.*Unsupported additionalProperties value: "false". Must be set to "true".*/)
+})

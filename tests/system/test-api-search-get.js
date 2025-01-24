@@ -108,3 +108,37 @@ test('/search preserve bbox and datetime in next links', async (t) => {
   t.deepEqual(nextUrl.searchParams.get('bbox'), bbox)
   t.deepEqual(nextUrl.searchParams.get('datetime'), datetime)
 })
+
+test('/search filter, query, and item search in single request', async (t) => {
+  const fixtureFiles = [
+    'collection.json',
+    'collection2.json',
+    'LC80100102015050LGN00.json',
+    'LC80100102015082LGN00.json',
+    'collection2_item.json'
+  ]
+  const items = await Promise.all(fixtureFiles.map((x) => loadJson(x)))
+  await ingestItems(items)
+  await refreshIndices()
+
+  const response = await t.context.api.client.get('search', {
+    searchParams: new URLSearchParams({
+      collections: ['landsat-8-l1'],
+      query: JSON.stringify({
+        'view:sun_elevation': {
+          gt: 20
+        }
+      }),
+      filter: JSON.stringify({
+        op: '>',
+        args: [
+          {
+            property: 'eo:cloud_cover'
+          },
+          0.54
+        ]
+      })
+    })
+  })
+  t.is(response.features.length, 1)
+})

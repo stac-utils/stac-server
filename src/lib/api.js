@@ -264,6 +264,33 @@ const extractStacQuery = function (params) {
   return stacQuery
 }
 
+const extractCql2Filter = function (params) {
+  let cql2Filter
+  const { 'filter-lang': filterLang, 'filter-crs': filterCrs, filter } = params
+
+  if (filterLang && filterLang !== 'cql2-json') {
+    throw new ValidationError(
+      `filter-lang must be "cql2-json". Supplied value: ${filterLang}`
+    )
+  }
+
+  if (filterCrs && filterCrs !== 'http://www.opengis.net/def/crs/OGC/1.3/CRS84') {
+    throw new ValidationError(
+      `filter-crs must be "http://www.opengis.net/def/crs/OGC/1.3/CRS84". Supplied value: ${filterCrs}`
+    )
+  }
+
+  if (filter) {
+    if (typeof filter === 'string') {
+      const parsed = JSON.parse(filter)
+      cql2Filter = parsed
+    } else {
+      cql2Filter = { ...filter }
+    }
+  }
+  return cql2Filter
+}
+
 const extractSortby = function (params) {
   let sortbyRules
   const { sortby } = params
@@ -599,6 +626,7 @@ const searchItems = async function (collectionId, queryParameters, backend, endp
 
   const sortby = extractSortby(queryParameters)
   const query = extractStacQuery(queryParameters)
+  const filter = extractCql2Filter(queryParameters)
   const fields = extractFields(queryParameters)
   const ids = extractIds(queryParameters)
   const collections = extractCollectionIds(queryParameters)
@@ -609,6 +637,7 @@ const searchItems = async function (collectionId, queryParameters, backend, endp
     datetime,
     intersects: geometry,
     query,
+    filter,
     sortby,
     fields,
     ids,
@@ -728,6 +757,7 @@ const aggregate = async function (
   const intersectsGeometry = extractIntersects(queryParameters)
   const geometry = intersectsGeometry || bboxGeometry
   const query = extractStacQuery(queryParameters)
+  const filter = extractCql2Filter(queryParameters)
   const ids = extractIds(queryParameters)
   const collections = extractCollectionIds(queryParameters)
 
@@ -735,6 +765,7 @@ const aggregate = async function (
     datetime,
     intersects: geometry,
     query,
+    filter,
     ids,
     collections,
   })
@@ -951,10 +982,16 @@ const getConformance = async function (txnEnabled) {
     'https://api.stacspec.org/v1.0.0/item-search#fields',
     'https://api.stacspec.org/v1.0.0/item-search#sort',
     'https://api.stacspec.org/v1.0.0/item-search#query',
+    'https://api.stacspec.org/v1.0.0/item-search#filter',
     'https://api.stacspec.org/v0.3.0/aggregation',
+    'https://api.stacspec.org/v0.3.0/aggregation#query',
+    'https://api.stacspec.org/v0.3.0/aggregation#filter',
     'http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/core',
     'http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/oas30',
-    'http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/geojson'
+    'http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/geojson',
+    'http://www.opengis.net/spec/ogcapi-features-3/1.0/conf/filter',
+    'http://www.opengis.net/spec/cql2/1.0/conf/basic-cql2',
+    'http://www.opengis.net/spec/cql2/1.0/conf/cql2-json'
   ]
 
   if (txnEnabled) {
@@ -980,6 +1017,17 @@ const getGlobalQueryables = async (endpoint = '') => ({
   additionalProperties: true
 })
 
+const validateAdditionalProperties = (queryables) => {
+  if ('additionalProperties' in queryables) {
+    const additionalProperties = queryables.additionalProperties
+    if (additionalProperties !== true) {
+      throw new ValidationError(
+        `Unsupported additionalProperties value: "${additionalProperties}". Must be set to "true".`
+      )
+    }
+  }
+}
+
 const getCollectionQueryables = async (collectionId, backend, endpoint = '') => {
   const collection = await backend.getCollection(collectionId)
 
@@ -987,6 +1035,7 @@ const getCollectionQueryables = async (collectionId, backend, endpoint = '') => 
     return collection
   }
   const queryables = collection.queryables || { ...DEFAULT_QUERYABLES }
+  validateAdditionalProperties(queryables)
   queryables.$id = `${endpoint}/collections/${collectionId}/queryables`
   queryables.title = `Queryables for Collection ${collectionId}`
   return queryables

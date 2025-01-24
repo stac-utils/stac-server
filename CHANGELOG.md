@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Added
+
+- Minimum implementation (basic-cql2 conformance class) of the filter extension for the
+  `/search` (GET and POST), `/collections/{collectionId}/items` (GET), and `/aggregate`
+  (GET) endpoints. Only CQL2 JSON is supported.
+
 ## [3.8.0] - 2024-05-29
 
 ### Changed
@@ -465,6 +473,7 @@ Initial release, forked from [sat-api](https://github.com/sat-utils/sat-api/tree
 Compliant with STAC 0.9.0
 
 <!-- [unreleased]: https://github.com/stac-utils/stac-api/compare/v3.6.0...main -->
+
 [3.7.0]: https://github.com/stac-utils/stac-api/compare/v3.6.0...v3.7.0
 [3.6.0]: https://github.com/stac-utils/stac-api/compare/v3.5.0...v3.6.0
 [3.5.0]: https://github.com/stac-utils/stac-api/compare/v3.4.0...v3.5.0

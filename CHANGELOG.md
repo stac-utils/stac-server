@@ -11,10 +11,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - Update to default to OpenSearch 2.17
 
-### Changed
-
-- Update to default to OpenSearch 2.17
-
 ### Added
 
 - Minimum implementation (basic-cql2 conformance class) of the filter extension for the

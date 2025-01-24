@@ -1237,12 +1237,19 @@ npm run test
 npm run build-api-docs # TODO: this fails
 ```
 
+[npm-check-updates](https://www.npmjs.com/package/npm-check-updates) can be used for
+updating version dependencies to newer ones. Run:
+
+```commandline
+ncu -i
+```
+
 ### Running Locally
 
-Before the API can be run, OpenSearch and Localstack need to be running. There is a `docker-compose.yml` file to simplify running OpenSearch locally:
+Before the API can be run, OpenSearch and Localstack need to be running. There is a `compose.yml` file to simplify running OpenSearch locally:
 
 ```shell
-docker-compose up -d
+docker compose up -d
 ```
 
 The API can then be run with:

@@ -1,16 +1,13 @@
-version: "3.8"
 services:
   opensearch:
-    image: opensearchproject/opensearch:2.13.0
+    image: opensearchproject/opensearch:2.17.1
     ports:
       - "127.0.0.1:9200:9200"
       - "127.0.0.1:9300:9300"
     volumes:
       - ./opensearch/config/opensearch.yml:/usr/share/opensearch/config/opensearch.yml
   localstack:
-    image: localstack/localstack:3
+    image: localstack/localstack:4
     ports:
       - "127.0.0.1:4566:4566" # LocalStack Gateway
       - "127.0.0.1:4510-4559:4510-4559"  # external services port range
-    environment:
-      - SERVICES=s3,sns,sqs

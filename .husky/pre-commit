@@ -1,0 +1,7 @@
+npm run lint
+npm run typecheck
+npm run check-openapi
+npm run audit-prod
+npm run test
+npm run test:system
+npm run build

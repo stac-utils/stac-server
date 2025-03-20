@@ -6,6 +6,8 @@
     "ava",
     "@ava/typescript",
     "eslint",
-    "@opensearch-project/opensearch"
+    "@opensearch-project/opensearch",
+    "serverless",
+    "serverless-offline"
   ]
 }

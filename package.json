@@ -28,19 +28,7 @@
     "package": "sls package",
     "serve": "REQUEST_LOGGING_FORMAT=dev LOG_LEVEL=debug STAC_API_URL=http://localhost:3000 ENABLE_TRANSACTIONS_EXTENSION=true nodemon --esm ./src/lambdas/api/local.ts",
     "build-api-docs": "npx @redocly/cli build-docs src/lambdas/api/openapi.yaml -o ./docs/index.html",
-    "pre-commit": "./node_modules/pre-commit/hook"
-  },
-  "pre-commit": {
-    "silent": false,
-    "run": [
-      "lint",
-      "typecheck",
-      "check-openapi",
-      "audit-prod",
-      "test",
-      "test:system",
-      "build"
-    ]
+    "prepare": "husky"
   },
   "ava": {
     "verbose": true,
@@ -113,10 +101,10 @@
     "eslint-config-airbnb": "^19.0.4",
     "eslint-plugin-import": "^2.29.1",
     "eslint-plugin-jsdoc": "^48.2.4",
+    "husky": "^9.1.7",
     "luxon": "^3.4.4",
     "nock": "^13.5.4",
     "nodemon": "^3.1.0",
-    "pre-commit": "^1.2.2",
     "prettier": "^3.2.5",
     "prettier-eslint": "^16.3.0",
     "prettier-eslint-cli": "^8.0.1",

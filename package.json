@@ -102,7 +102,7 @@
     "eslint-plugin-jsdoc": "^50.6.8",
     "husky": "^9.1.7",
     "luxon": "^3.5.0",
-    "nock": "^13.5.4",
+    "nock": "^14.0.1",
     "nodemon": "^3.1.9",
     "prettier": "^3.5.3",
     "prettier-eslint": "^16.3.0",

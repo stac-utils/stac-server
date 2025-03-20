@@ -85,7 +85,7 @@ export async function testPostIngestSNS(t, record, shouldError = false) {
 
   try {
     await sqsTriggerLambda(t.context.ingestQueueUrl, handler)
-  } catch (e) {
+  } catch (_) {
     if (!shouldError) {
       t.fail('Ingest had error, but should not have.')
     }

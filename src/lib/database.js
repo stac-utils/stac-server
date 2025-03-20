@@ -598,7 +598,7 @@ async function populateCollectionToIndexMapping() {
   if (process.env['COLLECTION_TO_INDEX_MAPPINGS']) {
     try {
       collectionToIndexMapping = JSON.parse(process.env['COLLECTION_TO_INDEX_MAPPINGS'])
-    } catch (e) {
+    } catch (_) {
       logger.error('COLLECTION_TO_INDEX_MAPPINGS is not a valid JSON object.')
       collectionToIndexMapping = {}
     }

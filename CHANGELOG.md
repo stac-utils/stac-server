@@ -12,6 +12,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Use Node 20 by default. Node 20 will be supported by AWS into 2026. Upgrade was
   not done to Node 22 because it requires upgrading the ava/typescript library.
 
+### Fixed
+
+- Removed inapplicable `stac_version` and `stac_extensions` fields from ItemCollection
+
 ## [3.9.0] - 2025-01-24
 
 ### Changed

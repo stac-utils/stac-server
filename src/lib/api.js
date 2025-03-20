@@ -540,8 +540,6 @@ const wrapResponseInFeatureCollection = function (
 ) {
   return {
     type: 'FeatureCollection',
-    stac_version: process.env['STAC_VERSION'] || '1.0.0',
-    stac_extensions: [],
     context,
     numberMatched: context.matched,
     numberReturned: context.returned,

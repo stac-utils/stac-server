@@ -1,4 +1,13 @@
 {
   "upgrade": false,
-  "reject": ["@types/node", "got", "ava", "@ava/typescript", "eslint"]
+  "reject": [
+    "@types/node",
+    "got",
+    "ava",
+    "@ava/typescript",
+    "eslint",
+    "@opensearch-project/opensearch",
+    "serverless",
+    "serverless-offline"
+  ]
 }

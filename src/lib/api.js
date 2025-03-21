@@ -67,7 +67,7 @@ export const extractIntersects = function (params) {
     if (typeof intersects === 'string') {
       try {
         geojson = JSON.parse(intersects)
-      } catch (e) {
+      } catch (_) {
         throw new ValidationError('Invalid GeoJSON geometry')
       }
     } else {
@@ -91,7 +91,7 @@ export const extractBbox = function (params, httpMethod = 'GET') {
     if (httpMethod === 'GET' && typeof bbox === 'string') {
       try {
         bboxArray = bbox.split(',').map(parseFloat).filter((x) => !Number.isNaN(x))
-      } catch (e2) {
+      } catch (_) {
         throw new ValidationError('Invalid bbox')
       }
     } else if (httpMethod === 'POST' && Array.isArray(bbox)) {
@@ -121,7 +121,7 @@ export const extractLimit = function (params) {
     let limit
     try {
       limit = parseInt(limitStr)
-    } catch (e) {
+    } catch (_) {
       throw new ValidationError('Invalid limit value')
     }
 
@@ -145,7 +145,7 @@ export const extractPrecision = function (params, name, min, max) {
     let precision
     try {
       precision = parseInt(precisionStr)
-    } catch (e) {
+    } catch (_) {
       throw new ValidationError(`Invalid precision value for ${name}`)
     }
 
@@ -167,7 +167,7 @@ export const extractAggregations = function (params) {
     if (typeof aggregations === 'string') {
       try {
         aggs = JSON.parse(aggregations)
-      } catch (e) {
+      } catch (_) {
         aggs = aggregations.split(',')
       }
     } else {
@@ -184,7 +184,7 @@ export const extractPage = function (params) {
     let page
     try {
       page = parseInt(pageStr)
-    } catch (e) {
+    } catch (_) {
       throw new ValidationError('Invalid page value')
     }
 
@@ -354,7 +354,7 @@ const extractIds = function (params) {
     if (typeof ids === 'string') {
       try {
         idsRules = JSON.parse(ids)
-      } catch (e) {
+      } catch (_) {
         idsRules = ids.split(',')
       }
     } else {
@@ -371,7 +371,7 @@ const extractCollectionIds = function (params) {
     if (typeof collections === 'string') {
       try {
         idsRules = JSON.parse(collections)
-      } catch (e) {
+      } catch (_) {
         idsRules = collections.split(',')
       }
     } else {

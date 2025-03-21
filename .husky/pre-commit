@@ -5,3 +5,4 @@ npm run audit-prod
 npm run test:unit
 npm run test:system
 npm run build
+npm run build-api-docs

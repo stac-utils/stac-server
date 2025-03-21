@@ -974,13 +974,13 @@ const getConformance = async function (txnEnabled) {
     `${foundationPrefix}/collections`,
     `${foundationPrefix}/ogcapi-features`,
     `${foundationPrefix}/item-search`,
-    'https://api.stacspec.org/v1.0.0/ogcapi-features#fields',
-    'https://api.stacspec.org/v1.0.0/ogcapi-features#sort',
-    'https://api.stacspec.org/v1.0.0/ogcapi-features#query',
-    'https://api.stacspec.org/v1.0.0/item-search#fields',
-    'https://api.stacspec.org/v1.0.0/item-search#sort',
-    'https://api.stacspec.org/v1.0.0/item-search#query',
-    'https://api.stacspec.org/v1.0.0/item-search#filter',
+    `${foundationPrefix}/ogcapi-features#fields`,
+    `${foundationPrefix}/ogcapi-features#sort`,
+    `${foundationPrefix}/ogcapi-features#query`,
+    `${foundationPrefix}/item-search#fields`,
+    `${foundationPrefix}/item-search#sort`,
+    `${foundationPrefix}/item-search#query`,
+    `${foundationPrefix}/item-search#filter`,
     'https://api.stacspec.org/v0.3.0/aggregation',
     'https://api.stacspec.org/v0.3.0/aggregation#query',
     'https://api.stacspec.org/v0.3.0/aggregation#filter',
@@ -988,12 +988,13 @@ const getConformance = async function (txnEnabled) {
     'http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/oas30',
     'http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/geojson',
     'http://www.opengis.net/spec/ogcapi-features-3/1.0/conf/filter',
+    'http://www.opengis.net/spec/ogcapi-features-3/1.0/conf/features-filter',
     'http://www.opengis.net/spec/cql2/1.0/conf/basic-cql2',
-    'http://www.opengis.net/spec/cql2/1.0/conf/cql2-json'
+    'http://www.opengis.net/spec/cql2/1.0/conf/cql2-json',
   ]
 
   if (txnEnabled) {
-    conformsTo.push('https://api.stacspec.org/v1.0.0-rc.3/ogcapi-features/extensions/transaction')
+    conformsTo.push(`${foundationPrefix}-rc.3/ogcapi-features/extensions/transaction`)
   }
 
   return { conformsTo }

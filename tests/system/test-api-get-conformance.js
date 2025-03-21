@@ -13,7 +13,7 @@ test.after.always(async (t) => {
 
 test('GET /conformance returns the expected conformsTo list', async (t) => {
   const response = await t.context.api.client.get('conformance')
-  t.is(response.conformsTo.length, 21)
+  t.is(response.conformsTo.length, 22)
 })
 
 test('GET /conformance has a content type of "application/json', async (t) => {

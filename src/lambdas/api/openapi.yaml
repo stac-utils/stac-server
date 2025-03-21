@@ -389,7 +389,7 @@ components:
     stac_version:
       title: STAC version
       type: string
-      example: 1.0.0
+      example: 1.1.0
     stac_extensions:
       title: STAC extensions
       type: array

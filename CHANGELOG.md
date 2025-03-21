@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - Use Node 20 by default. Node 20 will be supported by AWS into 2026. Upgrade was
   not done to Node 22 because it requires upgrading the ava/typescript library.
+- The default stac_version for the root Catalog / Landing page is now 1.1.0.
 
 ### Fixed
 

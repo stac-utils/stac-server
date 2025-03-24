@@ -54,7 +54,7 @@
     "@aws-sdk/client-secrets-manager": "^3.758.0",
     "@aws-sdk/client-sns": "^3.758.0",
     "@aws-sdk/client-sqs": "^3.758.0",
-    "@aws-sdk/credential-provider-node": "^3.758.0",
+    "@aws-sdk/credential-provider-node": "^3.772.0",
     "@aws-sdk/s3-request-presigner": "^3.758.0",
     "@mapbox/extent": "^0.4.0",
     "@opensearch-project/opensearch": "^2.13.0",

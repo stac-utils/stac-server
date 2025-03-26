@@ -1080,3 +1080,143 @@ test('/search - filter extension - failure with incorrect filter-crs', async (t)
   t.regex(error.response.body.description,
     /.*filter-crs must be "http:\/\/www.opengis.net\/def\/crs\/OGC\/1.3\/CRS84".*/)
 })
+
+test('/search - filter extension - failure with non-array operand for IN', async (t) => {
+  const error = await t.throwsAsync(async () => t.context.api.client.post('search', {
+    json: {
+      filter: {
+        op: 'in',
+        args: [
+          {
+            property: 'eo:cloud_cover'
+          },
+          1
+        ]
+      }
+    }
+  }))
+  t.is(error.response.statusCode, 400)
+  t.is(error.response.body.code, 'BadRequest')
+  t.regex(error.response.body.description,
+    /.*Operand for 'in' must be a non-empty array*/)
+})
+
+test('/search - filter extension - failure with array containing object for IN', async (t) => {
+  const error = await t.throwsAsync(async () => t.context.api.client.post('search', {
+    json: {
+      filter: {
+        op: 'in',
+        args: [
+          {
+            property: 'eo:cloud_cover'
+          },
+          [
+            {
+              x: 1
+            }
+          ]
+        ]
+      }
+    }
+  }))
+  t.is(error.response.statusCode, 400)
+  t.is(error.response.body.code, 'BadRequest')
+  t.regex(error.response.body.description,
+    /.*Operand for 'in' must contain only string, number, or boolean types*/)
+})
+
+test('/search - filter extension - IN with string[]', async (t) => {
+  const response = await t.context.api.client.post('search', {
+    json: {
+      filter: {
+        op: 'in',
+        args: [{ property: 'collection' }, ['collection2']]
+      }
+    }
+  })
+  t.is(response.features.length, 1)
+})
+
+test('/search - filter extension - IN with string[] - no matches', async (t) => {
+  const response = await t.context.api.client.post('search', {
+    json: {
+      filter: {
+        op: 'in',
+        args: [{ property: 'collection' }, ['non-existent-collection']]
+      }
+    }
+  })
+  t.is(response.features.length, 0)
+})
+
+test('/search - filter extension - IN with number[]', async (t) => {
+  const response = await t.context.api.client.post('search', {
+    json: {
+      filter: {
+        op: 'in',
+        args: [{ property: 'eo:cloud_cover' }, [0.54, 0.4, 0.1]]
+      }
+    }
+  })
+  t.is(response.features.length, 2)
+})
+
+test('/search - filter extension - IN with number[] - no matches', async (t) => {
+  const response = await t.context.api.client.post('search', {
+    json: {
+      filter: {
+        op: 'in',
+        args: [{ property: 'eo:cloud_cover' }, [3.14]]
+      }
+    }
+  })
+  t.is(response.features.length, 0)
+})
+
+test('/search - filter extension - IN with datetime[]', async (t) => {
+  const response = await t.context.api.client.post('search', {
+    json: {
+      filter: {
+        op: 'in',
+        args: [{ property: 'datetime' }, ['2015-02-19T15:06:12.565047+00:00', '2019-02-19T15:06:12.565047Z']]
+      }
+    }
+  })
+  t.is(response.features.length, 2)
+})
+
+test('/search - filter extension - IN with datetime[] - no matches', async (t) => {
+  const response = await t.context.api.client.post('search', {
+    json: {
+      filter: {
+        op: 'in',
+        args: [{ property: 'datetime' }, ['1999-02-19T15:06:12.565047+00:00']]
+      }
+    }
+  })
+  t.is(response.features.length, 0)
+})
+
+test('/search - filter extension - IN with boolean[]', async (t) => {
+  const response = await t.context.api.client.post('search', {
+    json: {
+      filter: {
+        op: 'in',
+        args: [{ property: 'boolean_property' }, [true]]
+      }
+    }
+  })
+  t.is(response.features.length, 1)
+})
+
+test('/search - filter extension - IN with boolean[] - no matches', async (t) => {
+  const response = await t.context.api.client.post('search', {
+    json: {
+      filter: {
+        op: 'in',
+        args: [{ property: 'boolean_property' }, [false]]
+      }
+    }
+  })
+  t.is(response.features.length, 0)
+})

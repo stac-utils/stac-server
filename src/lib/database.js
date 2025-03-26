@@ -1,22 +1,24 @@
 import { isEmpty } from 'lodash-es'
 import { dbClient as _client, createIndex } from './database-client.js'
 import logger from './logger.js'
+import { ValidationError } from './errors.js'
 
 const COLLECTIONS_INDEX = process.env['COLLECTIONS_INDEX'] || 'collections'
 const DEFAULT_INDICES = ['*', '-.*', '-collections']
-const LOGICAL_OP = {
+const OP = {
   AND: 'and',
   OR: 'or',
-  NOT: 'not'
-}
-const COMPARISON_OP = {
+  NOT: 'not',
   EQ: '=',
   NEQ: '<>',
   LT: '<',
   LTE: '<=',
   GT: '>',
   GTE: '>=',
-  IS_NULL: 'isNull'
+  IS_NULL: 'isNull',
+  IN: 'in',
+  BETWEEN: 'between',
+  LIKE: 'like',
 }
 const RANGE_TRANSLATION = {
   '<': 'lt',
@@ -213,20 +215,20 @@ function buildFilterExtQuery(filter) {
 
   switch (filter.op) {
   // recursive cases
-  case LOGICAL_OP.AND:
+  case OP.AND:
     return {
       bool: {
         filter: filter.args.map(buildFilterExtQuery)
       }
     }
-  case LOGICAL_OP.OR:
+  case OP.OR:
     return {
       bool: {
         should: filter.args.map(buildFilterExtQuery),
         minimum_should_match: 1
       }
     }
-  case LOGICAL_OP.NOT:
+  case OP.NOT:
     return {
       bool: {
         must_not: filter.args.map(buildFilterExtQuery)
@@ -234,13 +236,13 @@ function buildFilterExtQuery(filter) {
     }
 
   // direct cases
-  case COMPARISON_OP.EQ:
+  case OP.EQ:
     return {
       term: {
         [cql2Field]: cql2Value
       }
     }
-  case COMPARISON_OP.NEQ:
+  case OP.NEQ:
     return {
       bool: {
         must_not: [
@@ -252,7 +254,7 @@ function buildFilterExtQuery(filter) {
         ]
       }
     }
-  case COMPARISON_OP.IS_NULL:
+  case OP.IS_NULL:
     return {
       bool: {
         must_not: [
@@ -266,15 +268,30 @@ function buildFilterExtQuery(filter) {
     }
 
   // range cases
-  case COMPARISON_OP.LT:
-  case COMPARISON_OP.LTE:
-  case COMPARISON_OP.GT:
-  case COMPARISON_OP.GTE:
+  case OP.LT:
+  case OP.LTE:
+  case OP.GT:
+  case OP.GTE:
     return {
       range: {
         [cql2Field]: {
           [RANGE_TRANSLATION[filter.op]]: cql2Value
         }
+      }
+    }
+  case OP.IN:
+    if (!Array.isArray(cql2Value) || cql2Value.length === 0) {
+      throw new ValidationError("Operand for 'in' must be a non-empty array")
+    }
+    if (!cql2Value.every((x) => x !== Object(x))) {
+      throw new ValidationError(
+        "Operand for 'in' must contain only string, number, or boolean types"
+      )
+    }
+
+    return {
+      terms: {
+        [cql2Field]: cql2Value
       }
     }
 

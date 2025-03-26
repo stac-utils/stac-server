@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 
-- Added support for the "IN" operator of the Filter Extension
+- Added support for the "in" and "between" operators of the Filter Extension
 
 ## [3.10.0] - 2025-03-21
 

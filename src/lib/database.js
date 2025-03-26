@@ -294,6 +294,35 @@ function buildFilterExtQuery(filter) {
         [cql2Field]: cql2Value
       }
     }
+  case OP.BETWEEN:
+    if (filter.args.length < 3) {
+      throw new ValidationError("Two operands must be provided for the 'between' operator")
+    }
+
+    // eslint-disable-next-line no-case-declarations
+    const cql2Value2 = filter.args[2]
+    if (!(typeof cql2Value === 'number' && typeof cql2Value2 === 'number')) {
+      throw new ValidationError("Operands for 'between' must be numbers")
+    }
+
+    if (cql2Value > cql2Value2) {
+      throw new ValidationError(
+        "For the 'between' operator, the first operand must be less than or equal "
+        + 'to the second operand'
+      )
+    }
+
+    return {
+      range: {
+        [cql2Field]: {
+          gte: cql2Value,
+          lte: cql2Value2
+        }
+      }
+    }
+
+  case OP.LIKE:
+    throw new ValidationError("The 'like' operator is not currently supported")
 
   // should not get here
   default:

@@ -1220,3 +1220,73 @@ test('/search - filter extension - IN with boolean[] - no matches', async (t) =>
   })
   t.is(response.features.length, 0)
 })
+
+test('/search - filter extension - BETWEEN', async (t) => {
+  const response = await t.context.api.client.post('search', {
+    json: {
+      filter: {
+        op: 'between',
+        args: [{ property: 'eo:cloud_cover' }, 0.25, 0.75]
+      }
+    }
+  })
+  t.is(response.features.length, 2)
+})
+
+test('/search - filter extension - BETWEEN - no matches', async (t) => {
+  const response = await t.context.api.client.post('search', {
+    json: {
+      filter: {
+        op: 'between',
+        args: [{ property: 'eo:cloud_cover' }, 1, 2]
+      }
+    }
+  })
+  t.is(response.features.length, 0)
+})
+
+test('/search - filter extension - BETWEEN - failure for not enough args ', async (t) => {
+  const error = await t.throwsAsync(async () => t.context.api.client.post('search', {
+    json: {
+      filter: {
+        op: 'between',
+        args: [{ property: 'eo:cloud_cover' }, 1] // should be 2 operands
+      }
+    }
+  }))
+  t.is(error.response.statusCode, 400)
+  t.is(error.response.body.code, 'BadRequest')
+  t.regex(error.response.body.description,
+    /.*Two operands must be provided for the 'between' operator*/)
+})
+
+test('/search - filter extension - BETWEEN - failure for non-number args', async (t) => {
+  const error = await t.throwsAsync(async () => t.context.api.client.post('search', {
+    json: {
+      filter: {
+        op: 'between',
+        args: [{ property: 'eo:cloud_cover' }, 'a', 'b']
+      }
+    }
+  }))
+  t.is(error.response.statusCode, 400)
+  t.is(error.response.body.code, 'BadRequest')
+  t.regex(error.response.body.description,
+    /.*Operands for \'between\' must be numbers*/)
+})
+
+test('/search - filter extension - BETWEEN - failure for number args reversed', async (t) => {
+  const error = await t.throwsAsync(async () => t.context.api.client.post('search', {
+    json: {
+      filter: {
+        op: 'between',
+        args: [{ property: 'eo:cloud_cover' }, 1, 0]
+      }
+    }
+  }))
+  t.is(error.response.statusCode, 400)
+  t.is(error.response.body.code, 'BadRequest')
+  t.regex(error.response.body.description,
+    // eslint-disable-next-line max-len
+    /.*For the 'between' operator, the first operand must be less than or equal to the second operand*/)
+})

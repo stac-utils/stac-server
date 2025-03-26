@@ -1,7 +1,8 @@
 // @ts-nocheck
 
 import test from 'ava'
-import { extractBbox, ValidationError } from '../../src/lib/api.js'
+import { extractBbox } from '../../src/lib/api.js'
+import { ValidationError } from '../../src/lib/errors.js'
 
 test('extractBboxNull', (t) => {
   const params = {}

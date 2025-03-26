@@ -1,7 +1,8 @@
 // @ts-nocheck
 
 import test from 'ava'
-import { extractLimit, ValidationError } from '../../src/lib/api.js'
+import { extractLimit } from '../../src/lib/api.js'
+import { ValidationError } from '../../src/lib/errors.js'
 
 test('extractLimit undefined', (t) => {
   t.falsy(extractLimit({}), 'Returns undefined when no limit parameter')

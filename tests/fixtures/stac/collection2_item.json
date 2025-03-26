@@ -15,7 +15,8 @@
       "landsat:processing_level": "L1T",
       "landsat:product_id": null,
       "landsat:wrs_row": "10",
-      "landsat:scene_id": "collection2_item"
+      "landsat:scene_id": "collection2_item",
+      "boolean_property": true
    },
    "geometry": {
       "coordinates": [

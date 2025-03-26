@@ -89,7 +89,7 @@
     "@types/sinon": "^17.0.4",
     "@typescript-eslint/eslint-plugin": "^8.28.0",
     "@typescript-eslint/parser": "^8.28.0",
-    "ava": "^5.3",
+    "ava": "^6.2",
     "aws-event-mocks": "^0.0.0",
     "aws-sdk-client-mock": "^4.1.0",
     "better-npm-audit": "^3.11.0",

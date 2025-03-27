@@ -3,7 +3,7 @@ import extent from '@mapbox/extent'
 import { DateTime } from 'luxon'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3'
-
+import { ValidationError } from './errors.js'
 import { isIndexNotFoundError } from './database.js'
 import logger from './logger.js'
 
@@ -50,13 +50,6 @@ const ALL_AGGREGATION_NAMES = DEFAULT_AGGREGATIONS.map((x) => x.name).concat(
     'cloud_cover_frequency',
   ]
 )
-
-export class ValidationError extends Error {
-  constructor(message) {
-    super(message)
-    this.name = 'ValidationError'
-  }
-}
 
 export const extractIntersects = function (params) {
   let intersectsGeometry

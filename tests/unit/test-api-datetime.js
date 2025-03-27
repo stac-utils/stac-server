@@ -1,7 +1,8 @@
 // @ts-nocheck
 
 import test from 'ava'
-import { extractDatetime, ValidationError } from '../../src/lib/api.js'
+import { extractDatetime } from '../../src/lib/api.js'
+import { ValidationError } from '../../src/lib/errors.js'
 
 const validDatetimes = [
   '1985-04-12T23:20:50.52Z',

@@ -1,11 +1,11 @@
 import { pickBy, assign, get as getNested } from 'lodash-es'
-import extent from '@mapbox/extent'
 import { DateTime } from 'luxon'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3'
 import { ValidationError } from './errors.js'
 import { isIndexNotFoundError } from './database.js'
 import logger from './logger.js'
+import { bboxToPolygon } from './geo-utils.js'
 
 // max number of collections to retrieve
 const COLLECTION_LIMIT = process.env['STAC_SERVER_COLLECTION_LIMIT'] || 100
@@ -79,32 +79,7 @@ export const extractIntersects = function (params) {
 
 export const extractBbox = function (params, httpMethod = 'GET') {
   const { bbox } = params
-  if (bbox) {
-    let bboxArray
-    if (httpMethod === 'GET' && typeof bbox === 'string') {
-      try {
-        bboxArray = bbox.split(',').map(parseFloat).filter((x) => !Number.isNaN(x))
-      } catch (_) {
-        throw new ValidationError('Invalid bbox')
-      }
-    } else if (httpMethod === 'POST' && Array.isArray(bbox)) {
-      bboxArray = bbox
-    } else {
-      throw new ValidationError('Invalid bbox')
-    }
-
-    if (bboxArray.length !== 4 && bboxArray.length !== 6) {
-      throw new ValidationError('Invalid bbox, must have 4 or 6 points')
-    }
-
-    if ((bboxArray.length === 4 && bboxArray[1] > bboxArray[3])
-        || (bboxArray.length === 6 && bboxArray[1] > bboxArray[4])) {
-      throw new ValidationError('Invalid bbox, SW latitude must be less than NE latitude')
-    }
-
-    return extent(bboxArray).polygon()
-  }
-  return undefined
+  return bboxToPolygon(bbox, httpMethod === 'GET')
 }
 
 export const extractLimit = function (params) {
@@ -984,6 +959,8 @@ const getConformance = async function (txnEnabled) {
     'http://www.opengis.net/spec/ogcapi-features-3/1.0/conf/features-filter',
     'http://www.opengis.net/spec/cql2/1.0/conf/basic-cql2',
     'http://www.opengis.net/spec/cql2/1.0/conf/cql2-json',
+    'http://www.opengis.net/spec/cql2/1.0/conf/basic-spatial-functions',
+    'http://www.opengis.net/spec/cql2/1.0/conf/basic-spatial-functions-plus',
   ]
 
   if (txnEnabled) {

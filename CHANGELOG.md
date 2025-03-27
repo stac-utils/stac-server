@@ -9,7 +9,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 
-- Added support for the "in" and "between" operators of the Filter Extension
+- Support for the "in" and "between" operators of the Filter Extension
+- Support for "s_intersects" opeartor of the Filter Extension. This implements both the
+  "Basic Spatial Functions" and "Basic Spatial Functions with additional Spatial Literals"
+  conformance classes, supporting operands for s_intersects of either bbox or GeoJSON
+  Geometry literals.
 
 ## [3.10.0] - 2025-03-21
 

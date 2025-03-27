@@ -500,6 +500,7 @@ Compliant with STAC 0.9.0
 
 <!-- [unreleased]: https://github.com/stac-utils/stac-api/compare/v3.6.0...main -->
 
+[3.11.0]: https://github.com/stac-utils/stac-api/compare/v3.10.0...v3.11.0
 [3.10.0]: https://github.com/stac-utils/stac-api/compare/v3.9.0...v3.10.0
 [3.9.0]: https://github.com/stac-utils/stac-api/compare/v3.8.0...v3.9.0
 [3.8.0]: https://github.com/stac-utils/stac-api/compare/v3.7.0...v3.8.0

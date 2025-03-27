@@ -90,7 +90,9 @@ Currently, stac-server supports the following specifications:
 - Sort Extension
 - Fields Extension
 - Query Extension
-- Filter Extension
+- Filter Extension (conformance classes "Basic CQL2", "CQL2 JSON", "Basic Spatial Functions", and
+  "Basic Spatial Functions with additional Spatial Literals", and
+  the "in" and "between" predicates from "Advanced Comparison Operators")
 - Transaction Extension
 - Aggregation Extension (experimental)
 

@@ -13,6 +13,7 @@ import { loadJson, setup } from '../helpers/system-tests.js'
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename) // eslint-disable-line no-unused-vars
 const intersectsGeometry = fs.readFileSync(path.resolve(__dirname, '../fixtures/stac/intersectsGeometry.json'), 'utf8')
+const noIntersectsGeometry = fs.readFileSync(path.resolve(__dirname, '../fixtures/stac/noIntersectsGeometry.json'), 'utf8')
 
 const fixture = (filepath) => fs.readFileSync(path.resolve(__dirname, filepath), 'utf8')
 
@@ -1289,4 +1290,72 @@ test('/search - filter extension - BETWEEN - failure for number args reversed', 
   t.regex(error.response.body.description,
     // eslint-disable-next-line max-len
     /.*For the 'between' operator, the first operand must be less than or equal to the second operand*/)
+})
+
+test('/search - filter extension - s_intersects - no matches for bbox', async (t) => {
+  const response = await t.context.api.client.post('search', {
+    json: {
+      filter: {
+        op: 's_intersects',
+        args: [{ property: 'geometry' }, { bbox: [-1, -1, 0, 0] }]
+      }
+    }
+  })
+  t.is(response.features.length, 0)
+})
+
+test('/search - filter extension - s_intersects - no matches for polygon', async (t) => {
+  const response = await t.context.api.client.post('search', {
+    json: {
+      filter: {
+        op: 's_intersects',
+        args: [{ property: 'geometry' }, JSON.parse(noIntersectsGeometry)]
+      }
+    }
+  })
+  t.is(response.features.length, 0)
+})
+
+test('/search - filter extension - s_intersects - matches for polygon', async (t) => {
+  const response = await t.context.api.client.post('search', {
+    json: {
+      filter: {
+        op: 's_intersects',
+        args: [{ property: 'geometry' }, JSON.parse(intersectsGeometry)]
+      }
+    }
+  })
+  t.is(response.features.length, 3)
+})
+
+test('/search - filter extension - s_intersects - failure for not bbox or geometry', async (t) => {
+  const error = await t.throwsAsync(async () => t.context.api.client.post('search', {
+    json: {
+      filter: {
+        op: 's_intersects',
+        args: [{ property: 'geometry' }, { not_bbox: 'foo' }]
+      }
+    }
+  }))
+  t.is(error.response.statusCode, 400)
+  t.is(error.response.body.code, 'BadRequest')
+  t.regex(error.response.body.description,
+    // eslint-disable-next-line max-len
+    /.*Operand for 's_intersects' must be a bbox literal or GeoJSON geometry*/)
+})
+
+test('/search - filter extension - s_intersects - non-existent geometry type', async (t) => {
+  const error = await t.throwsAsync(async () => t.context.api.client.post('search', {
+    json: {
+      filter: {
+        op: 's_intersects',
+        args: [{ property: 'geometry' }, { type: 'notPolygon', coordinates: [] }]
+      }
+    }
+  }))
+  t.is(error.response.statusCode, 400)
+  t.is(error.response.body.code, 'BadRequest')
+  t.regex(error.response.body.description,
+    // eslint-disable-next-line max-len
+    /.*Operand for 's_intersects' must be a GeoJSON geometry: type was 'notPolygon'*/)
 })

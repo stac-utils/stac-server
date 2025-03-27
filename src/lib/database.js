@@ -2,6 +2,7 @@ import { isEmpty } from 'lodash-es'
 import { dbClient as _client, createIndex } from './database-client.js'
 import logger from './logger.js'
 import { ValidationError } from './errors.js'
+import { bboxToPolygon } from './geo-utils.js'
 
 const COLLECTIONS_INDEX = process.env['COLLECTIONS_INDEX'] || 'collections'
 const DEFAULT_INDICES = ['*', '-.*', '-collections']
@@ -19,6 +20,7 @@ const OP = {
   IN: 'in',
   BETWEEN: 'between',
   LIKE: 'like',
+  S_INTERSECTS: 's_intersects',
 }
 const RANGE_TRANSLATION = {
   '<': 'lt',
@@ -32,6 +34,8 @@ const UNPREFIXED_FIELDS = [
   'geometry',
   'bbox'
 ]
+const GEOMETRY_TYPES = ['Point', 'LineString', 'Polygon', 'MultiPoint',
+  'MultiLineString', 'MultiPolygon', 'GeometryCollection']
 
 let collectionToIndexMapping = null
 let unrestrictedIndices = null
@@ -99,6 +103,84 @@ export function buildDatetimeQuery(parameters) {
     }
   }
   return dateQuery
+}
+
+function IN(cql2Field, cql2Value) {
+  if (!Array.isArray(cql2Value) || cql2Value.length === 0) {
+    throw new ValidationError("Operand for 'in' must be a non-empty array")
+  }
+  if (!cql2Value.every((x) => x !== Object(x))) {
+    throw new ValidationError(
+      "Operand for 'in' must contain only string, number, or boolean types"
+    )
+  }
+
+  return {
+    terms: {
+      [cql2Field]: cql2Value
+    }
+  }
+}
+
+function between(cql2Field, filterArgs) {
+  if (filterArgs.length < 3) {
+    throw new ValidationError("Two operands must be provided for the 'between' operator")
+  }
+
+  const cql2Value1 = filterArgs[1]
+  const cql2Value2 = filterArgs[2]
+  if (!(typeof cql2Value1 === 'number' && typeof cql2Value2 === 'number')) {
+    throw new ValidationError("Operands for 'between' must be numbers")
+  }
+
+  if (cql2Value1 > cql2Value2) {
+    throw new ValidationError(
+      "For the 'between' operator, the first operand must be less than or equal "
+        + 'to the second operand'
+    )
+  }
+
+  return {
+    range: {
+      [cql2Field]: {
+        gte: cql2Value1,
+        lte: cql2Value2
+      }
+    }
+  }
+}
+
+function sIntersects(cql2Field, cql2Value) {
+  // cql2Value can be either:
+  // 1) { "bbox": [swLon, swLat, neLon, neLat] }
+  // 2) geojson geometry
+
+  let geom = null
+
+  if (cql2Value.bbox) {
+    geom = bboxToPolygon(cql2Value.bbox, true)
+  }
+
+  if (cql2Value.type && cql2Value.coordinates) {
+    if (!GEOMETRY_TYPES.includes(cql2Value.type)) {
+      throw new ValidationError(
+        `Operand for 's_intersects' must be a GeoJSON geometry: type was '${cql2Value.type}'`
+      )
+    }
+    geom = cql2Value
+  }
+
+  if (!geom) {
+    throw new ValidationError(
+      "Operand for 's_intersects' must be a bbox literal or GeoJSON geometry"
+    )
+  }
+
+  return {
+    geo_shape: {
+      [cql2Field]: { shape: geom }
+    }
+  }
 }
 
 function buildQueryExtQuery(query) {
@@ -280,49 +362,13 @@ function buildFilterExtQuery(filter) {
       }
     }
   case OP.IN:
-    if (!Array.isArray(cql2Value) || cql2Value.length === 0) {
-      throw new ValidationError("Operand for 'in' must be a non-empty array")
-    }
-    if (!cql2Value.every((x) => x !== Object(x))) {
-      throw new ValidationError(
-        "Operand for 'in' must contain only string, number, or boolean types"
-      )
-    }
-
-    return {
-      terms: {
-        [cql2Field]: cql2Value
-      }
-    }
+    return IN(cql2Field, cql2Value)
   case OP.BETWEEN:
-    if (filter.args.length < 3) {
-      throw new ValidationError("Two operands must be provided for the 'between' operator")
-    }
-
-    // eslint-disable-next-line no-case-declarations
-    const cql2Value2 = filter.args[2]
-    if (!(typeof cql2Value === 'number' && typeof cql2Value2 === 'number')) {
-      throw new ValidationError("Operands for 'between' must be numbers")
-    }
-
-    if (cql2Value > cql2Value2) {
-      throw new ValidationError(
-        "For the 'between' operator, the first operand must be less than or equal "
-        + 'to the second operand'
-      )
-    }
-
-    return {
-      range: {
-        [cql2Field]: {
-          gte: cql2Value,
-          lte: cql2Value2
-        }
-      }
-    }
-
+    return between(cql2Field, filter.args)
   case OP.LIKE:
     throw new ValidationError("The 'like' operator is not currently supported")
+  case OP.S_INTERSECTS:
+    return sIntersects(cql2Field, cql2Value)
 
   // should not get here
   default:

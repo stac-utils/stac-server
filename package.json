@@ -53,7 +53,7 @@
     "@aws-sdk/client-s3": "^3.775.0",
     "@aws-sdk/client-secrets-manager": "^3.775.0",
     "@aws-sdk/client-sns": "^3.775.0",
-    "@aws-sdk/client-sqs": "^3.775.0",
+    "@aws-sdk/client-sqs": "^3.777.0",
     "@aws-sdk/credential-provider-node": "^3.775.0",
     "@aws-sdk/s3-request-presigner": "^3.775.0",
     "@mapbox/extent": "^0.4.0",

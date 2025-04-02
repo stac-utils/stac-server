@@ -2,8 +2,6 @@
   "upgrade": false,
   "reject": [
     "got",
-    "ava",
-    "@ava/typescript",
     "eslint",
     "express",
     "@opensearch-project/opensearch",

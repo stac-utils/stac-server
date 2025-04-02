@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## unreleased - TBD
 
+## Removed
+
+- Removed configurability of the Root / Landing Page Catalog stac_version via the
+  STAC_VERSION environment variable. This is now fixed at 1.1.0.
+
 ### Changed
 
 - Use Node 22 by default.

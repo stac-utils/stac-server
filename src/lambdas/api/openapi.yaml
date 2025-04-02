@@ -798,7 +798,7 @@ components:
                       - type: string
                       - type: number
       example:
-        stac_version: 1.0.0
+        stac_version: 1.1.0
         stac_extensions: []
         type: Collection
         id: Sentinel-2
@@ -1226,7 +1226,7 @@ components:
         assets:
           $ref: '#/components/schemas/assets'
       example:
-        stac_version: 1.0.0
+        stac_version: 1.1.0
         stac_extensions:
           - https://stac-extensions.github.io/eo/v1.0.0/schema.json
           - https://stac-extensions.github.io/view/v1.0.0/schema.json
@@ -1709,7 +1709,7 @@ components:
             $ref: '#/components/schemas/landingPage'
           example:
             type: Catalog
-            stac_version: 1.0.0
+            stac_version: 1.1.0
             id: sentinel
             title: Copernicus Sentinel Imagery
             description: Catalog of Copernicus Sentinel 1 and 2 imagery.

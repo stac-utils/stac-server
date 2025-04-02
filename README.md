@@ -9,8 +9,8 @@
   - [Architecture](#architecture)
   - [Migration](#migration)
     - [Warnings](#warnings)
-    - [3.12.0](#3120)
-      - [Node 23 update](#node-23-update)
+    - [4.0.0](#400)
+      - [Node 22 update](#node-22-update)
     - [3.10.0](#3100)
       - [Node 20 update](#node-20-update)
     - [3.1.0](#310)
@@ -166,9 +166,9 @@ apiLambda --> opensearch
   name, reindex the existing index into the newly-created index, delete and re-created
   the existing index by creating a collection, and reindex back into the index.
 
-### 3.12.0
+### 4.0.0
 
-#### Node 23 update
+#### Node 22 update
 
 The default Lambda deployment environment is now Node 22.
 

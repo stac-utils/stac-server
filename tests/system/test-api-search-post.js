@@ -1359,3 +1359,20 @@ test('/search - filter extension - s_intersects - non-existent geometry type', a
     // eslint-disable-next-line max-len
     /.*Operand for 's_intersects' must be a GeoJSON geometry: type was 'notPolygon'*/)
 })
+
+test('/search - context extension - no context when default', async (t) => {
+  const response = await t.context.api.client.post('search', { json: { } })
+  t.is(response.type, 'FeatureCollection')
+
+  t.falsy(response.context)
+})
+
+test('/search - context extension - context added when enabled', async (t) => {
+  process.env['ENABLE_CONTEXT_EXTENSION'] = 'true'
+  const response = await t.context.api.client.post('search', { json: { } })
+  t.is(response.type, 'FeatureCollection')
+  t.truthy(response.context)
+  t.is(response.context.matched, 3)
+  t.is(response.context.returned, 3)
+  t.is(response.context.limit, 10)
+})

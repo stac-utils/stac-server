@@ -34,7 +34,7 @@ test('GET /collections', async (t) => {
   t.true(Array.isArray(response.collections))
   t.true(response.collections.length > 0)
 
-  t.truthy(response.context.returned)
+  t.falsy(response.context)
 
   // queryables definition is stored in the collection document in OpenSearch,
   // but we do not want it in the Collection entity returned from the API or

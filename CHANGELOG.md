@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## unreleased - TBD
 
+### Removed
+
+- Context Extension is not disabled by default, and can be enabled with ENABLE_CONTEXT_EXTENSION
+
 ### Changed
 
 - Use Node 22 by default.

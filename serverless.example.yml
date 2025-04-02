@@ -2,7 +2,7 @@ service: stac-server
 
 provider:
   name: aws
-  runtime: nodejs20.x
+  runtime: nodejs22.x
   stage: ${opt:stage, 'dev'}
   region: ${opt:region, 'us-west-2'}
   # uncomment this if using a bucket that already exists for deployment files

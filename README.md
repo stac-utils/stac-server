@@ -9,6 +9,8 @@
   - [Architecture](#architecture)
   - [Migration](#migration)
     - [Warnings](#warnings)
+    - [4.0.0](#400)
+      - [Node 22 update](#node-22-update)
     - [3.10.0](#3100)
       - [Node 20 update](#node-20-update)
     - [3.1.0](#310)
@@ -164,15 +166,24 @@ apiLambda --> opensearch
   name, reindex the existing index into the newly-created index, delete and re-created
   the existing index by creating a collection, and reindex back into the index.
 
+### 4.0.0
+
+#### Node 22 update
+
+The default Lambda deployment environment is now Node 22.
+
+To update the deployment to use Node 22, modify the serverless config file value
+`provider.runtime` to be `nodejs22.x` and the application re-deployed.
+
 ### 3.10.0
 
 #### Node 20 update
 
 The default Lambda deployment environment is now Node 20. The major difference between
 the Node 18 and Node 20 Lambda environment is the update of the underlying Linux version
-from Amazon Linux 2  to Amazon Linux 2023.
+from Amazon Linux 2 to Amazon Linux 2023.
 
-To update the deployment to use Node 18, modify the serverless config file value
+To update the deployment to use Node 20, modify the serverless config file value
 `provider.runtime` to be `nodejs20.x` and the application re-deployed.
 
 ### 3.1.0

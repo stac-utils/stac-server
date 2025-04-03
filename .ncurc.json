@@ -3,8 +3,10 @@
   "reject": [
     "got",
     "eslint",
+    "express",
     "@opensearch-project/opensearch",
     "serverless",
-    "serverless-offline"
+    "serverless-offline",
+    "@types/express"
   ]
 }

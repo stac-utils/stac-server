@@ -479,29 +479,6 @@ export const addItemLinks = function (results, endpoint) {
   return results
 }
 
-const collectionsToCatalogLinks = function (results, endpoint) {
-  const catalogId = process.env['STAC_ID'] || 'stac-server'
-  const catalogTitle = process.env['STAC_TITLE'] || 'A STAC API'
-  const catalogDescription = process.env['STAC_DESCRIPTION'] || 'A STAC API running on stac-server'
-  const catalog = {
-    stac_version: '1.1.0',
-    type: 'Catalog',
-    id: catalogId,
-    title: catalogTitle,
-    description: catalogDescription
-  }
-
-  catalog.links = results.map((result) => {
-    const { id } = result
-    return {
-      rel: 'child',
-      type: 'application/geo+json',
-      href: `${endpoint}/collections/${id}`
-    }
-  })
-  return catalog
-}
-
 const wrapResponseInFeatureCollection = function (
   context, features = [], links = []
 ) {
@@ -1055,16 +1032,7 @@ const getGlobalAggregations = async (endpoint = '') => {
   return { aggregations, links }
 }
 
-const getCatalog = async function (txnEnabled, backend, endpoint = '') {
-  const collectionsOrError = await backend.getCollections(1, COLLECTION_LIMIT)
-  if (collectionsOrError instanceof Error) {
-    return collectionsOrError
-  }
-
-  const catalog = collectionsToCatalogLinks(collectionsOrError, endpoint)
-
-  catalog.conformsTo = (await getConformance(txnEnabled)).conformsTo
-
+const getCatalog = async function (txnEnabled, endpoint = '') {
   const links = [
     {
       rel: 'self',
@@ -1126,18 +1094,23 @@ const getCatalog = async function (txnEnabled, backend, endpoint = '') {
     },
   ]
 
-  const docsUrl = process.env['STAC_DOCS_URL']
-  if (docsUrl) {
+  if (process.env['STAC_DOCS_URL']) {
     links.push({
       rel: 'server',
       type: 'text/html',
-      href: docsUrl,
+      href: process.env['STAC_DOCS_URL'],
     })
   }
 
-  catalog.links = links.concat(catalog.links)
-
-  return catalog
+  return {
+    stac_version: '1.1.0',
+    type: 'Catalog',
+    id: process.env['STAC_ID'] || 'stac-server',
+    title: process.env['STAC_TITLE'] || 'A STAC API',
+    description: process.env['STAC_DESCRIPTION'] || 'A STAC API running on stac-server',
+    conformsTo: (await getConformance(txnEnabled)).conformsTo,
+    links
+  }
 }
 
 const deleteUnusedFields = (collection) => {

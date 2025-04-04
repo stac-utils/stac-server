@@ -12,16 +12,6 @@
             "href": "catalog.json",
             "rel": "root",
             "type": "application/json"
-        },
-        {
-            "href": "collection.json",
-            "rel": "child",
-            "type": "application/json"
-        },
-        {
-            "href": "collection2.json",
-            "rel": "child",
-            "type": "application/json"
         }
     ],
     "stac_extensions": [

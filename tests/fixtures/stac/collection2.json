@@ -1,7 +1,7 @@
 {
     "id": "collection2",
     "type": "Collection",
-    "stac_version": "1.0.0",
+    "stac_version": "1.1.0",
     "description": "Landat-8 L1 Collection-1 imagery radiometrically calibrated and orthorectified using gound points and Digital Elevation Model (DEM) data to correct relief displacement.",
     "links": [
         {
@@ -23,39 +23,70 @@
     ],
     "stac_extensions": [],
     "title": "Landsat-8 L1 Collection-1",
-    "keywords": ["landsat", "earth observation", "usgs"],
+    "keywords": [
+        "landsat",
+        "earth observation",
+        "usgs"
+    ],
     "providers": [
         {
             "name": "USGS",
-            "roles": ["producer"],
+            "roles": [
+                "producer"
+            ],
             "url": "https://landsat.usgs.gov/"
         },
         {
             "name": "Planet Labs",
-            "roles": ["processor"],
+            "roles": [
+                "processor"
+            ],
             "url": "https://github.com/landsat-pds/landsat_ingestor"
         },
         {
             "name": "AWS",
-            "roles": ["host"],
+            "roles": [
+                "host"
+            ],
             "url": "https://landsatonaws.com/"
         },
         {
             "name": "Element 84",
-            "roles": ["processor"],
+            "roles": [
+                "processor"
+            ],
             "url": "https://element84.com/"
         }
     ],
     "summaries": {
-        "gsd": [30],
-        "platform": ["landsat-8"],
-        "instruments": ["oli", "tirs"]
+        "gsd": [
+            30
+        ],
+        "platform": [
+            "landsat-8"
+        ],
+        "instruments": [
+            "oli",
+            "tirs"
+        ]
     },
     "item_assets": {
-        "index": { "type": "text/html", "title": "HTML index page" },
-        "thumbnail": { "title": "Thumbnail image", "type": "image/jpeg" },
-        "ANG": { "title": "Angle coefficients file", "type": "text/plain" },
-        "MTL": { "title": "original metadata file", "type": "text/plain" },
+        "index": {
+            "type": "text/html",
+            "title": "HTML index page"
+        },
+        "thumbnail": {
+            "title": "Thumbnail image",
+            "type": "image/jpeg"
+        },
+        "ANG": {
+            "title": "Angle coefficients file",
+            "type": "text/plain"
+        },
+        "MTL": {
+            "title": "original metadata file",
+            "type": "text/plain"
+        },
         "BQA": {
             "title": "Band quality data",
             "type": "image/tiff; application=geotiff"
@@ -205,8 +236,24 @@
         }
     },
     "extent": {
-        "spatial": { "bbox": [[-180, -90, 180, 90]] },
-        "temporal": { "interval": [["2013-06-01T00:00:00Z", null]] }
+        "spatial": {
+            "bbox": [
+                [
+                    -180,
+                    -90,
+                    180,
+                    90
+                ]
+            ]
+        },
+        "temporal": {
+            "interval": [
+                [
+                    "2013-06-01T00:00:00Z",
+                    null
+                ]
+            ]
+        }
     },
     "license": "PDDL-1.0"
 }

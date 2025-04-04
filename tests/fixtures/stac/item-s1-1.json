@@ -1,6 +1,6 @@
 {
   "type": "Feature",
-  "stac_version": "1.0.0",
+  "stac_version": "1.1.0",
   "id": "S1A_IW_GRDH_1SSH_20230413T135642_20230413T135707_048078_05C78B",
   "properties": {
     "sar:frequency_band": "C",

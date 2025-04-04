@@ -1,11 +1,14 @@
 {
    "type": "Feature",
-   "stac_version": "1.0.0",
+   "stac_version": "1.1.0",
    "id": "collection2_item",
    "properties": {
       "gsd": 30,
       "platform": "platform2",
-      "instruments": ["OLI", "TIRS"],
+      "instruments": [
+         "OLI",
+         "TIRS"
+      ],
       "datetime": "2015-02-19T15:06:12.565047+00:00",
       "eo:cloud_cover": 0.54,
       "proj:epsg": 32622,
@@ -21,11 +24,26 @@
    "geometry": {
       "coordinates": [
          [
-            [-52.68296, 72.07674],
-            [-45.19691, 71.99758],
-            [-45.83578, 69.68409],
-            [-52.4967, 69.75356],
-            [-52.68296, 72.07674]
+            [
+               -52.68296,
+               72.07674
+            ],
+            [
+               -45.19691,
+               71.99758
+            ],
+            [
+               -45.83578,
+               69.68409
+            ],
+            [
+               -52.4967,
+               69.75356
+            ],
+            [
+               -52.68296,
+               72.07674
+            ]
          ]
       ],
       "type": "Polygon"
@@ -53,7 +71,9 @@
          "href": "https://s3-us-west-2.amazonaws.com/landsat-pds/L8/010/010/LC80100102015050LGN00/LC80100102015050LGN00_thumb_large.jpg",
          "type": "image/jpeg",
          "title": "Thumbnail",
-         "roles": ["thumbnail"]
+         "roles": [
+            "thumbnail"
+         ]
       },
       "index": {
          "href": "https://s3-us-west-2.amazonaws.com/landsat-pds/L8/010/010/LC80100102015050LGN00/index.html",
@@ -64,19 +84,25 @@
          "href": "https://s3-us-west-2.amazonaws.com/landsat-pds/L8/010/010/LC80100102015050LGN00/LC80100102015050LGN00_ANG.txt",
          "type": "text/plain",
          "title": "ANG Metadata",
-         "roles": ["metadata"]
+         "roles": [
+            "metadata"
+         ]
       },
       "MTL": {
          "href": "https://s3-us-west-2.amazonaws.com/landsat-pds/L8/010/010/LC80100102015050LGN00/LC80100102015050LGN00_MTL.txt",
          "type": "text/plain",
          "title": "MTL Metadata",
-         "roles": ["metadata"]
+         "roles": [
+            "metadata"
+         ]
       },
       "BQA": {
          "href": "https://s3-us-west-2.amazonaws.com/landsat-pds/L8/010/010/LC80100102015050LGN00/LC80100102015050LGN00_BQA.TIF",
          "type": "image/tiff; application=geotiff",
          "title": "Quality Band",
-         "roles": ["quality"]
+         "roles": [
+            "quality"
+         ]
       },
       "B1": {
          "href": "https://s3-us-west-2.amazonaws.com/landsat-pds/L8/010/010/LC80100102015050LGN00/LC80100102015050LGN00_B1.TIF",
@@ -214,7 +240,17 @@
          "gsd": 100
       }
    },
-   "bbox": [-52.68296, 69.68409, -45.19691, 72.07674],
-   "stac_extensions": ["eo", "projection", "view", "landsat"],
+   "bbox": [
+      -52.68296,
+      69.68409,
+      -45.19691,
+      72.07674
+   ],
+   "stac_extensions": [
+      "eo",
+      "projection",
+      "view",
+      "landsat"
+   ],
    "collection": "collection2"
 }

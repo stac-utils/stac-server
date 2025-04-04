@@ -772,7 +772,7 @@ export async function constructSearchParams(parameters, page, limit) {
   return searchParams
 }
 
-async function search(parameters, page, limit = 10) {
+async function search(parameters, limit, page) {
   const searchParams = await constructSearchParams(parameters, page, limit)
   const dbResponse = await dbQuery({
     ignore_unavailable: true,
@@ -783,12 +783,10 @@ async function search(parameters, page, limit = 10) {
   const results = dbResponse.body.hits.hits.map((r) => (r._source))
   const response = {
     results,
-    context: {
-      limit: Number(limit),
-      matched: dbResponse.body.hits.total.value,
-      returned: results.length
-    }
+    numberMatched: dbResponse.body.hits.total.value,
+    numberReturned: results.length
   }
+
   return response
 }
 
@@ -977,7 +975,7 @@ const getItem = async (collectionId, itemId) => {
   const searchResponse = await search({
     collections: [collectionId],
     id: itemId
-  })
+  }, 1)
 
   return searchResponse.results[0]
 }

@@ -28,7 +28,7 @@ export async function convertIngestObjectToDbObject(
     index = data.collection
   } else {
     throw new InvalidIngestError(
-      `Expected data.type to be "Collection" or "Feature" not ${data.type}`
+      `Expected data.type to be 'Collection' or 'Feature' not '${data.type}'`
     )
   }
 

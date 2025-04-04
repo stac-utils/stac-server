@@ -479,17 +479,25 @@ export const addItemLinks = function (results, endpoint) {
   return results
 }
 
-const wrapResponseInFeatureCollection = function (
-  context, features = [], links = []
-) {
-  return {
+const wrapResponseInFeatureCollection = function (features, links,
+  numberMatched, numberReturned, limit) {
+  const fc = {
     type: 'FeatureCollection',
-    context,
-    numberMatched: context.matched,
-    numberReturned: context.returned,
+    numberMatched,
+    numberReturned,
     features,
     links
   }
+
+  if (process.env['ENABLE_CONTEXT_EXTENSION']) {
+    fc['context'] = {
+      matched: numberMatched,
+      returned: numberReturned,
+      limit
+    }
+  }
+
+  return fc
 }
 
 const buildPaginationLinks = function (limit, parameters, bbox, intersects, endpoint,
@@ -572,7 +580,7 @@ const searchItems = async function (collectionId, queryParameters, backend, endp
   const fields = extractFields(queryParameters)
   const ids = extractIds(queryParameters)
   const collections = extractCollectionIds(queryParameters)
-  const limit = extractLimit(queryParameters)
+  const limit = extractLimit(queryParameters) || 10
   const page = extractPage(queryParameters)
 
   const searchParams = pickBy({
@@ -599,16 +607,13 @@ const searchItems = async function (collectionId, queryParameters, backend, endp
 
   let esResponse
   try {
-    esResponse = await backend.search(searchParams, page, limit)
+    esResponse = await backend.search(searchParams, limit, page)
   } catch (error) {
     if (isIndexNotFoundError(error)) {
       esResponse = {
-        context: {
-          matched: 0,
-          returned: 0,
-          limit
-        },
-        results: []
+        results: [],
+        numberMatched: 0,
+        numberReturned: 0,
       }
     // @ts-ignore
     } else if (error?.meta?.statusCode === 400) {
@@ -631,7 +636,7 @@ const searchItems = async function (collectionId, queryParameters, backend, endp
     }
   }
 
-  const { results: responseItems, context } = esResponse
+  const { results: responseItems, numberMatched, numberReturned } = esResponse
   const paginationLinks = buildPaginationLinks(
     limit, searchParams, bbox, intersects, newEndpoint, httpMethod, sortby, responseItems
   )
@@ -659,8 +664,7 @@ const searchItems = async function (collectionId, queryParameters, backend, endp
   }
 
   const items = addItemLinks(responseItems, endpoint)
-  const response = wrapResponseInFeatureCollection(context, items, links)
-  return response
+  return wrapResponseInFeatureCollection(items, links, numberMatched, numberReturned, limit)
 }
 
 const agg = function (esAggs, name, dataType) {
@@ -1146,7 +1150,13 @@ const getCollections = async function (backend, endpoint = '') {
         href: `${endpoint}`,
       },
     ],
-    context: {
+  }
+
+  // note: adding this to the Collections response is not
+  // part of the Context Extension, and was just a proprietary
+  // behavior of this implemenation
+  if (process.env['ENABLE_CONTEXT_EXTENSION']) {
+    resp['context'] = {
       page: 1,
       limit: COLLECTION_LIMIT,
       matched: linkedCollections && linkedCollections.length,
@@ -1183,7 +1193,7 @@ const createCollection = async function (collection, backend) {
 
 const getItem = async function (collectionId, itemId, backend, endpoint = '') {
   const itemQuery = { collections: [collectionId], id: itemId }
-  const { results } = await backend.search(itemQuery)
+  const { results } = await backend.search(itemQuery, 1)
   const [it] = addItemLinks(results, endpoint)
   if (it) {
     return it
@@ -1233,7 +1243,7 @@ const deleteItem = async function (collectionId, itemId, backend) {
 
 const getItemThumbnail = async function (collectionId, itemId, backend) {
   const itemQuery = { collections: [collectionId], id: itemId }
-  const { results } = await backend.search(itemQuery)
+  const { results } = await backend.search(itemQuery, 1)
   const [item] = results
   if (!item) {
     return new Error('Item not found')

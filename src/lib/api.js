@@ -479,29 +479,6 @@ export const addItemLinks = function (results, endpoint) {
   return results
 }
 
-const collectionsToCatalogLinks = function (results, endpoint) {
-  const catalogId = process.env['STAC_ID'] || 'stac-server'
-  const catalogTitle = process.env['STAC_TITLE'] || 'A STAC API'
-  const catalogDescription = process.env['STAC_DESCRIPTION'] || 'A STAC API running on stac-server'
-  const catalog = {
-    stac_version: '1.1.0',
-    type: 'Catalog',
-    id: catalogId,
-    title: catalogTitle,
-    description: catalogDescription
-  }
-
-  catalog.links = results.map((result) => {
-    const { id } = result
-    return {
-      rel: 'child',
-      type: 'application/geo+json',
-      href: `${endpoint}/collections/${id}`
-    }
-  })
-  return catalog
-}
-
 const wrapResponseInFeatureCollection = function (features, links,
   numberMatched, numberReturned, limit) {
   const fc = {

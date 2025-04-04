@@ -6,7 +6,7 @@ import path from 'path'
 import { fileURLToPath } from 'url'
 import database from '../../lib/database.js'
 import api from '../../lib/api.js'
-import { ValidationError } from '../../lib/errors.js'
+import { NotFoundError, ValidationError } from '../../lib/errors.js'
 import { readFile } from '../../lib/fs.js'
 import addEndpoint from './middleware/add-endpoint.js'
 import logger from '../../lib/logger.js'
@@ -153,7 +153,7 @@ app.get('/aggregations', async (req, res, next) => {
 
 app.get('/collections', async (req, res, next) => {
   try {
-    const response = await api.getCollections(database, req.endpoint)
+    const response = await api.getCollections(database, req.endpoint, req.query)
     if (response instanceof Error) next(createError(500, response.message))
     else res.json(response)
   } catch (error) {
@@ -185,7 +185,7 @@ app.post('/collections', async (req, res, next) => {
 app.get('/collections/:collectionId', async (req, res, next) => {
   const { collectionId } = req.params
   try {
-    const response = await api.getCollection(collectionId, database, req.endpoint)
+    const response = await api.getCollection(collectionId, database, req.endpoint, req.query)
     if (response instanceof Error) next(createError(404))
     else res.json(response)
   } catch (error) {
@@ -196,7 +196,9 @@ app.get('/collections/:collectionId', async (req, res, next) => {
 app.get('/collections/:collectionId/queryables', async (req, res, next) => {
   const { collectionId } = req.params
   try {
-    const queryables = await api.getCollectionQueryables(collectionId, database, req.endpoint)
+    const queryables = await api.getCollectionQueryables(
+      collectionId, database, req.endpoint, req.query
+    )
 
     if (queryables instanceof Error) next(createError(404))
     else {
@@ -215,7 +217,9 @@ app.get('/collections/:collectionId/queryables', async (req, res, next) => {
 app.get('/collections/:collectionId/aggregations', async (req, res, next) => {
   const { collectionId } = req.params
   try {
-    const aggs = await api.getCollectionAggregations(collectionId, database, req.endpoint)
+    const aggs = await api.getCollectionAggregations(
+      collectionId, database, req.endpoint, req.query
+    )
     if (aggs instanceof Error) next(createError(404))
     else res.json(aggs)
   } catch (error) {
@@ -231,7 +235,9 @@ app.get('/collections/:collectionId/aggregate',
   async (req, res, next) => {
     const { collectionId } = req.params
     try {
-      const response = await api.getCollection(collectionId, database, req.endpoint)
+      const response = await api.getCollection(
+        collectionId, database, req.endpoint, req.query
+      )
 
       if (response instanceof Error) next(createError(404))
       else {
@@ -249,20 +255,22 @@ app.get('/collections/:collectionId/aggregate',
 app.get('/collections/:collectionId/items', async (req, res, next) => {
   const { collectionId } = req.params
   try {
-    const response = await api.getCollection(collectionId, database, req.endpoint)
+    if ((await api.getCollection(
+      collectionId, database, req.endpoint, req.query
+    )) instanceof Error) {
+      next(createError(404))
+    }
 
-    if (response instanceof Error) next(createError(404))
-    else {
-      const items = await api.searchItems(
+    res.type('application/geo+json')
+    res.json(
+      await api.searchItems(
         collectionId,
         req.query,
         database,
         req.endpoint,
         'GET'
       )
-      res.type('application/geo+json')
-      res.json(items)
-    }
+    )
   } catch (error) {
     if (error instanceof ValidationError) {
       next(createError(400, error.message))
@@ -280,7 +288,7 @@ app.post('/collections/:collectionId/items', async (req, res, next) => {
     if (req.body.collection && req.body.collection !== collectionId) {
       next(createError(400, 'Collection resource URI must match collection in body'))
     } else {
-      const collectionRes = await api.getCollection(collectionId, database, req.endpoint)
+      const collectionRes = await api.getCollection(collectionId, database, req.endpoint, req.query)
       if (collectionRes instanceof Error) next(createError(404))
       else {
         try {
@@ -312,15 +320,14 @@ app.get('/collections/:collectionId/items/:itemId', async (req, res, next) => {
       collectionId,
       itemId,
       database,
-      req.endpoint
+      req.endpoint,
+      req.query
     )
 
-    if (response instanceof Error) {
-      if (response.message === 'Item not found') {
-        next(createError(404))
-      } else {
-        next(createError(500))
-      }
+    if (response instanceof NotFoundError) {
+      next(createError(404))
+    } else if (response instanceof Error) {
+      next(createError(500))
     } else {
       res.type('application/geo+json')
       res.json(response)
@@ -339,7 +346,7 @@ app.put('/collections/:collectionId/items/:itemId', async (req, res, next) => {
     } else if (req.body.id && req.body.id !== itemId) {
       next(createError(400, 'Item ID in resource URI must match id in body'))
     } else {
-      const itemRes = await api.getItem(collectionId, itemId, database, req.endpoint)
+      const itemRes = await api.getItem(collectionId, itemId, database, req.endpoint, req.query)
       if (itemRes instanceof Error) next(createError(404))
       else {
         req.body.collection = collectionId
@@ -372,7 +379,7 @@ app.patch('/collections/:collectionId/items/:itemId', async (req, res, next) => 
     } else if (req.body.id && req.body.id !== itemId) {
       next(createError(400, 'Item ID in resource URI must match id in body'))
     } else {
-      const itemRes = await api.getItem(collectionId, itemId, database, req.endpoint)
+      const itemRes = await api.getItem(collectionId, itemId, database, req.endpoint, req.query)
       if (itemRes instanceof Error) next(createError(404))
       else {
         try {
@@ -418,15 +425,13 @@ app.get('/collections/:collectionId/items/:itemId/thumbnail', async (req, res, n
       collectionId,
       itemId,
       database,
+      req.query
     )
 
-    if (response instanceof Error) {
-      if (response.message === 'Item not found'
-          || response.message === 'Thumbnail not found') {
-        next(createError(404))
-      } else {
-        next(createError(500))
-      }
+    if (response instanceof NotFoundError) {
+      next(createError(404))
+    } else if (response instanceof Error) {
+      next(createError(500))
     } else {
       res.redirect(response.location)
     }

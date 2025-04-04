@@ -12,11 +12,11 @@ test.before(async (t) => {
 
   t.context = standUpResult
 
-  const collectionId = randomId('collection')
+  t.context.collectionId = randomId('collection')
 
   const collection = await loadFixture(
     'landsat-8-l1-collection.json',
-    { id: collectionId }
+    { id: t.context.collectionId }
   )
 
   await ingestItem({
@@ -48,4 +48,22 @@ test('GET /collections has a content type of "application/json', async (t) => {
   const response = await t.context.api.client.get('collections', { resolveBodyOnly: false })
 
   t.is(response.headers['content-type'], 'application/json; charset=utf-8')
+})
+
+test('GET /collections with restriction returns filtered collections', async (t) => {
+  await refreshIndices()
+
+  const { collectionId } = t.context
+
+  t.is((await t.context.api.client.get(
+    'collections', {
+      searchParams: { _collections: `${collectionId},foo,bar` } }
+  )
+  ).collections.length, 1)
+
+  t.is((await t.context.api.client.get(
+    'collections', {
+      searchParams: { _collections: 'not-a-collection' } }
+  )
+  ).collections.length, 0)
 })

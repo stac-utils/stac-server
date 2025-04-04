@@ -1,7 +1,7 @@
 import { isEmpty } from 'lodash-es'
 import { dbClient as _client, createIndex } from './database-client.js'
 import logger from './logger.js'
-import { ValidationError } from './errors.js'
+import { NotFoundError, ValidationError } from './errors.js'
 import { bboxToPolygon } from './geo-utils.js'
 
 const COLLECTIONS_INDEX = process.env['COLLECTIONS_INDEX'] || 'collections'
@@ -666,7 +666,7 @@ async function getCollection(collectionId) {
   if (Array.isArray(response.body.hits.hits) && response.body.hits.hits.length) {
     return response.body.hits.hits[0]._source
   }
-  return new Error('Collection not found')
+  return new NotFoundError()
 }
 
 // get all collections

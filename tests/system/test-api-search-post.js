@@ -1401,3 +1401,25 @@ test('POST /search with restriction returns filtered collections', async (t) => 
   t.is(r3.statusCode, 200)
   t.is(r3.body.features.length, 0)
 })
+
+test('/search - context extension - no context when default', async (t) => {
+  const response = await t.context.api.client.post('search', { json: { } })
+  t.is(response.type, 'FeatureCollection')
+  t.is(response.numberMatched, 3)
+  t.is(response.numberReturned, 3)
+
+  t.falsy(response.context)
+})
+
+test('/search - context extension - context added when enabled', async (t) => {
+  process.env['ENABLE_CONTEXT_EXTENSION'] = 'true'
+  const response = await t.context.api.client.post('search', { json: { } })
+  t.is(response.type, 'FeatureCollection')
+  t.is(response.numberMatched, 3)
+  t.is(response.numberReturned, 3)
+
+  t.truthy(response.context)
+  t.is(response.context.matched, 3)
+  t.is(response.context.returned, 3)
+  t.is(response.context.limit, 10)
+})

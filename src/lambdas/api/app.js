@@ -51,7 +51,7 @@ app.use(addEndpoint)
 
 app.get('/', async (req, res, next) => {
   try {
-    const response = await api.getCatalog(txnEnabled, database, req.endpoint)
+    const response = await api.getCatalog(txnEnabled, req.endpoint)
     if (response instanceof Error) next(createError(500, response.message))
     else res.json(response)
   } catch (error) {

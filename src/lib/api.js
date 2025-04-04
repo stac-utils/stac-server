@@ -473,40 +473,25 @@ export const addItemLinks = function (results, endpoint) {
   return results
 }
 
-const collectionsToCatalogLinks = function (results, endpoint) {
-  const catalogId = process.env['STAC_ID'] || 'stac-server'
-  const catalogTitle = process.env['STAC_TITLE'] || 'A STAC API'
-  const catalogDescription = process.env['STAC_DESCRIPTION'] || 'A STAC API running on stac-server'
-  const catalog = {
-    stac_version: '1.1.0',
-    type: 'Catalog',
-    id: catalogId,
-    title: catalogTitle,
-    description: catalogDescription
-  }
-
-  catalog.links = results.map((result) => {
-    const { id } = result
-    return {
-      rel: 'child',
-      type: 'application/geo+json',
-      href: `${endpoint}/collections/${id}`
-    }
-  })
-  return catalog
-}
-
-const wrapResponseInFeatureCollection = function (
-  context, features = [], links = []
-) {
-  return {
+const wrapResponseInFeatureCollection = function (features, links,
+  numberMatched, numberReturned, limit) {
+  const fc = {
     type: 'FeatureCollection',
-    context,
-    numberMatched: context.matched,
-    numberReturned: context.returned,
+    numberMatched,
+    numberReturned,
     features,
     links
   }
+
+  if (process.env['ENABLE_CONTEXT_EXTENSION']) {
+    fc['context'] = {
+      matched: numberMatched,
+      returned: numberReturned,
+      limit
+    }
+  }
+
+  return fc
 }
 
 const buildPaginationLinks = function (limit, parameters, bbox, intersects, collections, endpoint,
@@ -593,7 +578,7 @@ const searchItems = async function (collectionId, queryParameters, backend, endp
   const collections = allowedCollectionIds ? allowedCollectionIds.filter(
     (x) => !specifiedCollectionIds || specifiedCollectionIds.includes(x)
   ) : specifiedCollectionIds
-  const limit = extractLimit(queryParameters)
+  const limit = extractLimit(queryParameters) || 10
   const page = extractPage(queryParameters)
 
   const searchParams = pickBy({
@@ -620,16 +605,13 @@ const searchItems = async function (collectionId, queryParameters, backend, endp
 
   let esResponse
   try {
-    esResponse = await backend.search(searchParams, page, limit)
+    esResponse = await backend.search(searchParams, limit, page)
   } catch (error) {
     if (isIndexNotFoundError(error)) {
       esResponse = {
-        context: {
-          matched: 0,
-          returned: 0,
-          limit
-        },
-        results: []
+        results: [],
+        numberMatched: 0,
+        numberReturned: 0,
       }
     // @ts-ignore
     } else if (error?.meta?.statusCode === 400) {
@@ -652,7 +634,7 @@ const searchItems = async function (collectionId, queryParameters, backend, endp
     }
   }
 
-  const { results: responseItems, context } = esResponse
+  const { results: responseItems, numberMatched, numberReturned } = esResponse
   const paginationLinks = buildPaginationLinks(
     limit,
     searchParams,
@@ -688,8 +670,7 @@ const searchItems = async function (collectionId, queryParameters, backend, endp
   }
 
   const items = addItemLinks(responseItems, endpoint)
-  const response = wrapResponseInFeatureCollection(context, items, links)
-  return response
+  return wrapResponseInFeatureCollection(items, links, numberMatched, numberReturned, limit)
 }
 
 const agg = function (esAggs, name, dataType) {
@@ -1075,16 +1056,7 @@ const getGlobalAggregations = async (endpoint = '') => {
   return { aggregations, links }
 }
 
-const getCatalog = async function (txnEnabled, backend, endpoint = '') {
-  const collectionsOrError = await backend.getCollections(1, COLLECTION_LIMIT)
-  if (collectionsOrError instanceof Error) {
-    return collectionsOrError
-  }
-
-  const catalog = collectionsToCatalogLinks(collectionsOrError, endpoint)
-
-  catalog.conformsTo = (await getConformance(txnEnabled)).conformsTo
-
+const getCatalog = async function (txnEnabled, endpoint = '') {
   const links = [
     {
       rel: 'self',
@@ -1146,18 +1118,23 @@ const getCatalog = async function (txnEnabled, backend, endpoint = '') {
     },
   ]
 
-  const docsUrl = process.env['STAC_DOCS_URL']
-  if (docsUrl) {
+  if (process.env['STAC_DOCS_URL']) {
     links.push({
       rel: 'server',
       type: 'text/html',
-      href: docsUrl,
+      href: process.env['STAC_DOCS_URL'],
     })
   }
 
-  catalog.links = links.concat(catalog.links)
-
-  return catalog
+  return {
+    stac_version: '1.1.0',
+    type: 'Catalog',
+    id: process.env['STAC_ID'] || 'stac-server',
+    title: process.env['STAC_TITLE'] || 'A STAC API',
+    description: process.env['STAC_DESCRIPTION'] || 'A STAC API running on stac-server',
+    conformsTo: (await getConformance(txnEnabled)).conformsTo,
+    links
+  }
 }
 
 const deleteUnusedFields = (collection) => {
@@ -1198,7 +1175,13 @@ const getCollections = async function (backend, endpoint, queryParameters) {
         href: `${endpoint}`,
       },
     ],
-    context: {
+  }
+
+  // note: adding this to the Collections response is not
+  // part of the Context Extension, and was just a proprietary
+  // behavior of this implemenation
+  if (process.env['ENABLE_CONTEXT_EXTENSION']) {
+    resp['context'] = {
       page: 1,
       limit: COLLECTION_LIMIT,
       matched: linkedCollections && linkedCollections.length,
@@ -1245,7 +1228,7 @@ const getItem = async function (collectionId, itemId, backend, endpoint, queryPa
   }
 
   const itemQuery = { collections: [collectionId], id: itemId }
-  const { results } = await backend.search(itemQuery)
+  const { results } = await backend.search(itemQuery, 1)
   const [it] = addItemLinks(results, endpoint)
   if (it) {
     return it
@@ -1300,7 +1283,7 @@ const getItemThumbnail = async function (collectionId, itemId, backend, queryPar
   }
 
   const itemQuery = { collections: [collectionId], id: itemId }
-  const { results } = await backend.search(itemQuery)
+  const { results } = await backend.search(itemQuery, 1)
   const [item] = results
   if (!item) {
     return new NotFoundError()

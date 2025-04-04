@@ -10,6 +10,7 @@
   - [Migration](#migration)
     - [Warnings](#warnings)
     - [4.0.0](#400)
+      - [Context Extension disabled by default](#context-extension-disabled-by-default)
       - [Node 22 update](#node-22-update)
       - [Hidden collections filter](#hidden-collections-filter)
     - [3.10.0](#3100)
@@ -83,6 +84,7 @@ Stac-server is an implementation of the [STAC API specification](https://github.
 | 0.4.x                  | 1.0.0        | 1.0.0-beta.5                |
 | 0.5.x-0.8.x            | 1.0.0        | 1.0.0-rc.2                  |
 | >=1.0.0                | 1.0.0        | 1.0.0                       |
+| >=3.10.0               | 1.1.0        | 1.0.0                       |
 
 Currently, stac-server supports the following specifications:
 
@@ -90,14 +92,14 @@ Currently, stac-server supports the following specifications:
 - STAC API - Features
 - STAC API - Collections
 - STAC API - Item Search
-- Context Extension (deprecated)
+- Context Extension (deprecated, disabled by default)
 - Sort Extension
 - Fields Extension
 - Query Extension
 - Filter Extension (conformance classes "Basic CQL2", "CQL2 JSON", "Basic Spatial Functions", and
   "Basic Spatial Functions with additional Spatial Literals", and
   the "in" and "between" predicates from "Advanced Comparison Operators")
-- Transaction Extension
+- Transaction Extension (disabled by default)
 - Aggregation Extension (experimental)
 
 The following APIs are deployed instances of stac-server:
@@ -169,6 +171,12 @@ apiLambda --> opensearch
   the existing index by creating a collection, and reindex back into the index.
 
 ### 4.0.0
+
+#### Context Extension disabled by default
+
+Context Extension is not disabled by default, and can be enabled with ENABLE_CONTEXT_EXTENSION
+env var. Usage of the "context" object "limit", "matched", and "returned" fields can be replaced
+with the root-level fields "numberMatched" and "numberReturned".
 
 #### Node 22 update
 
@@ -575,6 +583,7 @@ There are some settings that should be reviewed and updated as needeed in the se
 | REQUEST_LOGGING_FORMAT           | Express request logging format to use. Any of the [Morgan predefined formats](https://github.com/expressjs/morgan#predefined-formats).                                                                                                                                          | tiny                                                                                 |
 | STAC_API_URL                     | The root endpoint of this API                                                                                                                                                                                                                                                   | Inferred from request                                                                |
 | ENABLE_TRANSACTIONS_EXTENSION    | Boolean specifying if the [Transaction Extension](https://github.com/radiantearth/stac-api-spec/tree/master/ogcapi-features/extensions/transaction) should be activated                                                                                                         | false                                                                                |
+| ENABLE_CONTEXT_EXTENSION    | Boolean specifying if the [Context Extension](https://github.com/stac-api-extensions/context) should be activated                                                                                                         | false                                                                                |
 | STAC_API_ROOTPATH                | The path to append to URLs if this is not deployed at the server root. For example, if the server is deployed without a custom domain name, it will have the stage name (e.g., dev) in the path.                                                                                | ""                                                                                   |
 | PRE_HOOK                         | The name of a Lambda function to be called as the pre-hook.                                                                                                                                                                                                                     | none                                                                                 |
 | POST_HOOK                        | The name of a Lambda function to be called as the post-hook.                                                                                                                                                                                                                    | none                                                                                 |
@@ -1289,7 +1298,7 @@ npm run build
 # Run ESLint
 npm run lint
 
-# To run tests for all packages
+# To run both unit and system tests (requires running docker compose containers)
 npm run test
 
 # To build API docs from the api spec
@@ -1332,7 +1341,7 @@ npm run serve
 stac-server uses [ava](https://github.com/avajs/ava) to execute tests.
 
 ```shell
-# alias to run unit tests
+# alias to run unit and system tests
 npm test
 
 # run unit tests in tests directory
@@ -1377,12 +1386,6 @@ A subset of system tests may be run by providing a glob matching the test files 
 
 ```shell
 npm run test:system test-api-item-*
-```
-
-Run the integration tests (**Note**: currently none exist):
-
-```shell
-npm run test:integration
 ```
 
 ### Updating the OpenAPI specification

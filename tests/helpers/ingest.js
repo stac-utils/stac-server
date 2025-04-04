@@ -76,7 +76,7 @@ export const ingestFixtureC = (ingestTopicArn, ingestQueueUrl) =>
 
 export async function testPostIngestSNS(t, record, shouldError = false) {
   // @ts-ignore
-  process.env.POST_INGEST_TOPIC_ARN = t.context.postIngestTopicArn
+  process.env['POST_INGEST_TOPIC_ARN'] = t.context.postIngestTopicArn
 
   await sns().publish({
     TopicArn: t.context.ingestTopicArn,

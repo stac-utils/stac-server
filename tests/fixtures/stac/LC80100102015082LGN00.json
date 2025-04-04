@@ -4,7 +4,9 @@
             "href": "https://s3-us-west-2.amazonaws.com/landsat-pds/L8/010/010/LC80100102015082LGN00/LC80100102015082LGN00_ANG.txt",
             "title": "Angle coefficients file",
             "type": "text/plain",
-            "roles": ["metadata"]
+            "roles": [
+                "metadata"
+            ]
         },
         "B1": {
             "eo:bands": [
@@ -156,13 +158,17 @@
             "href": "https://s3-us-west-2.amazonaws.com/landsat-pds/L8/010/010/LC80100102015082LGN00/LC80100102015082LGN00_BQA.TIF",
             "title": "Band quality data",
             "type": "image/tiff; application=geotiff",
-            "roles": ["quality"]
+            "roles": [
+                "quality"
+            ]
         },
         "MTL": {
             "href": "https://s3-us-west-2.amazonaws.com/landsat-pds/L8/010/010/LC80100102015082LGN00/LC80100102015082LGN00_MTL.txt",
             "title": "original metadata file",
             "type": "text/plain",
-            "roles": ["metadata"]
+            "roles": [
+                "metadata"
+            ]
         },
         "index": {
             "href": "https://s3-us-west-2.amazonaws.com/landsat-pds/L8/010/010/LC80100102015082LGN00/index.html",
@@ -173,18 +179,40 @@
             "href": "https://s3-us-west-2.amazonaws.com/landsat-pds/L8/010/010/LC80100102015082LGN00/LC80100102015082LGN00_thumb_large.jpg",
             "title": "Thumbnail image",
             "type": "image/jpeg",
-            "roles": ["thumbnail"]
+            "roles": [
+                "thumbnail"
+            ]
         }
     },
-    "bbox": [-52.70915, 69.68455, -45.21422, 72.07651],
+    "bbox": [
+        -52.70915,
+        69.68455,
+        -45.21422,
+        72.07651
+    ],
     "geometry": {
         "coordinates": [
             [
-                [-52.70915, 72.07651],
-                [-45.21422, 71.9981],
-                [-45.8512, 69.68455],
-                [-52.52, 69.75337],
-                [-52.70915, 72.07651]
+                [
+                    -52.70915,
+                    72.07651
+                ],
+                [
+                    -45.21422,
+                    71.9981
+                ],
+                [
+                    -45.8512,
+                    69.68455
+                ],
+                [
+                    -52.52,
+                    69.75337
+                ],
+                [
+                    -52.70915,
+                    72.07651
+                ]
             ]
         ],
         "type": "Polygon"
@@ -223,6 +251,11 @@
         "landsat:scene_id": "LC80100102015082LGN00"
     },
     "type": "Feature",
-    "stac_extensions": ["eo", "projection", "view", "landsat"],
-    "stac_version": "1.0.0"
+    "stac_extensions": [
+        "eo",
+        "projection",
+        "view",
+        "landsat"
+    ],
+    "stac_version": "1.1.0"
 }

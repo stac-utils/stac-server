@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Context Extension is not disabled by default, and can be enabled with ENABLE_CONTEXT_EXTENSION
 - Removed configurability of the Root / Landing Page Catalog stac_version via the
   STAC_VERSION environment variable. This is now fixed at 1.1.0.
+- Child link relations removed from root (landing page).
 
 ### Changed
 

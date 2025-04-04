@@ -1265,7 +1265,7 @@ npm run build
 # Run ESLint
 npm run lint
 
-# To run tests for all packages
+# To run both unit and system tests (requires running docker compose containers)
 npm run test
 
 # To build API docs from the api spec
@@ -1308,7 +1308,7 @@ npm run serve
 stac-server uses [ava](https://github.com/avajs/ava) to execute tests.
 
 ```shell
-# alias to run unit tests
+# alias to run unit and system tests
 npm test
 
 # run unit tests in tests directory
@@ -1353,12 +1353,6 @@ A subset of system tests may be run by providing a glob matching the test files 
 
 ```shell
 npm run test:system test-api-item-*
-```
-
-Run the integration tests (**Note**: currently none exist):
-
-```shell
-npm run test:integration
 ```
 
 ### Updating the OpenAPI specification

@@ -11,6 +11,7 @@
     - [Warnings](#warnings)
     - [4.0.0](#400)
       - [Node 22 update](#node-22-update)
+      - [Hidden collections filter](#hidden-collections-filter)
     - [3.10.0](#3100)
       - [Node 20 update](#node-20-update)
     - [3.1.0](#310)
@@ -49,6 +50,7 @@
     - [Filter Extension](#filter-extension)
     - [Query Extension](#query-extension)
   - [Aggregation](#aggregation)
+  - [Hidden collections filter for authorization](#hidden-collections-filter-for-authorization)
   - [Ingesting Data](#ingesting-data)
     - [Ingesting large items](#ingesting-large-items)
     - [Subscribing to SNS Topics](#subscribing-to-sns-topics)
@@ -174,6 +176,13 @@ The default Lambda deployment environment is now Node 22.
 
 To update the deployment to use Node 22, modify the serverless config file value
 `provider.runtime` to be `nodejs22.x` and the application re-deployed.
+
+#### Hidden collections filter
+
+To all endpoints that depend on collections, there is now support for a query parameter
+(GET) or body field (POST) `_collections` that will filter to only those collections, but
+will not reveal that in link contents. This is useful for the application of permissions
+to only certain collections.
 
 ### 3.10.0
 
@@ -1083,6 +1092,30 @@ Available aggregations are:
 - centroid_geotile_grid_frequency (geotile on Item.Properties.proj:centroid)
 - geometry_geohash_grid_frequency ([geohash grid](https://opensearch.org/docs/latest/aggregations/bucket/geohash-grid/) on Item.geometry)
 - geometry_geotile_grid_frequency ([geotile grid](https://opensearch.org/docs/latest/aggregations/bucket/geotile-grid/) on Item.geometry)
+
+## Hidden collections filter for authorization
+
+All endpoints that involve the use of Collections support the use of a "hidden" query
+parameter named  (for GET requests) or body JSON field (for POST requests) named
+`_collections` that can be used by an authorization proxy (e.g., a pre-hook Lambda)
+to filter the collections a user has access to. This parameter/field will be excluded
+from pagination links, so it does not need to be removed on egress.
+
+The endpoints this applies to are:
+
+- /collections
+- /collections/:collectionId
+- /collections/:collectionId/queryables
+- /collections/:collectionId/aggregations
+- /collections/:collectionId/aggregate
+- /collections/:collectionId/items
+- /collections/:collectionId/items/:itemId
+- /collections/:collectionId/items/:itemId/thumbnail
+- /search
+- /aggregate
+
+The five endpoints of the Transaction Extension do not use this parameter, as there are
+other authorization considerations for these, that are left as future work.
 
 ## Ingesting Data
 

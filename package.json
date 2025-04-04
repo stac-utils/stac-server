@@ -26,7 +26,7 @@
     "deploy": "sls deploy",
     "sls-remove": "sls remove",
     "package": "sls package",
-    "serve": "REQUEST_LOGGING_FORMAT=dev LOG_LEVEL=debug STAC_API_URL=http://localhost:3000 ENABLE_TRANSACTIONS_EXTENSION=true nodemon --esm ./src/lambdas/api/local.ts",
+    "serve": "REQUEST_LOGGING_FORMAT=dev LOG_LEVEL=debug STAC_API_URL=http://localhost:3000 ENABLE_TRANSACTIONS_EXTENSION=true nodemon --exec node --loader ts-node/esm ./src/lambdas/api/local.ts",
     "build-api-docs": "npx @redocly/cli build-docs src/lambdas/api/openapi.yaml -o ./docs/index.html",
     "prepare": "husky"
   },

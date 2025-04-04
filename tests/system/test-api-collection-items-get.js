@@ -91,3 +91,24 @@ test('GET /collections/:collectionId/items for non-existent collection returns 4
 
   t.is(response.statusCode, 404)
 })
+
+test('GET /collections/:collectionId/items with restriction returns filtered collections', async (t) => {
+  const { collectionId } = t.context
+
+  const path = `collections/${collectionId}/items`
+
+  t.is((await t.context.api.client.get(path,
+    { resolveBodyOnly: false })).statusCode, 200)
+
+  t.is((await t.context.api.client.get(path,
+    {
+      resolveBodyOnly: false,
+      searchParams: { _collections: `${collectionId},foo,bar` }
+    })).statusCode, 200)
+
+  t.is((await t.context.api.client.get(path,
+    { resolveBodyOnly: false,
+      throwHttpErrors: false,
+      searchParams: { _collections: 'not-a-collection' }
+    })).statusCode, 404)
+})

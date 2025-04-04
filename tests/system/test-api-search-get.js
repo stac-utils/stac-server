@@ -142,3 +142,40 @@ test('/search filter, query, and item search in single request', async (t) => {
   })
   t.is(response.features.length, 1)
 })
+
+test('GET /search with restriction returns filtered collections', async (t) => {
+  const fixtureFiles = [
+    'catalog.json',
+    'collection.json',
+    'LC80100102015050LGN00.json',
+    'LC80100102015082LGN00.json'
+  ]
+  const items = await Promise.all(fixtureFiles.map((x) => loadJson(x)))
+  await ingestItems(items)
+  await refreshIndices()
+
+  const collectionId = 'landsat-8-l1'
+  const path = 'search'
+
+  const r1 = await t.context.api.client.get(path,
+    { resolveBodyOnly: false })
+
+  t.is(r1.statusCode, 200)
+  t.is(r1.body.features.length, 3)
+
+  const r2 = await t.context.api.client.get(path,
+    { resolveBodyOnly: false,
+      searchParams: { _collections: `${collectionId},foo,bar` }
+    })
+
+  t.is(r2.statusCode, 200)
+  t.is(r2.body.features.length, 2)
+
+  const r3 = await t.context.api.client.get(path,
+    { resolveBodyOnly: false,
+      searchParams: { _collections: 'not-a-collection' }
+    })
+
+  t.is(r3.statusCode, 200)
+  t.is(r3.body.features.length, 0)
+})

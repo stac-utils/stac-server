@@ -174,7 +174,7 @@ apiLambda --> opensearch
 
 #### Context Extension disabled by default
 
-Context Extension is not disabled by default, and can be enabled with ENABLE_CONTEXT_EXTENSION
+Context Extension is now disabled by default, and can be enabled with ENABLE_CONTEXT_EXTENSION
 env var. Usage of the "context" object "limit", "matched", and "returned" fields can be replaced
 with the root-level fields "numberMatched" and "numberReturned".
 

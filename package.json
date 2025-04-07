@@ -50,7 +50,7 @@
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.779.0",
-    "@aws-sdk/client-secrets-manager": "^3.777.0",
+    "@aws-sdk/client-secrets-manager": "^3.782.0",
     "@aws-sdk/client-sns": "^3.777.0",
     "@aws-sdk/client-sqs": "^3.777.0",
     "@aws-sdk/credential-provider-node": "^3.777.0",
@@ -84,7 +84,7 @@
     "@types/luxon": "^3.6.0",
     "@types/memorystream": "^0.3.4",
     "@types/morgan": "^1.9.9",
-    "@types/node": "^22.13",
+    "@types/node": "^22.14",
     "@types/sinon": "^17.0.4",
     "@typescript-eslint/eslint-plugin": "^8.29.0",
     "@typescript-eslint/parser": "^8.29.0",
@@ -112,7 +112,7 @@
     "sinon": "^20.0.0",
     "ts-node": "^10.9.2",
     "tslib": "^2.8.1",
-    "typescript": "^5.8.2",
+    "typescript": "^5.8.3",
     "webpack": "^5.98.0",
     "webpack-cli": "^6.0.1",
     "zip-webpack-plugin": "^4.0.3"

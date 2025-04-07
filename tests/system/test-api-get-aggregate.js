@@ -500,3 +500,93 @@ test('GET /aggregate with aggregations and filter params', async (t) => {
     value: 1
   }])
 })
+
+test('GET /aggregate with restriction returns filtered collections', async (t) => {
+  process.env['ENABLE_COLLECTIONS_AUTHX'] = 'true'
+
+  const fixtureFiles = [
+    'collection.json',
+    'LC80100102015050LGN00.json',
+    'LC80100102015082LGN00.json'
+  ]
+  const items = await Promise.all(fixtureFiles.map((x) => loadJson(x)))
+  await ingestItems(items)
+  await refreshIndices()
+
+  const collectionId = 'landsat-8-l1'
+
+  let response = null
+
+  // validate how many items we have total without restricting collections
+  response = await t.context.api.client.get(
+    'aggregate',
+    {
+      searchParams: new URLSearchParams({
+        aggregations: ['total_count']
+      }),
+      resolveBodyOnly: false,
+    }
+  )
+
+  t.is(response.statusCode, 200)
+  t.deepEqual(response.body.aggregations, [{
+    name: 'total_count',
+    data_type: 'integer',
+    value: 4
+  }])
+
+  // get the counts for collectionId without restrictions
+  response = await t.context.api.client.get(
+    'aggregate',
+    {
+      searchParams: new URLSearchParams({
+        aggregations: ['total_count'],
+        collections: [collectionId]
+      }),
+      resolveBodyOnly: false,
+    }
+  )
+
+  t.is(response.statusCode, 200)
+  t.deepEqual(response.body.aggregations, [{
+    name: 'total_count',
+    data_type: 'integer',
+    value: 2
+  }])
+
+  // restrict collections to include the one we just got 2 results for
+
+  const response2 = await t.context.api.client.get(
+    'aggregate',
+    {
+      searchParams: new URLSearchParams({
+        aggregations: ['total_count'],
+        _collections: [collectionId, 'foo', 'bar']
+      }),
+      resolveBodyOnly: false,
+    }
+  )
+
+  t.is(response.statusCode, 200)
+  t.deepEqual(response2.body.aggregations, response.body.aggregations)
+
+  // restrict collections to a non-existent one with no items, so should be 0 results
+  response = await t.context.api.client.get(
+    'aggregate',
+    {
+      searchParams: new URLSearchParams({
+        aggregations: ['total_count'],
+        collections: [collectionId],
+        _collections: ['not-a-collection']
+      }),
+      resolveBodyOnly: false,
+    }
+  )
+
+  t.is(response.statusCode, 200)
+  t.deepEqual(response.body.aggregations, [{
+    name: 'total_count',
+    data_type: 'integer',
+    value: 0
+  }])
+})

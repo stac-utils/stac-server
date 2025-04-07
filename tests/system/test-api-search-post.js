@@ -1360,6 +1360,50 @@ test('/search - filter extension - s_intersects - non-existent geometry type', a
     /.*Operand for 's_intersects' must be a GeoJSON geometry: type was 'notPolygon'*/)
 })
 
+test('POST /search with restriction returns filtered collections', async (t) => {
+  process.env['ENABLE_COLLECTIONS_AUTHX'] = 'true'
+
+  const fixtureFiles = [
+    'collection.json',
+    'LC80100102015050LGN00.json',
+    'LC80100102015082LGN00.json'
+  ]
+  const items = await Promise.all(fixtureFiles.map((x) => loadJson(x)))
+  await ingestItems(items)
+  await refreshIndices()
+
+  const collectionId = 'landsat-8-l1'
+  const urlpath = 'search'
+
+  const r1 = await t.context.api.client.post(urlpath,
+    { resolveBodyOnly: false,
+      json: {
+        _collections: [collectionId]
+      } })
+
+  t.is(r1.statusCode, 200)
+  t.is(r1.body.features.length, 2)
+
+  const r2 = await t.context.api.client.post(urlpath,
+    { resolveBodyOnly: false,
+      json: {
+        _collections: [collectionId, 'foo', 'bar']
+      } })
+
+  t.is(r2.statusCode, 200)
+  t.is(r2.body.features.length, 2)
+
+  const r3 = await t.context.api.client.post(urlpath,
+    { resolveBodyOnly: false,
+      json: {
+        _collections: ['not-a-collection']
+      }
+    })
+
+  t.is(r3.statusCode, 200)
+  t.is(r3.body.features.length, 0)
+})
+
 test('/search - context extension - no context when default', async (t) => {
   const response = await t.context.api.client.post('search', { json: { } })
   t.is(response.type, 'FeatureCollection')

@@ -129,3 +129,26 @@ test('GET /collections/:collectionId/aggregations returns default aggregations f
     ])
     t.deepEqual(response.body.links, links(proto, host, collectionId))
   })
+
+test('GET /collections/:collectionId/aggregations with restriction returns filtered collections', async (t) => {
+  process.env['ENABLE_COLLECTIONS_AUTHX'] = 'true'
+
+  const { collectionId } = t.context
+
+  const path = `collections/${collectionId}/aggregations`
+
+  t.is((await t.context.api.client.get(path,
+    { resolveBodyOnly: false })).statusCode, 200)
+
+  t.is((await t.context.api.client.get(path,
+    {
+      resolveBodyOnly: false,
+      searchParams: { _collections: `${collectionId},foo,bar` }
+    })).statusCode, 200)
+
+  t.is((await t.context.api.client.get(path,
+    { resolveBodyOnly: false,
+      throwHttpErrors: false,
+      searchParams: { _collections: 'not-a-collection' }
+    })).statusCode, 404)
+})

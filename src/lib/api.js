@@ -2,7 +2,7 @@ import { pickBy, assign, get as getNested } from 'lodash-es'
 import { DateTime } from 'luxon'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3'
-import { ValidationError } from './errors.js'
+import { NotFoundError, ValidationError } from './errors.js'
 import { isIndexNotFoundError } from './database.js'
 import logger from './logger.js'
 import { bboxToPolygon } from './geo-utils.js'
@@ -315,9 +315,8 @@ const extractFields = function (params) {
   return fieldRules
 }
 
-const extractIds = function (params) {
+const parseIds = function (ids) {
   let idsRules
-  const { ids } = params
   if (ids) {
     if (typeof ids === 'string') {
       try {
@@ -332,21 +331,18 @@ const extractIds = function (params) {
   return idsRules
 }
 
+const extractIds = function (params) {
+  return parseIds(params.ids)
+}
+
+const extractAllowedCollectionIds = function (params) {
+  return process.env['ENABLE_COLLECTIONS_AUTHX'] === 'true'
+    ? parseIds(params._collections)
+    : undefined
+}
+
 const extractCollectionIds = function (params) {
-  let idsRules
-  const { collections } = params
-  if (collections) {
-    if (typeof collections === 'string') {
-      try {
-        idsRules = JSON.parse(collections)
-      } catch (_) {
-        idsRules = collections.split(',')
-      }
-    } else {
-      idsRules = collections.slice()
-    }
-  }
-  return idsRules
+  return parseIds(params.collections)
 }
 
 export const parsePath = function (inpath) {
@@ -500,7 +496,7 @@ const wrapResponseInFeatureCollection = function (features, links,
   return fc
 }
 
-const buildPaginationLinks = function (limit, parameters, bbox, intersects, endpoint,
+const buildPaginationLinks = function (limit, parameters, bbox, intersects, collections, endpoint,
   httpMethod, sortby, items) {
   if (items.length) {
     const dictToURI = (dict) => (
@@ -518,7 +514,7 @@ const buildPaginationLinks = function (limit, parameters, bbox, intersects, endp
                 }
               }
               value = sortFields.join(',')
-            } else if (p === 'collections') {
+            } else if (p === 'collections') { // TODO
               value = value.toString()
             } else {
               value = JSON.stringify(value)
@@ -544,7 +540,7 @@ const buildPaginationLinks = function (limit, parameters, bbox, intersects, endp
         method: httpMethod,
         type: 'application/geo+json'
       }
-      const nextParams = pickBy(assign(parameters, { bbox, intersects, limit, next }))
+      const nextParams = pickBy(assign(parameters, { bbox, intersects, limit, next, collections }))
       if (httpMethod === 'GET') {
         const nextQueryParameters = dictToURI(nextParams)
         link.href = `${endpoint}?${nextQueryParameters}`
@@ -579,7 +575,11 @@ const searchItems = async function (collectionId, queryParameters, backend, endp
   const filter = extractCql2Filter(queryParameters)
   const fields = extractFields(queryParameters)
   const ids = extractIds(queryParameters)
-  const collections = extractCollectionIds(queryParameters)
+  const allowedCollectionIds = extractAllowedCollectionIds(queryParameters)
+  const specifiedCollectionIds = extractCollectionIds(queryParameters)
+  const collections = allowedCollectionIds ? allowedCollectionIds.filter(
+    (x) => !specifiedCollectionIds || specifiedCollectionIds.includes(x)
+  ) : specifiedCollectionIds
   const limit = extractLimit(queryParameters) || 10
   const page = extractPage(queryParameters)
 
@@ -638,7 +638,15 @@ const searchItems = async function (collectionId, queryParameters, backend, endp
 
   const { results: responseItems, numberMatched, numberReturned } = esResponse
   const paginationLinks = buildPaginationLinks(
-    limit, searchParams, bbox, intersects, newEndpoint, httpMethod, sortby, responseItems
+    limit,
+    searchParams,
+    bbox,
+    intersects,
+    specifiedCollectionIds,
+    newEndpoint,
+    httpMethod,
+    sortby,
+    responseItems
   )
 
   // @ts-ignore
@@ -705,7 +713,11 @@ const aggregate = async function (
   const query = extractStacQuery(queryParameters)
   const filter = extractCql2Filter(queryParameters)
   const ids = extractIds(queryParameters)
-  const collections = extractCollectionIds(queryParameters)
+  const allowedCollectionIds = extractAllowedCollectionIds(queryParameters)
+  const specifiedCollectionIds = extractCollectionIds(queryParameters)
+  const collections = allowedCollectionIds ? allowedCollectionIds.filter(
+    (x) => !specifiedCollectionIds || specifiedCollectionIds.includes(x)
+  ) : specifiedCollectionIds
 
   const searchParams = pickBy({
     datetime,
@@ -977,7 +989,12 @@ const validateAdditionalProperties = (queryables) => {
   }
 }
 
-const getCollectionQueryables = async (collectionId, backend, endpoint = '') => {
+const getCollectionQueryables = async (collectionId, backend, endpoint, queryParameters) => {
+  const allowedCollectionIds = extractAllowedCollectionIds(queryParameters)
+  if (allowedCollectionIds && !allowedCollectionIds.includes(collectionId)) {
+    return new NotFoundError()
+  }
+
   const collection = await backend.getCollection(collectionId)
 
   if (collection instanceof Error) {
@@ -990,7 +1007,12 @@ const getCollectionQueryables = async (collectionId, backend, endpoint = '') => 
   return queryables
 }
 
-const getCollectionAggregations = async (collectionId, backend, endpoint = '') => {
+const getCollectionAggregations = async (collectionId, backend, endpoint, queryParameters) => {
+  const allowedCollectionIds = extractAllowedCollectionIds(queryParameters)
+  if (allowedCollectionIds && !allowedCollectionIds.includes(collectionId)) {
+    return new NotFoundError()
+  }
+
   const collection = await backend.getCollection(collectionId)
 
   if (collection instanceof Error) {
@@ -1123,7 +1145,7 @@ const deleteUnusedFields = (collection) => {
   delete collection.aggregations
 }
 
-const getCollections = async function (backend, endpoint = '') {
+const getCollections = async function (backend, endpoint, queryParameters) {
   // TODO: implement proper pagination, as this will only return up to
   // COLLECTION_LIMIT collections
   const collectionsOrError = await backend.getCollections(1, COLLECTION_LIMIT)
@@ -1131,13 +1153,18 @@ const getCollections = async function (backend, endpoint = '') {
     return collectionsOrError
   }
 
-  for (const collection of collectionsOrError) {
+  const allowedCollectionIds = extractAllowedCollectionIds(queryParameters)
+  const collections = collectionsOrError.filter(
+    (c) => !allowedCollectionIds || allowedCollectionIds.includes(c.id)
+  )
+
+  for (const collection of collections) {
     deleteUnusedFields(collection)
   }
 
-  const linkedCollections = addCollectionLinks(collectionsOrError, endpoint)
+  const linkedCollections = addCollectionLinks(collections, endpoint)
   const resp = {
-    collections: collectionsOrError,
+    collections,
     links: [
       {
         rel: 'self',
@@ -1166,10 +1193,15 @@ const getCollections = async function (backend, endpoint = '') {
   return resp
 }
 
-const getCollection = async function (collectionId, backend, endpoint = '') {
+const getCollection = async function (collectionId, backend, endpoint, queryParameters) {
+  const allowedCollectionIds = extractAllowedCollectionIds(queryParameters)
+  if (allowedCollectionIds && !allowedCollectionIds.includes(collectionId)) {
+    return new NotFoundError()
+  }
+
   const result = await backend.getCollection(collectionId)
   if (result instanceof Error) {
-    return new Error('Collection not found')
+    return new NotFoundError()
   }
 
   deleteUnusedFields(result)
@@ -1191,14 +1223,19 @@ const createCollection = async function (collection, backend) {
   return new Error(`Error creating collection ${collection}`)
 }
 
-const getItem = async function (collectionId, itemId, backend, endpoint = '') {
+const getItem = async function (collectionId, itemId, backend, endpoint, queryParameters) {
+  const allowedCollectionIds = extractAllowedCollectionIds(queryParameters)
+  if (allowedCollectionIds && !allowedCollectionIds.includes(collectionId)) {
+    return new NotFoundError()
+  }
+
   const itemQuery = { collections: [collectionId], id: itemId }
   const { results } = await backend.search(itemQuery, 1)
   const [it] = addItemLinks(results, endpoint)
   if (it) {
     return it
   }
-  return new Error('Item not found')
+  return new NotFoundError()
 }
 
 const partialUpdateItem = async function (
@@ -1241,12 +1278,17 @@ const deleteItem = async function (collectionId, itemId, backend) {
   return new Error(`Error deleting item ${collectionId}/${itemId}`)
 }
 
-const getItemThumbnail = async function (collectionId, itemId, backend) {
+const getItemThumbnail = async function (collectionId, itemId, backend, queryParameters) {
+  const allowedCollectionIds = extractAllowedCollectionIds(queryParameters)
+  if (allowedCollectionIds && !allowedCollectionIds.includes(collectionId)) {
+    return new NotFoundError()
+  }
+
   const itemQuery = { collections: [collectionId], id: itemId }
   const { results } = await backend.search(itemQuery, 1)
   const [item] = results
   if (!item) {
-    return new Error('Item not found')
+    return new NotFoundError()
   }
 
   const thumbnailAsset = Object.values(item.assets || []).find(
@@ -1254,7 +1296,7 @@ const getItemThumbnail = async function (collectionId, itemId, backend) {
   )
 
   if (!thumbnailAsset) {
-    return new Error('Thumbnail not found')
+    return new NotFoundError()
   }
 
   let location
@@ -1279,7 +1321,7 @@ const getItemThumbnail = async function (collectionId, itemId, backend) {
       expiresIn: 60 * 5, // expiry in seconds
     })
   } else {
-    return new Error('Thumbnail not found')
+    return new NotFoundError()
   }
 
   return { location }

@@ -14,7 +14,7 @@ const getObjectBody = async (s3Location: {bucket: string, key: string}) => {
     return result.Body
   } catch (error) {
     if (error instanceof Error) {
-      console.log(`Failed to fetch ${s3Location.bucket}/${s3Location.key}: ${error.message}`)
+      console.error(`Failed to fetch ${s3Location.bucket}/${s3Location.key}: ${error.message}`)
     }
     throw error
   }

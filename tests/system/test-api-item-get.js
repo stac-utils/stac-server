@@ -61,7 +61,7 @@ test('GET /collections/:collectionId/items/:itemId', async (t) => {
   t.is(response.body.collection, collectionId)
 })
 
-test('GET /collections/:collectionId/items/:itemId for a non-existent id returns Not Found"', async (t) => {
+test('GET /collections/:collectionId/items/:itemId for a non-existent id returns not found', async (t) => {
   const { collectionId } = t.context
 
   const response = await t.context.api.client.get(
@@ -70,4 +70,62 @@ test('GET /collections/:collectionId/items/:itemId for a non-existent id returns
   )
 
   t.is(response.statusCode, 404)
+})
+
+test('GET /collections/:collectionId/items/:itemId for a non-existent collection returns not found', async (t) => {
+  const response = await t.context.api.client.get(
+    'collections/DOES_NOT_EXIST/items/DOES_NOT_EXIST',
+    { resolveBodyOnly: false, throwHttpErrors: false }
+  )
+
+  t.is(response.statusCode, 404)
+})
+
+test('GET /collections/:collectionId/items/:itemId with restriction returns filtered collections', async (t) => {
+  process.env['ENABLE_COLLECTIONS_AUTHX'] = 'true'
+
+  const { collectionId, itemId } = t.context
+
+  const path = `collections/${collectionId}/items/${itemId}`
+
+  t.is((await t.context.api.client.get(path,
+    { resolveBodyOnly: false })).statusCode, 200)
+
+  t.is((await t.context.api.client.get(path,
+    {
+      resolveBodyOnly: false,
+      searchParams: { _collections: `${collectionId},foo,bar` }
+    })).statusCode, 200)
+
+  t.is((await t.context.api.client.get(path,
+    { resolveBodyOnly: false,
+      throwHttpErrors: false,
+      searchParams: { _collections: 'not-a-collection' }
+    })).statusCode, 404)
+})
+
+test('GET /collections/:collectionId/items/:itemId/thumbnail with restriction returns filtered collections', async (t) => {
+  process.env['ENABLE_COLLECTIONS_AUTHX'] = 'true'
+
+  const { collectionId, itemId } = t.context
+
+  const path = `collections/${collectionId}/items/${itemId}/thumbnail`
+
+  t.is((await t.context.api.client.get(path,
+    { resolveBodyOnly: false, followRedirect: false
+    })).statusCode, 302)
+
+  t.is((await t.context.api.client.get(path,
+    {
+      resolveBodyOnly: false,
+      followRedirect: false,
+      searchParams: { _collections: `${collectionId},foo,bar` }
+    })).statusCode, 302)
+
+  t.is((await t.context.api.client.get(path,
+    { resolveBodyOnly: false,
+      followRedirect: false,
+      throwHttpErrors: false,
+      searchParams: { _collections: 'not-a-collection' }
+    })).statusCode, 404)
 })

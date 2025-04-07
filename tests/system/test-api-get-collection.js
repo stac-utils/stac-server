@@ -59,3 +59,24 @@ test('GET /collection/:collectionId for non-existent collection returns Not Foun
 
   t.is(response.statusCode, 404)
 })
+
+test('GET /collections/:collectionId with restriction returns filtered collections', async (t) => {
+  process.env['ENABLE_COLLECTIONS_AUTHX'] = 'true'
+
+  const { collectionId } = t.context
+
+  t.is((await t.context.api.client.get(`collections/${collectionId}`,
+    { resolveBodyOnly: false })).statusCode, 200)
+
+  t.is((await t.context.api.client.get(`collections/${collectionId}`,
+    {
+      resolveBodyOnly: false,
+      searchParams: { _collections: `${collectionId},foo,bar` }
+    })).statusCode, 200)
+
+  t.is((await t.context.api.client.get(`collections/${collectionId}`,
+    { resolveBodyOnly: false,
+      throwHttpErrors: false,
+      searchParams: { _collections: 'not-a-collection' }
+    })).statusCode, 404)
+})

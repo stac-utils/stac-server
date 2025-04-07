@@ -12,6 +12,7 @@
     - [4.0.0](#400)
       - [Context Extension disabled by default](#context-extension-disabled-by-default)
       - [Node 22 update](#node-22-update)
+      - [Hidden collections filter](#hidden-collections-filter)
     - [3.10.0](#3100)
       - [Node 20 update](#node-20-update)
     - [3.1.0](#310)
@@ -50,6 +51,7 @@
     - [Filter Extension](#filter-extension)
     - [Query Extension](#query-extension)
   - [Aggregation](#aggregation)
+  - [Hidden collections filter for authorization](#hidden-collections-filter-for-authorization)
   - [Ingesting Data](#ingesting-data)
     - [Ingesting large items](#ingesting-large-items)
     - [Subscribing to SNS Topics](#subscribing-to-sns-topics)
@@ -182,6 +184,13 @@ The default Lambda deployment environment is now Node 22.
 
 To update the deployment to use Node 22, modify the serverless config file value
 `provider.runtime` to be `nodejs22.x` and the application re-deployed.
+
+#### Hidden collections filter
+
+To all endpoints that depend on collections, there is now support for a query parameter
+(GET) or body field (POST) `_collections` that will filter to only those collections, but
+will not reveal that in link contents. This is useful for the application of permissions
+to only certain collections.
 
 ### 3.10.0
 
@@ -574,7 +583,7 @@ There are some settings that should be reviewed and updated as needeed in the se
 | REQUEST_LOGGING_FORMAT           | Express request logging format to use. Any of the [Morgan predefined formats](https://github.com/expressjs/morgan#predefined-formats).                                                                                                                                          | tiny                                                                                 |
 | STAC_API_URL                     | The root endpoint of this API                                                                                                                                                                                                                                                   | Inferred from request                                                                |
 | ENABLE_TRANSACTIONS_EXTENSION    | Boolean specifying if the [Transaction Extension](https://github.com/radiantearth/stac-api-spec/tree/master/ogcapi-features/extensions/transaction) should be activated                                                                                                         | false                                                                                |
-| ENABLE_CONTEXT_EXTENSION    | Boolean specifying if the [Context Extension](https://github.com/stac-api-extensions/context) should be activated                                                                                                         | false                                                                                |
+| ENABLE_CONTEXT_EXTENSION         | Boolean specifying if the [Context Extension](https://github.com/stac-api-extensions/context) should be activated                                                                                                                                                               | false                                                                                |
 | STAC_API_ROOTPATH                | The path to append to URLs if this is not deployed at the server root. For example, if the server is deployed without a custom domain name, it will have the stage name (e.g., dev) in the path.                                                                                | ""                                                                                   |
 | PRE_HOOK                         | The name of a Lambda function to be called as the pre-hook.                                                                                                                                                                                                                     | none                                                                                 |
 | POST_HOOK                        | The name of a Lambda function to be called as the post-hook.                                                                                                                                                                                                                    | none                                                                                 |
@@ -589,6 +598,7 @@ There are some settings that should be reviewed and updated as needeed in the se
 | CORS_CREDENTIALS                 | Configure whether or not to send the `Access-Control-Allow-Credentials` CORS header. Header will be sent if set to `true`.                                                                                                                                                      | none                                                                                 |
 | CORS_METHODS                     | Configure whether or not to send the `Access-Control-Allow-Methods` CORS header. Expects a comma-delimited string, e.g., `GET,PUT,POST`.                                                                                                                                        | `GET,HEAD,PUT,PATCH,POST,DELETE`                                                     |
 | CORS_HEADERS                     | Configure whether or not to send the `Access-Control-Allow-Headers` CORS header. Expects a comma-delimited string, e.g., `Content-Type,Authorization`. If not specified, defaults to reflecting the headers specified in the request’s `Access-Control-Request-Headers` header. | none                                                                                 |
+| ENABLE_COLLECTIONS_AUTHX         | Enables support for hidden `_collections` query parameter / field when set to `true`.                                                                                                                                                                                                              | none                                                                                 |
 
 Additionally, the credential for OpenSearch must be configured, as decribed in the
 section [Populating and accessing credentials](#populating-and-accessing-credentials).
@@ -1092,6 +1102,32 @@ Available aggregations are:
 - centroid_geotile_grid_frequency (geotile on Item.Properties.proj:centroid)
 - geometry_geohash_grid_frequency ([geohash grid](https://opensearch.org/docs/latest/aggregations/bucket/geohash-grid/) on Item.geometry)
 - geometry_geotile_grid_frequency ([geotile grid](https://opensearch.org/docs/latest/aggregations/bucket/geotile-grid/) on Item.geometry)
+
+## Hidden collections filter for authorization
+
+All endpoints that involve the use of Collections support the use of a "hidden" query
+parameter named  (for GET requests) or body JSON field (for POST requests) named
+`_collections` that can be used by an authorization proxy (e.g., a pre-hook Lambda)
+to filter the collections a user has access to. This parameter/field will be excluded
+from pagination links, so it does not need to be removed on egress.
+
+This feature must be enabled with the `ENABLE_COLLECTIONS_AUTHX` configuration.
+
+The endpoints this applies to are:
+
+- /collections
+- /collections/:collectionId
+- /collections/:collectionId/queryables
+- /collections/:collectionId/aggregations
+- /collections/:collectionId/aggregate
+- /collections/:collectionId/items
+- /collections/:collectionId/items/:itemId
+- /collections/:collectionId/items/:itemId/thumbnail
+- /search
+- /aggregate
+
+The five endpoints of the Transaction Extension do not use this parameter, as there are
+other authorization considerations for these, that are left as future work.
 
 ## Ingesting Data
 

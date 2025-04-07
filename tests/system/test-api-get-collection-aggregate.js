@@ -167,3 +167,26 @@ test('GET /aggregate with aggregation not supported by this collection', async (
     description: 'Aggregation grid_code_frequency not supported by collection sentinel-1-grd'
   })
 })
+
+test('GET /collections/:collectionId/aggregate with restriction returns filtered collections', async (t) => {
+  process.env['ENABLE_COLLECTIONS_AUTHX'] = 'true'
+
+  const collectionId = 'landsat-8-l1'
+
+  const path = `collections/${collectionId}/aggregate`
+
+  t.is((await t.context.api.client.get(path,
+    { resolveBodyOnly: false })).statusCode, 200)
+
+  t.is((await t.context.api.client.get(path,
+    {
+      resolveBodyOnly: false,
+      searchParams: { _collections: `${collectionId},foo,bar` }
+    })).statusCode, 200)
+
+  t.is((await t.context.api.client.get(path,
+    { resolveBodyOnly: false,
+      throwHttpErrors: false,
+      searchParams: { _collections: 'not-a-collection' }
+    })).statusCode, 404)
+})

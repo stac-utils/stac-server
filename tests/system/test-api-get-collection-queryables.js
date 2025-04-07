@@ -111,3 +111,26 @@ test.only('GET /collection/:collectionId/queryables for collection with unsuppor
   t.regex(error.response.body.description,
     /.*Unsupported additionalProperties value: "false". Must be set to "true".*/)
 })
+
+test('GET /collections/:collectionId/queryables with restriction returns filtered collections', async (t) => {
+  process.env['ENABLE_COLLECTIONS_AUTHX'] = 'true'
+
+  const { collectionId } = t.context
+
+  const path = `collections/${collectionId}/queryables`
+
+  t.is((await t.context.api.client.get(path,
+    { resolveBodyOnly: false })).statusCode, 200)
+
+  t.is((await t.context.api.client.get(path,
+    {
+      resolveBodyOnly: false,
+      searchParams: { _collections: `${collectionId},foo,bar` }
+    })).statusCode, 200)
+
+  t.is((await t.context.api.client.get(path,
+    { resolveBodyOnly: false,
+      throwHttpErrors: false,
+      searchParams: { _collections: 'not-a-collection' }
+    })).statusCode, 404)
+})

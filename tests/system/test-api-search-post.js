@@ -1361,6 +1361,8 @@ test('/search - filter extension - s_intersects - non-existent geometry type', a
 })
 
 test('POST /search with restriction returns filtered collections', async (t) => {
+  process.env['ENABLE_COLLECTIONS_AUTHX'] = 'true'
+
   const fixtureFiles = [
     'collection.json',
     'LC80100102015050LGN00.json',

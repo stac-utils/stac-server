@@ -61,6 +61,8 @@ test('GET /collection/:collectionId for non-existent collection returns Not Foun
 })
 
 test('GET /collections/:collectionId with restriction returns filtered collections', async (t) => {
+  process.env['ENABLE_COLLECTIONS_AUTHX'] = 'true'
+
   const { collectionId } = t.context
 
   t.is((await t.context.api.client.get(`collections/${collectionId}`,

@@ -22,7 +22,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - To all endpoints that depend on collections, add support for a query parameter (GET)
   or body field (POST) `_collections` that will filter to only those collections, but
-  will not reveal that in link contents.
+  will not reveal that in link contents. This is controlled by the "ENABLE_COLLECTIONS_AUTHX"
 
 ## [3.11.0] - 2025-03-27
 

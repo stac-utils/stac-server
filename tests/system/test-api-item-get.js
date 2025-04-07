@@ -82,6 +82,8 @@ test('GET /collections/:collectionId/items/:itemId for a non-existent collection
 })
 
 test('GET /collections/:collectionId/items/:itemId with restriction returns filtered collections', async (t) => {
+  process.env['ENABLE_COLLECTIONS_AUTHX'] = 'true'
+
   const { collectionId, itemId } = t.context
 
   const path = `collections/${collectionId}/items/${itemId}`
@@ -103,6 +105,8 @@ test('GET /collections/:collectionId/items/:itemId with restriction returns filt
 })
 
 test('GET /collections/:collectionId/items/:itemId/thumbnail with restriction returns filtered collections', async (t) => {
+  process.env['ENABLE_COLLECTIONS_AUTHX'] = 'true'
+
   const { collectionId, itemId } = t.context
 
   const path = `collections/${collectionId}/items/${itemId}/thumbnail`

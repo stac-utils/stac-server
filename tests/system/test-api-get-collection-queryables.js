@@ -113,6 +113,8 @@ test.only('GET /collection/:collectionId/queryables for collection with unsuppor
 })
 
 test('GET /collections/:collectionId/queryables with restriction returns filtered collections', async (t) => {
+  process.env['ENABLE_COLLECTIONS_AUTHX'] = 'true'
+
   const { collectionId } = t.context
 
   const path = `collections/${collectionId}/queryables`

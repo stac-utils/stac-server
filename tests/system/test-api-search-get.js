@@ -144,6 +144,8 @@ test('/search filter, query, and item search in single request', async (t) => {
 })
 
 test('GET /search with restriction returns filtered collections', async (t) => {
+  process.env['ENABLE_COLLECTIONS_AUTHX'] = 'true'
+
   const fixtureFiles = [
     'catalog.json',
     'collection.json',

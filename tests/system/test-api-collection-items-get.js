@@ -94,6 +94,7 @@ test('GET /collections/:collectionId/items for non-existent collection returns 4
 
 test('GET /collections/:collectionId/items with restriction returns filtered collections', async (t) => {
   const { collectionId } = t.context
+  process.env['ENABLE_COLLECTIONS_AUTHX'] = 'true'
 
   const path = `collections/${collectionId}/items`
 

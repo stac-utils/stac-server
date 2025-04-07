@@ -51,9 +51,24 @@ test('GET /collections has a content type of "application/json', async (t) => {
 })
 
 test('GET /collections with restriction returns filtered collections', async (t) => {
+  process.env['ENABLE_COLLECTIONS_AUTHX'] = 'true'
+
   await refreshIndices()
 
   const { collectionId } = t.context
+
+  // disable collections filtering
+  process.env['ENABLE_COLLECTIONS_AUTHX'] = 'not true'
+
+  t.is((await t.context.api.client.get(
+    'collections', {
+      searchParams: { _collections: 'not-a-collection' } }
+  )
+  ).collections.length, 1)
+
+  // enable collections filtering
+
+  process.env['ENABLE_COLLECTIONS_AUTHX'] = 'true'
 
   t.is((await t.context.api.client.get(
     'collections', {

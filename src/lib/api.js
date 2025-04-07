@@ -336,7 +336,9 @@ const extractIds = function (params) {
 }
 
 const extractAllowedCollectionIds = function (params) {
-  return parseIds(params._collections)
+  return process.env['ENABLE_COLLECTIONS_AUTHX'] === 'true'
+    ? parseIds(params._collections)
+    : undefined
 }
 
 const extractCollectionIds = function (params) {

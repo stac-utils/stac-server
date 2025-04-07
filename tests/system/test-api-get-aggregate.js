@@ -502,6 +502,8 @@ test('GET /aggregate with aggregations and filter params', async (t) => {
 })
 
 test('GET /aggregate with restriction returns filtered collections', async (t) => {
+  process.env['ENABLE_COLLECTIONS_AUTHX'] = 'true'
+
   const fixtureFiles = [
     'collection.json',
     'LC80100102015050LGN00.json',

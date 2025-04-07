@@ -169,6 +169,8 @@ test('GET /aggregate with aggregation not supported by this collection', async (
 })
 
 test('GET /collections/:collectionId/aggregate with restriction returns filtered collections', async (t) => {
+  process.env['ENABLE_COLLECTIONS_AUTHX'] = 'true'
+
   const collectionId = 'landsat-8-l1'
 
   const path = `collections/${collectionId}/aggregate`

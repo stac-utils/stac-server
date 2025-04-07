@@ -131,6 +131,8 @@ test('GET /collections/:collectionId/aggregations returns default aggregations f
   })
 
 test('GET /collections/:collectionId/aggregations with restriction returns filtered collections', async (t) => {
+  process.env['ENABLE_COLLECTIONS_AUTHX'] = 'true'
+
   const { collectionId } = t.context
 
   const path = `collections/${collectionId}/aggregations`

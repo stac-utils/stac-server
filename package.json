@@ -56,7 +56,7 @@
     "@aws-sdk/credential-provider-node": "^3.777.0",
     "@aws-sdk/s3-request-presigner": "^3.779.0",
     "@mapbox/extent": "^0.4.0",
-    "@opensearch-project/opensearch": "^2.13.0",
+    "@opensearch-project/opensearch": "^3.5.1",
     "@redocly/cli": "^1.34.1",
     "cors": "^2.8.5",
     "express": "^4.21.2",

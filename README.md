@@ -9,6 +9,8 @@
   - [Architecture](#architecture)
   - [Migration](#migration)
     - [Warnings](#warnings)
+    - [4.1.0](#410)
+      - [Thumbnails feature disabled by default](#thumbnails-feature-disabled-by-default)
     - [4.0.0](#400)
       - [Context Extension disabled by default](#context-extension-disabled-by-default)
       - [Node 22 update](#node-22-update)
@@ -169,6 +171,13 @@ apiLambda --> opensearch
   The solution is to create a new index by creating a new collection with a different
   name, reindex the existing index into the newly-created index, delete and re-created
   the existing index by creating a collection, and reindex back into the index.
+
+### 4.1.0
+
+#### Thumbnails feature disabled by default
+
+The thumbnails behavior is now disabled by default, and can be enabled with
+`ENABLE_THUMBNAILS` = `true`.
 
 ### 4.0.0
 
@@ -417,7 +426,8 @@ Properties: . . .
 #### Granting Access for Thumbnails
 
 The new experimental endpoint `/collections/{c_id}/items/{item_id}/thumbnail` will
-redirect to a URL providing a thumbnail as determined by the assets in an item. If the
+redirect to a URL providing a thumbnail as determined by the assets in an item. This is
+enabled only if `ENABLE_THUMBNAILS` is set to `true`. If the
 href for this is an AWS S3 ARN, IAM permissions must be granted for the API Lambda to
 generate a pre-signed HTTP URL instead. For example:
 
@@ -599,6 +609,7 @@ There are some settings that should be reviewed and updated as needeed in the se
 | CORS_METHODS                     | Configure whether or not to send the `Access-Control-Allow-Methods` CORS header. Expects a comma-delimited string, e.g., `GET,PUT,POST`.                                                                                                                                        | `GET,HEAD,PUT,PATCH,POST,DELETE`                                                     |
 | CORS_HEADERS                     | Configure whether or not to send the `Access-Control-Allow-Headers` CORS header. Expects a comma-delimited string, e.g., `Content-Type,Authorization`. If not specified, defaults to reflecting the headers specified in the request’s `Access-Control-Request-Headers` header. | none                                                                                 |
 | ENABLE_COLLECTIONS_AUTHX         | Enables support for hidden `_collections` query parameter / field when set to `true`.                                                                                                                                                                                                              | none                                                                                 |
+| ENABLE_THUMBNAILS         | Enables support for presigned thumnails.                                                                                                                                                                                                              | none                                                                                 |
 
 Additionally, the credential for OpenSearch must be configured, as decribed in the
 section [Populating and accessing credentials](#populating-and-accessing-credentials).

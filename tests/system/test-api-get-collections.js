@@ -26,6 +26,10 @@ test.before(async (t) => {
   })
 })
 
+test.beforeEach(async (_) => {
+  delete process.env['ENABLE_COLLECTIONS_AUTHX']
+})
+
 test('GET /collections', async (t) => {
   await refreshIndices()
 
@@ -69,6 +73,23 @@ test('GET /collections with restriction returns filtered collections', async (t)
   // enable collections filtering
 
   process.env['ENABLE_COLLECTIONS_AUTHX'] = 'true'
+
+  t.is((await t.context.api.client.get(
+    'collections', { }
+  )
+  ).collections.length, 0)
+
+  t.is((await t.context.api.client.get(
+    'collections', {
+      searchParams: { _collections: '' } }
+  )
+  ).collections.length, 0)
+
+  t.is((await t.context.api.client.get(
+    'collections', {
+      searchParams: { _collections: '*' } }
+  )
+  ).collections.length, 1)
 
   t.is((await t.context.api.client.get(
     'collections', {

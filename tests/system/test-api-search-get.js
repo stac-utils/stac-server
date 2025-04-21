@@ -14,6 +14,10 @@ test.before(async (t) => {
   t.context = standUpResult
 })
 
+test.beforeEach(async (_) => {
+  delete process.env['ENABLE_COLLECTIONS_AUTHX']
+})
+
 test.after.always(async (t) => {
   if (t.context.api) await t.context.api.close()
 })
@@ -159,25 +163,46 @@ test('GET /search with restriction returns filtered collections', async (t) => {
   const collectionId = 'landsat-8-l1'
   const path = 'search'
 
-  const r1 = await t.context.api.client.get(path,
-    { resolveBodyOnly: false })
+  {
+    const r = await t.context.api.client.get(path,
+      { resolveBodyOnly: false })
 
-  t.is(r1.statusCode, 200)
-  t.is(r1.body.features.length, 3)
+    t.is(r.statusCode, 200)
+    t.is(r.body.features.length, 0)
+  }
+  {
+    const r = await t.context.api.client.get(path,
+      { resolveBodyOnly: false, searchParams: { _collections: '' } })
 
-  const r2 = await t.context.api.client.get(path,
-    { resolveBodyOnly: false,
-      searchParams: { _collections: `${collectionId},foo,bar` }
-    })
+    t.is(r.statusCode, 200)
+    t.is(r.body.features.length, 0)
+  }
+  {
+    const r = await t.context.api.client.get(path,
+      { resolveBodyOnly: false,
+        searchParams: { _collections: '*' }
+      })
 
-  t.is(r2.statusCode, 200)
-  t.is(r2.body.features.length, 2)
+    t.is(r.statusCode, 200)
+    t.is(r.body.features.length, 3)
+  }
 
-  const r3 = await t.context.api.client.get(path,
-    { resolveBodyOnly: false,
-      searchParams: { _collections: 'not-a-collection' }
-    })
+  {
+    const r = await t.context.api.client.get(path,
+      { resolveBodyOnly: false,
+        searchParams: { _collections: `${collectionId},foo,bar` }
+      })
 
-  t.is(r3.statusCode, 200)
-  t.is(r3.body.features.length, 0)
+    t.is(r.statusCode, 200)
+    t.is(r.body.features.length, 2)
+  }
+  {
+    const r = await t.context.api.client.get(path,
+      { resolveBodyOnly: false,
+        searchParams: { _collections: 'not-a-collection' }
+      })
+
+    t.is(r.statusCode, 200)
+    t.is(r.body.features.length, 0)
+  }
 })

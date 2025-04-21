@@ -29,6 +29,10 @@ test.before(async (t) => {
   await refreshIndices()
 })
 
+test.beforeEach(async (_) => {
+  delete process.env['ENABLE_COLLECTIONS_AUTHX']
+})
+
 test('GET /collections/{collectionId}/aggregate with no aggregations param', async (t) => {
   const response = await t.context.api.client.get(
     'collections/landsat-8-l1/aggregate',
@@ -175,15 +179,33 @@ test('GET /collections/:collectionId/aggregate with restriction returns filtered
 
   const path = `collections/${collectionId}/aggregate`
 
+  // _collections undefined
   t.is((await t.context.api.client.get(path,
-    { resolveBodyOnly: false })).statusCode, 200)
+    { resolveBodyOnly: false, throwHttpErrors: false })).statusCode, 404)
 
+  // _collections empty
+  t.is((await t.context.api.client.get(path,
+    {
+      resolveBodyOnly: false,
+      throwHttpErrors: false,
+      searchParams: { _collections: '' }
+    })).statusCode, 404)
+
+  // _collections = *
+  t.is((await t.context.api.client.get(path,
+    {
+      resolveBodyOnly: false,
+      searchParams: { _collections: '*' }
+    })).statusCode, 200)
+
+  // _collections = good, other, other
   t.is((await t.context.api.client.get(path,
     {
       resolveBodyOnly: false,
       searchParams: { _collections: `${collectionId},foo,bar` }
     })).statusCode, 200)
 
+  // _collections = other
   t.is((await t.context.api.client.get(path,
     { resolveBodyOnly: false,
       throwHttpErrors: false,

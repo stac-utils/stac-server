@@ -315,6 +315,11 @@ const extractFields = function (params) {
   return fieldRules
 }
 
+/**
+ * Parse a string or array of IDs into an array of strings or undefined.
+ * @param {string | string[] | undefined} ids - The IDs parameter to parse
+ * @returns {string[] | undefined} Parsed array of ID strings or undefined
+ */
 const parseIds = function (ids) {
   let idsRules
   if (ids) {
@@ -337,12 +342,26 @@ const extractIds = function (params) {
 
 const extractAllowedCollectionIds = function (params) {
   return process.env['ENABLE_COLLECTIONS_AUTHX'] === 'true'
-    ? parseIds(params._collections)
+    ? parseIds(params._collections) || []
     : undefined
 }
 
 const extractCollectionIds = function (params) {
   return parseIds(params.collections)
+}
+
+const filterAllowedCollectionIds = function (allowedCollectionIds, specifiedCollectionIds) {
+  return (
+    Array.isArray(allowedCollectionIds) && !allowedCollectionIds.includes('*')
+  ) ? allowedCollectionIds.filter(
+      (x) => !specifiedCollectionIds || specifiedCollectionIds.includes(x)
+    ) : specifiedCollectionIds
+}
+
+const isCollectionIdAllowed = function (allowedCollectionIds, collectionId) {
+  return !Array.isArray(allowedCollectionIds)
+          || allowedCollectionIds.includes(collectionId)
+          || allowedCollectionIds.includes('*')
 }
 
 export const parsePath = function (inpath) {
@@ -577,9 +596,7 @@ const searchItems = async function (collectionId, queryParameters, backend, endp
   const ids = extractIds(queryParameters)
   const allowedCollectionIds = extractAllowedCollectionIds(queryParameters)
   const specifiedCollectionIds = extractCollectionIds(queryParameters)
-  const collections = allowedCollectionIds ? allowedCollectionIds.filter(
-    (x) => !specifiedCollectionIds || specifiedCollectionIds.includes(x)
-  ) : specifiedCollectionIds
+  const collections = filterAllowedCollectionIds(allowedCollectionIds, specifiedCollectionIds)
   const limit = extractLimit(queryParameters) || 10
   const page = extractPage(queryParameters)
 
@@ -715,9 +732,28 @@ const aggregate = async function (
   const ids = extractIds(queryParameters)
   const allowedCollectionIds = extractAllowedCollectionIds(queryParameters)
   const specifiedCollectionIds = extractCollectionIds(queryParameters)
-  const collections = allowedCollectionIds ? allowedCollectionIds.filter(
-    (x) => !specifiedCollectionIds || specifiedCollectionIds.includes(x)
-  ) : specifiedCollectionIds
+  const collections = filterAllowedCollectionIds(allowedCollectionIds, specifiedCollectionIds)
+
+  if (Array.isArray(collections) && !collections.length) {
+    if (collectionId) {
+      return new NotFoundError()
+    }
+
+    return {
+      aggregations: [],
+      links: [
+        {
+          rel: 'self',
+          type: 'application/json',
+          href: `${endpoint}/aggregate`
+        },
+        {
+          rel: 'root',
+          type: 'application/json',
+          href: `${endpoint}`
+        }]
+    }
+  }
 
   const searchParams = pickBy({
     datetime,
@@ -991,7 +1027,7 @@ const validateAdditionalProperties = (queryables) => {
 
 const getCollectionQueryables = async (collectionId, backend, endpoint, queryParameters) => {
   const allowedCollectionIds = extractAllowedCollectionIds(queryParameters)
-  if (allowedCollectionIds && !allowedCollectionIds.includes(collectionId)) {
+  if (!isCollectionIdAllowed(allowedCollectionIds, collectionId)) {
     return new NotFoundError()
   }
 
@@ -1008,8 +1044,7 @@ const getCollectionQueryables = async (collectionId, backend, endpoint, queryPar
 }
 
 const getCollectionAggregations = async (collectionId, backend, endpoint, queryParameters) => {
-  const allowedCollectionIds = extractAllowedCollectionIds(queryParameters)
-  if (allowedCollectionIds && !allowedCollectionIds.includes(collectionId)) {
+  if (!isCollectionIdAllowed(extractAllowedCollectionIds(queryParameters), collectionId)) {
     return new NotFoundError()
   }
 
@@ -1155,7 +1190,7 @@ const getCollections = async function (backend, endpoint, queryParameters) {
 
   const allowedCollectionIds = extractAllowedCollectionIds(queryParameters)
   const collections = collectionsOrError.filter(
-    (c) => !allowedCollectionIds || allowedCollectionIds.includes(c.id)
+    (c) => isCollectionIdAllowed(allowedCollectionIds, c.id)
   )
 
   for (const collection of collections) {
@@ -1194,8 +1229,7 @@ const getCollections = async function (backend, endpoint, queryParameters) {
 }
 
 const getCollection = async function (collectionId, backend, endpoint, queryParameters) {
-  const allowedCollectionIds = extractAllowedCollectionIds(queryParameters)
-  if (allowedCollectionIds && !allowedCollectionIds.includes(collectionId)) {
+  if (!isCollectionIdAllowed(extractAllowedCollectionIds(queryParameters), collectionId)) {
     return new NotFoundError()
   }
 
@@ -1224,8 +1258,7 @@ const createCollection = async function (collection, backend) {
 }
 
 const getItem = async function (collectionId, itemId, backend, endpoint, queryParameters) {
-  const allowedCollectionIds = extractAllowedCollectionIds(queryParameters)
-  if (allowedCollectionIds && !allowedCollectionIds.includes(collectionId)) {
+  if (!isCollectionIdAllowed(extractAllowedCollectionIds(queryParameters), collectionId)) {
     return new NotFoundError()
   }
 
@@ -1279,8 +1312,7 @@ const deleteItem = async function (collectionId, itemId, backend) {
 }
 
 const getItemThumbnail = async function (collectionId, itemId, backend, queryParameters) {
-  const allowedCollectionIds = extractAllowedCollectionIds(queryParameters)
-  if (allowedCollectionIds && !allowedCollectionIds.includes(collectionId)) {
+  if (!isCollectionIdAllowed(extractAllowedCollectionIds(queryParameters), collectionId)) {
     return new NotFoundError()
   }
 

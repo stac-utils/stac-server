@@ -42,6 +42,10 @@ test.before(async (t) => {
   ])
 })
 
+test.beforeEach(async (_) => {
+  delete process.env['ENABLE_COLLECTIONS_AUTHX']
+})
+
 test.after.always(async (t) => {
   if (t.context.api) await t.context.api.close()
 })
@@ -1375,33 +1379,58 @@ test('POST /search with restriction returns filtered collections', async (t) => 
   const collectionId = 'landsat-8-l1'
   const urlpath = 'search'
 
-  const r1 = await t.context.api.client.post(urlpath,
-    { resolveBodyOnly: false,
-      json: {
-        _collections: [collectionId]
-      } })
+  {
+    const r = await t.context.api.client.post(urlpath,
+      { resolveBodyOnly: false,
+        json: { } })
 
-  t.is(r1.statusCode, 200)
-  t.is(r1.body.features.length, 2)
+    t.is(r.statusCode, 200)
+    t.is(r.body.features.length, 0)
+  }
 
-  const r2 = await t.context.api.client.post(urlpath,
-    { resolveBodyOnly: false,
-      json: {
-        _collections: [collectionId, 'foo', 'bar']
-      } })
+  {
+    const r = await t.context.api.client.post(urlpath,
+      { resolveBodyOnly: false,
+        json: {
+          _collections: []
+        } })
 
-  t.is(r2.statusCode, 200)
-  t.is(r2.body.features.length, 2)
+    t.is(r.statusCode, 200)
+    t.is(r.body.features.length, 0)
+  }
 
-  const r3 = await t.context.api.client.post(urlpath,
-    { resolveBodyOnly: false,
-      json: {
-        _collections: ['not-a-collection']
-      }
-    })
+  {
+    const r = await t.context.api.client.post(urlpath,
+      { resolveBodyOnly: false,
+        json: {
+          _collections: [collectionId]
+        } })
 
-  t.is(r3.statusCode, 200)
-  t.is(r3.body.features.length, 0)
+    t.is(r.statusCode, 200)
+    t.is(r.body.features.length, 2)
+  }
+
+  {
+    const r = await t.context.api.client.post(urlpath,
+      { resolveBodyOnly: false,
+        json: {
+          _collections: [collectionId, 'foo', 'bar']
+        } })
+
+    t.is(r.statusCode, 200)
+    t.is(r.body.features.length, 2)
+  }
+  {
+    const r = await t.context.api.client.post(urlpath,
+      { resolveBodyOnly: false,
+        json: {
+          _collections: ['not-a-collection']
+        }
+      })
+
+    t.is(r.statusCode, 200)
+    t.is(r.body.features.length, 0)
+  }
 })
 
 test('/search - context extension - no context when default', async (t) => {

@@ -122,6 +122,7 @@ test('GET /collections/:collectionId/items/:itemId with restriction returns filt
 
 test('GET /collections/:collectionId/items/:itemId/thumbnail with restriction returns filtered collections', async (t) => {
   process.env['ENABLE_COLLECTIONS_AUTHX'] = 'true'
+  process.env['ENABLE_THUMBNAILS'] = 'true'
 
   const { collectionId, itemId } = t.context
 
@@ -158,4 +159,15 @@ test('GET /collections/:collectionId/items/:itemId/thumbnail with restriction re
       throwHttpErrors: false,
       searchParams: { _collections: 'not-a-collection' }
     })).statusCode, 404)
+})
+
+test('GET /collections/:collectionId/items/:itemId/thumbnail disabled', async (t) => {
+  process.env['ENABLE_THUMBNAILS'] = 'false'
+
+  const { collectionId, itemId } = t.context
+
+  const path = `collections/${collectionId}/items/${itemId}/thumbnail`
+
+  t.is((await t.context.api.client.get(path,
+    { resolveBodyOnly: false, throwHttpErrors: false })).statusCode, 404)
 })

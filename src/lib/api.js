@@ -484,10 +484,12 @@ export const addItemLinks = function (results, endpoint) {
       type: 'application/json',
       href: `${endpoint}`
     })
-    links.push({
-      rel: 'thumbnail',
-      href: `${endpoint}/collections/${collection}/items/${id}/thumbnail`
-    })
+    if (process.env['ENABLE_THUMBNAILS'] === 'true') {
+      links.push({
+        rel: 'thumbnail',
+        href: `${endpoint}/collections/${collection}/items/${id}/thumbnail`
+      })
+    }
     result.type = 'Feature'
     return result
   })
@@ -1312,6 +1314,10 @@ const deleteItem = async function (collectionId, itemId, backend) {
 }
 
 const getItemThumbnail = async function (collectionId, itemId, backend, queryParameters) {
+  if (process.env['ENABLE_THUMBNAILS'] !== 'true') {
+    return new NotFoundError()
+  }
+
   if (!isCollectionIdAllowed(extractAllowedCollectionIds(queryParameters), collectionId)) {
     return new NotFoundError()
   }

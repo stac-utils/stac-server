@@ -26,6 +26,10 @@ test.before(async (t) => {
   })
 })
 
+test.beforeEach(async (_) => {
+  delete process.env['ENABLE_COLLECTIONS_AUTHX']
+})
+
 test.after.always(async (t) => {
   if (t.context.api) await t.context.api.close()
 })
@@ -66,7 +70,18 @@ test('GET /collections/:collectionId with restriction returns filtered collectio
   const { collectionId } = t.context
 
   t.is((await t.context.api.client.get(`collections/${collectionId}`,
-    { resolveBodyOnly: false })).statusCode, 200)
+    { resolveBodyOnly: false, throwHttpErrors: false })).statusCode, 404)
+
+  t.is((await t.context.api.client.get(`collections/${collectionId}`,
+    { resolveBodyOnly: false,
+      throwHttpErrors: false,
+      searchParams: { _collections: '' },
+    })).statusCode, 404)
+
+  t.is((await t.context.api.client.get(`collections/${collectionId}`,
+    { resolveBodyOnly: false,
+      searchParams: { _collections: '*' },
+    })).statusCode, 200)
 
   t.is((await t.context.api.client.get(`collections/${collectionId}`,
     {

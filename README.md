@@ -1129,6 +1129,11 @@ The endpoints this applies to are:
 The five endpoints of the Transaction Extension do not use this parameter, as there are
 other authorization considerations for these, that are left as future work.
 
+If this behavior is enabled and a `_collections` parameter is not passed or is passed
+with an empty string or empty list, the caller will not have access to any collections.
+When `*` is included in the list of collections (ideally as the only value), the caller
+will have access to all collections.
+
 ## Ingesting Data
 
 STAC Collections and Items are ingested by the `ingest` Lambda function, however this Lambda is not invoked directly by a user, it consumes records from the `stac-server-<stage>-queue` SQS. To add STAC Items or Collections to the queue, publish them to the SNS Topic `stac-server-<stage>-ingest`.

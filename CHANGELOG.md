@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [4.1.0] - 2024-04-21
+
+### Changed
+
+- **breaking** Collections Auth features (ENABLE_COLLECTIONS_AUTHX) now fails closed
+  rather than open. If `_collections` is not specified or is empty, caller has no
+  access to collections. Also, adds a special collection name `*` that means access
+  to all collections is granted.
+
 ## [4.0.0] - 2025-04-07
 
 ### Removed

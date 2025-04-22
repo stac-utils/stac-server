@@ -1281,7 +1281,7 @@ const deleteItem = async function (collectionId, itemId, backend) {
 }
 
 const getItemThumbnail = async function (collectionId, itemId, backend, queryParameters) {
-  if (process.env['ENABLE_THUMBNAILS'] === 'true') {
+  if (process.env['ENABLE_THUMBNAILS'] !== 'true') {
     return new NotFoundError()
   }
 

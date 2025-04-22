@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   rather than open. If `_collections` is not specified or is empty, caller has no
   access to collections. Also, adds a special collection name `*` that means access
   to all collections is granted.
+- **breaking** The thumbnails behavior is now disabled by default, and can be enabled
+  with `ENABLE_THUMBNAILS` = `true`.
 
 ## [4.0.0] - 2025-04-07
 

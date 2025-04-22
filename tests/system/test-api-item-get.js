@@ -42,6 +42,10 @@ test.before(async (t) => {
   })
 })
 
+test.beforeEach(async (_) => {
+  delete process.env['ENABLE_COLLECTIONS_AUTHX']
+})
+
 test.after.always(async (t) => {
   if (t.context.api) await t.context.api.close()
 })
@@ -89,7 +93,19 @@ test('GET /collections/:collectionId/items/:itemId with restriction returns filt
   const path = `collections/${collectionId}/items/${itemId}`
 
   t.is((await t.context.api.client.get(path,
-    { resolveBodyOnly: false })).statusCode, 200)
+    { resolveBodyOnly: false, throwHttpErrors: false })).statusCode, 404)
+
+  t.is((await t.context.api.client.get(path,
+    { resolveBodyOnly: false,
+      throwHttpErrors: false,
+      searchParams: { _collections: '' }
+    })).statusCode, 404)
+
+  t.is((await t.context.api.client.get(path,
+    {
+      resolveBodyOnly: false,
+      searchParams: { _collections: '*' }
+    })).statusCode, 200)
 
   t.is((await t.context.api.client.get(path,
     {
@@ -113,7 +129,21 @@ test('GET /collections/:collectionId/items/:itemId/thumbnail with restriction re
   const path = `collections/${collectionId}/items/${itemId}/thumbnail`
 
   t.is((await t.context.api.client.get(path,
-    { resolveBodyOnly: false, followRedirect: false
+    { resolveBodyOnly: false, throwHttpErrors: false
+    })).statusCode, 404)
+
+  t.is((await t.context.api.client.get(path,
+    {
+      resolveBodyOnly: false,
+      throwHttpErrors: false,
+      searchParams: { _collections: '' }
+    })).statusCode, 404)
+
+  t.is((await t.context.api.client.get(path,
+    {
+      resolveBodyOnly: false,
+      followRedirect: false,
+      searchParams: { _collections: '*' }
     })).statusCode, 302)
 
   t.is((await t.context.api.client.get(path,

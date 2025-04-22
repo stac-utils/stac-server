@@ -43,6 +43,10 @@ test('GET /aggregate with no aggregations param', async (t) => {
   ])
 })
 
+test.beforeEach(async (_) => {
+  delete process.env['ENABLE_COLLECTIONS_AUTHX']
+})
+
 test('GET /aggregate with aggregations param', async (t) => {
   const fixtureFiles = [
     'collection.json',
@@ -515,78 +519,89 @@ test('GET /aggregate with restriction returns filtered collections', async (t) =
 
   const collectionId = 'landsat-8-l1'
 
-  let response = null
+  { // _collections not included
+    const r = await t.context.api.client.get(
+      'aggregate',
+      {
+        searchParams: new URLSearchParams({
+          aggregations: ['total_count']
+        }),
+        resolveBodyOnly: false,
+      }
+    )
 
-  // validate how many items we have total without restricting collections
-  response = await t.context.api.client.get(
-    'aggregate',
-    {
-      searchParams: new URLSearchParams({
-        aggregations: ['total_count']
-      }),
-      resolveBodyOnly: false,
-    }
-  )
+    t.is(r.statusCode, 200)
+    t.deepEqual(r.body.aggregations, [])
+  }
 
-  t.is(response.statusCode, 200)
-  t.deepEqual(response.body.aggregations, [{
-    name: 'total_count',
-    data_type: 'integer',
-    value: 4
-  }])
+  { // _collections is empty
+    const r = await t.context.api.client.get(
+      'aggregate',
+      {
+        searchParams: new URLSearchParams({
+          aggregations: ['total_count'],
+          collections: []
+        }),
+        resolveBodyOnly: false,
+      }
+    )
+    t.is(r.statusCode, 200)
+    t.deepEqual(r.body.aggregations, [])
+  }
 
-  // get the counts for collectionId without restrictions
-  response = await t.context.api.client.get(
-    'aggregate',
-    {
-      searchParams: new URLSearchParams({
-        aggregations: ['total_count'],
-        collections: [collectionId]
-      }),
-      resolveBodyOnly: false,
-    }
-  )
+  { // _collections is * for admin -- get the counts for  without restrictions
+    const r = await t.context.api.client.get(
+      'aggregate',
+      {
+        searchParams: new URLSearchParams({
+          aggregations: ['total_count'],
+          _collections: ['*']
+        }),
+        resolveBodyOnly: false,
+      }
+    )
+    t.is(r.statusCode, 200)
+    t.deepEqual(r.body.aggregations, [{
+      name: 'total_count',
+      data_type: 'integer',
+      value: 4
+    }])
+  }
 
-  t.is(response.statusCode, 200)
-  t.deepEqual(response.body.aggregations, [{
-    name: 'total_count',
-    data_type: 'integer',
-    value: 2
-  }])
+  { // restrict collections to include the one we just got 2 results for
+    const r = await t.context.api.client.get(
+      'aggregate',
+      {
+        searchParams: new URLSearchParams({
+          aggregations: ['total_count'],
+          _collections: [collectionId, 'foo', 'bar']
+        }),
+        resolveBodyOnly: false,
+      }
+    )
 
-  // restrict collections to include the one we just got 2 results for
+    t.is(r.statusCode, 200)
+    t.deepEqual(r.body.aggregations, [{
+      name: 'total_count',
+      data_type: 'integer',
+      value: 2
+    }])
+  }
 
-  const response2 = await t.context.api.client.get(
-    'aggregate',
-    {
-      searchParams: new URLSearchParams({
-        aggregations: ['total_count'],
-        _collections: [collectionId, 'foo', 'bar']
-      }),
-      resolveBodyOnly: false,
-    }
-  )
+  { // restrict collections to a non-existent one with no items, so should be 0 results
+    const r = await t.context.api.client.get(
+      'aggregate',
+      {
+        searchParams: new URLSearchParams({
+          aggregations: ['total_count'],
+          collections: [collectionId],
+          _collections: ['not-a-collection']
+        }),
+        resolveBodyOnly: false,
+      }
+    )
 
-  t.is(response.statusCode, 200)
-  t.deepEqual(response2.body.aggregations, response.body.aggregations)
-
-  // restrict collections to a non-existent one with no items, so should be 0 results
-  response = await t.context.api.client.get(
-    'aggregate',
-    {
-      searchParams: new URLSearchParams({
-        aggregations: ['total_count'],
-        collections: [collectionId],
-        _collections: ['not-a-collection']
-      }),
-      resolveBodyOnly: false,
-    }
-  )
-
-  t.is(response.statusCode, 200)
-  t.deepEqual(response.body.aggregations, [{
-    name: 'total_count',
-    data_type: 'integer',
-    value: 0
-  }])
+    t.is(r.statusCode, 200)
+    t.deepEqual(r.body.aggregations, [])
+  }
 })

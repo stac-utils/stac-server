@@ -4,7 +4,7 @@ import test from 'ava'
 import got from 'got' // eslint-disable-line import/no-unresolved
 import { deleteAllIndices, refreshIndices } from '../helpers/database.js'
 import { randomId } from '../helpers/utils.js'
-import { ingestItems } from '../../src/lib/ingest.js'
+import { processMessages } from '../../src/lib/ingest.js'
 import { setup, loadJson } from '../helpers/system-tests.js'
 
 test.before(async (t) => {
@@ -48,7 +48,7 @@ test('/search preserve bbox in next links', async (t) => {
     'LC80100102015082LGN00.json'
   ]
   const items = await Promise.all(fixtureFiles.map((x) => loadJson(x)))
-  await ingestItems(items)
+  await processMessages(items)
   await refreshIndices()
 
   const bbox = '-180,-90,180,90'
@@ -85,7 +85,7 @@ test('/search preserve bbox and datetime in next links', async (t) => {
     'LC80100102015082LGN00.json'
   ]
   const items = await Promise.all(fixtureFiles.map((x) => loadJson(x)))
-  await ingestItems(items)
+  await processMessages(items)
   await refreshIndices()
 
   const bbox = '-180,-90,180,90'
@@ -122,7 +122,7 @@ test('/search filter, query, and item search in single request', async (t) => {
     'collection2_item.json'
   ]
   const items = await Promise.all(fixtureFiles.map((x) => loadJson(x)))
-  await ingestItems(items)
+  await processMessages(items)
   await refreshIndices()
 
   const response = await t.context.api.client.get('search', {
@@ -157,7 +157,7 @@ test('GET /search with restriction returns filtered collections', async (t) => {
     'LC80100102015082LGN00.json'
   ]
   const items = await Promise.all(fixtureFiles.map((x) => loadJson(x)))
-  await ingestItems(items)
+  await processMessages(items)
   await refreshIndices()
 
   const collectionId = 'landsat-8-l1'

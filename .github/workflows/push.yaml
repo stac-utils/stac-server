@@ -38,10 +38,10 @@ jobs:
       - name: Audit
         run: npm run audit-prod
       - name: Unit tests
-        run: npm run test:coverage
+        run: npm run test:unit:coverage
       - name: Wait for OpenSearch
         run: ./bin/wait-for-opensearch/run.sh
       - name: System tests
-        run: npm run test:system
+        run: npm run test:system:coverage
       - name: Run build
         run: npm run build

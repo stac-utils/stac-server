@@ -55,6 +55,7 @@
   - [Aggregation](#aggregation)
   - [Hidden collections filter for authorization](#hidden-collections-filter-for-authorization)
   - [Ingesting Data](#ingesting-data)
+    - [Ingest actions](#ingest-actions)
     - [Ingesting large items](#ingesting-large-items)
     - [Subscribing to SNS Topics](#subscribing-to-sns-topics)
     - [Ingest Errors](#ingest-errors)
@@ -608,8 +609,9 @@ There are some settings that should be reviewed and updated as needeed in the se
 | CORS_CREDENTIALS                 | Configure whether or not to send the `Access-Control-Allow-Credentials` CORS header. Header will be sent if set to `true`.                                                                                                                                                      | none                                                                                 |
 | CORS_METHODS                     | Configure whether or not to send the `Access-Control-Allow-Methods` CORS header. Expects a comma-delimited string, e.g., `GET,PUT,POST`.                                                                                                                                        | `GET,HEAD,PUT,PATCH,POST,DELETE`                                                     |
 | CORS_HEADERS                     | Configure whether or not to send the `Access-Control-Allow-Headers` CORS header. Expects a comma-delimited string, e.g., `Content-Type,Authorization`. If not specified, defaults to reflecting the headers specified in the request’s `Access-Control-Request-Headers` header. | none                                                                                 |
-| ENABLE_COLLECTIONS_AUTHX         | Enables support for hidden `_collections` query parameter / field when set to `true`.                                                                                                                                                                                                              | none                                                                                 |
-| ENABLE_THUMBNAILS         | Enables support for presigned thumnails.                                                                                                                                                                                                              | none                                                                                 |
+| ENABLE_COLLECTIONS_AUTHX         | Enables support for hidden `_collections` query parameter / field when set to `true`.                                                                                                                                                                                                              | none (not enabled)                                                                                 |
+| ENABLE_THUMBNAILS         | Enables support for presigned thumnails.                                                                                                                                                                                                              | none (not enabled)                                                                                |
+| ENABLE_INGEST_ACTION_TRUNCATE         | Enables support for ingest action "truncate".                                                                                                                                                                                                              | none (not enabled)                                                                                |
 
 Additionally, the credential for OpenSearch must be configured, as decribed in the
 section [Populating and accessing credentials](#populating-and-accessing-credentials).
@@ -1152,7 +1154,8 @@ STAC Collections and Items are ingested by the `ingest` Lambda function, however
 **STAC Collections must be ingested before Items that belong to that Collection.** Items should have the `collection` field populated with the ID of an existing Collection. If an Item is ingested before ingestion of the Collection it contains,
 ingestion will either fail (in the case of a single Item ingest) or if auto-creation of indexes is enabled (default) and multiple Items are ingested in bulk, the auto-created index will have incorrect mappings.
 
-If a collection or item is ingested, and an item with that id already exists in STAC, the new item will completely replace the old item.
+If a collection or item is ingested, and an item with that id already exists in STAC, the new item will completely replace the old item, except the `created` property will be retained and the `updated` property updated
+to match the time of the new update.
 
 After a collection or item is ingested, the status of the ingest (success or failure) along with details of the collection or item are sent to a post-ingest SNS topic. To take action on items after they are ingested subscribe an endpoint to this topic.
 
@@ -1163,6 +1166,27 @@ Messages published to the post-ingest SNS topic include the following atributes 
 | recordType   | String | `Collection` or `Item`   |
 | ingestStatus | String | `successful` or `failed` |
 | collection   | String |                          |
+
+### Ingest actions
+
+In addition to ingesting Item and Collection JSON, the ingestion pipeline can also execute
+actions. This is useful when the Transaction Extension is turned off, but data modification
+still needs to occur.
+
+There is currently only one action implemented, `truncate`. This action will delete all
+of the Items in the specified Collection, but keep the Collection.
+
+This action is enabled by setting `ENABLE_INGEST_ACTION_TRUNCATE` to `true`.
+
+The form of this message is:
+
+```json
+{
+  "type": "action",
+  "command": "truncate",
+  "collection": "my_collection_1"
+}
+```
 
 ### Ingesting large items
 
@@ -1367,7 +1391,7 @@ npm test
 npm run test:unit
 
 # run unit tests with coverage
-npm run test:coverage
+npm run test:unit:coverage
 
 # run tests from a single test file whose titles match 'foobar*'
 npx ava tests/test-es.js --match='foobar*'
@@ -1399,6 +1423,12 @@ Once OpenSearch has been started, run the system tests:
 
 ```shell
 npm run test:system
+```
+
+With coverage:
+
+```shell
+npm run test:system:coverage
 ```
 
 A subset of system tests may be run by providing a glob matching the test files to run:

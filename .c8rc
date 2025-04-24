@@ -1,0 +1,6 @@
+{
+  "reporter": [
+    "html",
+    "text"
+  ]
+}

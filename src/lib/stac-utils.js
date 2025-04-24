@@ -8,6 +8,14 @@ export function isItem(record) {
   return record && record.type === 'Feature'
 }
 
+export function isStacEntity(record) {
+  return isItem(record) || isCollection(record)
+}
+
+export function isAction(record) {
+  return record && record.type === 'action'
+}
+
 export function getStartAndEndDates(record) {
   let startDate
   let endDate

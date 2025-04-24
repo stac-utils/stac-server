@@ -683,7 +683,7 @@ test('Unknown command fails ingest', async (t) => {
     async () => ingestItem(
       {
         type: 'action',
-        command: 'non-existant-command',
+        command: 'non-existent-command',
         collection: collection.id
       }
     ),

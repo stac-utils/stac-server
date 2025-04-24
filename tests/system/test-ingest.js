@@ -480,7 +480,7 @@ test('Ingested item is published to post-ingest SNS topic', async (t) => {
 test('Ingest item failure is published to post-ingest SNS topic', async (t) => {
   await ingestCollectionAndPurgePostIngestQueue(t)
 
-  // this failse because the collection does not exist
+  // this fails because the collection does not exist
   const { message, attrs } = await testPostIngestSNS(t, {
     type: 'Feature',
     id: 'badItem',

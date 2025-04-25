@@ -1176,7 +1176,9 @@ still needs to occur.
 There is currently only one action implemented, `truncate`. This action will delete all
 of the Items in the specified Collection, but keep the Collection.
 
-This action is enabled by setting `ENABLE_INGEST_ACTION_TRUNCATE` to `true`.
+This action is enabled by setting `ENABLE_INGEST_ACTION_TRUNCATE` to `true`. For example,
+a deployment may want to enable this in dev and staging, but disable in prod so you don't
+accidentally delete all the items from a production collection.
 
 The form of this message is:
 

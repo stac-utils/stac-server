@@ -35,6 +35,8 @@ test.beforeEach(async (t) => {
   if (ingestQueueUrl === undefined) throw new Error('No ingest queue url')
 
   await purgeQueue(ingestQueueUrl)
+
+  delete process.env['ENABLE_INGEST_ACTION_TRUNCATE']
 })
 
 test.afterEach.always(() => {
@@ -476,16 +478,17 @@ test('Ingested item is published to post-ingest SNS topic', async (t) => {
 })
 
 test('Ingest item failure is published to post-ingest SNS topic', async (t) => {
-  const collection = await ingestCollectionAndPurgePostIngestQueue(t)
+  await ingestCollectionAndPurgePostIngestQueue(t)
 
+  // this fails because the collection does not exist
   const { message, attrs } = await testPostIngestSNS(t, {
     type: 'Feature',
     id: 'badItem',
-    collection: collection.id
+    collection: 'non-existent',
   }, true)
 
   t.is(message.record.id, 'badItem')
-  t.is(attrs.collection.Value, collection.id)
+  t.is(attrs.collection.Value, 'non-existent')
   t.is(attrs.ingestStatus.Value, 'failed')
   t.is(attrs.recordType.Value, 'Item')
 })
@@ -534,4 +537,157 @@ test('Ingested item failure is published to post-ingest SNS topic without update
   } finally {
     process.env = envBeforeTest
   }
+})
+
+test('Truncate command fails when ENABLE_INGEST_ACTION_TRUNCATE is unset or not true', async (t) => {
+  const { ingestFixture } = t.context
+
+  const collection = await ingestFixture(
+    'landsat-8-l1-collection.json',
+    { id: randomId('collection') }
+  )
+
+  await t.throwsAsync(
+    async () => ingestFixture(
+      'truncate.json',
+      {
+        collection: collection.id,
+      }
+    ),
+    { instanceOf: Error,
+      message: 'There was at least one error ingesting items.' }
+  )
+
+  process.env['ENABLE_INGEST_ACTION_TRUNCATE'] = 'false'
+
+  await t.throwsAsync(
+    async () => ingestFixture(
+      'truncate.json',
+      {
+        collection: collection.id,
+      }
+    ),
+    { instanceOf: Error,
+      message: 'There was at least one error ingesting items.' }
+  )
+})
+
+test('Truncate command deletes items from collection', async (t) => {
+  process.env['ENABLE_INGEST_ACTION_TRUNCATE'] = 'true'
+
+  const { ingestFixture } = t.context
+  const assertHasResultCount = assertHasResultCountC(t)
+
+  const collection = await ingestFixture(
+    'landsat-8-l1-collection.json',
+    { id: randomId('collection') }
+  )
+
+  { // create some items to truncate
+    const ITEM_COUNT = 13
+
+    await Promise.all(
+      Array.from({ length: ITEM_COUNT }, () =>
+        ingestFixture(
+          'stac/LC80100102015082LGN00.json',
+          {
+            id: randomId('item'),
+            collection: collection.id,
+          }
+        ))
+    )
+
+    await assertHasResultCount(ITEM_COUNT, {
+      collections: [collection.id],
+      limit: 100,
+    }, '')
+  }
+
+  // ingest the truncate command
+  await ingestFixture(
+    'truncate.json',
+    {
+      collection: collection.id,
+    }
+  )
+
+  // check that the collection still exists
+  {
+    const response = await t.context.api.client.get('collections')
+    t.true(Array.isArray(response.collections))
+    t.true(response.collections.map((x) => x.id).includes(collection.id))
+
+    await assertHasResultCount(0, {
+      collections: [collection.id],
+      limit: 100,
+    }, '')
+  }
+
+  { // ingest more items
+    const ITEM_COUNT = 19
+
+    await Promise.all(
+      Array.from({ length: ITEM_COUNT }, () =>
+        ingestFixture(
+          'stac/LC80100102015082LGN00.json',
+          {
+            id: randomId('item'),
+            collection: collection.id,
+          }
+        ))
+    )
+
+    await assertHasResultCount(ITEM_COUNT, {
+      collections: [collection.id],
+      limit: 100,
+    }, '')
+  }
+})
+
+test('Truncate command fails for disallowed collection values', async (t) => {
+  process.env['ENABLE_INGEST_ACTION_TRUNCATE'] = 'true'
+
+  const { ingestFixture } = t.context
+
+  // Test that truncate fails with various disallowed collection patterns
+  const badCollections = ['', 'collections', '*', 'foo*']
+  await Promise.all(badCollections.map((collection) =>
+    t.throwsAsync(
+      async () => ingestFixture('truncate.json', { collection }),
+      { instanceOf: Error,
+        message: 'There was at least one error ingesting items.' }
+    )))
+})
+
+test('Unknown command fails ingest', async (t) => {
+  process.env['ENABLE_INGEST_ACTION_TRUNCATE'] = 'true'
+
+  const { ingestItem, ingestFixture } = t.context
+
+  await t.throwsAsync(
+    async () => ingestItem(
+      {
+        type: 'unknown'
+      }
+    ),
+    { instanceOf: Error,
+      message: 'There was at least one error ingesting items.' }
+  )
+
+  const collection = await ingestFixture(
+    'landsat-8-l1-collection.json',
+    { id: randomId('collection') }
+  )
+
+  await t.throwsAsync(
+    async () => ingestItem(
+      {
+        type: 'action',
+        command: 'non-existent-command',
+        collection: collection.id
+      }
+    ),
+    { instanceOf: Error,
+      message: 'There was at least one error ingesting items.' }
+  )
 })

@@ -4,7 +4,7 @@ import test from 'ava'
 import { randomId } from '../helpers/utils.js'
 import { setup, loadJson } from '../helpers/system-tests.js'
 import { deleteAllIndices, refreshIndices } from '../helpers/database.js'
-import { ingestItems } from '../../src/lib/ingest.js'
+import { processMessages } from '../../src/lib/ingest.js'
 
 test.before(async (t) => {
   await deleteAllIndices()
@@ -54,7 +54,7 @@ test('GET /aggregate with aggregations param', async (t) => {
     'LC80100102015082LGN00.json'
   ]
   const items = await Promise.all(fixtureFiles.map((x) => loadJson(x)))
-  await ingestItems(items)
+  await processMessages(items)
   await refreshIndices()
 
   const response = await t.context.api.client.get(
@@ -145,7 +145,7 @@ test('GET /aggregate with geoaggregations', async (t) => {
     'LC80100102015082LGN00.json', // no proj:centroid
   ]
   const items = await Promise.all(fixtureFiles.map((x) => loadJson(x)))
-  await ingestItems(items)
+  await processMessages(items)
   await refreshIndices()
 
   const response = await t.context.api.client.get(
@@ -304,7 +304,7 @@ test('GET /aggregate with geoaggregations with precision', async (t) => {
     'LC80100102015082LGN00.json', // no proj:centroid
   ]
   const items = await Promise.all(fixtureFiles.map((x) => loadJson(x)))
-  await ingestItems(items)
+  await processMessages(items)
   await refreshIndices()
 
   const response = await t.context.api.client.get(
@@ -432,7 +432,7 @@ test('GET /aggregate with aggregations and query params', async (t) => {
     'LC80100102015082LGN00.json'
   ]
   const items = await Promise.all(fixtureFiles.map((x) => loadJson(x)))
-  await ingestItems(items)
+  await processMessages(items)
   await refreshIndices()
 
   const response = await t.context.api.client.get(
@@ -470,7 +470,7 @@ test('GET /aggregate with aggregations and filter params', async (t) => {
     'LC80100102015082LGN00.json'
   ]
   const items = await Promise.all(fixtureFiles.map((x) => loadJson(x)))
-  await ingestItems(items)
+  await processMessages(items)
   await refreshIndices()
 
   const response = await t.context.api.client.get(
@@ -514,7 +514,7 @@ test('GET /aggregate with restriction returns filtered collections', async (t) =
     'LC80100102015082LGN00.json'
   ]
   const items = await Promise.all(fixtureFiles.map((x) => loadJson(x)))
-  await ingestItems(items)
+  await processMessages(items)
   await refreshIndices()
 
   const collectionId = 'landsat-8-l1'

@@ -6,7 +6,7 @@ import fs from 'fs'
 import path from 'path'
 import { deleteAllIndices, refreshIndices } from '../helpers/database.js'
 import { randomId } from '../helpers/utils.js'
-import { ingestItems } from '../../src/lib/ingest.js'
+import { processMessages } from '../../src/lib/ingest.js'
 
 import { loadJson, setup } from '../helpers/system-tests.js'
 
@@ -18,7 +18,7 @@ const noIntersectsGeometry = fs.readFileSync(path.resolve(__dirname, '../fixture
 const fixture = (filepath) => fs.readFileSync(path.resolve(__dirname, filepath), 'utf8')
 
 const ingestEntities = async (fixtures) => {
-  await ingestItems(
+  await processMessages(
     await Promise.all(fixtures.map((x) => loadJson(x)))
   )
   await refreshIndices()
@@ -1373,7 +1373,7 @@ test('POST /search with restriction returns filtered collections', async (t) => 
     'LC80100102015082LGN00.json'
   ]
   const items = await Promise.all(fixtureFiles.map((x) => loadJson(x)))
-  await ingestItems(items)
+  await processMessages(items)
   await refreshIndices()
 
   const collectionId = 'landsat-8-l1'

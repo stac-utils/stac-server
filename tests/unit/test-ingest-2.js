@@ -4,7 +4,7 @@ import MemoryStream from 'memorystream'
 import fs from 'fs'
 import path from 'path'
 import { fileURLToPath } from 'url'
-import { ingestItems } from '../../src/lib/ingest.js'
+import { processMessages } from '../../src/lib/ingest.js'
 
 const setup = () => {
   const dupOptions = {
@@ -41,7 +41,7 @@ test.skip('ingestItem passes item through transform stream', async (t) => {
 
   const firstItem = fs.readFileSync(path.resolve(__dirname, '../fixtures/stac/LC80100102015050LGN00.json'))
 
-  await ingestItems([firstItem])
+  await processMessages([firstItem])
   // @ts-ignore
   t.deepEqual(dbStream.queue[0], firstItem)
 })

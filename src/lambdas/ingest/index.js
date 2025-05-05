@@ -1,7 +1,7 @@
 /* eslint-disable import/prefer-default-export */
 import got from 'got' // eslint-disable-line import/no-unresolved
 import { createIndex } from '../../lib/database-client.js'
-import { ingestItems, publishResultsToSns } from '../../lib/ingest.js'
+import { processMessages, publishResultsToSns } from '../../lib/ingest.js'
 import getObjectJson from '../../lib/s3-utils.js'
 import logger from '../../lib/logger.js'
 
@@ -56,18 +56,18 @@ export const handler = async (event, _context) => {
     return
   }
 
-  const stacItems = isSqsEvent(event)
+  const messages = isSqsEvent(event)
     ? await stacItemsFromSqsEvent(event)
     : [event]
 
   try {
-    logger.debug('Attempting to ingest %d items', stacItems.length)
+    logger.debug('Attempting to process %d messages', messages.length)
 
-    const results = await ingestItems(stacItems)
+    const results = await processMessages(messages)
 
     const errorCount = results.filter((result) => result.error).length
     if (errorCount) {
-      logger.debug('There were %d errors ingesting %d items', errorCount, stacItems.length)
+      logger.debug('There were %d errors ingesting %d items', errorCount, messages.length)
     } else {
       logger.debug('Ingested %d items', results.length)
     }

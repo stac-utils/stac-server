@@ -3,7 +3,7 @@ import { addItemLinks, addCollectionLinks } from './api.js'
 import { dbClient, createIndex } from './database-client.js'
 import logger from './logger.js'
 import { publishRecordToSns } from './sns.js'
-import { isCollection, isItem } from './stac-utils.js'
+import { isCollection, isItem, isAction, isStacEntity } from './stac-utils.js'
 
 const COLLECTIONS_INDEX = process.env['COLLECTIONS_INDEX'] || 'collections'
 
@@ -16,27 +16,26 @@ export class InvalidIngestError extends Error {
 
 const hierarchyLinks = ['self', 'root', 'parent', 'child', 'collection', 'item', 'items']
 
-export async function convertIngestObjectToDbObject(
-  // eslint-disable-next-line max-len
-  /** @type {{ hasOwnProperty: (arg0: string) => any; type: string, collection: string; links: any[]; id: any; }} */ data
-) {
-  let index = ''
+export async function convertIngestMsgToDbOperation(data) {
+  let index
+  let action
   logger.debug('data', data)
   if (isCollection(data)) {
     index = COLLECTIONS_INDEX
+    action = 'index'
   } else if (isItem(data)) {
     index = data.collection
+    action = 'index'
+  } else if (isAction(data)) {
+    index = data.collection
+    action = data.command
   } else {
     throw new InvalidIngestError(
-      `Expected data.type to be 'Collection' or 'Feature' not '${data.type}'`
+      `Expected 'type' to be 'Collection', 'Feature', or 'action', not '${data.type}'`
     )
   }
 
-  // remove any hierarchy links in a non-mutating way
-  if (!data.links) {
-    throw new InvalidIngestError('Expected a "links" property on the stac object')
-  }
-  const links = data.links.filter(
+  const links = (data.links || []).filter(
     (/** @type {{ rel: string; }} */ link) => !hierarchyLinks.includes(link.rel)
   )
   const dbDataObject = { ...data, links }
@@ -55,75 +54,74 @@ export async function convertIngestObjectToDbObject(
   return {
     index,
     id: dbDataObject.id,
-    action: 'index',
+    action,
     _retry_on_conflict: 3,
     body: dbDataObject
   }
 }
 
-export function combineDbObjectsIntoBulkOperations(records) {
-  const operations = records.reduce((/** @type {{}[]} */ bulkOperations, record) => {
-    const operation = {}
-    operation[record.action] = {
-      _index: record.index,
-      _type: record.type,
-      _id: record.id
-    }
-    if (record.parent) {
-      operation[record.action]._parent = record.parent
-    }
-
-    bulkOperations.push(operation)
-    if (record.action !== 'delete') {
-      bulkOperations.push(record.body)
-    }
-    return bulkOperations
-  }, [])
-  return operations
-}
-
-export async function writeRecordToDb(
-  /** @type {{ index: string; id: string; body: {}; }} */ record
+export async function executeDbOperation(
+  /** @type {{ index: string; id: string; body: {}; action: string}} */ record
 ) {
-  const { index, id, body } = record
+  const { index, id, body, action } = record
+
+  if (!index) {
+    throw new InvalidIngestError('Index must defined, likely in "collection".')
+  }
+
   const client = await dbClient()
 
   // is this needed or will update just fail anyway and move on?
   if (index !== COLLECTIONS_INDEX) {
-    // if this isn't a collection check if index exists
+    // if this isn't a collection, check if index exists
     const exists = await client.indices.exists({ index })
     if (!exists.body) {
       throw new InvalidIngestError(`Index ${index} does not exist, add before ingesting items`)
     }
   }
 
-  const result = await client.index({
-    index,
-    type: '_doc',
-    id,
-    body
-  })
+  let result
+  if (action === 'index') {
+    result = await client.index({
+      index,
+      type: '_doc',
+      id,
+      body
+    })
 
-  logger.debug(`Wrote document ${id}`)
+    logger.debug(`Wrote document ${id}`)
 
-  // if this was a collection, then add a new index with collection name
-  if (index === COLLECTIONS_INDEX) {
-    await createIndex(id)
-  }
-  return result
-}
+    // if this was a collection, then add a new index with collection name
+    if (index === COLLECTIONS_INDEX) {
+      await createIndex(id)
+    }
+  } else if (action === 'truncate') {
+    if (process.env['ENABLE_INGEST_ACTION_TRUNCATE'] !== 'true') {
+      throw new InvalidIngestError("Command 'truncate' is not enabled")
+    }
+    if (index === COLLECTIONS_INDEX) {
+      throw new InvalidIngestError("Command 'truncate' not allowed on collections index")
+    }
+    if (index.includes('*')) {
+      throw new InvalidIngestError("Command 'truncate' not allowed on * index")
+    }
 
-export async function writeRecordsInBulkToDb(records) {
-  const body = combineDbObjectsIntoBulkOperations(records)
-  const client = await dbClient()
-  const result = await client.bulk({ body })
-  logger.debug('Result: %j', result)
-  const { errors } = result.body
-  if (errors) {
-    logger.error('Batch write had errors', errors)
+    result = await client.deleteByQuery({
+      index,
+      body: {
+        query: {
+          match_all: {}
+        }
+      },
+      refresh: true
+    })
+
+    logger.debug(`Truncated index '${index}'`)
   } else {
-    logger.debug(`Wrote batch of documents size ${body.length / 2}`)
+    throw new InvalidIngestError(`Unknown action '${action}' on '${index}'`)
   }
+
+  return result
 }
 
 function logIngestItemsResults(results) {
@@ -134,7 +132,7 @@ function logIngestItemsResults(results) {
         // log it as info and not error
         logger.warn('Invalid ingest item', result.error)
       } else {
-        logger.error('Error while ingesting item', result.error)
+        logger.error('Error while ingesting item::', result.error)
       }
     } else {
       logger.debug('Ingested item %j', result)
@@ -142,37 +140,34 @@ function logIngestItemsResults(results) {
   })
 }
 
-export async function ingestItems(items) {
+/* eslint-disable no-await-in-loop */
+
+export async function processMessages(msgs) {
   const results = []
-  for (const record of items) {
-    let dbRecord
+  // apply messages one-at-a-time in sequence
+  for (const msg of msgs) {
+    let dbOp
     let result
     let error
     try {
-      // We are intentionally writing records one at a time in sequence so we
-      // disable this rule
-      // eslint-disable-next-line no-await-in-loop
-      dbRecord = await convertIngestObjectToDbObject(record)
-      // eslint-disable-next-line no-await-in-loop
-      result = await writeRecordToDb(dbRecord)
+      dbOp = await convertIngestMsgToDbOperation(msg)
+      result = await executeDbOperation(dbOp)
     } catch (e) {
       error = e
     }
-    results.push({ record, dbRecord, result, error })
+    results.push({ record: msg, dbRecord: dbOp, result, error })
   }
   logIngestItemsResults(results)
   return results
 }
+
+/* eslint-enable no-await-in-loop */
 
 // Impure - mutates record
 function updateLinksWithinRecord(record) {
   const endpoint = process.env['STAC_API_URL']
   if (!endpoint) {
     logger.info('STAC_API_URL not set, not updating links within ingested record')
-    return record
-  }
-  if (!isItem(record) && !isCollection(record)) {
-    logger.info('Record is not a collection or item, not updating links within ingested record')
     return record
   }
 
@@ -189,9 +184,11 @@ function updateLinksWithinRecord(record) {
 
 export async function publishResultsToSns(results, topicArn) {
   await Promise.allSettled(results.map(async (result) => {
-    if (result.record && !result.error) {
-      updateLinksWithinRecord(result.record)
+    if (isStacEntity(result.record)) {
+      if (result.record && !result.error) {
+        updateLinksWithinRecord(result.record)
+      }
+      await publishRecordToSns(topicArn, result.record, result.error)
     }
-    await publishRecordToSns(topicArn, result.record, result.error)
   }))
 }

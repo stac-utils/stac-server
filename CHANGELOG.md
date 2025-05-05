@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [4.2.0] - unreleased
+
+### Added
+
+- Added support for ingest actions, specifically "truncate collection". This is enabled
+  by setting `ENABLE_INGEST_ACTION_TRUNCATE` to `true`.
+
+### Changed
+
+- When being ingested, Items and Collection without a `links` array will not be rejected,
+  but will have the field added.
+
+### Removed
+
+- From ingest.js, removed combineDbObjectsIntoBulkOperations and writeRecordsInBulkToDb
+  functions, as they have not been used since version 2.0.0.
+
 ## [4.1.0] - 2024-04-22
 
 ### Changed

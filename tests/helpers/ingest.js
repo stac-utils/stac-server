@@ -49,15 +49,15 @@ export const ingestFixture = async ({
   filename,
   overrides = {}
 }) => {
-  const item = await loadFixture(filename, overrides)
+  const msg = await loadFixture(filename, overrides)
 
   await ingestItem({
     ingestTopicArn,
     ingestQueueUrl,
-    item
+    item: msg
   })
 
-  return item
+  return msg
 }
 
 // eslint-disable-next-line valid-jsdoc

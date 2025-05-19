@@ -99,7 +99,7 @@
     "eslint": "^8.57.0",
     "eslint-config-airbnb": "^19.0.4",
     "eslint-plugin-import": "^2.31.0",
-    "eslint-plugin-jsdoc": "^50.6.10",
+    "eslint-plugin-jsdoc": "^50.6.17",
     "husky": "^9.1.7",
     "luxon": "^3.6.1",
     "nock": "^14.0.4",

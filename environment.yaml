@@ -1,0 +1,5 @@
+name: stac-server
+channels:
+  - conda-forge
+dependencies:
+  - nodejs >=20.0,<21.0

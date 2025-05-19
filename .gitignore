@@ -17,5 +17,6 @@ _book
 .serverless-offline
 serverless*.yml
 !serverless.example.yml
+!serverless.yml
 tsconfig.tsbuildinfo
 docs/

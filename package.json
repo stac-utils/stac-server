@@ -68,6 +68,8 @@
     "morgan": "^1.10.0",
     "p-filter": "^4.1.0",
     "serverless-http": "^3.2.0",
+    "serverless-plugin-git-variables": "^5.2.0",
+    "serverless-python-requirements": "^6.1.2",
     "through2": "^4.0.2",
     "ts-loader": "^9.5.2",
     "winston": "^3.17.0",

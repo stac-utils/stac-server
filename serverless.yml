@@ -1,0 +1,218 @@
+service: dpp-stac-server
+
+params:
+  default:
+    sharedServicesAccount: 850995554469 # hydrosat-shared-services
+    opensearchHost: https://search-dpp-stac-server-dev-ntaniqpyxykaenopy5soapburu.us-west-2.es.amazonaws.com
+  test:
+    opensearchHost: https://search-dpp-stac-server-test-eyrjjbvso6rhmnh5nuwc4f3rxu.us-west-2.es.amazonaws.com
+  stage:
+    opensearchHost: https://search-hs-opensearch-dpzzaqpistuxoiqiazrhh3vz4i.us-west-2.es.amazonaws.com
+  prod:
+    opensearchHost: https://search-dpp-stac-server-prod-aw2cfd4g4qm3orlc53obsahhoy.us-west-2.es.amazonaws.com
+
+custom:
+  sharedServicesAccount: 850995554469 # hydrosat-shared-services
+
+provider:
+  name: aws
+  runtime: nodejs20.x
+  stage: ${opt:stage, 'dev'}
+  region: ${opt:region, 'us-west-2'}
+  logs:
+    restApi:
+      executionLogging: false
+      fullExecutionData: false
+      accessLogging: false
+      format: '{"requestId":"$context.requestId","ip":"$context.identity.sourceIp","caller":"$context.identity.caller","useragent" : "$context.identity.userAgent","requestTime":"$context.requestTime","httpMethod":"$context.httpMethod","resourcePath":"$context.resourcePath","status":"$context.status","protocol":"$context.protocol","responseLength":"$context.responseLength"}'
+  environment:
+    STAC_ID: "dpp-stac-server"
+    STAC_TITLE: "Hydrosat data production STAC server API"
+    STAC_DESCRIPTION: "Hydrosat data product STAC API"
+    LOG_LEVEL: debug
+    STAC_DOCS_URL: https://stac-utils.github.io/stac-server/
+    OPENSEARCH_HOST: ${param:opensearchHost}
+    STAC_API_URL: "https://${self:provider.stage}.hydrosat.com"
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Resource: "arn:aws:es:${aws:region}:${aws:accountId}:domain/*"
+          Action: "es:*"
+        - Effect: Allow
+          Action:
+            - sqs:GetQueueUrl
+            - sqs:SendMessage
+            - sqs:ReceiveMessage
+            - sqs:DeleteMessage
+          Resource:
+            Fn::GetAtt: [ingestQueue, Arn]
+        - Effect: Allow
+          Action:
+            - sns:Publish
+          Resource:
+            Fn::GetAtt: [postIngestTopic, TopicArn]
+  stackTags:
+    git-repository: ${git:repository}
+    git-branch: ${git:branch}
+    git-commit: ${git:sha1}
+    git-description: ${git:describeLight}
+
+package:
+  individually: true
+
+functions:
+  api:
+    description: stac-server API Lambda
+    handler: index.handler
+    package:
+      artifact: dist/api/api.zip
+    events:
+      - http:
+          method: ANY
+          path: "/"
+          cors: true
+          authorizer:
+            name: api_auth
+            resultTtlInSeconds: 600
+            identitySource: method.request.header.Authorization
+            type: request
+      - http:
+          method: ANY
+          path: "{proxy+}"
+          cors: true
+          authorizer:
+            name: api_auth
+            resultTtlInSeconds: 600
+            identitySource: method.request.header.Authorization
+            type: request
+  ingest:
+    description: stac-server Ingest Lambda
+    handler: index.handler
+    memorySize: 512
+    timeout: 60
+    environment:
+      POST_INGEST_TOPIC_ARN: !Ref postIngestTopic
+    package:
+      artifact: dist/ingest/ingest.zip
+    events:
+      - sqs:
+          arn:
+            Fn::GetAtt: [ingestQueue, Arn]
+  api_auth:
+    runtime: python3.11
+    memorySize: 128
+    timeout: 60
+    handler: authorizer.api_auth.lambda_handler
+    description: STAC Server API Gateway Authorizer
+    package:
+      include:
+        - ./authorizer/*.py
+      exclude:
+        - '*'
+        - '*/**'
+        - '.*'
+resources:
+  Description: A STAC API running on stac-server
+  Resources:
+    ingestTopic:
+      Type: AWS::SNS::Topic
+      Properties:
+        TopicName: ${self:service}-${self:provider.stage}-ingest
+    postIngestTopic:
+      # After a collection or item is ingested, the status of the ingest (success
+      # or failure) along with details of the collection or item are sent to this
+      # SNS topic. To take future action on items after they are ingested
+      # suscribe an endpoint to this topic
+      Type: AWS::SNS::Topic
+      Properties:
+        TopicName: ${self:service}-${self:provider.stage}-post-ingest
+    postIngestTopicPolicy:
+      Type: AWS::SNS::TopicPolicy
+      DependsOn:
+        - postIngestTopic
+      Properties:
+        Topics:
+        - !GetAtt postIngestTopic.TopicArn
+        PolicyDocument:
+          Id: AllowSubscribe
+          Version: "2012-10-17"
+          Statement:
+          - Sid: AllowSharedServicesSubscribe
+            Effect: Allow
+            Principal:
+              AWS: 'arn:aws:iam::${param:sharedServicesAccount}:root'
+            Action: sns:Subscribe
+            Resource:
+            - !GetAtt postIngestTopic.TopicArn
+    deadLetterQueue:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: ${self:service}-${self:provider.stage}-dlq
+    ingestQueue:
+      Type: AWS::SQS::Queue
+      Properties:
+        VisibilityTimeout: 120
+        ReceiveMessageWaitTimeSeconds: 5
+        QueueName: ${self:service}-${self:provider.stage}-queue
+        RedrivePolicy:
+          deadLetterTargetArn: !GetAtt deadLetterQueue.Arn
+          maxReceiveCount: 2
+    ingestQueuePolicy:
+      Type: AWS::SQS::QueuePolicy
+      Properties:
+        Queues:
+          - !Ref ingestQueue
+        PolicyDocument:
+          Statement:
+            - Sid: allow-sqs-sendmessage
+              Effect: Allow
+              Principal:
+                AWS: "*"
+              Action: SQS:SendMessage
+              Resource: !GetAtt ingestQueue.Arn
+              Condition:
+                ArnEquals:
+                  aws:SourceArn: !Ref ingestTopic
+            # Allow any SNS Topic from this account to publish to this Queue
+            - Sid: allow-account-sendmessage
+              Effect: Allow
+              Principal:
+                AWS: "*"
+              Action: SQS:SendMessage
+              Resource: !GetAtt ingestQueue.Arn
+              Condition:
+                ArnLike:
+                  aws:SourceArn: "arn:aws:sns:${aws:region}:${aws:accountId}:*"
+    ingestSubscription:
+      Type: AWS::SNS::Subscription
+      Properties:
+        Endpoint: !GetAtt ingestQueue.Arn
+        Protocol: sqs
+        Region: "${aws:region}"
+        TopicArn: !Ref ingestTopic
+    # TODO: Remove when we get rid of Cirrus as the new Pipeline publish Lambda writes to the STAC Server ingest topic
+    cirrusSubscription:
+      Type: AWS::SNS::Subscription
+      Properties:
+        Endpoint: !GetAtt ingestQueue.Arn
+        Protocol: sqs
+        Region: "${aws:region}"
+        TopicArn: ${cf:${opt:cirrus, 'dpp-cirrus'}-${self:provider.stage}.CirrusPublishTopicArn}
+    # We want browsers to log in with basic auth, so return the response header "WWW-Authenticate: Basic"
+    apiLoginResponse:
+      Type: AWS::ApiGateway::GatewayResponse
+      Properties:
+        StatusCode: 401
+        ResponseType: UNAUTHORIZED
+        ResponseParameters:
+          "gatewayresponse.header.WWW-Authenticate": '''Basic''' # Yes, triple single quotes. YAML is weird.
+        ResponseTemplates:
+          "application/json": "{\"message\":$$context.error.messageString}"
+        RestApiId:
+          Ref: ApiGatewayRestApi
+
+plugins:
+  - serverless-offline
+  - serverless-plugin-git-variables
+  - serverless-python-requirements

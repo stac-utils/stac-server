@@ -59,6 +59,7 @@
     "@mapbox/extent": "^0.4.0",
     "@opensearch-project/opensearch": "^2.13.0",
     "@redocly/cli": "^1.34.2",
+    "compression": "^1.8.0",
     "cors": "^2.8.5",
     "express": "^4.21.2",
     "got": "^13.0",

@@ -1,6 +1,7 @@
 import cors from 'cors'
 import createError from 'http-errors'
 import express from 'express'
+import compression from 'compression'
 import morgan from 'morgan'
 import path from 'path'
 import { fileURLToPath } from 'url'
@@ -46,6 +47,10 @@ app.use(cors({
 }))
 
 app.use(express.json({ limit: '1mb' }))
+
+if (process.env['ENABLE_RESPONSE_COMPRESSION'] !== 'false') {
+  app.use(compression())
+}
 
 app.use(addEndpoint)
 

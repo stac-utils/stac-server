@@ -1294,6 +1294,10 @@ The post-hook Lambda configuration may reference any Lambda, not only one deploy
 of this stack. There is an example post-hook Lambda that can be included with this stack,
 which provides an example of how to interact with the response, but does not modify it.
 
+If compression is enabled with `ENABLE_RESPONSE_COMPRESSION`, you should ensure that the
+post-hook deployed handles compressed responses, or for the example post-hook lambda,
+disable compression.
+
 To enable this example post-hook:
 
 - Modify bin/build.sh to not exclude the "post-hook" package from being built.

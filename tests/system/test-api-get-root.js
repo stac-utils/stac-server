@@ -99,3 +99,13 @@ test('GET / returns links with the correct endpoint if `X-STAC-Endpoint` is set'
   t.not(apiLink, undefined)
   t.is(apiLink.href, `${url}/api`)
 })
+
+test('GET / returns a compressed response if ENABLE_RESPONSE_COMPRESSION', async (t) => {
+  const response = await t.context.api.client.get('', { resolveBodyOnly: false })
+
+  if (process.env['ENABLE_RESPONSE_COMPRESSION'] !== 'false') {
+    t.is(response.headers['content-encoding'], 'br')
+  } else {
+    t.true(response.headers['content-encoding'] === undefined)
+  }
+})

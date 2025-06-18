@@ -609,9 +609,10 @@ There are some settings that should be reviewed and updated as needeed in the se
 | CORS_CREDENTIALS                 | Configure whether or not to send the `Access-Control-Allow-Credentials` CORS header. Header will be sent if set to `true`.                                                                                                                                                      | none                                                                                 |
 | CORS_METHODS                     | Configure whether or not to send the `Access-Control-Allow-Methods` CORS header. Expects a comma-delimited string, e.g., `GET,PUT,POST`.                                                                                                                                        | `GET,HEAD,PUT,PATCH,POST,DELETE`                                                     |
 | CORS_HEADERS                     | Configure whether or not to send the `Access-Control-Allow-Headers` CORS header. Expects a comma-delimited string, e.g., `Content-Type,Authorization`. If not specified, defaults to reflecting the headers specified in the request’s `Access-Control-Request-Headers` header. | none                                                                                 |
-| ENABLE_COLLECTIONS_AUTHX         | Enables support for hidden `_collections` query parameter / field when set to `true`.                                                                                                                                                                                                              | none (not enabled)                                                                                 |
-| ENABLE_THUMBNAILS         | Enables support for presigned thumbnails.                                                                                                                                                                                                              | none (not enabled)                                                                                |
-| ENABLE_INGEST_ACTION_TRUNCATE         | Enables support for ingest action "truncate".                                                                                                                                                                                                              | none (not enabled)                                                                                |
+| ENABLE_COLLECTIONS_AUTHX         | Enables support for hidden `_collections` query parameter / field when set to `true`.                                                                                                                                                                                           | none (not enabled)                                                                   |
+| ENABLE_THUMBNAILS                | Enables support for presigned thumbnails.                                                                                                                                                                                                                                       | none (not enabled)                                                                   |
+| ENABLE_INGEST_ACTION_TRUNCATE    | Enables support for ingest action "truncate".                                                                                                                                                                                                                                   | none (not enabled)                                                                   |
+| ENABLE_RESPONSE_COMPRESSION      | Enables response compression. Set to 'false' to disable.                                                                                                                                                                                                                        | enabled                                                                              |
 
 Additionally, the credential for OpenSearch must be configured, as decribed in the
 section [Populating and accessing credentials](#populating-and-accessing-credentials).
@@ -1292,6 +1293,10 @@ which does nothing, but shows how the API Lambda response can be modified.
 The post-hook Lambda configuration may reference any Lambda, not only one deployed as part
 of this stack. There is an example post-hook Lambda that can be included with this stack,
 which provides an example of how to interact with the response, but does not modify it.
+
+If compression is enabled with `ENABLE_RESPONSE_COMPRESSION`, you should ensure that the
+post-hook deployed handles compressed responses, or for the example post-hook lambda,
+disable compression.
 
 To enable this example post-hook:
 

@@ -35,8 +35,8 @@ export default {
   plugins: [
     new CopyPlugin({
       patterns: [{
-        from: 'openapi.yaml',
-        to: 'openapi.yaml'
+        from: 'openapi.json',
+        to: 'openapi.json'
       },
       {
         from: 'redoc.html',

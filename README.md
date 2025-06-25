@@ -1466,6 +1466,12 @@ Next, edit that file to make it specific to this server. For example:
 - Fix each endpoint, especially the Landing Page defintion, which gets duplicated
 - Add definitions for each tag
 
+Then, convert the yaml to OpenAPI JSON document by running
+
+```shell
+yq -o=json src/lambdas/api/openapi.yaml > src/lambdas/api/openapi.json
+```
+
 To validate the resulting OpenAPI file, run
 
 ```shell

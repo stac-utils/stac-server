@@ -22,7 +22,7 @@ test.skip('search /', async (t) => {
   const expectedLinks = [
     {
       rel: 'service-desc',
-      type: 'application/vnd.oai.openapi',
+      type: 'application/vnd.oai.openapi+json;version=3.0',
       href: 'endpoint/api'
     },
     {

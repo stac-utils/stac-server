@@ -15,6 +15,6 @@ test('GET /api returns OpenAPI description', async (t) => {
   const response = await t.context.api.client.get('api',
     { resolveBodyOnly: false, responseType: 'text' })
 
-  t.is(response.headers['content-type'], 'application/vnd.oai.openapi')
+  t.is(response.headers['content-type'], 'application/vnd.oai.openapi+json;version=3.0')
   t.true(response.body.includes('openapi'))
 })

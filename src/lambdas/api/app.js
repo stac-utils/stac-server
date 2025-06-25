@@ -77,8 +77,8 @@ const pathName = process.env['LAMBDA_TASK_ROOT']
 
 app.get('/api', async (_req, res, next) => {
   try {
-    res.type('application/vnd.oai.openapi')
-    res.download(path.resolve(pathName, 'openapi.yaml'))
+    res.type('application/vnd.oai.openapi+json;version=3.0')
+    res.download(path.resolve(pathName, 'openapi.json'))
   } catch (error) {
     next(error)
   }

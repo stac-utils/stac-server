@@ -1142,7 +1142,7 @@ const getCatalog = async function (txnEnabled, endpoint = '') {
     },
     {
       rel: 'service-desc',
-      type: 'application/vnd.oai.openapi',
+      type: 'application/vnd.oai.openapi+json;version=3.0',
       href: `${endpoint}/api`
     },
     {

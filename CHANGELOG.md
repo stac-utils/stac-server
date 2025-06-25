@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Compression is enabled by default, can be disabled by setting
   `ENABLE_RESPONSE_COMPRESSION` to `false`. If using post-hooks, you must update
   to hooks to handle compression or disable compression.
+- OpenAPI definitions are now returned as JSON instead of YAML
 
 ## [4.2.0] - 2025-05-05
 

@@ -13,6 +13,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   `ENABLE_RESPONSE_COMPRESSION` to `false`. If using post-hooks, you must update
   to hooks to handle compression or disable compression.
 
+### Added
+
+- The maximum limit for the number of items returned from the /search and
+  /collections/{collection_id}/items endpoints can now be configured with the
+  `ITEMS_MAX_LIMIT` variable. It is recommended that this be set to 100.
+
 ## [4.2.0] - 2025-05-05
 
 ### Added

@@ -95,12 +95,16 @@ export const extractLimit = function (params) {
 
     if (Number.isNaN(limit) || limit <= 0) {
       throw new ValidationError(
-        'Invalid limit value, must be a number between 1 and 10000 inclusive'
+        'Invalid limit value, must be a positive number'
       )
     }
-    if (limit > 10000) {
-      limit = 10000
-    }
+
+    limit = Math.min(
+      Number(process.env['ITEMS_MAX_LIMIT'] || Number.MAX_SAFE_INTEGER),
+      limit || Number.MAX_SAFE_INTEGER,
+      10000
+    )
+
     return limit
   }
   return undefined

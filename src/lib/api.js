@@ -99,8 +99,12 @@ export const extractLimit = function (params) {
       )
     }
 
+    let itemsMaxLimit = Number(process.env['ITEMS_MAX_LIMIT'])
+    if (Number.isNaN(itemsMaxLimit) || itemsMaxLimit <= 0) {
+      itemsMaxLimit = Number.MAX_SAFE_INTEGER
+    }
     limit = Math.min(
-      Number(process.env['ITEMS_MAX_LIMIT'] || Number.MAX_SAFE_INTEGER),
+      itemsMaxLimit,
       limit || Number.MAX_SAFE_INTEGER,
       10000
     )

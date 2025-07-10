@@ -30,6 +30,11 @@ test('extractLimit when over max limit and ITEMS_MAX_LIMIT set over absolute max
   t.is(extractLimit({ limit: '10002' }), 10000)
 })
 
+test('extractLimit when ITEMS_MAX_LIMIT is invalid', (t) => {
+  process.env['ITEMS_MAX_LIMIT'] = 'foo'
+  t.is(extractLimit({ limit: '10002' }), 10000)
+})
+
 test('extractLimit invalid values', (t) => {
   const invalidLimits = ['', '-1', '0', 'a', -1, 0]
 

@@ -1,6 +1,6 @@
 services:
   opensearch:
-    image: opensearchproject/opensearch:2.17.1
+    image: opensearchproject/opensearch:2.19.2
     ports:
       - "127.0.0.1:9200:9200"
       - "127.0.0.1:9300:9300"

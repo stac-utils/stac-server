@@ -9,6 +9,7 @@
     "serverless-offline",
     "@types/express",
     "@ava/typescript",
-    "ava"
+    "ava",
+    "@types/node"
   ]
 }

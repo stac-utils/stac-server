@@ -89,7 +89,7 @@
     "@types/morgan": "^1.9.10",
     "@types/node": "^22.14",
     "@types/sinon": "^17.0.4",
-    "@typescript-eslint/eslint-plugin": "^8.36.0",
+    "@typescript-eslint/eslint-plugin": "^8.37.0",
     "@typescript-eslint/parser": "^8.36.0",
     "ava": "^5.3",
     "aws-event-mocks": "^0.0.0",

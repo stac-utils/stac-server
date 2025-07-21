@@ -62,7 +62,7 @@
     "compression": "^1.8.0",
     "cors": "^2.8.5",
     "express": "^4.21.2",
-    "got": "^13.0",
+    "got": "^14.4",
     "http-errors": "^2.0.0",
     "lodash-es": "^4.17.21",
     "memorystream": "^0.3.1",

@@ -1,9 +1,4 @@
 {
-  "1107275": {
-    "active": true,
-    "notes": "color-convert security vulnerability in version 3.1.1",
-    "expiry": "2025-11-01"
-  },
   "1107280": {
     "active": true,
     "notes": "color-name security vulnerability in version 2.0.1",
@@ -14,19 +9,40 @@
     "notes": "color-string security vulnerability in version 2.1.1",
     "expiry": "2025-11-01"
   },
-  "1107274": {
-    "active": true,
-    "notes": "debug security vulnerability in version 4.4.2",
-    "expiry": "2025-11-01"
-  },
   "1107278": {
     "active": true,
     "notes": "is-arrayish security vulnerability in version 0.3.3",
     "expiry": "2025-11-01"
   },
-  "1107279": {
+  "1107292": {
     "active": true,
-    "notes": "simple-swizzle security vulnerability in version 0.2.3",
+    "notes": "ansi-regex security vulnerability in version 6.2.1",
+    "expiry": "2025-11-01"
+  },
+  "1107296": {
+    "active": true,
+    "notes": "ansi-styles security vulnerability in version 6.2.2",
+    "expiry": "2025-11-01"
+  },
+  "1107295": {
+    "active": true,
+    "notes": "chalk security vulnerability in version 5.6.1",
+    "expiry": "2025-11-01"
+  },
+
+  "1107294": {
+    "active": true,
+    "notes": "strip-ansi security vulnerability in version 7.1.1",
+    "expiry": "2025-11-01"
+  },
+  "1107293": {
+    "active": true,
+    "notes": "supports-color security vulnerability in version 10.2.1",
+    "expiry": "2025-11-01"
+  },
+  "1107291": {
+    "active": true,
+    "notes": "wrap-ansi security vulnerability in version 9.0.1",
     "expiry": "2025-11-01"
   }
 }

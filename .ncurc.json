@@ -6,6 +6,7 @@
     "express",
     "@opensearch-project/opensearch",
     "serverless",
+    "serverless-http",
     "serverless-offline",
     "@types/express",
     "@ava/typescript",

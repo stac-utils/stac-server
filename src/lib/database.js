@@ -723,11 +723,15 @@ async function populateUnrestrictedIndices() {
 }
 
 export async function constructSearchParams(parameters, page, limit) {
-  const { id, collections } = parameters
+  const { id, collections, filter } = parameters
 
   let body
   if (id) {
-    body = buildIdQuery(id)
+    const params = { ids: [id] }
+    if (filter) {
+      params.filter = filter
+    }
+    body = buildOpenSearchQuery(params)
   } else {
     body = buildOpenSearchQuery(parameters)
     body.sort = buildSort(parameters) // sort applied to the id query causes hang???

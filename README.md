@@ -53,7 +53,9 @@
     - [Filter Extension](#filter-extension)
     - [Query Extension](#query-extension)
   - [Aggregation](#aggregation)
-  - [Hidden collections filter for authorization](#hidden-collections-filter-for-authorization)
+  - [Collections and filter parameters for authorization](#collections-and-filter-parameters-for-authorization)
+    - [Collections](#collections)
+    - [CQL2 Filter](#cql2-filter)
   - [Ingesting Data](#ingesting-data)
     - [Ingest actions](#ingest-actions)
     - [Ingesting large items](#ingesting-large-items)
@@ -609,7 +611,8 @@ There are some settings that should be reviewed and updated as needeed in the se
 | CORS_CREDENTIALS                 | Configure whether or not to send the `Access-Control-Allow-Credentials` CORS header. Header will be sent if set to `true`.                                                                                                                                                      | none                                                                                 |
 | CORS_METHODS                     | Configure whether or not to send the `Access-Control-Allow-Methods` CORS header. Expects a comma-delimited string, e.g., `GET,PUT,POST`.                                                                                                                                        | `GET,HEAD,PUT,PATCH,POST,DELETE`                                                     |
 | CORS_HEADERS                     | Configure whether or not to send the `Access-Control-Allow-Headers` CORS header. Expects a comma-delimited string, e.g., `Content-Type,Authorization`. If not specified, defaults to reflecting the headers specified in the request’s `Access-Control-Request-Headers` header. | none                                                                                 |
-| ENABLE_COLLECTIONS_AUTHX         | Enables support for hidden `_collections` query parameter / field when set to `true`.                                                                                                                                                                                           | none (not enabled)                                                                   |
+| ENABLE_COLLECTIONS_AUTHX         | Enables support for parameter to restrict collections when set to `true`.                                                                                                                                                                                           | none (not enabled)                                                                   |
+| ENABLE_FILTER_AUTHX         | Enables support for parameter to restrict items when set to `true`.                                                                                                                                                                                           | none (not enabled)                                                                   |
 | ENABLE_THUMBNAILS                | Enables support for presigned thumbnails.                                                                                                                                                                                                                                       | none (not enabled)                                                                   |
 | ENABLE_INGEST_ACTION_TRUNCATE    | Enables support for ingest action "truncate".                                                                                                                                                                                                                                   | none (not enabled)                                                                   |
 | ENABLE_RESPONSE_COMPRESSION      | Enables response compression. Set to 'false' to disable.                                                                                                                                                                                                                        | enabled                                                                              |
@@ -617,6 +620,9 @@ There are some settings that should be reviewed and updated as needeed in the se
 
 Additionally, the credential for OpenSearch must be configured, as decribed in the
 section [Populating and accessing credentials](#populating-and-accessing-credentials).
+
+If using STAC Server with a proxy in front of it, the base URL for the server, which
+will be used in all link URLs in response bodies, can be set with the `STAC-Endpoint` header.
 
 After reviewing the settings, build and deploy:
 
@@ -1118,15 +1124,31 @@ Available aggregations are:
 - geometry_geohash_grid_frequency ([geohash grid](https://opensearch.org/docs/latest/aggregations/bucket/geohash-grid/) on Item.geometry)
 - geometry_geotile_grid_frequency ([geotile grid](https://opensearch.org/docs/latest/aggregations/bucket/geotile-grid/) on Item.geometry)
 
-## Hidden collections filter for authorization
+## Collections and filter parameters for authorization
 
-All endpoints that involve the use of Collections support the use of a "hidden" query
-parameter named  (for GET requests) or body JSON field (for POST requests) named
-`_collections` that can be used by an authorization proxy (e.g., a pre-hook Lambda)
-to filter the collections a user has access to. This parameter/field will be excluded
-from pagination links, so it does not need to be removed on egress.
+One key concern in stac-server is how to restrict user's access to items.  These
+features allow this introducing support for injecting values at runtime (e.g., in a
+proxy or pre-hook Lambda) to restrict items by collection or by CQL2 filter.
+
+### Collections
 
 This feature must be enabled with the `ENABLE_COLLECTIONS_AUTHX` configuration.
+
+All endpoints that involve the use of Collections support the use of a additional
+parameter that indicates which collections a user should have access to. This parameter
+can be injected as:
+
+1. GET request - a query parameter `_collections`
+2. POST request - a body field `_collections`
+3. All requests - an HTTP header `stac-collections-authx`
+
+This parameter/field will be excluded
+from pagination links, so it does not need to be removed on egress.
+
+If this behavior is enabled and a parameter is not passed or is passed
+with an empty string or empty list, the caller will not have access to any collections.
+When `*` is included in the list of collections (presumably as the only value), the caller
+will have access to all collections.
 
 The endpoints this applies to are:
 
@@ -1141,13 +1163,32 @@ The endpoints this applies to are:
 - /search
 - /aggregate
 
-The five endpoints of the Transaction Extension do not use this parameter, as there are
+The five endpoints of the Transaction Extension do not use these parameters, as there are
 other authorization considerations for these, that are left as future work.
 
-If this behavior is enabled and a `_collections` parameter is not passed or is passed
-with an empty string or empty list, the caller will not have access to any collections.
-When `*` is included in the list of collections (ideally as the only value), the caller
-will have access to all collections.
+### CQL2 Filter
+
+This feature must be enabled with the `ENABLE_FILTER_AUTHX` configuration.
+
+All endpoints that involve items support the use of a additional
+parameter that indicates which items a user should have access to. This parameter
+can be injected as:
+
+1. GET request - a query parameter `_filter`
+2. POST request - a body field `_filter`
+3. All requests - an HTTP header `stac-filter-authx`
+
+This parameter/field will be excluded
+from pagination links, so it does not need to be removed on egress.
+
+The endpoints this applies to are:
+
+- /collections/:collectionId/aggregate
+- /collections/:collectionId/items
+- /collections/:collectionId/items/:itemId
+- /collections/:collectionId/items/:itemId/thumbnail
+- /search
+- /aggregate
 
 ## Ingesting Data
 

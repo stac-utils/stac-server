@@ -241,7 +241,7 @@ const extractStacQuery = function (params) {
 }
 
 const extractCql2Filter = function (params) {
-  let cql2Filter
+  let filterObj
   const { 'filter-lang': filterLang, 'filter-crs': filterCrs, filter } = params
 
   if (filterLang && filterLang !== 'cql2-json') {
@@ -258,13 +258,52 @@ const extractCql2Filter = function (params) {
 
   if (filter) {
     if (typeof filter === 'string') {
-      const parsed = JSON.parse(filter)
-      cql2Filter = parsed
+      filterObj = JSON.parse(filter)
     } else {
-      cql2Filter = { ...filter }
+      filterObj = { ...filter }
     }
   }
-  return cql2Filter
+  return filterObj
+}
+
+const extractRestrictionCql2Filter = function (params, headers) {
+  if (process.env['ENABLE_FILTER_AUTHX'] !== 'true') {
+    return undefined
+  }
+
+  const authxHeader = headers['stac-filter-authx']
+
+  const filter = authxHeader || params._filter
+
+  if (filter) {
+    if (typeof filter === 'string') {
+      return JSON.parse(filter)
+    }
+    return { ...filter }
+  }
+  return undefined
+}
+
+const concatenateCql2Filters = function (specifiedFilter, restrictionFilter) {
+  // an "and" op must have at least two args, so don't wrap if only one
+  // of the filters is defined
+
+  if (!specifiedFilter && !restrictionFilter) {
+    return undefined
+  }
+
+  if (specifiedFilter && !restrictionFilter) {
+    return specifiedFilter
+  }
+
+  if (!specifiedFilter && restrictionFilter) {
+    return restrictionFilter
+  }
+
+  return {
+    op: 'and',
+    args: [specifiedFilter, restrictionFilter]
+  }
 }
 
 const extractSortby = function (params) {
@@ -348,10 +387,22 @@ const extractIds = function (params) {
   return parseIds(params.ids)
 }
 
-const extractAllowedCollectionIds = function (params) {
-  return process.env['ENABLE_COLLECTIONS_AUTHX'] === 'true'
-    ? parseIds(params._collections) || []
-    : undefined
+const extractAllowedCollectionIds = function (params, headers) {
+  if (process.env['ENABLE_COLLECTIONS_AUTHX'] !== 'true') {
+    return undefined
+  }
+
+  const authxHeader = headers['stac-collections-authx']
+
+  if (authxHeader) {
+    return parseIds(authxHeader)
+  }
+
+  if (params._collections) {
+    return parseIds(params._collections)
+  }
+
+  return []
 }
 
 const extractCollectionIds = function (params) {
@@ -584,37 +635,46 @@ const buildPaginationLinks = function (limit, parameters, bbox, intersects, coll
   return []
 }
 
-const searchItems = async function (collectionId, queryParameters, backend, endpoint, httpMethod) {
-  logger.debug('Search parameters (unprocessed): %j', queryParameters)
+const searchItems = async function (
+  backend, httpMethod, collectionId, endpoint, parameters, headers
+) {
+  logger.debug('Search parameters (unprocessed): %j', parameters)
+
   const {
     next,
     bbox,
     intersects
-  } = queryParameters
+  } = parameters
   if (bbox && intersects) {
     throw new ValidationError('Expected bbox OR intersects, not both')
   }
-  const datetime = extractDatetime(queryParameters)
-  const bboxGeometry = extractBbox(queryParameters, httpMethod)
-  const intersectsGeometry = extractIntersects(queryParameters)
+  const datetime = extractDatetime(parameters)
+  const bboxGeometry = extractBbox(parameters, httpMethod)
+  const intersectsGeometry = extractIntersects(parameters)
   const geometry = intersectsGeometry || bboxGeometry
 
-  const sortby = extractSortby(queryParameters)
-  const query = extractStacQuery(queryParameters)
-  const filter = extractCql2Filter(queryParameters)
-  const fields = extractFields(queryParameters)
-  const ids = extractIds(queryParameters)
-  const allowedCollectionIds = extractAllowedCollectionIds(queryParameters)
-  const specifiedCollectionIds = extractCollectionIds(queryParameters)
+  const sortby = extractSortby(parameters)
+  const query = extractStacQuery(parameters)
+  const filter = concatenateCql2Filters(
+    extractCql2Filter(parameters),
+    extractRestrictionCql2Filter(parameters, headers)
+  )
+  const fields = extractFields(parameters)
+  const ids = extractIds(parameters)
+  const allowedCollectionIds = extractAllowedCollectionIds(
+    parameters,
+    headers
+  )
+  const specifiedCollectionIds = extractCollectionIds(parameters)
   const collections = filterAllowedCollectionIds(allowedCollectionIds, specifiedCollectionIds)
-  const limit = extractLimit(queryParameters) || 10
-  const page = extractPage(queryParameters)
+  const limit = extractLimit(parameters) || 10
+  const page = extractPage(parameters)
 
   const searchParams = pickBy({
     datetime,
     intersects: geometry,
     query,
-    filter,
+    filter: filter,
     sortby,
     fields,
     ids,
@@ -722,26 +782,29 @@ const agg = function (esAggs, name, dataType) {
 }
 
 const aggregate = async function (
-  collectionId, queryParameters, backend, endpoint, httpMethod
+  backend, httpMethod, collectionId, endpoint, parameters, headers
 ) {
-  logger.debug('Aggregate parameters (unprocessed): %j', queryParameters)
+  logger.debug('Aggregate parameters (unprocessed): %j', parameters)
 
   const {
     bbox,
     intersects
-  } = queryParameters
+  } = parameters
   if (bbox && intersects) {
     throw new ValidationError('Expected bbox OR intersects, not both')
   }
-  const datetime = extractDatetime(queryParameters)
-  const bboxGeometry = extractBbox(queryParameters, httpMethod)
-  const intersectsGeometry = extractIntersects(queryParameters)
+  const datetime = extractDatetime(parameters)
+  const bboxGeometry = extractBbox(parameters, httpMethod)
+  const intersectsGeometry = extractIntersects(parameters)
   const geometry = intersectsGeometry || bboxGeometry
-  const query = extractStacQuery(queryParameters)
-  const filter = extractCql2Filter(queryParameters)
-  const ids = extractIds(queryParameters)
-  const allowedCollectionIds = extractAllowedCollectionIds(queryParameters)
-  const specifiedCollectionIds = extractCollectionIds(queryParameters)
+  const query = extractStacQuery(parameters)
+  const filter = concatenateCql2Filters(
+    extractCql2Filter(parameters),
+    extractRestrictionCql2Filter(parameters, headers)
+  )
+  const ids = extractIds(parameters)
+  const allowedCollectionIds = extractAllowedCollectionIds(parameters, headers)
+  const specifiedCollectionIds = extractCollectionIds(parameters)
   const collections = filterAllowedCollectionIds(allowedCollectionIds, specifiedCollectionIds)
 
   if (Array.isArray(collections) && !collections.length) {
@@ -769,7 +832,7 @@ const aggregate = async function (
     datetime,
     intersects: geometry,
     query,
-    filter,
+    filter: filter,
     ids,
     collections,
   })
@@ -791,7 +854,7 @@ const aggregate = async function (
 
   logger.info('Aggregate parameters (processed): %j', searchParams)
 
-  const aggregationsRequested = extractAggregations(queryParameters)
+  const aggregationsRequested = extractAggregations(parameters)
 
   // validate that aggregations are supported by collection
   // if aggregations are not defined for a collection, any aggregation may be requested
@@ -816,57 +879,57 @@ const aggregate = async function (
 
   // the "grid_*" aggregation names are now deprecated
   const geohashPrecision = extractPrecision(
-    queryParameters,
+    parameters,
     'grid_geohash_frequency_precision',
     1,
     maxGeohashPrecision
   )
   const geohexPrecision = extractPrecision(
-    queryParameters,
+    parameters,
     'grid_geohex_frequency_precision',
     0,
     maxGeohexPrecision
   )
   const geotilePrecision = extractPrecision(
-    queryParameters,
+    parameters,
     'grid_geotile_frequency_precision',
     0,
     maxGeotilePrecision
   )
 
   const centroidGeohashGridPrecision = extractPrecision(
-    queryParameters,
+    parameters,
     'centroid_geohash_grid_frequency_precision',
     1,
     maxGeohashPrecision
   )
   const centroidGeohexGridPrecision = extractPrecision(
-    queryParameters,
+    parameters,
     'centroid_geohex_grid_frequency_precision',
     0,
     maxGeohexPrecision
   )
   const centroidGeotileGridPrecision = extractPrecision(
-    queryParameters,
+    parameters,
     'centroid_geotile_grid_frequency_precision',
     0,
     maxGeotilePrecision
   )
 
   const geometryGeohashGridPrecision = extractPrecision(
-    queryParameters,
+    parameters,
     'geometry_geohash_grid_frequency_precision',
     1,
     maxGeohashPrecision
   )
   // const geometryGeohexGridPrecision = extractPrecision(
-  //   queryParameters,
+  //   parameters,
   //   'geometry_geohex_grid_frequency_precision',
   //   0,
   //   maxGeohexPrecision
   // )
   const geometryGeotileGridPrecision = extractPrecision(
-    queryParameters,
+    parameters,
     'geometry_geotile_grid_frequency_precision',
     0,
     maxGeotilePrecision
@@ -1035,8 +1098,8 @@ const validateAdditionalProperties = (queryables) => {
   }
 }
 
-const getCollectionQueryables = async (collectionId, backend, endpoint, queryParameters) => {
-  const allowedCollectionIds = extractAllowedCollectionIds(queryParameters)
+const getCollectionQueryables = async (backend, collectionId, endpoint, parameters, headers) => {
+  const allowedCollectionIds = extractAllowedCollectionIds(parameters, headers)
   if (!isCollectionIdAllowed(allowedCollectionIds, collectionId)) {
     return new NotFoundError()
   }
@@ -1053,8 +1116,8 @@ const getCollectionQueryables = async (collectionId, backend, endpoint, queryPar
   return queryables
 }
 
-const getCollectionAggregations = async (collectionId, backend, endpoint, queryParameters) => {
-  if (!isCollectionIdAllowed(extractAllowedCollectionIds(queryParameters), collectionId)) {
+const getCollectionAggregations = async (backend, collectionId, endpoint, parameters, headers) => {
+  if (!isCollectionIdAllowed(extractAllowedCollectionIds(parameters, headers), collectionId)) {
     return new NotFoundError()
   }
 
@@ -1190,7 +1253,7 @@ const deleteUnusedFields = (collection) => {
   delete collection.aggregations
 }
 
-const getCollections = async function (backend, endpoint, queryParameters) {
+const getCollections = async function (backend, endpoint, parameters, headers) {
   // TODO: implement proper pagination, as this will only return up to
   // COLLECTION_LIMIT collections
   const collectionsOrError = await backend.getCollections(1, COLLECTION_LIMIT)
@@ -1198,7 +1261,7 @@ const getCollections = async function (backend, endpoint, queryParameters) {
     return collectionsOrError
   }
 
-  const allowedCollectionIds = extractAllowedCollectionIds(queryParameters)
+  const allowedCollectionIds = extractAllowedCollectionIds(parameters, headers)
   const collections = collectionsOrError.filter(
     (c) => isCollectionIdAllowed(allowedCollectionIds, c.id)
   )
@@ -1238,8 +1301,8 @@ const getCollections = async function (backend, endpoint, queryParameters) {
   return resp
 }
 
-const getCollection = async function (collectionId, backend, endpoint, queryParameters) {
-  if (!isCollectionIdAllowed(extractAllowedCollectionIds(queryParameters), collectionId)) {
+const getCollection = async function (backend, collectionId, endpoint, parameters, headers) {
+  if (!isCollectionIdAllowed(extractAllowedCollectionIds(parameters, headers), collectionId)) {
     return new NotFoundError()
   }
 
@@ -1257,7 +1320,7 @@ const getCollection = async function (collectionId, backend, endpoint, queryPara
   return new Error('Collection retrieval failed')
 }
 
-const createCollection = async function (collection, backend) {
+const createCollection = async function (backend, collection) {
   const response = await backend.indexCollection(collection)
   logger.debug('Create Collection: %j', response)
 
@@ -1267,13 +1330,19 @@ const createCollection = async function (collection, backend) {
   return new Error(`Error creating collection ${collection}`)
 }
 
-const getItem = async function (collectionId, itemId, backend, endpoint, queryParameters) {
-  if (!isCollectionIdAllowed(extractAllowedCollectionIds(queryParameters), collectionId)) {
+const getItem = async function (backend, collectionId, itemId, endpoint, params, headers) {
+  if (!isCollectionIdAllowed(extractAllowedCollectionIds(params, headers), collectionId)) {
     return new NotFoundError()
   }
 
-  const itemQuery = { collections: [collectionId], id: itemId }
+  const itemQuery = {
+    collections: [collectionId],
+    id: itemId,
+    filter: extractRestrictionCql2Filter(params, headers)
+  }
+
   const { results } = await backend.search(itemQuery, 1)
+
   const [it] = addItemLinks(results, endpoint)
   if (it) {
     return it
@@ -1281,10 +1350,9 @@ const getItem = async function (collectionId, itemId, backend, endpoint, queryPa
   return new NotFoundError()
 }
 
-const partialUpdateItem = async function (
-  collectionId, itemId, queryParameters, backend, endpoint = ''
-) {
-  const response = await backend.partialUpdateItem(collectionId, itemId, queryParameters)
+const partialUpdateItem = async function (backend,
+  collectionId, itemId, endpoint, parameters) {
+  const response = await backend.partialUpdateItem(collectionId, itemId, parameters)
   logger.debug('Partial Update Item: %j', response)
   if (response) {
     return addItemLinks([response.body.get._source], endpoint)[0]
@@ -1292,7 +1360,7 @@ const partialUpdateItem = async function (
   return new Error(`Error partially updating item ${itemId}`)
 }
 
-const createItem = async function (item, backend) {
+const createItem = async function (backend, item) {
   const response = await backend.indexItem(item)
   logger.debug('Create Item: %j', response)
 
@@ -1302,7 +1370,7 @@ const createItem = async function (item, backend) {
   return new Error(`Error creating item in collection ${item.collection}`)
 }
 
-const updateItem = async function (item, backend) {
+const updateItem = async function (backend, item) {
   const response = await backend.updateItem(item)
   logger.debug('Update Item: %j', response)
 
@@ -1312,7 +1380,7 @@ const updateItem = async function (item, backend) {
   return new Error(`Error updating item ${item.id}`)
 }
 
-const deleteItem = async function (collectionId, itemId, backend) {
+const deleteItem = async function (backend, collectionId, itemId) {
   const response = await backend.deleteItem(collectionId, itemId)
   logger.debug('Delete Item: %j', response)
   if (response) {
@@ -1321,16 +1389,20 @@ const deleteItem = async function (collectionId, itemId, backend) {
   return new Error(`Error deleting item ${collectionId}/${itemId}`)
 }
 
-const getItemThumbnail = async function (collectionId, itemId, backend, queryParameters) {
+const getItemThumbnail = async function (backend, collectionId, itemId, parameters, headers) {
   if (process.env['ENABLE_THUMBNAILS'] !== 'true') {
     return new NotFoundError()
   }
 
-  if (!isCollectionIdAllowed(extractAllowedCollectionIds(queryParameters), collectionId)) {
+  if (!isCollectionIdAllowed(extractAllowedCollectionIds(parameters, headers), collectionId)) {
     return new NotFoundError()
   }
 
-  const itemQuery = { collections: [collectionId], id: itemId }
+  const itemQuery = {
+    collections: [collectionId],
+    id: itemId,
+    filter: extractRestrictionCql2Filter(parameters, headers)
+  }
   const { results } = await backend.search(itemQuery, 1)
   const [item] = results
   if (!item) {

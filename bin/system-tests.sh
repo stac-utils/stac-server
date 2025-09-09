@@ -12,6 +12,8 @@ export REQUEST_LOGGING_ENABLED=false
 
 echo "Running tests"
 set +e
+
+# add --match to restrict by test name
 npx ava "./tests/system/${TEST_PATTERN}" --serial --verbose
 TEST_RESULT="$?"
 set -e

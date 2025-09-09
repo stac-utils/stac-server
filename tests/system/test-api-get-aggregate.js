@@ -605,3 +605,68 @@ test('GET /aggregate with restriction returns filtered collections', async (t) =
     t.deepEqual(r.body.aggregations, [])
   }
 })
+
+test('GET /aggregate with filter restriction', async (t) => {
+  process.env['ENABLE_FILTER_AUTHX'] = 'true'
+
+  const fixtureFiles = [
+    'collection.json',
+    'LC80100102015050LGN00.json',
+    'LC80100102015082LGN00.json'
+  ]
+  const items = await Promise.all(fixtureFiles.map((x) => loadJson(x)))
+  await processMessages(items)
+  await refreshIndices()
+
+  {
+    const r = await t.context.api.client.get(
+      'aggregate',
+      {
+        searchParams: new URLSearchParams({
+          aggregations: ['total_count'],
+          _filter: JSON.stringify({
+            op: '<>',
+            args: [
+              { property: 'id' }, 'LC80100102015050LGN00'
+            ]
+          })
+        }),
+        resolveBodyOnly: false,
+      }
+    )
+
+    t.is(r.statusCode, 200)
+    t.deepEqual(r.body.aggregations, [{
+      name: 'total_count',
+      data_type: 'integer',
+      value: 3
+    }
+    ])
+  }
+  {
+    const r = await t.context.api.client.get(
+      'aggregate',
+      {
+        searchParams: new URLSearchParams({
+          aggregations: ['total_count'] }),
+        headers: {
+          'stac-filter-authx': JSON.stringify({
+            op: '<>',
+            args: [
+              { property: 'id' }, 'LC80100102015050LGN00'
+            ]
+          })
+        },
+        resolveBodyOnly: false,
+      }
+    )
+
+    t.is(r.statusCode, 200)
+    t.deepEqual(r.body.aggregations, [{
+      name: 'total_count',
+      data_type: 'integer',
+      value: 3
+    }
+    ])
+  }
+})

@@ -1190,6 +1190,9 @@ The endpoints this applies to are:
 - /search
 - /aggregate
 
+One limitation of the header approach is that API Gateway has a hard limit of 10240 or
+8000 bytes (depending on the type), so a large filter could exceed this.
+
 ## Ingesting Data
 
 STAC Collections and Items are ingested by the `ingest` Lambda function, however this Lambda is not invoked directly by a user, it consumes records from the `stac-server-<stage>-queue` SQS. To add STAC Items or Collections to the queue, publish them to the SNS Topic `stac-server-<stage>-ingest`.

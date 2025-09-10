@@ -1,10 +1,11 @@
 // @ts-nocheck
 
 import test from 'ava'
-import { deleteAllIndices } from '../helpers/database.js'
+import { deleteAllIndices, refreshIndices } from '../helpers/database.js'
 import { ingestItem } from '../helpers/ingest.js'
 import { randomId, loadFixture } from '../helpers/utils.js'
-import { setup } from '../helpers/system-tests.js'
+import { setup, loadJson } from '../helpers/system-tests.js'
+import { processMessages } from '../../src/lib/ingest.js'
 
 test.before(async (t) => {
   await deleteAllIndices()
@@ -60,6 +61,7 @@ test.before(async (t) => {
 
 test.beforeEach(async (_) => {
   delete process.env['ENABLE_COLLECTIONS_AUTHX']
+  delete process.env['ENABLE_FILTER_AUTHX']
 })
 
 test.after.always(async (t) => {
@@ -130,4 +132,171 @@ test('GET /collections/:collectionId/items with restriction returns filtered col
       throwHttpErrors: false,
       searchParams: { _collections: 'not-a-collection' }
     })).statusCode, 404)
+})
+
+test('GET /collections/:collectionId/items with filter restriction', async (t) => {
+  process.env['ENABLE_FILTER_AUTHX'] = 'true'
+
+  const fixtureFiles = [
+    'collection.json',
+    'LC80100102015050LGN00.json',
+    'LC80100102015082LGN00.json'
+  ]
+  const items = await Promise.all(fixtureFiles.map((x) => loadJson(x)))
+  await processMessages(items)
+  await refreshIndices()
+
+  const collectionId = 'landsat-8-l1'
+  const urlpath = `collections/${collectionId}/items`
+
+  {
+    const r = await t.context.api.client.get(urlpath,
+      { resolveBodyOnly: false,
+        searchParams: { }
+      })
+
+    t.is(r.statusCode, 200)
+    t.is(r.body.features.length, 2)
+  }
+
+  {
+    const r = await t.context.api.client.get(urlpath,
+      { resolveBodyOnly: false,
+        searchParams: { _filter: null }
+      })
+
+    t.is(r.statusCode, 200)
+    t.is(r.body.features.length, 2)
+  }
+
+  {
+    const r = await t.context.api.client.get(urlpath,
+      { resolveBodyOnly: false,
+        searchParams: { _filter: JSON.stringify({
+          op: '=',
+          args: [
+            { property: 'id' }, 'foobar'
+          ]
+        }) }
+      })
+
+    t.is(r.statusCode, 200)
+    t.is(r.body.features.length, 0)
+  }
+
+  {
+    const r = await t.context.api.client.get(urlpath,
+      { resolveBodyOnly: false,
+        searchParams: {
+          _filter: JSON.stringify({
+            op: '<>',
+            args: [
+              { property: 'id' }, 'LC80100102015050LGN00'
+            ]
+          })
+        } })
+    t.is(r.statusCode, 200)
+    t.is(r.body.features.length, 1)
+  }
+
+  {
+    const r = await t.context.api.client.get(urlpath,
+      { resolveBodyOnly: false,
+        searchParams: {
+          _filter: JSON.stringify({
+            op: '=',
+            args: [
+              { property: 'landsat:scene_id' }, 'LC80100102015050LGN00'
+            ]
+          })
+        } })
+
+    t.is(r.statusCode, 200)
+    t.is(r.body.features.length, 1)
+  }
+
+  {
+    const r = await t.context.api.client.get(urlpath,
+      { resolveBodyOnly: false,
+        searchParams: {
+          _filter: JSON.stringify({
+            op: '=',
+            args: [
+              { property: 'landsat:scene_id' }, 'foo'
+            ]
+          })
+        } })
+
+    t.is(r.statusCode, 200)
+    t.is(r.body.features.length, 0)
+  }
+
+  {
+    const r = await t.context.api.client.get(urlpath,
+      { resolveBodyOnly: false,
+        searchParams: {
+          _filter: JSON.stringify({
+            op: '=',
+            args: [
+              { property: 'id' }, 'LC80100102015050LGN00'
+            ]
+          }),
+          filter: JSON.stringify({
+            op: '=',
+            args: [
+              { property: 'id' }, 'LC80100102015082LGN00'
+            ]
+          })
+        }
+      })
+
+    t.is(r.statusCode, 200)
+    t.is(r.body.features.length, 0)
+  }
+
+  {
+    const r = await t.context.api.client.get(urlpath,
+      { resolveBodyOnly: false,
+        searchParams: {
+          _filter: JSON.stringify({
+            op: '=',
+            args: [
+              { property: 'id' }, 'LC80100102015050LGN00'
+            ]
+          }),
+          filter: JSON.stringify({
+            op: '<>',
+            args: [
+              { property: 'id' }, 'LC80100102015082LGN00'
+            ]
+          })
+        }
+      })
+
+    t.is(r.statusCode, 200)
+    t.is(r.body.features.length, 1)
+  }
+
+  {
+    const r = await t.context.api.client.get(urlpath,
+      { resolveBodyOnly: false,
+        headers: { 'stac-filter-authx': JSON.stringify({
+          op: '=',
+          args: [
+            { property: 'id' }, 'LC80100102015050LGN00'
+          ]
+        }) },
+        searchParams: {
+          filter: JSON.stringify({
+            op: '<>',
+            args: [
+              { property: 'id' }, 'LC80100102015082LGN00'
+            ]
+          })
+        }
+      })
+
+    t.is(r.statusCode, 200)
+    t.is(r.body.features.length, 1)
+  }
 })

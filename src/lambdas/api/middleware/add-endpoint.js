@@ -9,8 +9,8 @@
  * @returns {string}
  */
 const determineEndpoint = (req) => {
-  const xStacEndpoint = req.get('X-STAC-Endpoint')
-  if (xStacEndpoint) return xStacEndpoint
+  const stacEndpointHeader = req.get('x-stac-endpoint') || req.get('stac-endpoint')
+  if (stacEndpointHeader) return stacEndpointHeader
 
   if (process.env['STAC_API_URL']) return process.env['STAC_API_URL']
 

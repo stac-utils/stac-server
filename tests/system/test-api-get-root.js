@@ -100,6 +100,21 @@ test('GET / returns links with the correct endpoint if `X-STAC-Endpoint` is set'
   t.is(apiLink.href, `${url}/api`)
 })
 
+test('GET / returns links with the correct endpoint if `STAC-Endpoint` is set', async (t) => {
+  const url = `http://${randomId()}.local`
+
+  const response = await t.context.api.client.get('', {
+    headers: {
+      'STAC-Endpoint': url
+    }
+  })
+
+  const apiLink = response.links.find((l) => l.rel === 'service-desc')
+
+  t.not(apiLink, undefined)
+  t.is(apiLink.href, `${url}/api`)
+})
+
 test('GET / returns a compressed response if ENABLE_RESPONSE_COMPRESSION', async (t) => {
   const response = await t.context.api.client.get('', { resolveBodyOnly: false })
 

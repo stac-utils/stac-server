@@ -31,6 +31,7 @@ test.before(async (t) => {
 
 test.beforeEach(async (_) => {
   delete process.env['ENABLE_COLLECTIONS_AUTHX']
+  delete process.env['ENABLE_FILTER_AUTHX']
 })
 
 test('GET /collections/{collectionId}/aggregate with no aggregations param', async (t) => {
@@ -211,4 +212,58 @@ test('GET /collections/:collectionId/aggregate with restriction returns filtered
       throwHttpErrors: false,
       searchParams: { _collections: 'not-a-collection' }
     })).statusCode, 404)
+})
+
+test('GET /collections/:collectionId/aggregate with filter restriction', async (t) => {
+  process.env['ENABLE_FILTER_AUTHX'] = 'true'
+
+  const collectionId = 'landsat-8-l1'
+
+  const path = `collections/${collectionId}/aggregate`
+
+  {
+    const r = await t.context.api.client.get(path,
+      {
+        resolveBodyOnly: false,
+        searchParams: new URLSearchParams({
+          aggregations: ['total_count'],
+          _filter: JSON.stringify({
+            op: '<>',
+            args: [
+              { property: 'id' }, 'LC80100102015050LGN00'
+            ]
+          }) })
+      })
+    t.is(r.statusCode, 200)
+    t.deepEqual(r.body.aggregations, [{
+      name: 'total_count',
+      data_type: 'integer',
+      value: 1
+    }
+    ])
+  }
+
+  {
+    const r = await t.context.api.client.get(path,
+      {
+        resolveBodyOnly: false,
+        searchParams: new URLSearchParams({
+          aggregations: ['total_count'],
+        }),
+        headers: {
+          'stac-filter-authx': JSON.stringify({
+            op: '<>',
+            args: [
+              { property: 'id' }, 'LC80100102015050LGN00'
+            ]
+          }) }
+      })
+    t.is(r.statusCode, 200)
+    t.deepEqual(r.body.aggregations, [{
+      name: 'total_count',
+      data_type: 'integer',
+      value: 1
+    }
+    ])
+  }
 })

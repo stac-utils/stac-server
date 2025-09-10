@@ -44,6 +44,7 @@ test.before(async (t) => {
 
 test.beforeEach(async (_) => {
   delete process.env['ENABLE_COLLECTIONS_AUTHX']
+  delete process.env['ENABLE_FILTER_AUTHX']
 })
 
 test.after.always(async (t) => {
@@ -1364,7 +1365,7 @@ test('/search - filter extension - s_intersects - non-existent geometry type', a
     /.*Operand for 's_intersects' must be a GeoJSON geometry: type was 'notPolygon'*/)
 })
 
-test('POST /search with restriction returns filtered collections', async (t) => {
+test('POST /search with collection restriction returns filtered collections', async (t) => {
   process.env['ENABLE_COLLECTIONS_AUTHX'] = 'true'
 
   const fixtureFiles = [
@@ -1430,6 +1431,166 @@ test('POST /search with restriction returns filtered collections', async (t) => 
 
     t.is(r.statusCode, 200)
     t.is(r.body.features.length, 0)
+  }
+})
+
+test('POST /search with filter restriction returns filtered results', async (t) => {
+  process.env['ENABLE_FILTER_AUTHX'] = 'true'
+
+  const fixtureFiles = [
+    'collection.json',
+    'LC80100102015050LGN00.json',
+    'LC80100102015082LGN00.json'
+  ]
+  const items = await Promise.all(fixtureFiles.map((x) => loadJson(x)))
+  await processMessages(items)
+  await refreshIndices()
+
+  const urlpath = 'search'
+
+  {
+    const r = await t.context.api.client.post(urlpath,
+      { resolveBodyOnly: false,
+        json: { } })
+
+    t.is(r.statusCode, 200)
+    t.is(r.body.features.length, 3)
+  }
+
+  {
+    const r = await t.context.api.client.post(urlpath,
+      { resolveBodyOnly: false,
+        json: {
+          _filter: null
+        } })
+
+    t.is(r.statusCode, 200)
+    t.is(r.body.features.length, 3)
+  }
+
+  {
+    const r = await t.context.api.client.post(urlpath,
+      { resolveBodyOnly: false,
+        json: {
+          _filter: {
+            op: '=',
+            args: [
+              { property: 'id' }, 'foobar'
+            ]
+          }
+        } })
+
+    t.is(r.statusCode, 200)
+    t.is(r.body.features.length, 0)
+  }
+
+  {
+    const r = await t.context.api.client.post(urlpath,
+      { resolveBodyOnly: false,
+        json: {
+          _filter: {
+            op: '<>',
+            args: [
+              { property: 'id' }, 'LC80100102015050LGN00'
+            ]
+          }
+        } })
+
+    t.is(r.statusCode, 200)
+    t.is(r.body.features.length, 2)
+  }
+
+  {
+    const r = await t.context.api.client.post(urlpath,
+      { resolveBodyOnly: false,
+        json: {
+          _filter: {
+            op: '=',
+            args: [
+              { property: 'landsat:scene_id' }, 'LC80100102015050LGN00'
+            ]
+          }
+        } })
+
+    t.is(r.statusCode, 200)
+    t.is(r.body.features.length, 1)
+  }
+
+  {
+    const r = await t.context.api.client.post(urlpath,
+      { resolveBodyOnly: false,
+        json: {
+          _filter: {
+            op: '=',
+            args: [
+              { property: 'landsat:scene_id' }, 'foo'
+            ]
+          }
+        } })
+
+    t.is(r.statusCode, 200)
+    t.is(r.body.features.length, 0)
+  }
+
+  {
+    const r = await t.context.api.client.post(urlpath,
+      { resolveBodyOnly: false,
+        json: {
+          _filter: {
+            op: '=',
+            args: [
+              { property: 'id' }, 'LC80100102015050LGN00'
+            ]
+          },
+          filter: {
+            op: '=',
+            args: [
+              { property: 'id' }, 'LC80100102015082LGN00'
+            ]
+          }
+        }
+      })
+
+    t.is(r.statusCode, 200)
+    t.is(r.body.features.length, 0)
+  }
+
+  {
+    const r = await t.context.api.client.post(urlpath,
+      { resolveBodyOnly: false,
+        json: {
+          _filter: {
+            op: '=',
+            args: [
+              { property: 'id' }, 'LC80100102015050LGN00'
+            ]
+          },
+          filter: {
+            op: '<>',
+            args: [
+              { property: 'id' }, 'LC80100102015082LGN00'
+            ]
+          }
+        }
+      })
+
+    t.is(r.statusCode, 200)
+    t.is(r.body.features.length, 1)
+  }
+
+  {
+    const r = await t.context.api.client.post(urlpath,
+      { resolveBodyOnly: false,
+        headers: { 'stac-filter-authx': JSON.stringify({
+          op: '=',
+          args: [
+            { property: 'landsat:scene_id' }, 'LC80100102015050LGN00'
+          ]
+        }) },
+        json: {} })
+
+    t.is(r.statusCode, 200)
+    t.is(r.body.features.length, 1)
   }
 })
 

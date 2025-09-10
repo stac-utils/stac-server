@@ -44,6 +44,8 @@ test.before(async (t) => {
 
 test.beforeEach(async (_) => {
   delete process.env['ENABLE_COLLECTIONS_AUTHX']
+  delete process.env['ENABLE_FILTER_AUTHX']
+  delete process.env['ENABLE_THUMBNAILS']
 })
 
 test.after.always(async (t) => {
@@ -118,6 +120,13 @@ test('GET /collections/:collectionId/items/:itemId with restriction returns filt
       throwHttpErrors: false,
       searchParams: { _collections: 'not-a-collection' }
     })).statusCode, 404)
+
+  // header
+  t.is((await t.context.api.client.get(path,
+    {
+      resolveBodyOnly: false,
+      headers: { 'stac-collections-authx': `${collectionId},foo,bar` }
+    })).statusCode, 200)
 })
 
 test('GET /collections/:collectionId/items/:itemId/thumbnail with restriction returns filtered collections', async (t) => {
@@ -159,6 +168,14 @@ test('GET /collections/:collectionId/items/:itemId/thumbnail with restriction re
       throwHttpErrors: false,
       searchParams: { _collections: 'not-a-collection' }
     })).statusCode, 404)
+
+  // header
+  t.is((await t.context.api.client.get(path,
+    {
+      resolveBodyOnly: false,
+      followRedirect: false,
+      headers: { 'stac-collections-authx': `${collectionId},foo,bar` }
+    })).statusCode, 302)
 })
 
 test('GET /collections/:collectionId/items/:itemId/thumbnail disabled', async (t) => {
@@ -170,4 +187,118 @@ test('GET /collections/:collectionId/items/:itemId/thumbnail disabled', async (t
 
   t.is((await t.context.api.client.get(path,
     { resolveBodyOnly: false, throwHttpErrors: false })).statusCode, 404)
+})
+
+test('GET /collections/:collectionId/items/:itemId with filter authx returns filtered collections', async (t) => {
+  process.env['ENABLE_FILTER_AUTHX'] = 'true'
+
+  const { collectionId, itemId } = t.context
+
+  const path = `collections/${collectionId}/items/${itemId}`
+
+  t.is((await t.context.api.client.get(path,
+    {
+      resolveBodyOnly: false,
+    })).statusCode, 200)
+
+  t.is((await t.context.api.client.get(path,
+    { resolveBodyOnly: false,
+      searchParams: { _filter: null }
+    })).statusCode, 200)
+
+  t.is((await t.context.api.client.get(path,
+    {
+      resolveBodyOnly: false,
+      throwHttpErrors: false,
+      searchParams: { _filter: JSON.stringify({
+        op: '=',
+        args: [
+          { property: 'id' }, 'itemId'
+        ]
+      }) }
+    })).statusCode, 404)
+
+  t.is((await t.context.api.client.get(path,
+    {
+      resolveBodyOnly: false,
+      throwHttpErrors: false,
+      searchParams: { _filter: JSON.stringify({
+        op: '=',
+        args: [
+          { property: 'id' }, 'foobar'
+        ]
+      }) }
+    })).statusCode, 404)
+})
+
+test('GET /collections/:collectionId/items/:itemId/thumbnail with filter authx returns filtered results', async (t) => {
+  process.env['ENABLE_FILTER_AUTHX'] = 'true'
+  process.env['ENABLE_THUMBNAILS'] = 'true'
+
+  const { collectionId, itemId } = t.context
+
+  const path = `collections/${collectionId}/items/${itemId}/thumbnail`
+
+  t.is((await t.context.api.client.get(path,
+    { resolveBodyOnly: false, throwHttpErrors: false, followRedirect: false,
+    })).statusCode, 302)
+
+  t.is((await t.context.api.client.get(path,
+    {
+      resolveBodyOnly: false,
+      throwHttpErrors: false,
+      followRedirect: false,
+      searchParams: { _filter: '' }
+    })).statusCode, 302)
+
+  t.is((await t.context.api.client.get(path,
+    {
+      resolveBodyOnly: false,
+      followRedirect: false,
+      throwHttpErrors: false,
+      searchParams: { _filter: JSON.stringify({
+        op: '<>',
+        args: [
+          { property: 'id' }, itemId
+        ]
+      }) }
+    })).statusCode, 404)
+
+  t.is((await t.context.api.client.get(path,
+    {
+      resolveBodyOnly: false,
+      followRedirect: false,
+      searchParams: { _filter: JSON.stringify({
+        op: '=',
+        args: [
+          { property: 'id' }, itemId
+        ]
+      }) }
+    })).statusCode, 302)
+
+  t.is((await t.context.api.client.get(path,
+    { resolveBodyOnly: false,
+      followRedirect: false,
+      throwHttpErrors: false,
+      searchParams: { _filter: JSON.stringify({
+        op: '=',
+        args: [
+          { property: 'id' }, 'non-existent'
+        ]
+      }) }
+    })).statusCode, 404)
+
+  // header
+  t.is((await t.context.api.client.get(path,
+    {
+      resolveBodyOnly: false,
+      followRedirect: false,
+      throwHttpErrors: false,
+      headers: { 'stac-filter-authx': JSON.stringify({
+        op: '=',
+        args: [
+          { property: 'id' }, itemId
+        ]
+      }) }
+    })).statusCode, 302)
 })

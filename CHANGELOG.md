@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## Unreleased - TBD
+
+## Changed
+
+- If a request includes the `STAC-Endpoint` header, that endpoint will be used when generating link hrefs.
+  This deprecates (but still supports) the `X-STAC-Endpoint` header. This change is in order to comply
+  with the proprietary header name recommendations in RFC 6648.
+
+## Added
+
+- To all endpoints that accept a `filter` parameter, add support for a query parameter (GET)
+  or body field (POST) `_filter` or a header `STAC-Filter-Authx` that will "and" a CQL2
+  filter expression to the user's
+  request, such that the extra expression will not be
+  will not be revealed in link contents. This is controlled by the `ENABLE_FILTER_AUTHX`
+  environment variable.
+- To all endpoints that already support the `_collections` parameter, also support a
+  header `STAC-Collections-Authx` to pass the value.
+
 ## [4.3.0] - 2025-07-16
 
 ### Changed

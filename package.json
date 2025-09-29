@@ -55,7 +55,7 @@
     "@aws-sdk/client-sns": "^3.882.0",
     "@aws-sdk/client-sqs": "^3.882.0",
     "@aws-sdk/credential-provider-node": "^3.882.0",
-    "@aws-sdk/s3-request-presigner": "^3.882.0",
+    "@aws-sdk/s3-request-presigner": "^3.896.0",
     "@mapbox/extent": "^0.4.0",
     "@opensearch-project/opensearch": "^2.13.0",
     "@redocly/cli": "^2.0.8",

@@ -1,5 +1,5 @@
 import { getItemCreated } from './database.js'
-import { addItemLinks, addCollectionLinks } from './api.js'
+import { addItemLinks, addCollectionLinks, proxyStacObjectAssets } from './api.js'
 import { dbClient, createIndex } from './database-client.js'
 import logger from './logger.js'
 import { publishRecordToSns } from './sns.js'
@@ -164,7 +164,7 @@ export async function processMessages(msgs) {
 /* eslint-enable no-await-in-loop */
 
 // Impure - mutates record
-function updateLinksWithinRecord(record) {
+function updateLinksAndHrefsWithinRecord(record) {
   const endpoint = process.env['STAC_API_URL']
   if (!endpoint) {
     logger.info('STAC_API_URL not set, not updating links within ingested record')
@@ -179,6 +179,7 @@ function updateLinksWithinRecord(record) {
   } else if (isCollection(record)) {
     addCollectionLinks([record], endpoint)
   }
+  proxyStacObjectAssets([record], endpoint)
   return record
 }
 
@@ -186,7 +187,7 @@ export async function publishResultsToSns(results, topicArn) {
   await Promise.allSettled(results.map(async (result) => {
     if (isStacEntity(result.record)) {
       if (result.record && !result.error) {
-        updateLinksWithinRecord(result.record)
+        updateLinksAndHrefsWithinRecord(result.record)
       }
       await publishRecordToSns(topicArn, result.record, result.error)
     }

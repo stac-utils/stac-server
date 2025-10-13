@@ -6,6 +6,10 @@ import { NotFoundError, ValidationError } from './errors.js'
 import { isIndexNotFoundError } from './database.js'
 import logger from './logger.js'
 import { bboxToPolygon } from './geo-utils.js'
+import {
+  getCachedProxyConfig,
+  proxyAssets,
+} from './asset-proxy.js'
 
 // max number of collections to retrieve
 const COLLECTION_LIMIT = process.env['STAC_SERVER_COLLECTION_LIMIT'] || 100
@@ -50,6 +54,8 @@ const ALL_AGGREGATION_NAMES = DEFAULT_AGGREGATIONS.map((x) => x.name).concat(
     'cloud_cover_frequency',
   ]
 )
+
+const ALTERNATE_ASSETS_EXTENSION = 'https://stac-extensions.github.io/alternate-assets/v1.2.0/schema.json'
 
 export const extractIntersects = function (params) {
   let intersectsGeometry
@@ -555,6 +561,45 @@ export const addItemLinks = function (results, endpoint) {
   return results
 }
 
+// Impure - mutates results
+export const proxyStacObjectAssets = function (results, endpoint) {
+  const proxyConfig = getCachedProxyConfig()
+  if (!proxyConfig.enabled) {
+    return results
+  }
+
+  results.forEach((result) => {
+    if (!result.assets || typeof result.assets !== 'object') {
+      return
+    }
+
+    const itemId = result.collection ? result.id : null
+    const collectionId = result.collection ? result.collection : result.id
+
+    const { assets, wasProxied } = proxyAssets(
+      result.assets,
+      endpoint,
+      collectionId,
+      itemId,
+      proxyConfig
+    )
+
+    if (wasProxied) {
+      result.assets = assets
+
+      if (!result.stac_extensions) {
+        result.stac_extensions = []
+      }
+
+      if (!result.stac_extensions.includes(ALTERNATE_ASSETS_EXTENSION)) {
+        result.stac_extensions.push(ALTERNATE_ASSETS_EXTENSION)
+      }
+    }
+  })
+
+  return results
+}
+
 const wrapResponseInFeatureCollection = function (features, links,
   numberMatched, numberReturned, limit) {
   const fc = {
@@ -758,8 +803,10 @@ const searchItems = async function (
     })
   }
 
-  const items = addItemLinks(responseItems, endpoint)
-  return wrapResponseInFeatureCollection(items, links, numberMatched, numberReturned, limit)
+  addItemLinks(responseItems, endpoint)
+  proxyStacObjectAssets(responseItems, endpoint)
+
+  return wrapResponseInFeatureCollection(responseItems, links, numberMatched, numberReturned, limit)
 }
 
 const agg = function (esAggs, name, dataType) {
@@ -1270,7 +1317,9 @@ const getCollections = async function (backend, endpoint, parameters, headers) {
     deleteUnusedFields(collection)
   }
 
-  const linkedCollections = addCollectionLinks(collections, endpoint)
+  addCollectionLinks(collections, endpoint)
+  proxyStacObjectAssets(collections, endpoint)
+
   const resp = {
     collections,
     links: [
@@ -1294,8 +1343,8 @@ const getCollections = async function (backend, endpoint, parameters, headers) {
     resp['context'] = {
       page: 1,
       limit: COLLECTION_LIMIT,
-      matched: linkedCollections && linkedCollections.length,
-      returned: linkedCollections && linkedCollections.length
+      matched: collections && collections.length,
+      returned: collections && collections.length
     }
   }
   return resp
@@ -1312,12 +1361,10 @@ const getCollection = async function (backend, collectionId, endpoint, parameter
   }
 
   deleteUnusedFields(result)
+  addCollectionLinks([result], endpoint)
+  proxyStacObjectAssets([result], endpoint)
 
-  const col = addCollectionLinks([result], endpoint)
-  if (col.length > 0) {
-    return col[0]
-  }
-  return new Error('Collection retrieval failed')
+  return result
 }
 
 const createCollection = async function (backend, collection) {
@@ -1343,7 +1390,10 @@ const getItem = async function (backend, collectionId, itemId, endpoint, params,
 
   const { results } = await backend.search(itemQuery, 1)
 
-  const [it] = addItemLinks(results, endpoint)
+  addItemLinks(results, endpoint)
+  proxyStacObjectAssets(results, endpoint)
+
+  const [it] = results
   if (it) {
     return it
   }
@@ -1355,7 +1405,9 @@ const partialUpdateItem = async function (backend,
   const response = await backend.partialUpdateItem(collectionId, itemId, parameters)
   logger.debug('Partial Update Item: %j', response)
   if (response) {
-    return addItemLinks([response.body.get._source], endpoint)[0]
+    const items = addItemLinks([response.body.get._source], endpoint)
+    proxyStacObjectAssets(items, endpoint)
+    return items[0]
   }
   return new Error(`Error partially updating item ${itemId}`)
 }
@@ -1479,4 +1531,5 @@ export default {
   getCollectionQueryables,
   getGlobalAggregations,
   getCollectionAggregations,
+  proxyStacObjectAssets,
 }

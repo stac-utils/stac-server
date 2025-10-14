@@ -4,6 +4,7 @@ import {
   proxyAssets,
   shouldProxyAssets,
   determineS3Region,
+  isAssetProxyEnabled,
   BucketOption
 } from '../../src/lib/asset-proxy.js'
 
@@ -40,58 +41,84 @@ test('parseS3Url - path style without region', (t) => {
 test('parseS3Url - invalid URLs', (t) => {
   t.is(parseS3Url('https://example.com/file.tif'), null)
   t.is(parseS3Url('s3://bucket'), null)
+  t.is(parseS3Url('s3://bucket-only-no-key'), null)
   t.is(parseS3Url(''), null)
 })
 
-test('shouldProxyAssets - ALL mode', (t) => {
-  const config = {
-    enabled: true,
-    mode: BucketOption.ALL,
-    buckets: new Set(),
-    urlExpiry: 300
-  }
-  t.true(shouldProxyAssets('any-bucket', config))
+test('parseS3Url - handles nested paths', (t) => {
+  const result = parseS3Url('s3://my-bucket/deeply/nested/path/to/file.tif')
+  t.deepEqual(result, { bucket: 'my-bucket', key: 'deeply/nested/path/to/file.tif', region: null })
 })
 
-test('shouldProxyAssets - NONE mode', (t) => {
-  const config = {
-    enabled: false,
-    mode: BucketOption.NONE,
-    buckets: new Set(),
-    urlExpiry: 300
+test('isAssetProxyEnabled - NONE mode', (t) => {
+  const originalOption = process.env['ASSET_PROXY_BUCKET_OPTION']
+  process.env['ASSET_PROXY_BUCKET_OPTION'] = 'NONE'
+
+  t.false(isAssetProxyEnabled())
+
+  if (originalOption !== undefined) {
+    process.env['ASSET_PROXY_BUCKET_OPTION'] = originalOption
+  } else {
+    delete process.env['ASSET_PROXY_BUCKET_OPTION']
   }
-  t.false(shouldProxyAssets('any-bucket', config))
 })
 
-test('shouldProxyAssets - LIST mode with matching bucket', (t) => {
-  const config = {
-    enabled: true,
-    mode: BucketOption.LIST,
-    buckets: new Set(['bucket1', 'bucket2']),
-    urlExpiry: 300
+test('isAssetProxyEnabled - ALL mode', (t) => {
+  const originalOption = process.env['ASSET_PROXY_BUCKET_OPTION']
+  process.env['ASSET_PROXY_BUCKET_OPTION'] = 'ALL'
+
+  t.true(isAssetProxyEnabled())
+
+  if (originalOption !== undefined) {
+    process.env['ASSET_PROXY_BUCKET_OPTION'] = originalOption
+  } else {
+    delete process.env['ASSET_PROXY_BUCKET_OPTION']
   }
-  t.true(shouldProxyAssets('bucket1', config))
-  t.false(shouldProxyAssets('bucket3', config))
 })
 
-test('shouldProxyAssets - ALL_BUCKETS_IN_ACCOUNT mode', (t) => {
-  const config = {
-    enabled: true,
-    mode: BucketOption.ALL_BUCKETS_IN_ACCOUNT,
-    buckets: new Set(['account-bucket-1', 'account-bucket-2']),
-    urlExpiry: 300
+test('isAssetProxyEnabled - LIST mode', (t) => {
+  const originalOption = process.env['ASSET_PROXY_BUCKET_OPTION']
+  process.env['ASSET_PROXY_BUCKET_OPTION'] = 'LIST'
+
+  t.true(isAssetProxyEnabled())
+
+  if (originalOption !== undefined) {
+    process.env['ASSET_PROXY_BUCKET_OPTION'] = originalOption
+  } else {
+    delete process.env['ASSET_PROXY_BUCKET_OPTION']
   }
-  t.true(shouldProxyAssets('account-bucket-1', config))
-  t.false(shouldProxyAssets('other-bucket', config))
 })
 
-test('proxyAssets - transforms assets with ALL mode', (t) => {
-  const config = {
-    enabled: true,
-    mode: BucketOption.ALL,
-    buckets: new Set(),
-    urlExpiry: 300
+test('shouldProxyAssets - NONE mode returns false', (t) => {
+  const originalOption = process.env['ASSET_PROXY_BUCKET_OPTION']
+  process.env['ASSET_PROXY_BUCKET_OPTION'] = 'NONE'
+
+  t.false(shouldProxyAssets('any-bucket'))
+
+  if (originalOption !== undefined) {
+    process.env['ASSET_PROXY_BUCKET_OPTION'] = originalOption
+  } else {
+    delete process.env['ASSET_PROXY_BUCKET_OPTION']
   }
+})
+
+test('shouldProxyAssets - ALL mode returns true for any bucket', (t) => {
+  const originalOption = process.env['ASSET_PROXY_BUCKET_OPTION']
+  process.env['ASSET_PROXY_BUCKET_OPTION'] = 'ALL'
+
+  t.true(shouldProxyAssets('any-bucket'))
+  t.true(shouldProxyAssets('another-bucket'))
+
+  if (originalOption !== undefined) {
+    process.env['ASSET_PROXY_BUCKET_OPTION'] = originalOption
+  } else {
+    delete process.env['ASSET_PROXY_BUCKET_OPTION']
+  }
+})
+
+test('proxyAssets - ALL mode transforms item assets', (t) => {
+  const originalOption = process.env['ASSET_PROXY_BUCKET_OPTION']
+  process.env['ASSET_PROXY_BUCKET_OPTION'] = 'ALL'
 
   const assets = {
     thumbnail: {
@@ -108,8 +135,7 @@ test('proxyAssets - transforms assets with ALL mode', (t) => {
     assets,
     'https://api.example.com',
     'collection1',
-    'item1',
-    config
+    'item1'
   )
 
   t.true(wasProxied)
@@ -117,15 +143,17 @@ test('proxyAssets - transforms assets with ALL mode', (t) => {
   t.is(proxied.thumbnail.alternate.s3.href, 's3://my-bucket/thumb.jpg')
   t.is(proxied.data.href, 'https://api.example.com/collections/collection1/items/item1/assets/data')
   t.is(proxied.data.alternate.s3.href, 'https://my-bucket.s3.us-west-2.amazonaws.com/data.tif')
+
+  if (originalOption !== undefined) {
+    process.env['ASSET_PROXY_BUCKET_OPTION'] = originalOption
+  } else {
+    delete process.env['ASSET_PROXY_BUCKET_OPTION']
+  }
 })
 
-test('proxyAssets - no transformation with NONE mode', (t) => {
-  const config = {
-    enabled: false,
-    mode: BucketOption.NONE,
-    buckets: new Set(),
-    urlExpiry: 300
-  }
+test('proxyAssets - NONE mode does not transform assets', (t) => {
+  const originalOption = process.env['ASSET_PROXY_BUCKET_OPTION']
+  process.env['ASSET_PROXY_BUCKET_OPTION'] = 'NONE'
 
   const assets = {
     thumbnail: {
@@ -138,55 +166,23 @@ test('proxyAssets - no transformation with NONE mode', (t) => {
     assets,
     'https://api.example.com',
     'collection1',
-    'item1',
-    config
+    'item1'
   )
 
   t.false(wasProxied)
   t.is(proxied.thumbnail.href, 's3://my-bucket/thumb.jpg')
   t.is(proxied.thumbnail.alternate, undefined)
-})
 
-test('proxyAssets - LIST mode only transforms matching buckets', (t) => {
-  const config = {
-    enabled: true,
-    mode: BucketOption.LIST,
-    buckets: new Set(['proxied-bucket']),
-    urlExpiry: 300
+  if (originalOption !== undefined) {
+    process.env['ASSET_PROXY_BUCKET_OPTION'] = originalOption
+  } else {
+    delete process.env['ASSET_PROXY_BUCKET_OPTION']
   }
-
-  const assets = {
-    proxied: {
-      href: 's3://proxied-bucket/file.tif',
-      type: 'image/tiff'
-    },
-    notProxied: {
-      href: 's3://other-bucket/file.tif',
-      type: 'image/tiff'
-    }
-  }
-
-  const { assets: proxied, wasProxied } = proxyAssets(
-    assets,
-    'https://api.example.com',
-    'collection1',
-    'item1',
-    config
-  )
-
-  t.true(wasProxied)
-  t.is(proxied.proxied.href, 'https://api.example.com/collections/collection1/items/item1/assets/proxied')
-  t.is(proxied.notProxied.href, 's3://other-bucket/file.tif')
-  t.is(proxied.notProxied.alternate, undefined)
 })
 
 test('proxyAssets - collection assets (no itemId)', (t) => {
-  const config = {
-    enabled: true,
-    mode: BucketOption.ALL,
-    buckets: new Set(),
-    urlExpiry: 300
-  }
+  const originalOption = process.env['ASSET_PROXY_BUCKET_OPTION']
+  process.env['ASSET_PROXY_BUCKET_OPTION'] = 'ALL'
 
   const assets = {
     thumbnail: {
@@ -199,22 +195,23 @@ test('proxyAssets - collection assets (no itemId)', (t) => {
     assets,
     'https://api.example.com',
     'collection1',
-    null,
-    config
+    null
   )
 
   t.true(wasProxied)
   t.is(proxied.thumbnail.href, 'https://api.example.com/collections/collection1/assets/thumbnail')
   t.is(proxied.thumbnail.alternate.s3.href, 's3://my-bucket/collection-thumb.jpg')
+
+  if (originalOption !== undefined) {
+    process.env['ASSET_PROXY_BUCKET_OPTION'] = originalOption
+  } else {
+    delete process.env['ASSET_PROXY_BUCKET_OPTION']
+  }
 })
 
 test('proxyAssets - preserves existing alternate links', (t) => {
-  const config = {
-    enabled: true,
-    mode: BucketOption.ALL,
-    buckets: new Set(),
-    urlExpiry: 300
-  }
+  const originalOption = process.env['ASSET_PROXY_BUCKET_OPTION']
+  process.env['ASSET_PROXY_BUCKET_OPTION'] = 'ALL'
 
   const assets = {
     data: {
@@ -230,22 +227,20 @@ test('proxyAssets - preserves existing alternate links', (t) => {
     assets,
     'https://api.example.com',
     'collection1',
-    'item1',
-    config
+    'item1'
   )
 
   t.is(proxied.data.alternate.http.href, 'https://example.com/data.tif')
   t.is(proxied.data.alternate.s3.href, 's3://my-bucket/data.tif')
+
+  if (originalOption !== undefined) {
+    process.env['ASSET_PROXY_BUCKET_OPTION'] = originalOption
+  } else {
+    delete process.env['ASSET_PROXY_BUCKET_OPTION']
+  }
 })
 
 test('proxyAssets - handles non-S3 assets', (t) => {
-  const config = {
-    enabled: true,
-    mode: BucketOption.ALL,
-    buckets: new Set(),
-    urlExpiry: 300
-  }
-
   const assets = {
     metadata: {
       href: 'https://example.com/metadata.xml',
@@ -257,13 +252,44 @@ test('proxyAssets - handles non-S3 assets', (t) => {
     assets,
     'https://api.example.com',
     'collection1',
-    'item1',
-    config
+    'item1'
   )
 
   t.false(wasProxied)
   t.is(proxied.metadata.href, 'https://example.com/metadata.xml')
   t.is(proxied.metadata.alternate, undefined)
+})
+
+test('proxyAssets - handles assets without href', (t) => {
+  const assets = {
+    metadata: {
+      type: 'application/xml'
+    }
+  }
+
+  const { assets: proxied, wasProxied } = proxyAssets(
+    assets,
+    'https://api.example.com',
+    'collection1',
+    'item1'
+  )
+
+  t.false(wasProxied)
+  t.deepEqual(proxied.metadata, { type: 'application/xml' })
+})
+
+test('proxyAssets - handles empty assets object', (t) => {
+  const assets = {}
+
+  const { assets: proxied, wasProxied } = proxyAssets(
+    assets,
+    'https://api.example.com',
+    'collection1',
+    'item1'
+  )
+
+  t.false(wasProxied)
+  t.deepEqual(proxied, {})
 })
 
 test('determineS3Region - v1 asset-level storage extension', (t) => {
@@ -286,6 +312,24 @@ test('determineS3Region - v2 storage extension', (t) => {
     }
   }
   t.is(determineS3Region(asset, item), 'ap-southeast-2')
+})
+
+test('determineS3Region - v2 storage extension in properties', (t) => {
+  const asset = { 'storage:refs': 'scheme1' }
+  const item = {
+    properties: {
+      'storage:schemes': {
+        scheme1: { region: 'ap-southeast-2' }
+      }
+    }
+  }
+  t.is(determineS3Region(asset, item), 'ap-southeast-2')
+})
+
+test('determineS3Region - asset-level takes precedence over item-level', (t) => {
+  const asset = { 'storage:region': 'us-east-1' }
+  const item = { properties: { 'storage:region': 'eu-west-1' } }
+  t.is(determineS3Region(asset, item), 'us-east-1')
 })
 
 test('determineS3Region - default fallback', (t) => {
@@ -312,4 +356,11 @@ test('determineS3Region - environment variable fallback', (t) => {
   } else {
     delete process.env['AWS_REGION']
   }
+})
+
+test('BucketOption - exports expected constants', (t) => {
+  t.is(BucketOption.NONE, 'NONE')
+  t.is(BucketOption.ALL, 'ALL')
+  t.is(BucketOption.ALL_BUCKETS_IN_ACCOUNT, 'ALL_BUCKETS_IN_ACCOUNT')
+  t.is(BucketOption.LIST, 'LIST')
 })

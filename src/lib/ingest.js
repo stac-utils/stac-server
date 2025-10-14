@@ -4,6 +4,7 @@ import { dbClient, createIndex } from './database-client.js'
 import logger from './logger.js'
 import { publishRecordToSns } from './sns.js'
 import { isCollection, isItem, isAction, isStacEntity } from './stac-utils.js'
+import { isAssetProxyEnabled } from './asset-proxy.js'
 
 const COLLECTIONS_INDEX = process.env['COLLECTIONS_INDEX'] || 'collections'
 
@@ -179,7 +180,9 @@ function updateLinksAndHrefsWithinRecord(record) {
   } else if (isCollection(record)) {
     addCollectionLinks([record], endpoint)
   }
-  proxyStacObjectAssets([record], endpoint)
+  if (isAssetProxyEnabled()) {
+    proxyStacObjectAssets([record], endpoint)
+  }
   return record
 }
 

@@ -74,7 +74,7 @@ export async function dbClient() {
   return _dbClient
 }
 
-export async function createIndecreateIndexcreateIndexx(index) {
+export async function createIndex(index) {
   const client = await dbClient()
   const exists = await client.indices.exists({ index })
   if (!exists.body) {

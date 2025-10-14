@@ -7,7 +7,7 @@ import { isIndexNotFoundError } from './database.js'
 import logger from './logger.js'
 import { bboxToPolygon } from './geo-utils.js'
 import {
-  getCachedProxyConfig,
+  isAssetProxyEnabled,
   proxyAssets,
 } from './asset-proxy.js'
 
@@ -563,8 +563,7 @@ export const addItemLinks = function (results, endpoint) {
 
 // Impure - mutates results
 export const proxyStacObjectAssets = function (results, endpoint) {
-  const proxyConfig = getCachedProxyConfig()
-  if (!proxyConfig.enabled) {
+  if (!isAssetProxyEnabled()) {
     return results
   }
 
@@ -581,7 +580,6 @@ export const proxyStacObjectAssets = function (results, endpoint) {
       endpoint,
       collectionId,
       itemId,
-      proxyConfig
     )
 
     if (wasProxied) {

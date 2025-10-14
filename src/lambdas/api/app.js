@@ -7,18 +7,11 @@ import path from 'path'
 import { fileURLToPath } from 'url'
 import database from '../../lib/database.js'
 import api from '../../lib/api.js'
-import { NotFoundError, ValidationError } from '../../lib/errors.js'
+import { NotFoundError, ValidationError, ForbiddenError } from '../../lib/errors.js'
 import { readFile } from '../../lib/fs.js'
 import addEndpoint from './middleware/add-endpoint.js'
 import logger from '../../lib/logger.js'
-import {
-  getCachedProxyConfig,
-  parseS3Url,
-  shouldProxyAssets,
-  generatePresignedUrl,
-  determineS3Region,
-  initProxyConfig,
-} from '../../lib/asset-proxy.js'
+import { getAssetProxyBuckets, getAssetPresignedUrl } from '../../lib/asset-proxy.js'
 
 /**
  * @typedef {import('express').Request} Request
@@ -28,7 +21,7 @@ import {
  */
 
 export const createApp = async () => {
-  await initProxyConfig()
+  await getAssetProxyBuckets()
 
   const txnEnabled = process.env['ENABLE_TRANSACTIONS_EXTENSION'] === 'true'
 
@@ -463,79 +456,72 @@ export const createApp = async () => {
     }
   })
 
-  /**
-   * Redirects a request for a proxied asset to a presigned S3 URL
-   * @param {Request} req - Express request
-   * @param {Response} res - Express response
-   * @param {NextFunction} next - Express next function
-   * @returns {Promise<void>} Resolves when done
-   */
-  const redirectProxiedAssetRequest = async (req, res, next) => {
-    logger.debug('Asset proxy request', { params: req.params })
-    try {
-      const proxyConfig = getCachedProxyConfig()
-      if (!proxyConfig.enabled) {
-        return next(createError(403))
-      }
-
-      const { collectionId, itemId, assetKey } = req.params
-      const itemOrCollection = itemId // itemId is only defined for item assets
-        ? await api.getItem(database, collectionId, itemId, req.endpoint, req.query, req.headers)
-        : await api.getCollection(database, collectionId, req.endpoint, req.query, req.headers)
-      if (itemOrCollection instanceof NotFoundError) {
-        return next(createError(404))
-      }
-      if (itemOrCollection instanceof Error) {
-        return next(createError(500))
-      }
-
-      // @ts-ignore - assetKey guaranteed by Express route
-      const asset = itemOrCollection.assets?.[assetKey] || null
-      if (!asset) {
-        return next(createError(404))
-      }
-
-      const alternateHref = asset.alternate?.s3?.href || null
-      if (!alternateHref) {
-        return next(createError(404))
-      }
-
-      const s3Info = parseS3Url(alternateHref)
-      if (!s3Info) {
-        return next(createError(500, 'Asset S3 href is invalid'))
-      }
-
-      if (!shouldProxyAssets(s3Info.bucket, proxyConfig)) {
-        return next(createError(403))
-      }
-
-      let region = null
-      if (s3Info.region) {
-        region = s3Info.region
-      } else {
-        region = determineS3Region(asset, itemOrCollection)
-      }
-
-      const presignedUrl = await generatePresignedUrl(
-        s3Info.bucket,
-        s3Info.key,
-        region,
-        proxyConfig.urlExpiry
-      )
-
-      return res.redirect(presignedUrl)
-    } catch (error) {
-      return next(error)
-    }
-  }
-
   app.get('/collections/:collectionId/items/:itemId/assets/:assetKey',
     async (req, res, next) => {
-      await redirectProxiedAssetRequest(req, res, next)
+      try {
+        const item = await api.getItem(
+          database,
+          req.params.collectionId,
+          req.params.itemId,
+          req.endpoint,
+          req.query,
+          req.headers,
+        )
+
+        if (item instanceof NotFoundError) {
+          next(createError(404))
+        } else if (item instanceof Error) {
+          next(createError(500))
+        } else {
+          const presignedUrl = await getAssetPresignedUrl(item, req.params.assetKey)
+          if (presignedUrl instanceof ValidationError) {
+            next(createError(400))
+          } else if (presignedUrl instanceof ForbiddenError) {
+            next(createError(403))
+          } else if (presignedUrl instanceof NotFoundError) {
+            next(createError(404))
+          } else if (presignedUrl instanceof Error) {
+            next(createError(500))
+          } else {
+            res.redirect(presignedUrl)
+          }
+        }
+      } catch (error) {
+        next(error)
+      }
     })
 
   app.get('/collections/:collectionId/assets/:assetKey', async (req, res, next) => {
-    await redirectProxiedAssetRequest(req, res, next)
+    try {
+      const collection = await api.getCollection(
+        database,
+        req.params.collectionId,
+        req.endpoint,
+        req.query,
+        req.headers,
+      )
+
+      if (collection instanceof NotFoundError) {
+        next(createError(404))
+      } else if (collection instanceof Error) {
+        next(createError(500))
+      } else {
+        const presignedUrl = await getAssetPresignedUrl(collection, req.params.assetKey)
+        if (presignedUrl instanceof ValidationError) {
+          next(createError(400))
+        } else if (presignedUrl instanceof ForbiddenError) {
+          next(createError(403))
+        } else if (presignedUrl instanceof NotFoundError) {
+          next(createError(404))
+        } else if (presignedUrl instanceof Error) {
+          next(createError(500))
+        } else {
+          res.redirect(presignedUrl)
+        }
+      }
+    } catch (error) {
+      next(error)
+    }
   })
 
   // catch 404 and forward to error handler

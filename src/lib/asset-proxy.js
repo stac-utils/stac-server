@@ -1,6 +1,18 @@
-import { S3Client, GetObjectCommand, ListBucketsCommand } from '@aws-sdk/client-s3'
+import { GetObjectCommand, ListBucketsCommand } from '@aws-sdk/client-s3'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
+import { s3 } from './aws-clients.js'
 import logger from './logger.js'
+import { NotFoundError, ValidationError, ForbiddenError } from './errors.js'
+
+const VIRTUAL_HOST_PATTERN = /^([^.]+)\.s3(?:\.([^.]+))?\.amazonaws\.com$/
+const PATH_STYLE_PATTERN = /^s3(?:[.-]([^.]+))?\.amazonaws\.com$/
+
+const s3ClientCache = new Map()
+let assetProxyBucketsCache = null
+
+const getBucketOption = () => process.env['ASSET_PROXY_BUCKET_OPTION'] || 'NONE'
+const getBucketList = () => process.env['ASSET_PROXY_BUCKET_LIST']
+const getUrlExpiry = () => parseInt(process.env['ASSET_PROXY_URL_EXPIRY'] || '300', 10)
 
 export const BucketOption = Object.freeze({
   NONE: 'NONE',
@@ -9,144 +21,65 @@ export const BucketOption = Object.freeze({
   LIST: 'LIST'
 })
 
-// Cached configuration
-let proxyConfigCache = null
-
-// Cached S3 clients by region to avoid creating new clients on each request
-const s3ClientCache = new Map()
-
 /**
- * Get or create an S3Client for a specific region
+ * Get or create an S3 client for a specific region
  * @param {string} region - AWS region
- * @returns {S3Client} Cached or new S3 client
+ * @returns {Object} Cached or new S3 client
  */
 const getS3Client = (region) => {
   if (s3ClientCache.has(region)) {
     return s3ClientCache.get(region)
   }
 
-  const client = new S3Client({ region })
+  const client = s3({ region })
   s3ClientCache.set(region, client)
   return client
 }
 
 /**
- * Fetch all bucket names in the AWS account
- * This is called once during configuration initialization if mode is ALL_BUCKETS_IN_ACCOUNT
- * @returns {Promise<Set<string>>} Set of bucket names
+ * Cache bucket names for asset proxying based on configuration.
+ * @returns {Promise<void>}
  */
-const fetchAllBucketsInAccount = async () => {
-  try {
-    const region = process.env['AWS_REGION'] || 'us-west-2'
-    const client = getS3Client(region)
-    const command = new ListBucketsCommand({})
-    const response = await client.send(command)
-
-    const bucketNames = response.Buckets?.map((b) => b.Name)
-      ?.filter((name) => typeof name === 'string') || []
-    const buckets = new Set(bucketNames)
-    logger.info(`Fetched ${buckets.size} buckets from AWS account for asset proxy`)
-    return buckets
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error)
-    logger.error('Failed to fetch buckets from AWS account', { error: errorMessage })
-    throw new Error(`Failed to fetch buckets for asset proxy: ${errorMessage}`)
-  }
-}
-
-/**
- * Initialize asset proxy configuration.
- * The config is cached after first initialization. Subsequent calls return the cached value.
- * @returns {Promise<Object>} Configuration object
- */
-export const initProxyConfig = async () => {
-  if (proxyConfigCache) {
-    return proxyConfigCache
-  }
-
-  const bucketOption = process.env['ASSET_PROXY_BUCKET_OPTION'] || BucketOption.NONE
-  const bucketList = process.env['ASSET_PROXY_BUCKET_LIST'] || ''
-  const urlExpiry = parseInt(process.env['ASSET_PROXY_URL_EXPIRY'] || '300', 10)
+export const getAssetProxyBuckets = async () => {
+  const bucketOption = getBucketOption()
+  const bucketList = getBucketList()
 
   switch (bucketOption) {
-  case BucketOption.NONE:
-    proxyConfigCache = {
-      enabled: false,
-      mode: BucketOption.NONE,
-      buckets: new Set(),
-      urlExpiry
+  case BucketOption.LIST:
+    if (bucketList) {
+      const bucketNames = bucketList.split(',').map((b) => b.trim()).filter((b) => b)
+      assetProxyBucketsCache = new Set(bucketNames)
+      logger.info(
+        `Parsed ${assetProxyBucketsCache.size} buckets from ASSET_PROXY_BUCKET_LIST for asset proxy`
+      )
+    } else {
+      throw new Error('ASSET_PROXY_BUCKET_LIST must be set when ASSET_PROXY_BUCKET_OPTION is LIST')
     }
     break
 
-  case BucketOption.ALL:
-    proxyConfigCache = {
-      enabled: true,
-      mode: BucketOption.ALL,
-      buckets: new Set(),
-      urlExpiry
+  case BucketOption.ALL_BUCKETS_IN_ACCOUNT:
+    try {
+      const region = process.env['AWS_REGION'] || 'us-west-2'
+      const client = getS3Client(region)
+      const command = new ListBucketsCommand({})
+      const response = await client.send(command)
+      const bucketNames = response.Buckets?.map((b) => b.Name)
+        ?.filter((name) => typeof name === 'string') || []
+      assetProxyBucketsCache = new Set(bucketNames)
+      logger.info(`Fetched ${assetProxyBucketsCache.size} buckets from AWS account for asset proxy`)
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error)
+      throw new Error(`Failed to fetch buckets for asset proxy: ${message}`)
     }
     break
 
-  case BucketOption.ALL_BUCKETS_IN_ACCOUNT: {
-    const buckets = await fetchAllBucketsInAccount()
-    proxyConfigCache = {
-      enabled: true,
-      mode: BucketOption.ALL_BUCKETS_IN_ACCOUNT,
-      buckets,
-      urlExpiry
-    }
+  default:
     break
   }
-
-  case BucketOption.LIST: {
-    const buckets = bucketList.split(',').map((b) => b.trim()).filter((b) => b)
-    proxyConfigCache = {
-      enabled: true,
-      mode: BucketOption.LIST,
-      buckets: new Set(buckets),
-      urlExpiry
-    }
-    break
-  }
-
-  default: {
-    const validOptions = Object.values(BucketOption).join(', ')
-    throw new Error(
-      `Invalid ASSET_PROXY_BUCKET_OPTION: ${bucketOption}. Must be one of: ${validOptions}`
-    )
-  }
-  }
-
-  logger.debug('Asset proxy configuration loaded', {
-    mode: proxyConfigCache.mode,
-    enabled: proxyConfigCache.enabled,
-    bucketCount: proxyConfigCache.buckets.size,
-    urlExpiry: proxyConfigCache.urlExpiry
-  })
-
-  return proxyConfigCache
-}
-
-/**
- * Get the cached proxy configuration synchronously
- * @returns {Object} Cached configuration object
- */
-export const getCachedProxyConfig = () => {
-  if (!proxyConfigCache) {
-    throw new Error('Asset proxy config not initialized.')
-  }
-  return proxyConfigCache
 }
 
 /**
  * Parse S3 URL (URI or HTTPS) into components
- * Supports:
- * - s3://bucket/key
- * - https://bucket.s3.amazonaws.com/key
- * - https://bucket.s3.region.amazonaws.com/key
- * - https://s3.amazonaws.com/bucket/key
- * - https://s3.region.amazonaws.com/bucket/key
- *
  * @param {string} url - S3 URL to parse
  * @returns {Object|null} {bucket, key, region} or null if not a valid S3 URL
  */
@@ -178,7 +111,7 @@ export const parseS3Url = (url) => {
       const pathname = urlObj.pathname
 
       // Virtual-hosted style: bucket.s3.region.amazonaws.com or bucket.s3.amazonaws.com
-      const virtualHostMatch = hostname.match(/^([^.]+)\.s3(?:\.([^.]+))?\.amazonaws\.com$/)
+      const virtualHostMatch = hostname.match(VIRTUAL_HOST_PATTERN)
       if (virtualHostMatch) {
         const bucket = virtualHostMatch[1]
         const region = virtualHostMatch[2] || null
@@ -193,7 +126,7 @@ export const parseS3Url = (url) => {
 
       // Path style: s3.region.amazonaws.com/bucket/key,
       // s3-region.amazonaws.com/bucket/key, or s3.amazonaws.com/bucket/key
-      const pathStyleMatch = hostname.match(/^s3(?:[.-]([^.]+))?\.amazonaws\.com$/)
+      const pathStyleMatch = hostname.match(PATH_STYLE_PATTERN)
       if (pathStyleMatch) {
         const region = pathStyleMatch[1] || null
         const pathParts = pathname.split('/').filter((p) => p)
@@ -217,55 +150,26 @@ export const parseS3Url = (url) => {
 }
 
 /**
- * Determine if a asset hrefs should be proxied
- * @param {string} bucket - asset S3 bucket
- * @param {Object} proxyConfig - Proxy configuration
- * @returns {boolean} True if should be proxied
+ * Determine if asset proxying is enabled
+ * @returns {boolean} True if enabled
  */
-export const shouldProxyAssets = (bucket, proxyConfig) => {
-  if (!proxyConfig.enabled) {
+export const isAssetProxyEnabled = () => {
+  if (getBucketOption() === BucketOption.NONE) {
     return false
   }
-
-  if (proxyConfig.mode === BucketOption.ALL) {
-    return true
-  }
-
-  // For LIST and ALL_BUCKETS_IN_ACCOUNT modes
-  return proxyConfig.buckets.has(bucket)
+  return true
 }
 
 /**
- * Generate a pre-signed URL for S3 object access
- * Uses cached S3 clients per region for better performance.
- *
- * @param {string} bucket - S3 bucket name
- * @param {string} key - S3 object key
- * @param {string} region - AWS region
- * @param {number} expirySeconds - URL expiry time in seconds
- * @returns {Promise<string>} Pre-signed URL
+ * Determine if a bucket's assets should be proxied
+ * @param {string} bucket - S3 bucket
+ * @returns {boolean} True if assets should be proxied
  */
-export const generatePresignedUrl = async (bucket, key, region, expirySeconds) => {
-  const client = getS3Client(region)
-
-  const command = new GetObjectCommand({
-    Bucket: bucket,
-    Key: key,
-    RequestPayer: 'requester'
-  })
-
-  const presignedUrl = await getSignedUrl(client, command, {
-    expiresIn: expirySeconds
-  })
-
-  logger.debug('Generated pre-signed URL for asset', {
-    bucket,
-    key,
-    region,
-    expirySeconds,
-  })
-
-  return presignedUrl
+export const shouldProxyAssets = (bucket) => {
+  if (getBucketOption() === BucketOption.ALL || assetProxyBucketsCache?.has(bucket)) {
+    return true
+  }
+  return false
 }
 
 /**
@@ -274,22 +178,21 @@ export const generatePresignedUrl = async (bucket, key, region, expirySeconds) =
  * @param {string} endpoint - API endpoint base URL
  * @param {string} collectionId - Collection ID
  * @param {string|null} itemId - Item ID (null for collection assets)
- * @param {Object} proxyConfig - Proxy configuration
  * @returns {Object} {assets: Proxied assets object, wasProxied: boolean}
  */
-export const proxyAssets = (assets, endpoint, collectionId, itemId, proxyConfig) => {
+export const proxyAssets = (assets, endpoint, collectionId, itemId) => {
   const ProxiedAssets = {}
   let wasProxied = false
 
   for (const [assetKey, asset] of Object.entries(assets)) {
-    if (!asset || !asset.href) {
+    if (!asset?.href) {
       ProxiedAssets[assetKey] = asset
       // eslint-disable-next-line no-continue
       continue
     }
 
     const s3Info = parseS3Url(asset.href)
-    if (!s3Info || !shouldProxyAssets(s3Info.bucket, proxyConfig)) {
+    if (!s3Info || !(shouldProxyAssets(s3Info.bucket))) {
       ProxiedAssets[assetKey] = asset
       // eslint-disable-next-line no-continue
       continue
@@ -317,7 +220,7 @@ export const proxyAssets = (assets, endpoint, collectionId, itemId, proxyConfig)
 }
 
 /**
- * Determine S3 region STAC Storage Extension, if it exists
+ * Determine S3 region from STAC Storage Extension
  * @param {Object} asset - Asset object
  * @param {Object} itemOrCollection - Item or Collection object
  * @returns {string} AWS region
@@ -341,12 +244,79 @@ export const determineS3Region = (asset, itemOrCollection) => {
   return process.env['AWS_REGION'] || 'us-west-2'
 }
 
+/**
+ * Create a pre-signed URL for S3 object access
+ * @param {string} bucket - S3 bucket name
+ * @param {string} key - S3 object key
+ * @param {string} region - AWS region
+ * @returns {Promise<string>} Pre-signed URL
+ */
+export const createPresignedS3Url = async (bucket, key, region) => {
+  const client = getS3Client(region)
+  const urlExpiry = getUrlExpiry()
+
+  const command = new GetObjectCommand({
+    Bucket: bucket,
+    Key: key,
+    RequestPayer: 'requester'
+  })
+
+  const presignedUrl = await getSignedUrl(client, command, {
+    expiresIn: urlExpiry
+  })
+
+  logger.debug('Generated pre-signed URL for asset', {
+    bucket,
+    key,
+    region,
+    urlExpiry,
+  })
+
+  return presignedUrl
+}
+
+/**
+ * Generate a presigned URL for an asset
+ * @param {Object} itemOrCollection - STAC Item or Collection
+ * @param {string} assetKey - Asset key to generate presigned URL for
+ * @returns {Promise<string|Error>} Pre-signed URL or Error
+ */
+export const getAssetPresignedUrl = async (itemOrCollection, assetKey) => {
+  if (!isAssetProxyEnabled()) {
+    return new ForbiddenError()
+  }
+
+  const asset = itemOrCollection.assets?.[assetKey] || null
+  if (!asset) {
+    return new NotFoundError()
+  }
+
+  const alternateS3Href = asset.alternate?.s3?.href || null
+  if (!alternateS3Href) {
+    return new NotFoundError()
+  }
+
+  const s3Info = parseS3Url(alternateS3Href)
+  if (!s3Info) {
+    return new ValidationError('Asset S3 href is invalid')
+  }
+
+  if (!shouldProxyAssets(s3Info.bucket)) {
+    return new ForbiddenError()
+  }
+
+  const region = s3Info.region || determineS3Region(asset, itemOrCollection)
+  const presignedUrl = await createPresignedS3Url(s3Info.bucket, s3Info.key, region)
+
+  return presignedUrl
+}
+
 export default {
-  initProxyConfig,
-  getCachedProxyConfig,
+  getAssetProxyBuckets,
   parseS3Url,
+  isAssetProxyEnabled,
   shouldProxyAssets,
-  generatePresignedUrl,
+  createPresignedS3Url,
   proxyAssets,
   determineS3Region,
 }

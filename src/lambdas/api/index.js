@@ -9,7 +9,7 @@
 import { z } from 'zod'
 import serverless from 'serverless-http'
 import { Lambda } from '@aws-sdk/client-lambda'
-import { app } from './app.js'
+import { createApp } from './app.js'
 import _default from './types.js'
 import logger from '../../lib/logger.js'
 
@@ -156,13 +156,19 @@ const invokePostHook = async (lambda, postHook, payload) => {
   return hookResult
 }
 
+let appInstance = null
+
 /**
  * @param {APIGatewayProxyEvent} event
  * @param {Context} context
  * @returns {Promise<APIGatewayProxyResult>}
  */
 const callServerlessApp = async (event, context) => {
-  const result = await serverless(app)(event, context)
+  if (!appInstance) {
+    appInstance = await createApp()
+  }
+
+  const result = await serverless(appInstance)(event, context)
 
   try {
     return APIGatewayProxyResultSchema.parse(result)

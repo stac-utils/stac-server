@@ -9,8 +9,8 @@ export const BucketOption = Object.freeze({
   LIST: 'LIST'
 })
 
-// Cached configuration - initialized once at startup
-let cachedProxyConfig = null
+// Cached configuration
+let proxyConfigCache = null
 
 // Cached S3 clients by region to avoid creating new clients on each request
 const s3ClientCache = new Map()
@@ -55,65 +55,76 @@ const fetchAllBucketsInAccount = async () => {
 }
 
 /**
- * Load and cache proxy configuration from environment variables
- * This function is called once at app startup and the result is cached.
+ * Initialize asset proxy configuration.
+ * The config is cached after first initialization. Subsequent calls return the cached value.
  * @returns {Promise<Object>} Configuration object
  */
-export const getProxyConfig = async () => {
-  // Return cached config if already loaded
-  if (cachedProxyConfig) {
-    return cachedProxyConfig
+export const initProxyConfig = async () => {
+  if (proxyConfigCache) {
+    return proxyConfigCache
   }
 
   const bucketOption = process.env['ASSET_PROXY_BUCKET_OPTION'] || BucketOption.NONE
   const bucketList = process.env['ASSET_PROXY_BUCKET_LIST'] || ''
   const urlExpiry = parseInt(process.env['ASSET_PROXY_URL_EXPIRY'] || '300', 10)
 
-  if (bucketOption === BucketOption.NONE) {
-    cachedProxyConfig = {
+  switch (bucketOption) {
+  case BucketOption.NONE:
+    proxyConfigCache = {
       enabled: false,
       mode: BucketOption.NONE,
       buckets: new Set(),
       urlExpiry
     }
-  } else if (bucketOption === BucketOption.ALL) {
-    cachedProxyConfig = {
+    break
+
+  case BucketOption.ALL:
+    proxyConfigCache = {
       enabled: true,
       mode: BucketOption.ALL,
       buckets: new Set(),
       urlExpiry
     }
-  } else if (bucketOption === BucketOption.ALL_BUCKETS_IN_ACCOUNT) {
+    break
+
+  case BucketOption.ALL_BUCKETS_IN_ACCOUNT: {
     const buckets = await fetchAllBucketsInAccount()
-    cachedProxyConfig = {
+    proxyConfigCache = {
       enabled: true,
       mode: BucketOption.ALL_BUCKETS_IN_ACCOUNT,
       buckets,
       urlExpiry
     }
-  } else if (bucketOption === BucketOption.LIST) {
+    break
+  }
+
+  case BucketOption.LIST: {
     const buckets = bucketList.split(',').map((b) => b.trim()).filter((b) => b)
-    cachedProxyConfig = {
+    proxyConfigCache = {
       enabled: true,
       mode: BucketOption.LIST,
       buckets: new Set(buckets),
       urlExpiry
     }
-  } else {
+    break
+  }
+
+  default: {
     const validOptions = Object.values(BucketOption).join(', ')
     throw new Error(
       `Invalid ASSET_PROXY_BUCKET_OPTION: ${bucketOption}. Must be one of: ${validOptions}`
     )
   }
+  }
 
   logger.debug('Asset proxy configuration loaded', {
-    mode: cachedProxyConfig.mode,
-    enabled: cachedProxyConfig.enabled,
-    bucketCount: cachedProxyConfig.buckets.size,
-    urlExpiry: cachedProxyConfig.urlExpiry
+    mode: proxyConfigCache.mode,
+    enabled: proxyConfigCache.enabled,
+    bucketCount: proxyConfigCache.buckets.size,
+    urlExpiry: proxyConfigCache.urlExpiry
   })
 
-  return cachedProxyConfig
+  return proxyConfigCache
 }
 
 /**
@@ -121,10 +132,10 @@ export const getProxyConfig = async () => {
  * @returns {Object} Cached configuration object
  */
 export const getCachedProxyConfig = () => {
-  if (!cachedProxyConfig) {
-    throw new Error('Asset proxy config not initialized. Call getProxyConfig() at startup.')
+  if (!proxyConfigCache) {
+    throw new Error('Asset proxy config not initialized.')
   }
-  return cachedProxyConfig
+  return proxyConfigCache
 }
 
 /**
@@ -140,10 +151,6 @@ export const getCachedProxyConfig = () => {
  * @returns {Object|null} {bucket, key, region} or null if not a valid S3 URL
  */
 export const parseS3Url = (url) => {
-  if (!url || typeof url !== 'string') {
-    return null
-  }
-
   // S3 URI format: s3://bucket/key
   if (url.startsWith('s3://')) {
     const withoutProtocol = url.substring(5)
@@ -184,8 +191,9 @@ export const parseS3Url = (url) => {
         return { bucket, key, region }
       }
 
-      // Path style: s3.region.amazonaws.com/bucket/key or s3.amazonaws.com/bucket/key
-      const pathStyleMatch = hostname.match(/^s3(?:\.([^.]+))?\.amazonaws\.com$/)
+      // Path style: s3.region.amazonaws.com/bucket/key,
+      // s3-region.amazonaws.com/bucket/key, or s3.amazonaws.com/bucket/key
+      const pathStyleMatch = hostname.match(/^s3(?:[.-]([^.]+))?\.amazonaws\.com$/)
       if (pathStyleMatch) {
         const region = pathStyleMatch[1] || null
         const pathParts = pathname.split('/').filter((p) => p)
@@ -334,7 +342,7 @@ export const determineS3Region = (asset, itemOrCollection) => {
 }
 
 export default {
-  getProxyConfig,
+  initProxyConfig,
   getCachedProxyConfig,
   parseS3Url,
   shouldProxyAssets,

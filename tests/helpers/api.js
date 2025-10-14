@@ -1,6 +1,6 @@
 import got from 'got' // eslint-disable-line import/no-unresolved
 import { once } from 'events'
-import { app } from '../../src/lambdas/api/app.js'
+import { createApp } from '../../src/lambdas/api/app.js'
 
 /**
  * @typedef {import('got').Got} Got
@@ -30,6 +30,7 @@ const apiClient = (url) => got.extend({
  * @returns {Promise<ApiInstance>}
  */
 export const startApi = async () => {
+  const app = await createApp()
   const server = app.listen(0, '127.0.0.1')
 
   await once(server, 'listening')

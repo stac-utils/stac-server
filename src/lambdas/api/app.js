@@ -17,7 +17,7 @@ import {
   shouldProxyAssets,
   generatePresignedUrl,
   determineS3Region,
-  getProxyConfig,
+  initProxyConfig,
 } from '../../lib/asset-proxy.js'
 
 /**
@@ -27,243 +27,201 @@ import {
  * @typedef {import('express').ErrorRequestHandler} ErrorRequestHandler
  */
 
-// Initialize asset proxy configuration at startup
-await getProxyConfig()
+export const createApp = async () => {
+  await initProxyConfig()
 
-const txnEnabled = process.env['ENABLE_TRANSACTIONS_EXTENSION'] === 'true'
+  const txnEnabled = process.env['ENABLE_TRANSACTIONS_EXTENSION'] === 'true'
 
-export const app = express()
+  const app = express()
 
-if (process.env['REQUEST_LOGGING_ENABLED'] !== 'false') {
-  app.use(
-    [
-      // Setting `immediate: true` allows us to log at request start
-      // in case the lambda times out it's helpful to have the request ID
-      // Using console out will allow us to capture the request ID from lambda
-      morgan('Request Start - :method :url',
-        { immediate: true, stream: { write: (message) => console.info(`${message}`) } }),
-      // Logs at the end of the request
-      // Using console out will allow us to capture the request ID from lambda
-      morgan(process.env['REQUEST_LOGGING_FORMAT'] || 'tiny',
-        { stream: { write: (message) => console.info(message) } })
-    ]
-  )
-}
-
-app.use(cors({
-  origin: process.env['CORS_ORIGIN'] || '*',
-  credentials: process.env['CORS_CREDENTIALS'] === 'true',
-  methods: process.env['CORS_METHODS'] || 'GET,HEAD,PUT,PATCH,POST,DELETE', // default
-  allowedHeaders: process.env['CORS_HEADERS'] || '',
-}))
-
-app.use(express.json({ limit: '1mb' }))
-
-if (process.env['ENABLE_RESPONSE_COMPRESSION'] !== 'false') {
-  app.use(compression())
-}
-
-app.use(addEndpoint)
-
-app.get('/', async (req, res, next) => {
-  try {
-    const response = await api.getCatalog(txnEnabled, req.endpoint)
-    if (response instanceof Error) next(createError(500, response.message))
-    else res.json(response)
-  } catch (error) {
-    next(error)
+  if (process.env['REQUEST_LOGGING_ENABLED'] !== 'false') {
+    app.use(
+      [
+        // Setting `immediate: true` allows us to log at request start
+        // in case the lambda times out it's helpful to have the request ID
+        // Using console out will allow us to capture the request ID from lambda
+        morgan('Request Start - :method :url',
+          { immediate: true, stream: { write: (message) => console.info(`${message}`) } }),
+        // Logs at the end of the request
+        // Using console out will allow us to capture the request ID from lambda
+        morgan(process.env['REQUEST_LOGGING_FORMAT'] || 'tiny',
+          { stream: { write: (message) => console.info(message) } })
+      ]
+    )
   }
-})
 
-app.get('/healthcheck', async (_req, res, next) => {
-  try {
-    res.json(await api.healthCheck(database))
-  } catch (error) {
-    next(error)
+  app.use(cors({
+    origin: process.env['CORS_ORIGIN'] || '*',
+    credentials: process.env['CORS_CREDENTIALS'] === 'true',
+    methods: process.env['CORS_METHODS'] || 'GET,HEAD,PUT,PATCH,POST,DELETE', // default
+    allowedHeaders: process.env['CORS_HEADERS'] || '',
+  }))
+
+  app.use(express.json({ limit: '1mb' }))
+
+  if (process.env['ENABLE_RESPONSE_COMPRESSION'] !== 'false') {
+    app.use(compression())
   }
-})
 
-const pathName = process.env['LAMBDA_TASK_ROOT']
-  ? process.env['LAMBDA_TASK_ROOT'] : path.dirname(fileURLToPath(import.meta.url))
+  app.use(addEndpoint)
 
-app.get('/api', async (_req, res, next) => {
-  try {
-    res.type('application/vnd.oai.openapi')
-    res.download(path.resolve(pathName, 'openapi.yaml'))
-  } catch (error) {
-    next(error)
-  }
-})
-
-app.get('/api.html', async (_req, res, next) => {
-  try {
-    res.type('text/html')
-    res.send(await readFile(path.resolve(pathName, 'redoc.html'), 'utf8'))
-  } catch (error) {
-    next(error)
-  }
-})
-
-app.get('/conformance', async (_req, res, next) => {
-  try {
-    res.json(await api.getConformance(txnEnabled))
-  } catch (error) {
-    next(error)
-  }
-})
-
-app.get('/queryables', async (req, res, next) => {
-  try {
-    res.type('application/schema+json')
-    res.json(await api.getGlobalQueryables(req.endpoint))
-  } catch (error) {
-    next(error)
-  }
-})
-
-app.get('/search', async (req, res, next) => {
-  try {
-    res.type('application/geo+json')
-    res.json(await api.searchItems(database, 'GET', null, req.endpoint, req.query, req.headers))
-  } catch (error) {
-    if (error instanceof ValidationError) {
-      next(createError(400, error.message))
-    } else {
-      next(error)
-    }
-  }
-})
-
-app.post('/search', async (req, res, next) => {
-  try {
-    res.type('application/geo+json')
-    res.json(await api.searchItems(database, 'POST', null, req.endpoint, req.body, req.headers))
-  } catch (error) {
-    if (error instanceof ValidationError) {
-      next(createError(400, error.message))
-    } else {
-      next(error)
-    }
-  }
-})
-
-app.get('/aggregate', async (req, res, next) => {
-  try {
-    res.json(await api.aggregate(database, 'GET', null, req.endpoint, req.query, req.headers))
-  } catch (error) {
-    if (error instanceof ValidationError) {
-      next(createError(400, error.message))
-    } else {
-      next(error)
-    }
-  }
-})
-
-app.get('/aggregations', async (req, res, next) => {
-  try {
-    res.json(await api.getGlobalAggregations(req.endpoint))
-  } catch (error) {
-    next(error)
-  }
-})
-
-app.get('/collections', async (req, res, next) => {
-  try {
-    const response = await api.getCollections(database, req.endpoint, req.query, req.headers)
-    if (response instanceof Error) next(createError(500, response.message))
-    else res.json(response)
-  } catch (error) {
-    next(error)
-  }
-})
-
-app.post('/collections', async (req, res, next) => {
-  if (txnEnabled) {
-    const collectionId = req.body.collection
+  app.get('/', async (req, res, next) => {
     try {
-      await api.createCollection(database, req.body)
-      res.location(`${req.endpoint}/collections/${collectionId}`)
-      res.sendStatus(201)
+      const response = await api.getCatalog(txnEnabled, req.endpoint)
+      if (response instanceof Error) next(createError(500, response.message))
+      else res.json(response)
     } catch (error) {
-      if (error instanceof Error
-              && error.name === 'ResponseError'
-              && error.message.includes('version_conflict_engine_exception')) {
-        res.sendStatus(409)
+      next(error)
+    }
+  })
+
+  app.get('/healthcheck', async (_req, res, next) => {
+    try {
+      res.json(await api.healthCheck(database))
+    } catch (error) {
+      next(error)
+    }
+  })
+
+  const pathName = process.env['LAMBDA_TASK_ROOT']
+    ? process.env['LAMBDA_TASK_ROOT'] : path.dirname(fileURLToPath(import.meta.url))
+
+  app.get('/api', async (_req, res, next) => {
+    try {
+      res.type('application/vnd.oai.openapi')
+      res.download(path.resolve(pathName, 'openapi.yaml'))
+    } catch (error) {
+      next(error)
+    }
+  })
+
+  app.get('/api.html', async (_req, res, next) => {
+    try {
+      res.type('text/html')
+      res.send(await readFile(path.resolve(pathName, 'redoc.html'), 'utf8'))
+    } catch (error) {
+      next(error)
+    }
+  })
+
+  app.get('/conformance', async (_req, res, next) => {
+    try {
+      res.json(await api.getConformance(txnEnabled))
+    } catch (error) {
+      next(error)
+    }
+  })
+
+  app.get('/queryables', async (req, res, next) => {
+    try {
+      res.type('application/schema+json')
+      res.json(await api.getGlobalQueryables(req.endpoint))
+    } catch (error) {
+      next(error)
+    }
+  })
+
+  app.get('/search', async (req, res, next) => {
+    try {
+      res.type('application/geo+json')
+      res.json(await api.searchItems(database, 'GET', null, req.endpoint, req.query, req.headers))
+    } catch (error) {
+      if (error instanceof ValidationError) {
+        next(createError(400, error.message))
       } else {
         next(error)
       }
     }
-  } else {
-    next(createError(404))
-  }
-})
+  })
 
-app.get('/collections/:collectionId', async (req, res, next) => {
-  const { collectionId } = req.params
-  try {
-    const response = await api.getCollection(
-      database, collectionId, req.endpoint, req.query, req.headers
-    )
-    if (response instanceof Error) next(createError(404))
-    else res.json(response)
-  } catch (error) {
-    next(error)
-  }
-})
-
-app.get('/collections/:collectionId/queryables', async (req, res, next) => {
-  const { collectionId } = req.params
-  try {
-    const queryables = await api.getCollectionQueryables(
-      database, collectionId, req.endpoint, req.query, req.headers
-    )
-
-    if (queryables instanceof Error) next(createError(404))
-    else {
-      res.type('application/schema+json')
-      res.json(queryables)
+  app.post('/search', async (req, res, next) => {
+    try {
+      res.type('application/geo+json')
+      res.json(await api.searchItems(database, 'POST', null, req.endpoint, req.body, req.headers))
+    } catch (error) {
+      if (error instanceof ValidationError) {
+        next(createError(400, error.message))
+      } else {
+        next(error)
+      }
     }
-  } catch (error) {
-    if (error instanceof ValidationError) {
-      next(createError(400, error.message))
-    } else {
+  })
+
+  app.get('/aggregate', async (req, res, next) => {
+    try {
+      res.json(await api.aggregate(database, 'GET', null, req.endpoint, req.query, req.headers))
+    } catch (error) {
+      if (error instanceof ValidationError) {
+        next(createError(400, error.message))
+      } else {
+        next(error)
+      }
+    }
+  })
+
+  app.get('/aggregations', async (req, res, next) => {
+    try {
+      res.json(await api.getGlobalAggregations(req.endpoint))
+    } catch (error) {
       next(error)
     }
-  }
-})
+  })
 
-app.get('/collections/:collectionId/aggregations', async (req, res, next) => {
-  const { collectionId } = req.params
-  try {
-    const aggs = await api.getCollectionAggregations(
-      database, collectionId, req.endpoint, req.query, req.headers
-    )
-    if (aggs instanceof Error) next(createError(404))
-    else res.json(aggs)
-  } catch (error) {
-    if (error instanceof ValidationError) {
-      next(createError(400, error.message))
-    } else {
+  app.get('/collections', async (req, res, next) => {
+    try {
+      const response = await api.getCollections(database, req.endpoint, req.query, req.headers)
+      if (response instanceof Error) next(createError(500, response.message))
+      else res.json(response)
+    } catch (error) {
       next(error)
     }
-  }
-})
+  })
 
-app.get('/collections/:collectionId/aggregate',
-  async (req, res, next) => {
+  app.post('/collections', async (req, res, next) => {
+    if (txnEnabled) {
+      const collectionId = req.body.collection
+      try {
+        await api.createCollection(database, req.body)
+        res.location(`${req.endpoint}/collections/${collectionId}`)
+        res.sendStatus(201)
+      } catch (error) {
+        if (error instanceof Error
+                && error.name === 'ResponseError'
+                && error.message.includes('version_conflict_engine_exception')) {
+          res.sendStatus(409)
+        } else {
+          next(error)
+        }
+      }
+    } else {
+      next(createError(404))
+    }
+  })
+
+  app.get('/collections/:collectionId', async (req, res, next) => {
     const { collectionId } = req.params
     try {
       const response = await api.getCollection(
         database, collectionId, req.endpoint, req.query, req.headers
       )
-
       if (response instanceof Error) next(createError(404))
+      else res.json(response)
+    } catch (error) {
+      next(error)
+    }
+  })
+
+  app.get('/collections/:collectionId/queryables', async (req, res, next) => {
+    const { collectionId } = req.params
+    try {
+      const queryables = await api.getCollectionQueryables(
+        database, collectionId, req.endpoint, req.query, req.headers
+      )
+
+      if (queryables instanceof Error) next(createError(404))
       else {
-        res.json(
-          await api.aggregate(
-            database, 'GET', collectionId, req.endpoint, req.query, req.headers
-          )
-        )
+        res.type('application/schema+json')
+        res.json(queryables)
       }
     } catch (error) {
       if (error instanceof ValidationError) {
@@ -274,299 +232,344 @@ app.get('/collections/:collectionId/aggregate',
     }
   })
 
-app.get('/collections/:collectionId/items', async (req, res, next) => {
-  const { collectionId } = req.params
-  try {
-    if (
-      (await api.getCollection(database, collectionId, req.endpoint, req.query, req.headers)
-      ) instanceof Error) {
-      next(createError(404))
-    }
-
-    res.type('application/geo+json')
-    res.json(
-      await api.searchItems(database, 'GET', collectionId, req.endpoint, req.query, req.headers)
-    )
-  } catch (error) {
-    if (error instanceof ValidationError) {
-      next(createError(400, error.message))
-    } else {
-      next(error)
-    }
-  }
-})
-
-app.post('/collections/:collectionId/items', async (req, res, next) => {
-  if (txnEnabled) {
+  app.get('/collections/:collectionId/aggregations', async (req, res, next) => {
     const { collectionId } = req.params
-    const itemId = req.body.id
-
-    if (req.body.collection && req.body.collection !== collectionId) {
-      next(createError(400, 'Collection resource URI must match collection in body'))
-    } else {
-      const collectionRes = await api.getCollection(
+    try {
+      const aggs = await api.getCollectionAggregations(
         database, collectionId, req.endpoint, req.query, req.headers
       )
-      if (collectionRes instanceof Error) next(createError(404))
-      else {
-        try {
-          req.body.collection = collectionId
-          await api.createItem(database, req.body)
-          res.location(`${req.endpoint}/collections/${collectionId}/items/${itemId}`)
-          res.sendStatus(201)
-        } catch (error) {
-          if (error instanceof Error
-              && error.name === 'ResponseError'
-              && error.message.includes('version_conflict_engine_exception')) {
-            res.sendStatus(409)
-          } else {
-            next(error)
-          }
-        }
+      if (aggs instanceof Error) next(createError(404))
+      else res.json(aggs)
+    } catch (error) {
+      if (error instanceof ValidationError) {
+        next(createError(400, error.message))
+      } else {
+        next(error)
       }
     }
-  } else {
-    next(createError(404))
-  }
-})
+  })
 
-app.get('/collections/:collectionId/items/:itemId', async (req, res, next) => {
-  try {
-    const { itemId, collectionId } = req.params
+  app.get('/collections/:collectionId/aggregate',
+    async (req, res, next) => {
+      const { collectionId } = req.params
+      try {
+        const response = await api.getCollection(
+          database, collectionId, req.endpoint, req.query, req.headers
+        )
 
-    const response = await api.getItem(
-      database,
-      collectionId,
-      itemId,
-      req.endpoint,
-      req.query,
-      req.headers,
-    )
-
-    if (response instanceof NotFoundError) {
-      next(createError(404))
-    } else if (response instanceof Error) {
-      next(createError(500))
-    } else {
-      res.type('application/geo+json')
-      res.json(response)
-    }
-  } catch (error) {
-    next(error)
-  }
-})
-
-app.put('/collections/:collectionId/items/:itemId', async (req, res, next) => {
-  if (txnEnabled) {
-    const { collectionId, itemId } = req.params
-
-    if (req.body.collection && req.body.collection !== collectionId) {
-      next(createError(400, 'Collection ID in resource URI must match collection in body'))
-    } else if (req.body.id && req.body.id !== itemId) {
-      next(createError(400, 'Item ID in resource URI must match id in body'))
-    } else {
-      const itemRes = await api.getItem(
-        database, collectionId, itemId, req.endpoint, req.query, req.headers
-      )
-
-      if (itemRes instanceof Error) next(createError(404))
-      else {
-        req.body.collection = collectionId
-        req.body.id = itemId
-        try {
-          await api.updateItem(database, req.body)
-          res.sendStatus(204)
-        } catch (error) {
-          if (error instanceof Error
-                  && error.name === 'ResponseError'
-                  && error.message.includes('version_conflict_engine_exception')) {
-            res.sendStatus(409)
-          } else {
-            next(error)
-          }
+        if (response instanceof Error) next(createError(404))
+        else {
+          res.json(
+            await api.aggregate(
+              database, 'GET', collectionId, req.endpoint, req.query, req.headers
+            )
+          )
         }
-      }
-    }
-  } else {
-    next(createError(404))
-  }
-})
-
-app.patch('/collections/:collectionId/items/:itemId', async (req, res, next) => {
-  if (txnEnabled) {
-    const { collectionId, itemId } = req.params
-
-    if (req.body.collection && req.body.collection !== collectionId) {
-      next(createError(400, 'Collection ID in resource URI must match collection in body'))
-    } else if (req.body.id && req.body.id !== itemId) {
-      next(createError(400, 'Item ID in resource URI must match id in body'))
-    } else {
-      const itemRes = await api.getItem(
-        database, collectionId, itemId, req.endpoint, req.query, req.headers
-      )
-      if (itemRes instanceof Error) next(createError(404))
-      else {
-        try {
-          //const item =
-          await api.partialUpdateItem(database,
-            collectionId,
-            itemId,
-            req.endpoint,
-            req.body)
-          // res.type('application/geo+json')
-          // res.json(item)
-          res.sendStatus(204)
-        } catch (error) {
+      } catch (error) {
+        if (error instanceof ValidationError) {
+          next(createError(400, error.message))
+        } else {
           next(error)
         }
       }
-    }
-  } else {
-    next(createError(404))
-  }
-})
+    })
 
-app.delete('/collections/:collectionId/items/:itemId', async (req, res, next) => {
-  if (txnEnabled) {
-    const { collectionId, itemId } = req.params
+  app.get('/collections/:collectionId/items', async (req, res, next) => {
+    const { collectionId } = req.params
     try {
-      const response = await api.deleteItem(database, collectionId, itemId)
-      if (response instanceof Error) next(createError(500))
-      else {
-        res.sendStatus(204)
+      if (
+        (await api.getCollection(database, collectionId, req.endpoint, req.query, req.headers)
+        ) instanceof Error) {
+        next(createError(404))
+      }
+
+      res.type('application/geo+json')
+      res.json(
+        await api.searchItems(database, 'GET', collectionId, req.endpoint, req.query, req.headers)
+      )
+    } catch (error) {
+      if (error instanceof ValidationError) {
+        next(createError(400, error.message))
+      } else {
+        next(error)
+      }
+    }
+  })
+
+  app.post('/collections/:collectionId/items', async (req, res, next) => {
+    if (txnEnabled) {
+      const { collectionId } = req.params
+      const itemId = req.body.id
+
+      if (req.body.collection && req.body.collection !== collectionId) {
+        next(createError(400, 'Collection resource URI must match collection in body'))
+      } else {
+        const collectionRes = await api.getCollection(
+          database, collectionId, req.endpoint, req.query, req.headers
+        )
+        if (collectionRes instanceof Error) next(createError(404))
+        else {
+          try {
+            req.body.collection = collectionId
+            await api.createItem(database, req.body)
+            res.location(`${req.endpoint}/collections/${collectionId}/items/${itemId}`)
+            res.sendStatus(201)
+          } catch (error) {
+            if (error instanceof Error
+                && error.name === 'ResponseError'
+                && error.message.includes('version_conflict_engine_exception')) {
+              res.sendStatus(409)
+            } else {
+              next(error)
+            }
+          }
+        }
+      }
+    } else {
+      next(createError(404))
+    }
+  })
+
+  app.get('/collections/:collectionId/items/:itemId', async (req, res, next) => {
+    try {
+      const { itemId, collectionId } = req.params
+
+      const response = await api.getItem(
+        database,
+        collectionId,
+        itemId,
+        req.endpoint,
+        req.query,
+        req.headers,
+      )
+
+      if (response instanceof NotFoundError) {
+        next(createError(404))
+      } else if (response instanceof Error) {
+        next(createError(500))
+      } else {
+        res.type('application/geo+json')
+        res.json(response)
       }
     } catch (error) {
       next(error)
     }
-  } else {
-    next(createError(404))
-  }
-})
+  })
 
-app.get('/collections/:collectionId/items/:itemId/thumbnail', async (req, res, next) => {
-  try {
-    const { itemId, collectionId } = req.params
+  app.put('/collections/:collectionId/items/:itemId', async (req, res, next) => {
+    if (txnEnabled) {
+      const { collectionId, itemId } = req.params
 
-    const response = await api.getItemThumbnail(
-      database, collectionId, itemId, req.query, req.headers
-    )
+      if (req.body.collection && req.body.collection !== collectionId) {
+        next(createError(400, 'Collection ID in resource URI must match collection in body'))
+      } else if (req.body.id && req.body.id !== itemId) {
+        next(createError(400, 'Item ID in resource URI must match id in body'))
+      } else {
+        const itemRes = await api.getItem(
+          database, collectionId, itemId, req.endpoint, req.query, req.headers
+        )
 
-    if (response instanceof NotFoundError) {
+        if (itemRes instanceof Error) next(createError(404))
+        else {
+          req.body.collection = collectionId
+          req.body.id = itemId
+          try {
+            await api.updateItem(database, req.body)
+            res.sendStatus(204)
+          } catch (error) {
+            if (error instanceof Error
+                    && error.name === 'ResponseError'
+                    && error.message.includes('version_conflict_engine_exception')) {
+              res.sendStatus(409)
+            } else {
+              next(error)
+            }
+          }
+        }
+      }
+    } else {
       next(createError(404))
-    } else if (response instanceof Error) {
-      next(createError(500))
+    }
+  })
+
+  app.patch('/collections/:collectionId/items/:itemId', async (req, res, next) => {
+    if (txnEnabled) {
+      const { collectionId, itemId } = req.params
+
+      if (req.body.collection && req.body.collection !== collectionId) {
+        next(createError(400, 'Collection ID in resource URI must match collection in body'))
+      } else if (req.body.id && req.body.id !== itemId) {
+        next(createError(400, 'Item ID in resource URI must match id in body'))
+      } else {
+        const itemRes = await api.getItem(
+          database, collectionId, itemId, req.endpoint, req.query, req.headers
+        )
+        if (itemRes instanceof Error) next(createError(404))
+        else {
+          try {
+            //const item =
+            await api.partialUpdateItem(database,
+              collectionId,
+              itemId,
+              req.endpoint,
+              req.body)
+            // res.type('application/geo+json')
+            // res.json(item)
+            res.sendStatus(204)
+          } catch (error) {
+            next(error)
+          }
+        }
+      }
     } else {
-      res.redirect(response.location)
+      next(createError(404))
     }
-  } catch (error) {
-    next(error)
-  }
-})
+  })
 
-/**
- * Redirects a request for a proxied asset to a presigned S3 URL
- * @param {Request} req - Express request
- * @param {Response} res - Express response
- * @param {NextFunction} next - Express next function
- * @returns {Promise<void>} Resolves when done
- */
-const redirectProxiedAssetRequest = async (req, res, next) => {
-  logger.debug('Asset proxy request', { params: req.params })
-  try {
-    const proxyConfig = getCachedProxyConfig()
-    if (!proxyConfig.enabled) {
-      return next(createError(403))
-    }
-
-    const { collectionId, itemId, assetKey } = req.params
-    const itemOrCollection = itemId // itemId is only defined for item assets
-      ? await api.getItem(database, collectionId, itemId, req.endpoint, req.query, req.headers)
-      : await api.getCollection(database, collectionId, req.endpoint, req.query, req.headers)
-    if (itemOrCollection instanceof NotFoundError) {
-      return next(createError(404))
-    }
-    if (itemOrCollection instanceof Error) {
-      return next(createError(500))
-    }
-
-    // @ts-ignore - assetKey guaranteed by Express route
-    const asset = itemOrCollection.assets?.[assetKey] || null
-    if (!asset) {
-      return next(createError(404))
-    }
-
-    const alternateHref = asset.alternate?.s3?.href || null
-    if (!alternateHref) {
-      return next(createError(404))
-    }
-
-    const s3Info = parseS3Url(alternateHref)
-    if (!s3Info) {
-      return next(createError(500, 'Asset S3 href is invalid'))
-    }
-
-    if (!shouldProxyAssets(s3Info.bucket, proxyConfig)) {
-      return next(createError(403))
-    }
-
-    let region = null
-    if (s3Info.region) {
-      region = s3Info.region
+  app.delete('/collections/:collectionId/items/:itemId', async (req, res, next) => {
+    if (txnEnabled) {
+      const { collectionId, itemId } = req.params
+      try {
+        const response = await api.deleteItem(database, collectionId, itemId)
+        if (response instanceof Error) next(createError(500))
+        else {
+          res.sendStatus(204)
+        }
+      } catch (error) {
+        next(error)
+      }
     } else {
-      region = determineS3Region(asset, itemOrCollection)
+      next(createError(404))
     }
+  })
 
-    const presignedUrl = await generatePresignedUrl(
-      s3Info.bucket,
-      s3Info.key,
-      region,
-      proxyConfig.urlExpiry
-    )
+  app.get('/collections/:collectionId/items/:itemId/thumbnail', async (req, res, next) => {
+    try {
+      const { itemId, collectionId } = req.params
 
-    return res.redirect(presignedUrl)
-  } catch (error) {
-    return next(error)
+      const response = await api.getItemThumbnail(
+        database, collectionId, itemId, req.query, req.headers
+      )
+
+      if (response instanceof NotFoundError) {
+        next(createError(404))
+      } else if (response instanceof Error) {
+        next(createError(500))
+      } else {
+        res.redirect(response.location)
+      }
+    } catch (error) {
+      next(error)
+    }
+  })
+
+  /**
+   * Redirects a request for a proxied asset to a presigned S3 URL
+   * @param {Request} req - Express request
+   * @param {Response} res - Express response
+   * @param {NextFunction} next - Express next function
+   * @returns {Promise<void>} Resolves when done
+   */
+  const redirectProxiedAssetRequest = async (req, res, next) => {
+    logger.debug('Asset proxy request', { params: req.params })
+    try {
+      const proxyConfig = getCachedProxyConfig()
+      if (!proxyConfig.enabled) {
+        return next(createError(403))
+      }
+
+      const { collectionId, itemId, assetKey } = req.params
+      const itemOrCollection = itemId // itemId is only defined for item assets
+        ? await api.getItem(database, collectionId, itemId, req.endpoint, req.query, req.headers)
+        : await api.getCollection(database, collectionId, req.endpoint, req.query, req.headers)
+      if (itemOrCollection instanceof NotFoundError) {
+        return next(createError(404))
+      }
+      if (itemOrCollection instanceof Error) {
+        return next(createError(500))
+      }
+
+      // @ts-ignore - assetKey guaranteed by Express route
+      const asset = itemOrCollection.assets?.[assetKey] || null
+      if (!asset) {
+        return next(createError(404))
+      }
+
+      const alternateHref = asset.alternate?.s3?.href || null
+      if (!alternateHref) {
+        return next(createError(404))
+      }
+
+      const s3Info = parseS3Url(alternateHref)
+      if (!s3Info) {
+        return next(createError(500, 'Asset S3 href is invalid'))
+      }
+
+      if (!shouldProxyAssets(s3Info.bucket, proxyConfig)) {
+        return next(createError(403))
+      }
+
+      let region = null
+      if (s3Info.region) {
+        region = s3Info.region
+      } else {
+        region = determineS3Region(asset, itemOrCollection)
+      }
+
+      const presignedUrl = await generatePresignedUrl(
+        s3Info.bucket,
+        s3Info.key,
+        region,
+        proxyConfig.urlExpiry
+      )
+
+      return res.redirect(presignedUrl)
+    } catch (error) {
+      return next(error)
+    }
   }
-}
 
-app.get('/collections/:collectionId/items/:itemId/assets/:assetKey',
-  async (req, res, next) => {
+  app.get('/collections/:collectionId/items/:itemId/assets/:assetKey',
+    async (req, res, next) => {
+      await redirectProxiedAssetRequest(req, res, next)
+    })
+
+  app.get('/collections/:collectionId/assets/:assetKey', async (req, res, next) => {
     await redirectProxiedAssetRequest(req, res, next)
   })
 
-app.get('/collections/:collectionId/assets/:assetKey', async (req, res, next) => {
-  await redirectProxiedAssetRequest(req, res, next)
-})
-
-// catch 404 and forward to error handler
-app.use((_req, _res, next) => {
-  next(createError(404))
-})
-
-// error handler
-app.use(
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  /** @type {ErrorRequestHandler} */ ((err, _req, res, _next) => {
-    res.status(err.status || 500)
-
-    res.type('application/json')
-
-    switch (err.status) {
-    case 400:
-      res.json({ code: 'BadRequest', description: err.message })
-      break
-    case 403:
-      res.json({ code: 'Forbidden', description: 'Forbidden' })
-      break
-    case 404:
-      res.json({ code: 'NotFound', description: 'Not Found' })
-      break
-    default:
-      logger.error(err)
-      res.json({ code: 'InternalServerError', description: err.message })
-      break
-    }
+  // catch 404 and forward to error handler
+  app.use((_req, _res, next) => {
+    next(createError(404))
   })
-)
 
-export default { app }
+  // error handler
+  app.use(
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    /** @type {ErrorRequestHandler} */ ((err, _req, res, _next) => {
+      res.status(err.status || 500)
+
+      res.type('application/json')
+
+      switch (err.status) {
+      case 400:
+        res.json({ code: 'BadRequest', description: err.message })
+        break
+      case 403:
+        res.json({ code: 'Forbidden', description: 'Forbidden' })
+        break
+      case 404:
+        res.json({ code: 'NotFound', description: 'Not Found' })
+        break
+      default:
+        logger.error(err)
+        res.json({ code: 'InternalServerError', description: err.message })
+        break
+      }
+    })
+  )
+
+  return app
+}
+
+export default { createApp }

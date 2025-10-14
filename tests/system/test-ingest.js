@@ -37,6 +37,8 @@ test.beforeEach(async (t) => {
   await purgeQueue(ingestQueueUrl)
 
   delete process.env['ENABLE_INGEST_ACTION_TRUNCATE']
+  delete process.env['ASSET_PROXY_BUCKET_OPTION']
+  delete process.env['ASSET_PROXY_BUCKET_LIST']
 })
 
 test.afterEach.always(() => {
@@ -512,6 +514,39 @@ test('Ingested item is published to post-ingest SNS topic with updated links', a
     t.truthy(message.record.links)
     t.true(message.record.links.every((/** @type {Link} */ link) => (
       link.href && url.parse(link.href).hostname === hostname)))
+  } finally {
+    process.env = envBeforeTest
+  }
+})
+
+test.serial('Ingested item is published to post-ingest SNS topic with transformed assets', async (t) => {
+  const envBeforeTest = { ...process.env }
+  try {
+    const hostname = 'some-stac-server.com'
+    const endpoint = `https://${hostname}`
+    process.env['STAC_API_URL'] = endpoint
+    process.env['ASSET_PROXY_BUCKET_OPTION'] = 'ALL'
+
+    const collection = await ingestCollectionAndPurgePostIngestQueue(t)
+
+    const item = await loadFixture(
+      'stac/LC80100102015082LGN00.json',
+      { id: randomId('item'), collection: collection.id }
+    )
+
+    const { message } = await testPostIngestSNS(t, item)
+
+    t.truthy(message.record.assets)
+
+    const assetKeys = Object.keys(message.record.assets)
+    t.true(assetKeys.length > 0)
+
+    const b1Asset = message.record.assets.B1
+    t.truthy(b1Asset)
+    t.true(b1Asset.href.includes(`/collections/${collection.id}/items/${item.id}/assets/B1`))
+    t.truthy(b1Asset.alternate)
+    t.truthy(b1Asset.alternate.s3)
+    t.true(b1Asset.alternate.s3.href.includes('landsat-pds'))
   } finally {
     process.env = envBeforeTest
   }

@@ -46,8 +46,6 @@ test.beforeEach(async (_) => {
   delete process.env['ENABLE_COLLECTIONS_AUTHX']
   delete process.env['ENABLE_FILTER_AUTHX']
   delete process.env['ENABLE_THUMBNAILS']
-  delete process.env['ASSET_PROXY_BUCKET_OPTION']
-  delete process.env['ASSET_PROXY_BUCKET_LIST']
 })
 
 test.after.always(async (t) => {
@@ -303,26 +301,4 @@ test('GET /collections/:collectionId/items/:itemId/thumbnail with filter authx r
         ]
       }) }
     })).statusCode, 302)
-})
-
-test.serial('GET /collections/:collectionId/items/:itemId with asset proxying transforms assets', async (t) => {
-  process.env['ASSET_PROXY_BUCKET_OPTION'] = 'ALL'
-
-  const { collectionId, itemId } = t.context
-
-  const response = await t.context.api.client.get(
-    `collections/${collectionId}/items/${itemId}`,
-    { resolveBodyOnly: false }
-  )
-
-  t.is(response.statusCode, 200)
-
-  const { assets } = response.body
-  t.truthy(assets.B1)
-
-  const b1Asset = assets.B1
-  t.true(b1Asset.href.includes(`/collections/${collectionId}/items/${itemId}/assets/B1`))
-  t.truthy(b1Asset.alternate)
-  t.truthy(b1Asset.alternate.s3)
-  t.true(b1Asset.alternate.s3.href.includes('landsat-pds'))
 })

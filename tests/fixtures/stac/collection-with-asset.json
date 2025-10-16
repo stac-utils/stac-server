@@ -1,0 +1,115 @@
+{
+  "id": "landsat-8-l1",
+  "type": "Collection",
+  "stac_version": "1.1.0",
+  "description": "Landat-8 L1 Collection-1 imagery radiometrically calibrated and orthorectified using gound points and Digital Elevation Model (DEM) data to correct relief displacement.",
+  "links": [
+    {
+      "href": "collection.json",
+      "rel": "self",
+      "type": "application/json"
+    },
+    {
+      "href": "catalog.json",
+      "rel": "root",
+      "type": "application/json"
+    },
+    {
+      "href": "catalog.json",
+      "rel": "parent",
+      "type": "application/json"
+    },
+    {
+      "href": "LC80100102015050LGN00.json",
+      "rel": "item",
+      "type": "application/json"
+    },
+    {
+      "href": "LC80100102015082LGN00.json",
+      "rel": "item",
+      "type": "application/json"
+    },
+    {
+      "href": "badGeometryItem.json",
+      "rel": "item",
+      "type": "application/json"
+    }
+  ],
+  "stac_extensions": [],
+  "title": "Landsat-8 L1 Collection-1",
+  "keywords": [
+    "landsat",
+    "earth observation",
+    "usgs"
+  ],
+  "providers": [
+    {
+      "name": "USGS",
+      "roles": [
+        "producer"
+      ],
+      "url": "https://landsat.usgs.gov/"
+    },
+    {
+      "name": "Planet Labs",
+      "roles": [
+        "processor"
+      ],
+      "url": "https://github.com/landsat-pds/landsat_ingestor"
+    },
+    {
+      "name": "AWS",
+      "roles": [
+        "host"
+      ],
+      "url": "https://landsatonaws.com/"
+    },
+    {
+      "name": "Element 84",
+      "roles": [
+        "processor"
+      ],
+      "url": "https://element84.com/"
+    }
+  ],
+  "summaries": {
+    "gsd": [
+      30
+    ],
+    "platform": [
+      "landsat-8"
+    ],
+    "instruments": [
+      "oli",
+      "tirs"
+    ]
+  },
+  "extent": {
+    "spatial": {
+      "bbox": [
+        [
+          -180,
+          -90,
+          180,
+          90
+        ]
+      ]
+    },
+    "temporal": {
+      "interval": [
+        [
+          "2013-06-01T00:00:00Z",
+          null
+        ]
+      ]
+    }
+  },
+  "license": "PDDL-1.0",
+  "assets": {
+    "thumbnail": {
+      "href": "https://s3-us-west-2.amazonaws.com/landsat-pds/L8/010/010/LC80100102015082LGN00/LC80100102015082LGN00_thumb_large.jpg",
+      "title": "Thumbnail image",
+      "type": "image/jpeg"
+    }
+  }
+}

@@ -45,8 +45,6 @@ test.before(async (t) => {
 test.beforeEach(async (_) => {
   delete process.env['ENABLE_COLLECTIONS_AUTHX']
   delete process.env['ENABLE_FILTER_AUTHX']
-  delete process.env['ASSET_PROXY_BUCKET_OPTION']
-  delete process.env['ASSET_PROXY_BUCKET_LIST']
 })
 
 test.after.always(async (t) => {
@@ -1616,29 +1614,4 @@ test('/search - context extension - context added when enabled', async (t) => {
   t.is(response.context.matched, 3)
   t.is(response.context.returned, 3)
   t.is(response.context.limit, 10)
-})
-
-test.serial('POST /search with asset proxying transforms assets', async (t) => {
-  process.env['ASSET_PROXY_BUCKET_OPTION'] = 'ALL'
-
-  const response = await t.context.api.client.post('search', {
-    json: {
-      collections: ['landsat-8-l1'],
-      limit: 1
-    }
-  })
-
-  t.is(response.features.length, 1)
-
-  const item = response.features[0]
-  t.truthy(item.assets)
-
-  const assetKeys = Object.keys(item.assets)
-  t.true(assetKeys.length > 0)
-
-  const sampleAsset = item.assets[assetKeys[0]]
-  t.true(sampleAsset.href.includes(`/collections/${item.collection}/items/${item.id}/assets/${assetKeys[0]}`))
-  t.truthy(sampleAsset.alternate)
-  t.truthy(sampleAsset.alternate.s3)
-  t.true(sampleAsset.alternate.s3.href.includes('s3') || sampleAsset.alternate.s3.href.includes('amazonaws'))
 })

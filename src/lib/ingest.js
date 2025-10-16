@@ -1,10 +1,9 @@
 import { getItemCreated } from './database.js'
-import { addItemLinks, addCollectionLinks, proxyStacObjectAssets } from './api.js'
+import { addItemLinks, addCollectionLinks } from './api.js'
 import { dbClient, createIndex } from './database-client.js'
 import logger from './logger.js'
 import { publishRecordToSns } from './sns.js'
 import { isCollection, isItem, isAction, isStacEntity } from './stac-utils.js'
-import { isAssetProxyEnabled } from './asset-proxy.js'
 
 const COLLECTIONS_INDEX = process.env['COLLECTIONS_INDEX'] || 'collections'
 
@@ -165,7 +164,7 @@ export async function processMessages(msgs) {
 /* eslint-enable no-await-in-loop */
 
 // Impure - mutates record
-function updateLinksAndHrefsWithinRecord(record) {
+function updateLinksAndHrefsWithinRecord(record, assetProxy) {
   const endpoint = process.env['STAC_API_URL']
   if (!endpoint) {
     logger.info('STAC_API_URL not set, not updating links within ingested record')
@@ -180,17 +179,17 @@ function updateLinksAndHrefsWithinRecord(record) {
   } else if (isCollection(record)) {
     addCollectionLinks([record], endpoint)
   }
-  if (isAssetProxyEnabled()) {
-    proxyStacObjectAssets([record], endpoint)
+  if (assetProxy.isEnabled()) {
+    assetProxy.addProxiedAssets([record], endpoint)
   }
   return record
 }
 
-export async function publishResultsToSns(results, topicArn) {
+export async function publishResultsToSns(results, topicArn, assetProxy) {
   await Promise.allSettled(results.map(async (result) => {
     if (isStacEntity(result.record)) {
       if (result.record && !result.error) {
-        updateLinksAndHrefsWithinRecord(result.record)
+        updateLinksAndHrefsWithinRecord(result.record, assetProxy)
       }
       await publishRecordToSns(topicArn, result.record, result.error)
     }

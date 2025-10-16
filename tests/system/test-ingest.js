@@ -5,11 +5,12 @@ import test from 'ava'
 import nock from 'nock'
 import { DateTime } from 'luxon'
 import { getCollectionIds, getItem } from '../helpers/api.js'
-import { handler } from '../../src/lambdas/ingest/index.js'
+import { handler, resetAssetProxy } from '../../src/lambdas/ingest/index.js'
 import { loadFixture, randomId } from '../helpers/utils.js'
 import { refreshIndices, deleteAllIndices } from '../helpers/database.js'
 import { sqsTriggerLambda, purgeQueue } from '../helpers/sqs.js'
 import { sns, sqs, s3 as _s3 } from '../../src/lib/aws-clients.js'
+import { ALTERNATE_ASSETS_EXTENSION } from '../../src/lib/asset-proxy.js'
 import { setup } from '../helpers/system-tests.js'
 import { ingestItemC, ingestFixtureC, testPostIngestSNS } from '../helpers/ingest.js'
 
@@ -37,8 +38,6 @@ test.beforeEach(async (t) => {
   await purgeQueue(ingestQueueUrl)
 
   delete process.env['ENABLE_INGEST_ACTION_TRUNCATE']
-  delete process.env['ASSET_PROXY_BUCKET_OPTION']
-  delete process.env['ASSET_PROXY_BUCKET_LIST']
 })
 
 test.afterEach.always(() => {
@@ -519,34 +518,29 @@ test('Ingested item is published to post-ingest SNS topic with updated links', a
   }
 })
 
-test.serial('Ingested item is published to post-ingest SNS topic with transformed assets', async (t) => {
+test('Ingested item is published to post-ingest SNS topic with proxied assets', async (t) => {
   const envBeforeTest = { ...process.env }
   try {
-    const hostname = 'some-stac-server.com'
-    const endpoint = `https://${hostname}`
+    const endpoint = 'https://some-stac-server.com'
     process.env['STAC_API_URL'] = endpoint
     process.env['ASSET_PROXY_BUCKET_OPTION'] = 'ALL'
+    resetAssetProxy()
 
     const collection = await ingestCollectionAndPurgePostIngestQueue(t)
-
     const item = await loadFixture(
-      'stac/LC80100102015082LGN00.json',
+      'stac/ingest-item.json',
       { id: randomId('item'), collection: collection.id }
     )
 
+    const firstAssetKey = Object.keys(item.assets)[0]
+    const originalHref = item.assets[firstAssetKey].href
+
     const { message } = await testPostIngestSNS(t, item)
+    const firstAsset = message.record.assets[firstAssetKey]
 
-    t.truthy(message.record.assets)
-
-    const assetKeys = Object.keys(message.record.assets)
-    t.true(assetKeys.length > 0)
-
-    const b1Asset = message.record.assets.B1
-    t.truthy(b1Asset)
-    t.true(b1Asset.href.includes(`/collections/${collection.id}/items/${item.id}/assets/B1`))
-    t.truthy(b1Asset.alternate)
-    t.truthy(b1Asset.alternate.s3)
-    t.true(b1Asset.alternate.s3.href.includes('landsat-pds'))
+    t.true(firstAsset.href.includes(endpoint))
+    t.is(firstAsset.alternate.s3.href, originalHref)
+    t.true(message.record.stac_extensions.includes(ALTERNATE_ASSETS_EXTENSION))
   } finally {
     process.env = envBeforeTest
   }

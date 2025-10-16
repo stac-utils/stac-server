@@ -21,6 +21,7 @@ const apiClient = (url) => got.extend({
 
 /**
  * @typedef {Object} ApiInstance
+ * @property {import('express').Application} app
  * @property {Got} client
  * @property {() => Promise<void>} close
  * @property {string} url
@@ -50,6 +51,7 @@ export const startApi = async () => {
   }
 
   return Object.freeze({
+    app,
     client,
     close,
     url

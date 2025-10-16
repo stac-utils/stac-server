@@ -53,6 +53,7 @@
     - [Filter Extension](#filter-extension)
     - [Query Extension](#query-extension)
   - [Aggregation](#aggregation)
+  - [Asset Proxy](#asset-proxy)
   - [Collections and filter parameters for authorization](#collections-and-filter-parameters-for-authorization)
     - [Collections](#collections)
     - [CQL2 Filter](#cql2-filter)
@@ -617,6 +618,9 @@ There are some settings that should be reviewed and updated as needeed in the se
 | ENABLE_INGEST_ACTION_TRUNCATE    | Enables support for ingest action "truncate".                                                                                                                                                                                                                                   | none (not enabled)                                                                   |
 | ENABLE_RESPONSE_COMPRESSION      | Enables response compression. Set to 'false' to disable.                                                                                                                                                                                                                        | enabled                                                                              |
 | ITEMS_MAX_LIMIT                  | The maximum limit for the number of items returned from the /search and /collections/{collection_id}/items endpoints. It is recommended that this be set to 100. There is an absolute max limit of 10000 for this.                                                              | 10000                                                                                |
+| ASSET_PROXY_BUCKET_OPTION        | Control which S3 buckets are proxied through the API. Options: `NONE` (disabled), `ALL` (all S3 assets), `ALL_BUCKETS_IN_ACCOUNT` (all buckets in AWS account), `LIST` (specific buckets only).                                                                                 | NONE                                                                                 |
+| ASSET_PROXY_BUCKET_LIST          | Comma-separated list of S3 bucket names to proxy. Required when `ASSET_PROXY_BUCKET_OPTION` is `LIST`.                                                                                                                                                                          | none                                                                                 |
+| ASSET_PROXY_URL_EXPIRY           | Pre-signed URL expiry time in seconds for proxied assets.                                                                                                                                                                                                                        | 300                                                                                  |
 
 Additionally, the credential for OpenSearch must be configured, as decribed in the
 section [Populating and accessing credentials](#populating-and-accessing-credentials).
@@ -1124,6 +1128,129 @@ Available aggregations are:
 - geometry_geohash_grid_frequency ([geohash grid](https://opensearch.org/docs/latest/aggregations/bucket/geohash-grid/) on Item.geometry)
 - geometry_geotile_grid_frequency ([geotile grid](https://opensearch.org/docs/latest/aggregations/bucket/geotile-grid/) on Item.geometry)
 
+## Asset Proxy
+
+The Asset Proxy feature allows stac-server to proxy access to S3 assets through the STAC API by generating pre-signed URLs. When enabled, asset `href` values pointing to S3 are replaced with proxy endpoint URLs, while the original S3 URLs are preserved in the `alternate.s3.href` field using the [Alternate Assets Extension](https://github.com/stac-extensions/alternate-assets).
+
+### Configuration
+
+Asset proxying is controlled by the `ASSET_PROXY_BUCKET_OPTION` environment variable, which supports four modes:
+
+- **NONE** (default): Asset proxy is disabled. All asset hrefs are returned unchanged.
+- **ALL**: Proxy all S3 assets regardless of which bucket they are in.
+- **ALL_BUCKETS_IN_ACCOUNT**: Proxy assets from any S3 bucket in the AWS account. The list of buckets is fetched at Lambda startup.
+- **LIST**: Proxy only assets from specific buckets listed in `ASSET_PROXY_BUCKET_LIST`.
+
+When using the `LIST` option, the `ASSET_PROXY_BUCKET_LIST` environment variable must be set to a comma-separated list of bucket names:
+
+```yaml
+ASSET_PROXY_BUCKET_OPTION: "LIST"
+ASSET_PROXY_BUCKET_LIST: "my-bucket-1,my-bucket-2,my-bucket-3"
+```
+
+The `ASSET_PROXY_URL_EXPIRY` environment variable controls how long the pre-signed URLs are valid, in seconds (default: 300).
+
+### Endpoints
+
+When asset proxying is enabled, two endpoints are available for accessing proxied assets:
+
+- `GET /collections/{collectionId}/items/{itemId}/assets/{assetKey}` - Redirects (HTTP 302) to a pre-signed S3 URL for an item asset
+- `GET /collections/{collectionId}/assets/{assetKey}` - Redirects (HTTP 302) to a pre-signed S3 URL for a collection asset
+
+These endpoints will return:
+- `302` - Redirect to pre-signed S3 URL (success)
+- `400` - Bad request (asset href is not a valid S3 URL)
+- `403` - Forbidden (asset proxy disabled, or bucket not in allowed list)
+- `404` - Not found (item/collection or asset does not exist)
+- `500` - Server error
+
+### IAM Permissions
+
+For the Asset Proxy to generate pre-signed URLs, the API Lambda must have `s3:GetObject` permission for the S3 buckets containing the assets. Add the following to the IAM role statements in your serverless.yml:
+
+```yaml
+- Effect: Allow
+  Action: s3:GetObject
+  Resource:
+    - "arn:aws:s3:::my-bucket-1/*"
+    - "arn:aws:s3:::my-bucket-2/*"
+```
+
+For the `ALL` or `ALL_BUCKETS_IN_ACCOUNT` options, you may use a wildcard:
+
+```yaml
+- Effect: Allow
+  Action: s3:GetObject
+  Resource: "arn:aws:s3:::*/*"
+```
+
+When using `ALL_BUCKETS_IN_ACCOUNT`, the Lambda also needs permission to list buckets:
+
+```yaml
+- Effect: Allow
+  Action: s3:ListAllMyBuckets
+  Resource: "*"
+```
+
+### Asset Transformation
+
+When asset proxying is enabled and an asset's `href` points to an S3 URL, the asset is transformed as follows:
+
+**Original asset:**
+```json
+{
+  "thumbnail": {
+    "href": "s3://my-bucket/path/to/thumbnail.png",
+    "type": "image/png",
+    "roles": ["thumbnail"]
+  }
+}
+```
+
+**Transformed asset:**
+```json
+{
+  "thumbnail": {
+    "href": "https://api.example.com/collections/my-collection/items/my-item/assets/thumbnail",
+    "type": "image/png",
+    "roles": ["thumbnail"],
+    "alternate": {
+      "s3": {
+        "href": "s3://my-bucket/path/to/thumbnail.png"
+      }
+    }
+  }
+}
+```
+
+The item or collection will also have the Alternate Assets Extension added to its `stac_extensions` array:
+
+```json
+"stac_extensions": [
+  "https://stac-extensions.github.io/alternate-assets/v1.2.0/schema.json"
+]
+```
+
+### Supported S3 URL Formats
+
+The Asset Proxy recognizes and parses these S3 URL formats:
+
+- S3 URI: `s3://bucket-name/key`
+- Virtual-hosted style: `https://bucket-name.s3.region.amazonaws.com/key`
+- Virtual-hosted style (no region): `https://bucket-name.s3.amazonaws.com/key`
+- Path style: `https://s3.region.amazonaws.com/bucket-name/key`
+- Path style (legacy): `https://s3-region.amazonaws.com/bucket-name/key`
+
+### Region Determination
+
+The AWS region for generating pre-signed URLs is determined in this order:
+
+1. Region parsed from the S3 URL (for HTTPS URLs)
+2. `storage:region` field on the asset (Storage Extension v1)
+3. Region from `storage:schemes` referenced by `storage:refs` on the asset (Storage Extension v2)
+4. `AWS_REGION` environment variable
+5. Default: `us-west-2`
+
 ## Collections and filter parameters for authorization
 
 One key concern in stac-server is how to restrict user's access to items.  These
@@ -1160,6 +1287,8 @@ The endpoints this applies to are:
 - /collections/:collectionId/items
 - /collections/:collectionId/items/:itemId
 - /collections/:collectionId/items/:itemId/thumbnail
+- /collections/:collectionId/items/:itemId/assets/:assetKey
+- /collections/:collectionId/assets/:assetKey
 - /search
 - /aggregate
 
@@ -1187,6 +1316,8 @@ The endpoints this applies to are:
 - /collections/:collectionId/items
 - /collections/:collectionId/items/:itemId
 - /collections/:collectionId/items/:itemId/thumbnail
+- /collections/:collectionId/items/:itemId/assets/:assetKey
+- /collections/:collectionId/assets/:assetKey
 - /search
 - /aggregate
 

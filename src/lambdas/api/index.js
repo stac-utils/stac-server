@@ -30,6 +30,8 @@ const {
  * @typedef {z.infer<typeof LambdaErrorSchema>} LambdaError
  */
 
+const appInstance = await createApp()
+
 /** @type {APIGatewayProxyResult} */
 const internalServerError = Object.freeze({
   statusCode: 500,
@@ -156,18 +158,12 @@ const invokePostHook = async (lambda, postHook, payload) => {
   return hookResult
 }
 
-let appInstance = null
-
 /**
  * @param {APIGatewayProxyEvent} event
  * @param {Context} context
  * @returns {Promise<APIGatewayProxyResult>}
  */
 const callServerlessApp = async (event, context) => {
-  if (!appInstance) {
-    appInstance = await createApp()
-  }
-
   const result = await serverless(appInstance)(event, context)
 
   try {

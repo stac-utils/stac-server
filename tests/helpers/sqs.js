@@ -1,6 +1,12 @@
 // @ts-nocheck
 
 import { isUndefined } from 'lodash-es'
+import {
+  ReceiveMessageCommand,
+  PurgeQueueCommand,
+  CreateQueueCommand,
+  GetQueueAttributesCommand
+} from '@aws-sdk/client-sqs'
 import { sqs as _sqs } from '../../src/lib/aws-clients.js'
 import { randomId } from './utils.js'
 
@@ -17,10 +23,11 @@ const sqsMessageToRecord = (message) => ({
 })
 
 const eventFromQueue = async (ingestQueueUrl) => {
-  const { Messages } = await _sqs().receiveMessage({
+  const command = new ReceiveMessageCommand({
     QueueUrl: ingestQueueUrl,
     WaitTimeSeconds: 1
   })
+  const { Messages } = await _sqs().send(command)
 
   return {
     Records: Messages.map((m) => sqsMessageToRecord(m))
@@ -37,7 +44,8 @@ export const sqsTriggerLambda = async (sqsUrl, handler, _context = {}) => {
  * @returns {Promise<void>}
  */
 export const purgeQueue = async (url) => {
-  await _sqs().purgeQueue({ QueueUrl: url })
+  const command = new PurgeQueueCommand({ QueueUrl: url })
+  await _sqs().send(command)
 }
 
 /**
@@ -46,9 +54,10 @@ export const purgeQueue = async (url) => {
 export const createQueue = async () => {
   const sqs = _sqs()
 
-  const { QueueUrl } = await sqs.createQueue({
+  const command = new CreateQueueCommand({
     QueueName: randomId('queue')
   })
+  const { QueueUrl } = await sqs.send(command)
 
   if (QueueUrl) return QueueUrl
 
@@ -62,10 +71,11 @@ export const createQueue = async () => {
 export const getQueueArn = async (queueUrl) => {
   const sqs = _sqs()
 
-  const getQueueAttributesResult = await sqs.getQueueAttributes({
+  const command = new GetQueueAttributesCommand({
     QueueUrl: queueUrl,
     AttributeNames: ['QueueArn']
   })
+  const getQueueAttributesResult = await sqs.send(command)
 
   if (
     isUndefined(getQueueAttributesResult.Attributes)

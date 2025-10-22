@@ -1,3 +1,5 @@
+import { PublishCommand } from '@aws-sdk/client-sns'
+import { ReceiveMessageCommand } from '@aws-sdk/client-sqs'
 import { sns, sqs } from '../../src/lib/aws-clients.js'
 import { handler } from '../../src/lambdas/ingest/index.js'
 import { sqsTriggerLambda } from './sqs.js'
@@ -16,10 +18,11 @@ import { loadFixture } from './utils.js'
  * @returns {Promise<void>}
  */
 export const ingestItem = async (params) => {
-  await sns().publish({
+  const command = new PublishCommand({
     TopicArn: params.ingestTopicArn,
     Message: JSON.stringify(params.item)
   })
+  await sns().send(command)
 
   await sqsTriggerLambda(params.ingestQueueUrl, handler)
 
@@ -78,10 +81,11 @@ export async function testPostIngestSNS(t, record, shouldError = false) {
   // @ts-ignore
   process.env['POST_INGEST_TOPIC_ARN'] = t.context.postIngestTopicArn
 
-  await sns().publish({
+  const publishCommand = new PublishCommand({
     TopicArn: t.context.ingestTopicArn,
     Message: JSON.stringify(record)
   })
+  await sns().send(publishCommand)
 
   try {
     await sqsTriggerLambda(t.context.ingestQueueUrl, handler)
@@ -91,10 +95,11 @@ export async function testPostIngestSNS(t, record, shouldError = false) {
     }
   }
 
-  const { Messages } = await sqs().receiveMessage({
+  const receiveCommand = new ReceiveMessageCommand({
     QueueUrl: t.context.postIngestQueueUrl,
     WaitTimeSeconds: 1
   })
+  const { Messages } = await sqs().send(receiveCommand)
 
   t.truthy(Messages, 'Post-ingest message not found in queue')
   t.false(Messages && Messages.length > 1, 'More than one message in post-ingest queue')

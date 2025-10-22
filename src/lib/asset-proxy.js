@@ -7,6 +7,8 @@ import { NotFoundError, ValidationError, ForbiddenError } from './errors.js'
 const VIRTUAL_HOST_PATTERN = /^([^.]+)\.s3(?:\.([^.]+))?\.amazonaws\.com$/
 const PATH_STYLE_PATTERN = /^s3(?:[.-]([^.]+))?\.amazonaws\.com$/
 
+const s3Client = s3()
+
 export const ALTERNATE_ASSETS_EXTENSION = 'https://stac-extensions.github.io/alternate-assets/v1.2.0/schema.json'
 
 export const BucketOption = Object.freeze({
@@ -112,7 +114,6 @@ const determineS3Region = (asset, itemOrCollection) => {
 export class AssetProxy {
   constructor() {
     this.bucketsCache = null
-    this.s3ClientCache = new Map()
     this.bucketOption = process.env['ASSET_PROXY_BUCKET_OPTION'] || 'NONE'
     this.bucketList = process.env['ASSET_PROXY_BUCKET_LIST']
     this.urlExpiry = parseInt(process.env['ASSET_PROXY_URL_EXPIRY'] || '300', 10)
@@ -139,10 +140,8 @@ export class AssetProxy {
 
     case BucketOption.ALL_BUCKETS_IN_ACCOUNT:
       try {
-        const region = process.env['AWS_REGION'] || 'us-west-2'
-        const client = this.getS3Client(region)
         const command = new ListBucketsCommand({})
-        const response = await client.send(command)
+        const response = await s3Client.send(command)
         const bucketNames = response.Buckets?.map((b) => b.Name)
           ?.filter((name) => typeof name === 'string') || []
         this.bucketsCache = new Set(bucketNames)
@@ -156,20 +155,6 @@ export class AssetProxy {
     default:
       break
     }
-  }
-
-  /**
-   * @param {string} region - AWS region
-   * @returns {Object} S3 client instance
-   */
-  getS3Client(region) {
-    if (this.s3ClientCache.has(region)) {
-      return this.s3ClientCache.get(region)
-    }
-
-    const client = s3({ region })
-    this.s3ClientCache.set(region, client)
-    return client
   }
 
   /**
@@ -280,20 +265,18 @@ export class AssetProxy {
   /**
    * @param {string} bucket - S3 bucket name
    * @param {string} key - S3 object key
-   * @param {string} region - AWS region
+   * @param {string} region - AWS region of the S3 bucket
    * @returns {Promise<string>} Pre-signed URL
    */
   async createPresignedUrl(bucket, key, region) {
-    const client = this.getS3Client(region)
-
     const command = new GetObjectCommand({
       Bucket: bucket,
       Key: key,
       RequestPayer: 'requester'
     })
 
-    const presignedUrl = await getSignedUrl(client, command, {
-      expiresIn: this.urlExpiry
+    const presignedUrl = await getSignedUrl(s3Client, command, {
+      expiresIn: this.urlExpiry, signingRegion: region
     })
 
     logger.debug('Generated pre-signed URL for asset', {

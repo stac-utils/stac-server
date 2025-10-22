@@ -1,7 +1,15 @@
 // @ts-nocheck
 
 import test from 'ava'
+import { mockClient } from 'aws-sdk-client-mock'
+import { S3Client, ListBucketsCommand } from '@aws-sdk/client-s3'
 import { AssetProxy, BucketOption, ALTERNATE_ASSETS_EXTENSION } from '../../src/lib/asset-proxy.js'
+
+const s3Mock = mockClient(S3Client)
+
+test.beforeEach(() => {
+  s3Mock.reset()
+})
 
 test('BucketOption - exports expected constants', (t) => {
   t.is(BucketOption.NONE, 'NONE')
@@ -80,19 +88,14 @@ test('AssetProxy - initialize() with ALL_BUCKETS_IN_ACCOUNT mode fetches buckets
     process.env['ASSET_PROXY_BUCKET_OPTION'] = 'ALL_BUCKETS_IN_ACCOUNT'
     process.env['AWS_REGION'] = 'us-west-2'
 
+    s3Mock.on(ListBucketsCommand).resolves({
+      Buckets: [
+        { Name: 'bucket-1' },
+        { Name: 'bucket-2' },
+      ]
+    })
+
     const proxy = new AssetProxy()
-
-    const mockS3Client = {
-      send: async () => ({
-        Buckets: [
-          { Name: 'bucket-1' },
-          { Name: 'bucket-2' },
-        ]
-      })
-    }
-
-    proxy.getS3Client = () => mockS3Client
-
     await proxy.initialize()
 
     t.truthy(proxy.bucketsCache)
@@ -110,15 +113,10 @@ test('AssetProxy - initialize() with ALL_BUCKETS_IN_ACCOUNT mode throws on error
   try {
     process.env['ASSET_PROXY_BUCKET_OPTION'] = 'ALL_BUCKETS_IN_ACCOUNT'
 
+    // Set up the mock to reject with an error
+    s3Mock.on(ListBucketsCommand).rejects(new Error('Access denied'))
+
     const proxy = new AssetProxy()
-
-    const mockS3Client = {
-      send: async () => {
-        throw new Error('Access denied')
-      }
-    }
-
-    proxy.getS3Client = () => mockS3Client
 
     await t.throwsAsync(
       async () => proxy.initialize(),
@@ -172,13 +170,11 @@ test('AssetProxy - isEnabled() returns true for ALL_BUCKETS_IN_ACCOUNT', async (
   try {
     process.env['ASSET_PROXY_BUCKET_OPTION'] = 'ALL_BUCKETS_IN_ACCOUNT'
 
+    s3Mock.on(ListBucketsCommand).resolves({
+      Buckets: [{ Name: 'bucket-1' }]
+    })
+
     const proxy = new AssetProxy()
-
-    const mockS3Client = {
-      send: async () => ({ Buckets: [{ Name: 'bucket-1' }] })
-    }
-
-    proxy.getS3Client = () => mockS3Client
     await proxy.initialize()
 
     t.true(proxy.isEnabled())
@@ -234,18 +230,14 @@ test('AssetProxy - shouldProxyBucket() with ALL_BUCKETS_IN_ACCOUNT mode only pro
   try {
     process.env['ASSET_PROXY_BUCKET_OPTION'] = 'ALL_BUCKETS_IN_ACCOUNT'
 
+    s3Mock.on(ListBucketsCommand).resolves({
+      Buckets: [
+        { Name: 'fetched-bucket-1' },
+        { Name: 'fetched-bucket-2' }
+      ]
+    })
+
     const proxy = new AssetProxy()
-
-    const mockS3Client = {
-      send: async () => ({
-        Buckets: [
-          { Name: 'fetched-bucket-1' },
-          { Name: 'fetched-bucket-2' }
-        ]
-      })
-    }
-
-    proxy.getS3Client = () => mockS3Client
     await proxy.initialize()
 
     t.true(proxy.shouldProxyBucket('fetched-bucket-1'))

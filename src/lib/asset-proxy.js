@@ -296,7 +296,7 @@ export class AssetProxy {
    */
   async getAssetPresignedUrl(itemOrCollection, assetKey) {
     if (!this.isEnabled()) {
-      return new ForbiddenError()
+      return new NotFoundError()
     }
 
     const asset = itemOrCollection.assets?.[assetKey] || null

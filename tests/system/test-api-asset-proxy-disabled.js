@@ -55,7 +55,7 @@ test.after.always(async (t) => {
   if (t.context.api) await t.context.api.close()
 })
 
-test('GET /collections/:collectionId/items/:itemId/assets/:assetKey - returns 403 when proxy disabled', async (t) => {
+test('GET /collections/:collectionId/items/:itemId/assets/:assetKey - returns 404 when proxy disabled', async (t) => {
   const { collectionId, itemId } = t.context
 
   const response = await t.context.api.client.get(
@@ -67,10 +67,10 @@ test('GET /collections/:collectionId/items/:itemId/assets/:assetKey - returns 40
     }
   )
 
-  t.is(response.statusCode, 403)
+  t.is(response.statusCode, 404)
 })
 
-test('GET /collections/:collectionId/assets/:assetKey - returns 403 when proxy disabled', async (t) => {
+test('GET /collections/:collectionId/assets/:assetKey - returns 404 when proxy disabled', async (t) => {
   const { collectionWithAssetId } = t.context
 
   const response = await t.context.api.client.get(
@@ -82,7 +82,7 @@ test('GET /collections/:collectionId/assets/:assetKey - returns 403 when proxy d
     }
   )
 
-  t.is(response.statusCode, 403)
+  t.is(response.statusCode, 404)
 })
 
 test('GET /collections/:collectionId/items/:itemId - item asset hrefs unchanged when proxy disabled', async (t) => {

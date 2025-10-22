@@ -6,19 +6,12 @@ import getObjectJson from '../../lib/s3-utils.js'
 import logger from '../../lib/logger.js'
 import { AssetProxy } from '../../lib/asset-proxy.js'
 
-let assetProxyInstance = null
+let assetProxy = new AssetProxy()
+await assetProxy.initialize()
 
-const getAssetProxy = async () => {
-  if (!assetProxyInstance) {
-    assetProxyInstance = new AssetProxy()
-    await assetProxyInstance.initialize()
-  }
-
-  return assetProxyInstance
-}
-
-export const resetAssetProxy = () => {
-  assetProxyInstance = null
+export const resetAssetProxy = async () => {
+  assetProxy = new AssetProxy()
+  await assetProxy.initialize()
 }
 
 const isSqsEvent = (event) => 'Records' in event
@@ -92,7 +85,7 @@ export const handler = async (event, _context) => {
 
     if (postIngestTopicArn) {
       logger.debug('Publishing to post-ingest topic: %s', postIngestTopicArn)
-      const assetProxy = await getAssetProxy()
+      // const assetProxy = await getAssetProxy()
       await publishResultsToSns(results, postIngestTopicArn, assetProxy)
     } else {
       logger.debug('Skipping post-ingest notification since no topic is configured')

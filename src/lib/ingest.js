@@ -179,7 +179,7 @@ function updateLinksAndHrefsWithinRecord(record, assetProxy) {
   } else if (isCollection(record)) {
     addCollectionLinks([record], endpoint)
   }
-  assetProxy.addProxiedAssets([record], endpoint)
+  assetProxy.updateAssetHrefs([record], endpoint)
   return record
 }
 

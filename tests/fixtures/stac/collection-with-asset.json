@@ -107,7 +107,7 @@
   "license": "PDDL-1.0",
   "assets": {
     "thumbnail": {
-      "href": "https://s3-us-west-2.amazonaws.com/landsat-pds/L8/010/010/LC80100102015082LGN00/LC80100102015082LGN00_thumb_large.jpg",
+      "href": "s3://landsat-pds/L8/010/010/LC80100102015082LGN00/LC80100102015082LGN00_thumb_large.jpg",
       "title": "Thumbnail image",
       "type": "image/jpeg"
     }

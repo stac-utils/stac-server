@@ -6,12 +6,10 @@ import getObjectJson from '../../lib/s3-utils.js'
 import logger from '../../lib/logger.js'
 import { AssetProxy } from '../../lib/asset-proxy.js'
 
-let assetProxy = new AssetProxy()
-await assetProxy.initialize()
+let assetProxy = await AssetProxy.create()
 
 export const resetAssetProxy = async () => {
-  assetProxy = new AssetProxy()
-  await assetProxy.initialize()
+  assetProxy = await AssetProxy.create()
 }
 
 const isSqsEvent = (event) => 'Records' in event

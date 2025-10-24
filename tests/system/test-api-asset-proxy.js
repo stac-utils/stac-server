@@ -63,8 +63,8 @@ test.after.always(async (t) => {
 test('AssetProxy initialized with ALL_BUCKETS_IN_ACCOUNT mode fetches buckets', (t) => {
   const assetProxy = t.context.api.app.locals['assetProxy']
 
-  t.truthy(assetProxy.bucketsCache)
-  t.true(assetProxy.isEnabled())
+  t.truthy(assetProxy.buckets)
+  t.true(assetProxy.isEnabled)
   t.true(assetProxy.shouldProxyBucket('landsat-pds'))
   t.true(!assetProxy.shouldProxyBucket('some-other-bucket'))
 })

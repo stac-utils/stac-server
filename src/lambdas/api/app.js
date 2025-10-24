@@ -7,7 +7,7 @@ import path from 'path'
 import { fileURLToPath } from 'url'
 import database from '../../lib/database.js'
 import api from '../../lib/api.js'
-import { NotFoundError, ValidationError, ForbiddenError } from '../../lib/errors.js'
+import { NotFoundError, ValidationError } from '../../lib/errors.js'
 import { readFile } from '../../lib/fs.js'
 import addEndpoint from './middleware/add-endpoint.js'
 import logger from '../../lib/logger.js'
@@ -25,8 +25,7 @@ export const createApp = async () => {
 
   const app = express()
 
-  app.locals['assetProxy'] = new AssetProxy()
-  await app.locals['assetProxy'].initialize()
+  app.locals['assetProxy'] = await AssetProxy.create()
 
   if (process.env['REQUEST_LOGGING_ENABLED'] !== 'false') {
     app.use(
@@ -120,7 +119,7 @@ export const createApp = async () => {
       const result = await api.searchItems(
         database, 'GET', null, req.endpoint, req.query, req.headers
       )
-      req.app.locals['assetProxy'].addProxiedAssets(result.features, req.endpoint)
+      req.app.locals['assetProxy'].updateAssetHrefs(result.features, req.endpoint)
       res.type('application/geo+json')
       res.json(result)
     } catch (error) {
@@ -137,7 +136,7 @@ export const createApp = async () => {
       const result = await api.searchItems(
         database, 'POST', null, req.endpoint, req.body, req.headers
       )
-      req.app.locals['assetProxy'].addProxiedAssets(result.features, req.endpoint)
+      req.app.locals['assetProxy'].updateAssetHrefs(result.features, req.endpoint)
       res.type('application/geo+json')
       res.json(result)
     } catch (error) {
@@ -174,7 +173,7 @@ export const createApp = async () => {
       const response = await api.getCollections(database, req.endpoint, req.query, req.headers)
       if (response instanceof Error) next(createError(500, response.message))
       else {
-        req.app.locals['assetProxy'].addProxiedAssets(response.collections, req.endpoint)
+        req.app.locals['assetProxy'].updateAssetHrefs(response.collections, req.endpoint)
         res.json(response)
       }
     } catch (error) {
@@ -211,7 +210,7 @@ export const createApp = async () => {
       )
       if (response instanceof Error) next(createError(404))
       else {
-        req.app.locals['assetProxy'].addProxiedAssets([response], req.endpoint)
+        req.app.locals['assetProxy'].updateAssetHrefs([response], req.endpoint)
         res.json(response)
       }
     } catch (error) {
@@ -294,7 +293,7 @@ export const createApp = async () => {
       const result = await api.searchItems(
         database, 'GET', collectionId, req.endpoint, req.query, req.headers
       )
-      req.app.locals['assetProxy'].addProxiedAssets(result.features, req.endpoint)
+      req.app.locals['assetProxy'].updateAssetHrefs(result.features, req.endpoint)
       res.type('application/geo+json')
       res.json(result)
     } catch (error) {
@@ -358,7 +357,7 @@ export const createApp = async () => {
       } else if (response instanceof Error) {
         next(createError(500))
       } else {
-        req.app.locals['assetProxy'].addProxiedAssets([response], req.endpoint)
+        req.app.locals['assetProxy'].updateAssetHrefs([response], req.endpoint)
         res.type('application/geo+json')
         res.json(response)
       }
@@ -476,6 +475,11 @@ export const createApp = async () => {
 
   app.get('/collections/:collectionId/items/:itemId/assets/:assetKey',
     async (req, res, next) => {
+      if (!req.app.locals['assetProxy'].isEnabled) {
+        next(createError(404))
+        return
+      }
+
       try {
         const item = await api.getItem(
           database,
@@ -488,21 +492,13 @@ export const createApp = async () => {
 
         if (item instanceof NotFoundError) {
           next(createError(404))
-        } else if (item instanceof Error) {
-          next(createError(500))
         } else {
           const presignedUrl = await req.app.locals['assetProxy'].getAssetPresignedUrl(
             item,
             req.params.assetKey
           )
-          if (presignedUrl instanceof ValidationError) {
-            next(createError(400))
-          } else if (presignedUrl instanceof ForbiddenError) {
-            next(createError(403))
-          } else if (presignedUrl instanceof NotFoundError) {
+          if (!presignedUrl) {
             next(createError(404))
-          } else if (presignedUrl instanceof Error) {
-            next(createError(500))
           } else {
             res.redirect(presignedUrl)
           }
@@ -513,6 +509,11 @@ export const createApp = async () => {
     })
 
   app.get('/collections/:collectionId/assets/:assetKey', async (req, res, next) => {
+    if (!req.app.locals['assetProxy'].isEnabled) {
+      next(createError(404))
+      return
+    }
+
     try {
       const collection = await api.getCollection(
         database,
@@ -524,21 +525,13 @@ export const createApp = async () => {
 
       if (collection instanceof NotFoundError) {
         next(createError(404))
-      } else if (collection instanceof Error) {
-        next(createError(500))
       } else {
         const presignedUrl = await req.app.locals['assetProxy'].getAssetPresignedUrl(
           collection,
           req.params.assetKey
         )
-        if (presignedUrl instanceof ValidationError) {
-          next(createError(400))
-        } else if (presignedUrl instanceof ForbiddenError) {
-          next(createError(403))
-        } else if (presignedUrl instanceof NotFoundError) {
+        if (!presignedUrl) {
           next(createError(404))
-        } else if (presignedUrl instanceof Error) {
-          next(createError(500))
         } else {
           res.redirect(presignedUrl)
         }

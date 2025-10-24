@@ -2,7 +2,7 @@
 
 import test from 'ava'
 import { mockClient } from 'aws-sdk-client-mock'
-import { S3Client, ListBucketsCommand } from '@aws-sdk/client-s3'
+import { S3Client, ListBucketsCommand, HeadBucketCommand } from '@aws-sdk/client-s3'
 import { AssetProxy, BucketOption, ALTERNATE_ASSETS_EXTENSION } from '../../src/lib/asset-proxy.js'
 
 const s3Mock = mockClient(S3Client)
@@ -18,27 +18,28 @@ test('BucketOption - exports expected constants', (t) => {
   t.is(BucketOption.LIST, 'LIST')
 })
 
-test('AssetProxy - constructor initializes with expected defaults', (t) => {
+test('AssetProxy - constructor initializes with expected defaults', async (t) => {
   const before = { ...process.env }
   try {
     delete process.env['ASSET_PROXY_BUCKET_OPTION']
 
-    const proxy = new AssetProxy()
+    const proxy = await AssetProxy.create()
     t.is(proxy.bucketOption, 'NONE')
     t.is(proxy.urlExpiry, 300)
+    t.is(proxy.isEnabled, false)
   } finally {
     process.env = before
   }
 })
 
-test('AssetProxy - constructor reads env vars correctly', (t) => {
+test('AssetProxy - constructor reads env vars correctly', async (t) => {
   const before = { ...process.env }
   try {
     process.env['ASSET_PROXY_BUCKET_OPTION'] = 'ALL'
     process.env['ASSET_PROXY_URL_EXPIRY'] = '600'
     process.env['ASSET_PROXY_BUCKET_LIST'] = 'bucket1,bucket2'
 
-    const proxy = new AssetProxy()
+    const proxy = await AssetProxy.create()
     t.is(proxy.bucketOption, 'ALL')
     t.is(proxy.urlExpiry, 600)
     t.is(proxy.bucketList, 'bucket1,bucket2')
@@ -47,34 +48,37 @@ test('AssetProxy - constructor reads env vars correctly', (t) => {
   }
 })
 
-test('AssetProxy - initialize() with LIST mode parses bucket list', async (t) => {
+test('AssetProxy - LIST mode parses bucket list', async (t) => {
   const before = { ...process.env }
   try {
     process.env['ASSET_PROXY_BUCKET_OPTION'] = 'LIST'
     process.env['ASSET_PROXY_BUCKET_LIST'] = 'bucket1, bucket2 , bucket3'
 
-    const proxy = new AssetProxy()
-    await proxy.initialize()
+    s3Mock.on(HeadBucketCommand).resolves({
+      $metadata: { httpStatusCode: 200 },
+      BucketRegion: 'us-west-2'
+    })
 
-    t.truthy(proxy.bucketsCache)
-    t.true(proxy.bucketsCache.has('bucket1'))
-    t.true(proxy.bucketsCache.has('bucket2'))
-    t.true(proxy.bucketsCache.has('bucket3'))
-    t.is(proxy.bucketsCache.size, 3)
+    const proxy = await AssetProxy.create()
+
+    t.truthy(proxy.buckets)
+    t.truthy(proxy.buckets['bucket1'])
+    t.truthy(proxy.buckets['bucket2'])
+    t.truthy(proxy.buckets['bucket3'])
+    t.is(Object.keys(proxy.buckets).length, 3)
   } finally {
     process.env = before
   }
 })
 
-test('AssetProxy - initialize() with LIST mode throws if no bucket list', async (t) => {
+test('AssetProxy - LIST mode throws if no bucket list', async (t) => {
   const before = { ...process.env }
   try {
     process.env['ASSET_PROXY_BUCKET_OPTION'] = 'LIST'
     delete process.env['ASSET_PROXY_BUCKET_LIST']
 
-    const proxy = new AssetProxy()
     await t.throwsAsync(
-      async () => proxy.initialize(),
+      async () => AssetProxy.create(),
       { message: /ASSET_PROXY_BUCKET_LIST must be set/ }
     )
   } finally {
@@ -82,7 +86,7 @@ test('AssetProxy - initialize() with LIST mode throws if no bucket list', async 
   }
 })
 
-test('AssetProxy - initialize() with ALL_BUCKETS_IN_ACCOUNT mode fetches buckets', async (t) => {
+test('AssetProxy - ALL_BUCKETS_IN_ACCOUNT mode fetches buckets', async (t) => {
   const before = { ...process.env }
   try {
     process.env['ASSET_PROXY_BUCKET_OPTION'] = 'ALL_BUCKETS_IN_ACCOUNT'
@@ -95,31 +99,32 @@ test('AssetProxy - initialize() with ALL_BUCKETS_IN_ACCOUNT mode fetches buckets
       ]
     })
 
-    const proxy = new AssetProxy()
-    await proxy.initialize()
+    s3Mock.on(HeadBucketCommand).resolves({
+      $metadata: { httpStatusCode: 200 },
+      BucketRegion: 'us-west-2'
+    })
 
-    t.truthy(proxy.bucketsCache)
-    t.true(proxy.bucketsCache.has('bucket-1'))
-    t.true(proxy.bucketsCache.has('bucket-2'))
-    t.true(!proxy.bucketsCache.has('some-other-bucket'))
-    t.is(proxy.bucketsCache.size, 2)
+    const proxy = await AssetProxy.create()
+
+    t.truthy(proxy.buckets)
+    t.truthy(proxy.buckets['bucket-1'])
+    t.truthy(proxy.buckets['bucket-2'])
+    t.is(proxy.buckets['some-other-bucket'], undefined)
+    t.is(Object.keys(proxy.buckets).length, 2)
   } finally {
     process.env = before
   }
 })
 
-test('AssetProxy - initialize() with ALL_BUCKETS_IN_ACCOUNT mode throws on error', async (t) => {
+test('AssetProxy - ALL_BUCKETS_IN_ACCOUNT mode throws on error', async (t) => {
   const before = { ...process.env }
   try {
     process.env['ASSET_PROXY_BUCKET_OPTION'] = 'ALL_BUCKETS_IN_ACCOUNT'
 
-    // Set up the mock to reject with an error
     s3Mock.on(ListBucketsCommand).rejects(new Error('Access denied'))
 
-    const proxy = new AssetProxy()
-
     await t.throwsAsync(
-      async () => proxy.initialize(),
+      async () => AssetProxy.create(),
       { message: /Failed to fetch buckets for asset proxy: Access denied/ }
     )
   } finally {
@@ -127,45 +132,49 @@ test('AssetProxy - initialize() with ALL_BUCKETS_IN_ACCOUNT mode throws on error
   }
 })
 
-test('AssetProxy - isEnabled() returns false for NONE', (t) => {
+test('AssetProxy - isEnabled returns false for NONE', async (t) => {
   const before = { ...process.env }
   try {
     process.env['ASSET_PROXY_BUCKET_OPTION'] = 'NONE'
 
-    const proxy = new AssetProxy()
-    t.false(proxy.isEnabled())
+    const proxy = await AssetProxy.create()
+    t.false(proxy.isEnabled)
   } finally {
     process.env = before
   }
 })
 
-test('AssetProxy - isEnabled() returns true for ALL', (t) => {
+test('AssetProxy - isEnabled returns true for ALL', async (t) => {
   const before = { ...process.env }
   try {
     process.env['ASSET_PROXY_BUCKET_OPTION'] = 'ALL'
 
-    const proxy = new AssetProxy()
-    t.true(proxy.isEnabled())
+    const proxy = await AssetProxy.create()
+    t.true(proxy.isEnabled)
   } finally {
     process.env = before
   }
 })
 
-test('AssetProxy - isEnabled() returns true for LIST', async (t) => {
+test('AssetProxy - isEnabled returns true for LIST', async (t) => {
   const before = { ...process.env }
   try {
     process.env['ASSET_PROXY_BUCKET_OPTION'] = 'LIST'
     process.env['ASSET_PROXY_BUCKET_LIST'] = 'bucket1'
 
-    const proxy = new AssetProxy()
-    await proxy.initialize()
-    t.true(proxy.isEnabled())
+    s3Mock.on(HeadBucketCommand).resolves({
+      $metadata: { httpStatusCode: 200 },
+      BucketRegion: 'us-west-2'
+    })
+
+    const proxy = await AssetProxy.create()
+    t.true(proxy.isEnabled)
   } finally {
     process.env = before
   }
 })
 
-test('AssetProxy - isEnabled() returns true for ALL_BUCKETS_IN_ACCOUNT', async (t) => {
+test('AssetProxy - isEnabled returns true for ALL_BUCKETS_IN_ACCOUNT', async (t) => {
   const before = { ...process.env }
   try {
     process.env['ASSET_PROXY_BUCKET_OPTION'] = 'ALL_BUCKETS_IN_ACCOUNT'
@@ -174,33 +183,37 @@ test('AssetProxy - isEnabled() returns true for ALL_BUCKETS_IN_ACCOUNT', async (
       Buckets: [{ Name: 'bucket-1' }]
     })
 
-    const proxy = new AssetProxy()
-    await proxy.initialize()
+    s3Mock.on(HeadBucketCommand).resolves({
+      $metadata: { httpStatusCode: 200 },
+      BucketRegion: 'us-west-2'
+    })
 
-    t.true(proxy.isEnabled())
+    const proxy = await AssetProxy.create()
+
+    t.true(proxy.isEnabled)
   } finally {
     process.env = before
   }
 })
 
-test('AssetProxy - shouldProxyBucket() with NONE mode returns false', (t) => {
+test('AssetProxy - shouldProxyBucket() with NONE mode returns false', async (t) => {
   const before = { ...process.env }
   try {
     process.env['ASSET_PROXY_BUCKET_OPTION'] = 'NONE'
 
-    const proxy = new AssetProxy()
+    const proxy = await AssetProxy.create()
     t.false(proxy.shouldProxyBucket('any-bucket'))
   } finally {
     process.env = before
   }
 })
 
-test('AssetProxy - shouldProxyBucket() with ALL mode returns true', (t) => {
+test('AssetProxy - shouldProxyBucket() with ALL mode returns true', async (t) => {
   const before = { ...process.env }
   try {
     process.env['ASSET_PROXY_BUCKET_OPTION'] = 'ALL'
 
-    const proxy = new AssetProxy()
+    const proxy = await AssetProxy.create()
     t.true(proxy.shouldProxyBucket('any-bucket'))
     t.true(proxy.shouldProxyBucket('another-bucket'))
   } finally {
@@ -214,8 +227,12 @@ test('AssetProxy - shouldProxyBucket() with LIST mode only proxies buckets in li
     process.env['ASSET_PROXY_BUCKET_OPTION'] = 'LIST'
     process.env['ASSET_PROXY_BUCKET_LIST'] = 'allowed-bucket,another-allowed'
 
-    const proxy = new AssetProxy()
-    await proxy.initialize()
+    s3Mock.on(HeadBucketCommand).resolves({
+      $metadata: { httpStatusCode: 200 },
+      BucketRegion: 'us-west-2'
+    })
+
+    const proxy = await AssetProxy.create()
 
     t.true(proxy.shouldProxyBucket('allowed-bucket'))
     t.true(proxy.shouldProxyBucket('another-allowed'))
@@ -237,8 +254,12 @@ test('AssetProxy - shouldProxyBucket() with ALL_BUCKETS_IN_ACCOUNT mode only pro
       ]
     })
 
-    const proxy = new AssetProxy()
-    await proxy.initialize()
+    s3Mock.on(HeadBucketCommand).resolves({
+      $metadata: { httpStatusCode: 200 },
+      BucketRegion: 'us-west-2'
+    })
+
+    const proxy = await AssetProxy.create()
 
     t.true(proxy.shouldProxyBucket('fetched-bucket-1'))
     t.true(proxy.shouldProxyBucket('fetched-bucket-2'))
@@ -248,19 +269,19 @@ test('AssetProxy - shouldProxyBucket() with ALL_BUCKETS_IN_ACCOUNT mode only pro
   }
 })
 
-test('AssetProxy - getProxiedAssets() transforms item assets in ALL mode', (t) => {
+test('AssetProxy - getProxiedAssets() transforms item assets in ALL mode', async (t) => {
   const before = { ...process.env }
   try {
     process.env['ASSET_PROXY_BUCKET_OPTION'] = 'ALL'
 
-    const proxy = new AssetProxy()
+    const proxy = await AssetProxy.create()
     const assets = {
       thumbnail: {
         href: 's3://my-bucket/thumb.jpg',
         type: 'image/jpeg'
       },
       data: {
-        href: 'https://my-bucket.s3.us-west-2.amazonaws.com/data.tif',
+        href: 's3://my-bucket/data.tif',
         type: 'image/tiff'
       }
     }
@@ -276,18 +297,18 @@ test('AssetProxy - getProxiedAssets() transforms item assets in ALL mode', (t) =
     t.is(proxied.thumbnail.href, 'https://api.example.com/collections/collection1/items/item1/assets/thumbnail')
     t.is(proxied.thumbnail.alternate.s3.href, 's3://my-bucket/thumb.jpg')
     t.is(proxied.data.href, 'https://api.example.com/collections/collection1/items/item1/assets/data')
-    t.is(proxied.data.alternate.s3.href, 'https://my-bucket.s3.us-west-2.amazonaws.com/data.tif')
+    t.is(proxied.data.alternate.s3.href, 's3://my-bucket/data.tif')
   } finally {
     process.env = before
   }
 })
 
-test('AssetProxy - getProxiedAssets() transforms collection assets', (t) => {
+test('AssetProxy - getProxiedAssets() transforms collection assets', async (t) => {
   const before = { ...process.env }
   try {
     process.env['ASSET_PROXY_BUCKET_OPTION'] = 'ALL'
 
-    const proxy = new AssetProxy()
+    const proxy = await AssetProxy.create()
     const assets = {
       thumbnail: {
         href: 's3://my-bucket/collection-thumb.jpg',
@@ -310,12 +331,12 @@ test('AssetProxy - getProxiedAssets() transforms collection assets', (t) => {
   }
 })
 
-test('AssetProxy - getProxiedAssets() does not transform assets in NONE mode', (t) => {
+test('AssetProxy - getProxiedAssets() does not transform assets in NONE mode', async (t) => {
   const before = { ...process.env }
   try {
     process.env['ASSET_PROXY_BUCKET_OPTION'] = 'NONE'
 
-    const proxy = new AssetProxy()
+    const proxy = await AssetProxy.create()
     const assets = {
       thumbnail: {
         href: 's3://my-bucket/thumb.jpg',
@@ -338,12 +359,12 @@ test('AssetProxy - getProxiedAssets() does not transform assets in NONE mode', (
   }
 })
 
-test('AssetProxy - getProxiedAssets() preserves existing alternate links', (t) => {
+test('AssetProxy - getProxiedAssets() preserves existing alternate links', async (t) => {
   const before = { ...process.env }
   try {
     process.env['ASSET_PROXY_BUCKET_OPTION'] = 'ALL'
 
-    const proxy = new AssetProxy()
+    const proxy = await AssetProxy.create()
     const assets = {
       data: {
         href: 's3://my-bucket/data.tif',
@@ -368,12 +389,12 @@ test('AssetProxy - getProxiedAssets() preserves existing alternate links', (t) =
   }
 })
 
-test('AssetProxy - getProxiedAssets() does not transform non-S3 assets', (t) => {
+test('AssetProxy - getProxiedAssets() does not transform non-S3 assets', async (t) => {
   const before = { ...process.env }
   try {
     process.env['ASSET_PROXY_BUCKET_OPTION'] = 'ALL'
 
-    const proxy = new AssetProxy()
+    const proxy = await AssetProxy.create()
     const assets = {
       metadata: {
         href: 'https://example.com/metadata.xml',
@@ -396,12 +417,12 @@ test('AssetProxy - getProxiedAssets() does not transform non-S3 assets', (t) => 
   }
 })
 
-test('AssetProxy - getProxiedAssets() handles assets without href', (t) => {
+test('AssetProxy - getProxiedAssets() handles assets without href', async (t) => {
   const before = { ...process.env }
   try {
     process.env['ASSET_PROXY_BUCKET_OPTION'] = 'ALL'
 
-    const proxy = new AssetProxy()
+    const proxy = await AssetProxy.create()
     const assets = {
       metadata: {
         type: 'application/xml'
@@ -422,12 +443,12 @@ test('AssetProxy - getProxiedAssets() handles assets without href', (t) => {
   }
 })
 
-test('AssetProxy - getProxiedAssets() handles empty assets object', (t) => {
+test('AssetProxy - getProxiedAssets() handles empty assets object', async (t) => {
   const before = { ...process.env }
   try {
     process.env['ASSET_PROXY_BUCKET_OPTION'] = 'ALL'
 
-    const proxy = new AssetProxy()
+    const proxy = await AssetProxy.create()
     const assets = {}
 
     const { assets: proxied, wasProxied } = proxy.getProxiedAssets(
@@ -444,12 +465,12 @@ test('AssetProxy - getProxiedAssets() handles empty assets object', (t) => {
   }
 })
 
-test('AssetProxy - addProxiedAssets() mutates results and adds stac_extensions', (t) => {
+test('AssetProxy - updateAssetHrefs() mutates results and adds the alternate assets extension', async (t) => {
   const before = { ...process.env }
   try {
     process.env['ASSET_PROXY_BUCKET_OPTION'] = 'ALL'
 
-    const proxy = new AssetProxy()
+    const proxy = await AssetProxy.create()
     const results = [{
       id: 'item1',
       collection: 'collection1',
@@ -460,7 +481,7 @@ test('AssetProxy - addProxiedAssets() mutates results and adds stac_extensions',
       }
     }]
 
-    proxy.addProxiedAssets(results, 'https://api.example.com')
+    proxy.updateAssetHrefs(results, 'https://api.example.com')
 
     t.truthy(results[0].assets)
     t.is(results[0].assets.data.href, 'https://api.example.com/collections/collection1/items/item1/assets/data')
@@ -473,12 +494,12 @@ test('AssetProxy - addProxiedAssets() mutates results and adds stac_extensions',
   }
 })
 
-test('AssetProxy - addProxiedAssets() returns unchanged results when disabled', (t) => {
+test('AssetProxy - updateAssetHrefs() returns unchanged results when disabled', async (t) => {
   const before = { ...process.env }
   try {
     process.env['ASSET_PROXY_BUCKET_OPTION'] = 'NONE'
 
-    const proxy = new AssetProxy()
+    const proxy = await AssetProxy.create()
     const results = [{
       id: 'item1',
       collection: 'collection1',
@@ -490,7 +511,7 @@ test('AssetProxy - addProxiedAssets() returns unchanged results when disabled', 
     }]
 
     const originalHref = results[0].assets.data.href
-    proxy.addProxiedAssets(results, 'https://api.example.com')
+    proxy.updateAssetHrefs(results, 'https://api.example.com')
 
     t.is(results[0].assets.data.href, originalHref)
     t.is(results[0].assets.data.alternate, undefined)

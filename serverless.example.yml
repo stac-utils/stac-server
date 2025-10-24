@@ -34,7 +34,7 @@ provider:
     STAC_API_URL: "https://some-stac-server.example.com"
     CORS_ORIGIN: "https://ui.example.com"
     CORS_CREDENTIALS: true
-    # Asset Proxy Configuration
+    # Asset Proxy Environment Variables
     # ASSET_PROXY_BUCKET_OPTION: "NONE"  # Options: NONE, ALL, ALL_BUCKETS_IN_ACCOUNT, LIST
     # ASSET_PROXY_BUCKET_LIST: "bucket1,bucket2,bucket3"  # Required only when ASSET_PROXY_BUCKET_OPTION is LIST
     # ASSET_PROXY_URL_EXPIRY: 300  # Pre-signed URL expiry in seconds (default: 300)

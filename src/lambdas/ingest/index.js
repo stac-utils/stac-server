@@ -83,7 +83,6 @@ export const handler = async (event, _context) => {
 
     if (postIngestTopicArn) {
       logger.debug('Publishing to post-ingest topic: %s', postIngestTopicArn)
-      // const assetProxy = await getAssetProxy()
       await publishResultsToSns(results, postIngestTopicArn, assetProxy)
     } else {
       logger.debug('Skipping post-ingest notification since no topic is configured')

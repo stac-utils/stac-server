@@ -1130,7 +1130,15 @@ Available aggregations are:
 
 ## Asset Proxy
 
-The Asset Proxy feature enables stac-server to proxy access to S3 assets through the STAC API by generating pre-signed URLs. When enabled, asset `href` values pointing to S3 are replaced with proxy endpoint URLs when an Item or Collection is served, while the original S3 URLs are preserved in the `alternate.s3.href` field using the [Alternate Assets Extension](https://github.com/stac-extensions/alternate-assets). Only objects with S3 URIs (`s3://` prefix) are proxied; other URL schemes are returned unchanged.
+The Asset Proxy feature enables stac-server to proxy access to S3 assets through the STAC
+API by generating requester-pays pre-signed URLs. Only assets with S3 URIs (`s3://`
+prefix) are proxied; other URL schemes are ignored. When the Asset Proxy feature is
+enabled, asset `href` values pointing to S3 are replaced with proxy endpoint URLs when an
+Item or Collection is served, while the original S3 URLs are preserved in the
+`alternate.s3.href` field using the [Alternate Assets
+Extension](https://github.com/stac-extensions/alternate-assets). Subsequent GET requests
+to the proxy endpoint URLs are redirected to pre-signed S3 object URLS for download (the
+requester pays for S3 egress).
 
 ### Configuration
 

@@ -1,4 +1,3 @@
-/* eslint-disable max-classes-per-file */
 import {
   GetObjectCommand,
   ListBucketsCommand,
@@ -274,6 +273,9 @@ export class AssetProxy {
 
     const region = await this.getBucket(bucket).then((b) => b.region)
     if (!region) {
+      // Should not get here if bucketOption is LIST or ALL_BUCKETS_IN_ACCOUNT
+      // If bucketOption is ALL, the bucket either does not exist or access is denied
+      logger.warn(`Bucket ${bucket} does not exist or access is denied`)
       return null
     }
 

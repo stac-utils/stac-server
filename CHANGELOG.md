@@ -17,9 +17,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Changed
 
-- When asset proxying is enabled, S3 asset hrefs are replaced with proxy endpoint URLs,
-  and original S3 URLs are preserved in `alternate.s3.href` using the Alternate Assets
-  Extension.
+- When asset proxying is enabled, when a STAC Item or Collection is served, asset S3 hrefs
+  are replaced with proxy endpoint URLs and the original S3 URLs are preserved in
+  `alternate.s3.href` using the Alternate Assets Extension.
 
 ## [4.4.0] - 2025-09-10
 

@@ -65,8 +65,8 @@ test('AssetProxy initialized with ALL_BUCKETS_IN_ACCOUNT mode fetches buckets', 
 
   t.truthy(assetProxy.buckets)
   t.true(assetProxy.isEnabled)
-  t.true(assetProxy.shouldProxyBucket('landsat-pds'))
-  t.true(!assetProxy.shouldProxyBucket('some-other-bucket'))
+  t.true(assetProxy.buckets.shouldProxyBucket('landsat-pds'))
+  t.true(!assetProxy.buckets.shouldProxyBucket('some-other-bucket'))
 })
 
 test('GET /collections/:collectionId/items/:itemId/assets/:assetKey - 302 redirect to presigned URL', async (t) => {

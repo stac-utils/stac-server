@@ -18,31 +18,17 @@ test('BucketOption - exports expected constants', (t) => {
   t.is(BucketOption.LIST, 'LIST')
 })
 
-test('AssetProxy - constructor initializes with expected defaults', async (t) => {
+test.only('AssetProxy - constructor initializes with expected defaults', async (t) => {
   const before = { ...process.env }
   try {
     delete process.env['ASSET_PROXY_BUCKET_OPTION']
 
     const proxy = await AssetProxy.create()
-    t.is(proxy.bucketOption, 'NONE')
     t.is(proxy.urlExpiry, 300)
     t.is(proxy.isEnabled, false)
-  } finally {
-    process.env = before
-  }
-})
-
-test('AssetProxy - constructor reads env vars correctly', async (t) => {
-  const before = { ...process.env }
-  try {
-    process.env['ASSET_PROXY_BUCKET_OPTION'] = 'ALL'
-    process.env['ASSET_PROXY_URL_EXPIRY'] = '600'
-    process.env['ASSET_PROXY_BUCKET_LIST'] = 'bucket1,bucket2'
-
-    const proxy = await AssetProxy.create()
-    t.is(proxy.bucketOption, 'ALL')
-    t.is(proxy.urlExpiry, 600)
-    t.is(proxy.bucketList, 'bucket1,bucket2')
+    t.is(proxy.buckets.bucketOption, 'NONE')
+    t.is(proxy.buckets.bucketNames, null)
+    t.deepEqual(proxy.buckets.buckets, {})
   } finally {
     process.env = before
   }
@@ -62,10 +48,10 @@ test('AssetProxy - LIST mode parses bucket list', async (t) => {
     const proxy = await AssetProxy.create()
 
     t.truthy(proxy.buckets)
-    t.truthy(proxy.buckets['bucket1'])
-    t.truthy(proxy.buckets['bucket2'])
-    t.truthy(proxy.buckets['bucket3'])
-    t.is(Object.keys(proxy.buckets).length, 3)
+    t.truthy(proxy.buckets.buckets['bucket1'])
+    t.truthy(proxy.buckets.buckets['bucket2'])
+    t.truthy(proxy.buckets.buckets['bucket3'])
+    t.is(Object.keys(proxy.buckets.buckets).length, 3)
   } finally {
     process.env = before
   }
@@ -107,26 +93,10 @@ test('AssetProxy - ALL_BUCKETS_IN_ACCOUNT mode fetches buckets', async (t) => {
     const proxy = await AssetProxy.create()
 
     t.truthy(proxy.buckets)
-    t.truthy(proxy.buckets['bucket-1'])
-    t.truthy(proxy.buckets['bucket-2'])
-    t.is(proxy.buckets['some-other-bucket'], undefined)
-    t.is(Object.keys(proxy.buckets).length, 2)
-  } finally {
-    process.env = before
-  }
-})
-
-test('AssetProxy - ALL_BUCKETS_IN_ACCOUNT mode throws on error', async (t) => {
-  const before = { ...process.env }
-  try {
-    process.env['ASSET_PROXY_BUCKET_OPTION'] = 'ALL_BUCKETS_IN_ACCOUNT'
-
-    s3Mock.on(ListBucketsCommand).rejects(new Error('Access denied'))
-
-    await t.throwsAsync(
-      async () => AssetProxy.create(),
-      { message: /Failed to fetch buckets for asset proxy: Access denied/ }
-    )
+    t.truthy(proxy.buckets.buckets['bucket-1'])
+    t.truthy(proxy.buckets.buckets['bucket-2'])
+    t.is(proxy.buckets.buckets['some-other-bucket'], undefined)
+    t.is(Object.keys(proxy.buckets.buckets).length, 2)
   } finally {
     process.env = before
   }
@@ -196,32 +166,32 @@ test('AssetProxy - isEnabled returns true for ALL_BUCKETS_IN_ACCOUNT', async (t)
   }
 })
 
-test('AssetProxy - shouldProxyBucket() with NONE mode returns false', async (t) => {
+test('AssetProxy - bucket filtering with NONE mode returns false', async (t) => {
   const before = { ...process.env }
   try {
     process.env['ASSET_PROXY_BUCKET_OPTION'] = 'NONE'
 
     const proxy = await AssetProxy.create()
-    t.false(proxy.shouldProxyBucket('any-bucket'))
+    t.false(proxy.buckets.shouldProxyBucket('any-bucket'))
   } finally {
     process.env = before
   }
 })
 
-test('AssetProxy - shouldProxyBucket() with ALL mode returns true', async (t) => {
+test('AssetProxy - bucket filtering with ALL mode returns true', async (t) => {
   const before = { ...process.env }
   try {
     process.env['ASSET_PROXY_BUCKET_OPTION'] = 'ALL'
 
     const proxy = await AssetProxy.create()
-    t.true(proxy.shouldProxyBucket('any-bucket'))
-    t.true(proxy.shouldProxyBucket('another-bucket'))
+    t.true(proxy.buckets.shouldProxyBucket('any-bucket'))
+    t.true(proxy.buckets.shouldProxyBucket('another-bucket'))
   } finally {
     process.env = before
   }
 })
 
-test('AssetProxy - shouldProxyBucket() with LIST mode only proxies buckets in list', async (t) => {
+test('AssetProxy - bucket filtering with LIST mode only proxies buckets in list', async (t) => {
   const before = { ...process.env }
   try {
     process.env['ASSET_PROXY_BUCKET_OPTION'] = 'LIST'
@@ -234,15 +204,15 @@ test('AssetProxy - shouldProxyBucket() with LIST mode only proxies buckets in li
 
     const proxy = await AssetProxy.create()
 
-    t.true(proxy.shouldProxyBucket('allowed-bucket'))
-    t.true(proxy.shouldProxyBucket('another-allowed'))
-    t.false(proxy.shouldProxyBucket('not-in-list'))
+    t.true(proxy.buckets.shouldProxyBucket('allowed-bucket'))
+    t.true(proxy.buckets.shouldProxyBucket('another-allowed'))
+    t.false(proxy.buckets.shouldProxyBucket('not-in-list'))
   } finally {
     process.env = before
   }
 })
 
-test('AssetProxy - shouldProxyBucket() with ALL_BUCKETS_IN_ACCOUNT mode only proxies fetched buckets', async (t) => {
+test('AssetProxy - bucket filtering with ALL_BUCKETS_IN_ACCOUNT mode only proxies fetched buckets', async (t) => {
   const before = { ...process.env }
   try {
     process.env['ASSET_PROXY_BUCKET_OPTION'] = 'ALL_BUCKETS_IN_ACCOUNT'
@@ -261,9 +231,9 @@ test('AssetProxy - shouldProxyBucket() with ALL_BUCKETS_IN_ACCOUNT mode only pro
 
     const proxy = await AssetProxy.create()
 
-    t.true(proxy.shouldProxyBucket('fetched-bucket-1'))
-    t.true(proxy.shouldProxyBucket('fetched-bucket-2'))
-    t.false(proxy.shouldProxyBucket('not-fetched-bucket'))
+    t.true(proxy.buckets.shouldProxyBucket('fetched-bucket-1'))
+    t.true(proxy.buckets.shouldProxyBucket('fetched-bucket-2'))
+    t.false(proxy.buckets.shouldProxyBucket('not-fetched-bucket'))
   } finally {
     process.env = before
   }

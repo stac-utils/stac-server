@@ -1,3 +1,4 @@
+/* eslint-disable max-classes-per-file */
 import {
   GetObjectCommand,
   ListBucketsCommand,
@@ -32,22 +33,26 @@ const parseS3Url = (url) => {
   return { bucket, key }
 }
 
-export class AssetProxy {
-  constructor() {
-    this.bucketOption = process.env['ASSET_PROXY_BUCKET_OPTION'] || 'NONE'
-    this.bucketList = process.env['ASSET_PROXY_BUCKET_LIST']
-    this.urlExpiry = parseInt(process.env['ASSET_PROXY_URL_EXPIRY'] || '300', 10)
-    this.isEnabled = this.bucketOption !== BucketOption.NONE
+class AssetBuckets {
+  /**
+   * @param {string} bucketOption - Bucket option (NONE, ALL, ALL_BUCKETS_IN_ACCOUNT, LIST)
+   * @param {string[]|null} bucketNames - Array of bucket names (required for LIST option)
+   */
+  constructor(bucketOption, bucketNames) {
+    this.bucketOption = bucketOption
+    this.bucketNames = bucketNames
     this.buckets = {}
   }
 
   /**
-   * @returns {Promise<AssetProxy>} Initialized AssetProxy instance
+   * @param {string} bucketOption - Bucket option (NONE, ALL, ALL_BUCKETS_IN_ACCOUNT, LIST)
+   * @param {string[]|null} bucketNames - Array of bucket names (required for LIST option)
+   * @returns {Promise<AssetBuckets>} Initialized AssetBuckets instance
    */
-  static async create() {
-    const dbInstance = new AssetProxy()
-    await dbInstance._initBuckets()
-    return dbInstance
+  static async create(bucketOption, bucketNames) {
+    const instance = new AssetBuckets(bucketOption, bucketNames)
+    await instance._initBuckets()
+    return instance
   }
 
   /**
@@ -55,16 +60,14 @@ export class AssetProxy {
    */
   async _initBuckets() {
     switch (this.bucketOption) {
-    case BucketOption.LIST:
-      if (this.bucketList) {
-        const bucketNames = this.bucketList.split(',').map((b) => b.trim()).filter((b) => b)
+    case BucketOption.LIST: {
+      if (this.bucketNames && this.bucketNames.length > 0) {
         await Promise.all(
-          bucketNames.map(async (name) => { await this.getBucket(name) })
+          this.bucketNames.map(async (name) => { await this.getBucket(name) })
         )
 
-        const invalidBuckets = Object.values(this.buckets)
-          .filter((b) => b.region === null)
-          .map((b) => b.name)
+        const invalidBuckets = Object.keys(this.buckets)
+          .filter((bucketName) => this.buckets[bucketName].region === null)
         if (invalidBuckets.length > 0) {
           throw new Error(
             `Could not access or determine region for the following buckets: ${
@@ -78,33 +81,30 @@ export class AssetProxy {
         )
       } else {
         throw new Error(
-          'ASSET_PROXY_BUCKET_LIST must be set when ASSET_PROXY_BUCKET_OPTION is LIST'
+          'ASSET_PROXY_BUCKET_LIST must not be empty when ASSET_PROXY_BUCKET_OPTION is LIST'
         )
       }
       break
+    }
 
-    case BucketOption.ALL_BUCKETS_IN_ACCOUNT:
-      try {
-        const command = new ListBucketsCommand({})
-        const response = await s3Client.send(command)
-        const buckets = response.Buckets || []
+    case BucketOption.ALL_BUCKETS_IN_ACCOUNT: {
+      const command = new ListBucketsCommand({})
+      const response = await s3Client.send(command)
+      const buckets = response.Buckets || []
 
-        await Promise.all(
-          buckets
-            .map((bucket) => bucket.Name)
-            .filter((name) => typeof name === 'string')
-            .map(async (name) => { await this.getBucket(name) })
-        )
+      await Promise.all(
+        buckets
+          .map((bucket) => bucket.Name)
+          .filter((name) => typeof name === 'string')
+          .map(async (name) => { await this.getBucket(name) })
+      )
 
-        const count = Object.keys(this.buckets).length
-        logger.info(
-          `Fetched ${count} buckets from AWS account for asset proxy`
-        )
-      } catch (error) {
-        const message = error instanceof Error ? error.message : String(error)
-        throw new Error(`Failed to fetch buckets for asset proxy: ${message}`)
-      }
+      const count = Object.keys(this.buckets).length
+      logger.info(
+        `Fetched ${count} buckets from AWS account for asset proxy`
+      )
       break
+    }
 
     default:
       break
@@ -120,10 +120,12 @@ export class AssetProxy {
       const command = new HeadBucketCommand({ Bucket: bucketName })
       const response = await s3Client.send(command)
       const statusCode = response.$metadata.httpStatusCode
+      let name = null
       let region = null
 
       switch (statusCode) {
       case 200:
+        name = bucketName
         region = response.BucketRegion === 'EU'
           ? 'eu-west-1'
           : response.BucketRegion || 'us-east-1'
@@ -141,7 +143,7 @@ export class AssetProxy {
         logger.warn(`Unexpected status code ${statusCode} for bucket ${bucketName}`)
       }
 
-      this.buckets[bucketName] = { name: bucketName, region }
+      this.buckets[bucketName] = { name, region }
     }
     return this.buckets[bucketName]
   }
@@ -156,6 +158,42 @@ export class AssetProxy {
       return true
     }
     return false
+  }
+}
+
+export class AssetProxy {
+  /**
+   * @param {AssetBuckets} buckets - AssetBuckets instance
+   * @param {number} urlExpiry - Pre-signed URL expiry time in seconds
+   * @param {string} bucketOption - Bucket option (NONE, ALL, ALL_BUCKETS_IN_ACCOUNT, LIST)
+   */
+  constructor(buckets, urlExpiry, bucketOption) {
+    this.buckets = buckets
+    this.urlExpiry = urlExpiry
+    this.isEnabled = bucketOption !== BucketOption.NONE
+  }
+
+  /**
+   * @returns {Promise<AssetProxy>} Initialized AssetProxy instance
+   */
+  static async create() {
+    const bucketOption = process.env['ASSET_PROXY_BUCKET_OPTION'] || 'NONE'
+    const urlExpiry = parseInt(process.env['ASSET_PROXY_URL_EXPIRY'] || '300', 10)
+    const bucketList = process.env['ASSET_PROXY_BUCKET_LIST']
+
+    let bucketNames = null
+    if (bucketOption === BucketOption.LIST) {
+      if (!bucketList) {
+        throw new Error(
+          'ASSET_PROXY_BUCKET_LIST must be set when ASSET_PROXY_BUCKET_OPTION is LIST'
+        )
+      }
+      bucketNames = bucketList.split(',').map((b) => b.trim()).filter((b) => b)
+    }
+
+    const buckets = await AssetBuckets.create(bucketOption, bucketNames)
+
+    return new AssetProxy(buckets, urlExpiry, bucketOption)
   }
 
   /**
@@ -185,7 +223,7 @@ export class AssetProxy {
         continue
       }
 
-      if (!this.shouldProxyBucket(bucket)) {
+      if (!this.buckets.shouldProxyBucket(bucket)) {
         proxiedAssets[assetKey] = asset
         logger.warn(`Asset ${assetKey} bucket ${bucket} is not configured for proxying`)
         // eslint-disable-next-line no-continue
@@ -267,11 +305,11 @@ export class AssetProxy {
     }
 
     const { bucket, key } = parseS3Url(asset.href)
-    if (!bucket || !key || !this.shouldProxyBucket(bucket)) {
+    if (!bucket || !key || !this.buckets.shouldProxyBucket(bucket)) {
       return null
     }
 
-    const region = await this.getBucket(bucket).then((b) => b.region)
+    const region = await this.buckets.getBucket(bucket).then((b) => b.region)
     if (!region) {
       // Should not get here if bucketOption is LIST or ALL_BUCKETS_IN_ACCOUNT
       // If bucketOption is ALL, the bucket either does not exist or access is denied

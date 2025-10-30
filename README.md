@@ -1213,7 +1213,7 @@ Messages published to the post-ingest SNS topic include the following attributes
 
 ### Automatic Temporal Extent
 
-When ingesting Collections, the `extent.temporal.interval` field can be omitted to enable automatic temporal extent calculation. When a collection is requested via the API, if it doesn't have a temporal extent defined, stac-server will automatically calculate it by finding the earliest and latest `datetime` values from the items in that collection. Collections with no items will have a temporal extent of `[[null, null]]`. This feature allows temporal extents to stay current as items are added or removed without requiring manual collection updates.
+When ingesting Collections, the `extent.temporal.interval` field can be omitted to enable automatic temporal extent calculation. When a collection is requested via the API, if it doesn't have a temporal extent defined, stac-server will automatically calculate it by finding the earliest and latest `datetime` values from the items in that collection. Collections with no items will have a temporal extent of `[[null, null]]`. This feature allows temporal extents to stay current as items are added or removed without requiring manual collection updates. The temporal extent is calculated dynamically each time the collection is requested, so it automatically reflects the current state of items without requiring collection updates or persisting changes to the collection document.
 
 After a collection or item is ingested, the status of the ingest (success or failure) along with details of the collection or item are sent to a post-ingest SNS topic. To take action on items after they are ingested subscribe an endpoint to this topic.
 

@@ -1203,7 +1203,7 @@ ingestion will either fail (in the case of a single Item ingest) or if auto-crea
 If a collection or item is ingested, and an item with that id already exists in STAC, the new item will completely replace the old item, except the `created` property will be retained and the `updated` property updated
 to match the time of the new update.
 
-Messages published to the post-ingest SNS topic include the following atributes that can be used for filtering:
+Messages published to the post-ingest SNS topic include the following attributes that can be used for filtering:
 
 | attribute    | type   | values                   |
 | ------------ | ------ | ------------------------ |

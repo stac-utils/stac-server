@@ -1027,6 +1027,69 @@ async function healthCheck() {
   return client.cat.health()
 }
 
+/**
+ * Calculate temporal extent for a collection by finding the earliest and latest items
+ * @param {string} collectionId - The collection ID
+ * @returns {Promise<Array|null>} Returns [[startDate, endDate]] or null if no items/datetime
+ */
+async function getTemporalExtentFromItems(collectionId) {
+  try {
+    const client = await _client()
+    if (client === undefined) throw new Error('Client is undefined')
+
+    // Get earliest item by sorting ascending
+    const minParams = await constructSearchParams(
+      { collections: [collectionId] },
+      undefined,
+      1 // Only need the first item
+    )
+    minParams.body.sort = [{ 'properties.datetime': { order: 'asc' } }]
+    minParams.body._source = ['properties.datetime']
+
+    // Get latest item by sorting descending
+    const maxParams = await constructSearchParams(
+      { collections: [collectionId] },
+      undefined,
+      1 // Only need the first item
+    )
+    maxParams.body.sort = [{ 'properties.datetime': { order: 'desc' } }]
+    maxParams.body._source = ['properties.datetime']
+
+    // Execute both queries in parallel
+    const [minResponse, maxResponse] = await Promise.all([
+      client.search({
+        ignore_unavailable: true,
+        allow_no_indices: true,
+        ...minParams
+      }),
+      client.search({
+        ignore_unavailable: true,
+        allow_no_indices: true,
+        ...maxParams
+      })
+    ])
+
+    const minItem = minResponse.body.hits.hits[0]?._source
+    const maxItem = maxResponse.body.hits.hits[0]?._source
+
+    // If no items or no datetime values, return [[null, null]]
+    if (!minItem?.properties?.datetime || !maxItem?.properties?.datetime) {
+      return [[null, null]]
+    }
+
+    const startDate = minItem.properties.datetime
+    const endDate = maxItem.properties.datetime
+
+    return [[startDate, endDate]]
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error)
+    logger.error(
+      `Error calculating temporal extent for collection ${collectionId}: ${errorMessage}`
+    )
+    return null
+  }
+}
+
 export default {
   getCollections,
   getCollection,
@@ -1042,5 +1105,6 @@ export default {
   aggregate,
   constructSearchParams,
   buildDatetimeQuery,
-  healthCheck
+  healthCheck,
+  getTemporalExtentFromItems
 }

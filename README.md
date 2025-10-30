@@ -1203,8 +1203,6 @@ ingestion will either fail (in the case of a single Item ingest) or if auto-crea
 If a collection or item is ingested, and an item with that id already exists in STAC, the new item will completely replace the old item, except the `created` property will be retained and the `updated` property updated
 to match the time of the new update.
 
-After a collection or item is ingested, the status of the ingest (success or failure) along with details of the collection or item are sent to a post-ingest SNS topic. To take action on items after they are ingested subscribe an endpoint to this topic.
-
 Messages published to the post-ingest SNS topic include the following atributes that can be used for filtering:
 
 | attribute    | type   | values                   |
@@ -1212,6 +1210,12 @@ Messages published to the post-ingest SNS topic include the following atributes 
 | recordType   | String | `Collection` or `Item`   |
 | ingestStatus | String | `successful` or `failed` |
 | collection   | String |                          |
+
+### Automatic Temporal Extent
+
+When ingesting Collections, the `extent.temporal.interval` field can be omitted to enable automatic temporal extent calculation. When a collection is requested via the API, if it doesn't have a temporal extent defined, stac-server will automatically calculate it by finding the earliest and latest `datetime` values from the items in that collection. Collections with no items will have a temporal extent of `[[null, null]]`. This feature allows temporal extents to stay current as items are added or removed without requiring manual collection updates.
+
+After a collection or item is ingested, the status of the ingest (success or failure) along with details of the collection or item are sent to a post-ingest SNS topic. To take action on items after they are ingested subscribe an endpoint to this topic.
 
 ### Ingest actions
 

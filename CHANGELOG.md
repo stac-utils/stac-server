@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- Automatic temporal extent calculation for collections. When serving collections via the `/collections` 
+  and `/collections/{collectionId}` endpoints, if a collection does not have a temporal extent defined, 
+  the server will automatically calculate it from the earliest and latest items in the collection. To use 
+  this feature, simply omit the `extent.temporal.interval` field when ingesting a collection.
+
 ## [4.4.0] - 2025-09-10
 
 ## Changed

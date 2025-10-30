@@ -1256,12 +1256,11 @@ const deleteUnusedFields = (collection) => {
 /**
  * Populate temporal extent for a collection from its items if not already defined
  * @param {Object} backend - Database backend
- * @param {Object} collection - Collection object to populate
- * @param {string} [collectionId] - Collection ID (defaults to collection.id)
+ * @param {Object} collection - Collection object
  * @returns {Promise<void>}
  */
-const populateTemporalExtentIfMissing = async (backend, collection, collectionId = undefined) => {
-  const id = collectionId || collection.id
+const populateTemporalExtentIfMissing = async (backend, collection) => {
+  const id = collection.id
 
   // Check if collection already has a temporal extent defined
   const hasTemporalExtent = collection.extent?.temporal?.interval?.[0]?.[0] !== undefined
@@ -1297,7 +1296,7 @@ const getCollections = async function (backend, endpoint, parameters, headers) {
 
   // Populate temporal extent for each collection from items only if not already defined
   await Promise.all(collections.map((collection) =>
-    populateTemporalExtentIfMissing(backend, collection, undefined)))
+    populateTemporalExtentIfMissing(backend, collection)))
 
   for (const collection of collections) {
     deleteUnusedFields(collection)
@@ -1345,7 +1344,7 @@ const getCollection = async function (backend, collectionId, endpoint, parameter
   }
 
   // Populate temporal extent from items only if not already defined
-  await populateTemporalExtentIfMissing(backend, result, collectionId)
+  await populateTemporalExtentIfMissing(backend, result)
 
   deleteUnusedFields(result)
 

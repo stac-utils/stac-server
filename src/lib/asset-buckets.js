@@ -5,7 +5,8 @@ import {
 import { s3 } from './aws-clients.js'
 import logger from './logger.js'
 
-const s3Client = s3()
+// Follow, rather than throw, HeadBucket redirects for buckets not in the client's region
+const s3Client = s3({ followRegionRedirects: true })
 
 export const BucketOptionEnum = Object.freeze({
   NONE: 'NONE',
@@ -56,9 +57,10 @@ export class AssetBuckets {
           )
         }
 
-        const count = Object.keys(this.bucketCache).length
+        const bucketNames = Object.keys(this.bucketCache)
         logger.info(
-          `Parsed ${count} buckets from ASSET_PROXY_BUCKET_LIST for asset proxy`
+          `Parsed ${bucketNames.length} buckets from ASSET_PROXY_BUCKET_LIST `
+          + `for asset proxy: ${bucketNames.join(', ')}`
         )
       } else {
         throw new Error(
@@ -80,9 +82,10 @@ export class AssetBuckets {
           .map(async (name) => { await this.getBucket(name) })
       )
 
-      const count = Object.keys(this.bucketCache).length
+      const bucketNames = Object.keys(this.bucketCache)
       logger.info(
-        `Fetched ${count} buckets from AWS account for asset proxy`
+        `Fetched ${bucketNames.length} buckets from AWS account `
+        + `for asset proxy: ${bucketNames.join(', ')}`
       )
       break
     }
@@ -99,29 +102,33 @@ export class AssetBuckets {
   async getBucket(bucketName) {
     if (!(bucketName in this.bucketCache)) {
       const command = new HeadBucketCommand({ Bucket: bucketName })
-      const response = await s3Client.send(command)
-      const statusCode = response.$metadata.httpStatusCode
       let name = null
       let region = null
 
-      switch (statusCode) {
-      case 200:
+      try {
+        const response = await s3Client.send(command)
         name = bucketName
         region = response.BucketRegion === 'EU'
           ? 'eu-west-1'
           : response.BucketRegion || 'us-east-1'
-        break
-      case 403:
-        logger.warn(`Access denied to bucket ${bucketName}`)
-        break
-      case 404:
-        logger.warn(`Bucket ${bucketName} does not exist`)
-        break
-      case 400:
-        logger.warn(`Bad request for bucket ${bucketName}`)
-        break
-      default:
-        logger.warn(`Unexpected status code ${statusCode} for bucket ${bucketName}`)
+      } catch (err) {
+        const error = /** @type {any} */ (err)
+        const statusCode = error.$metadata?.httpStatusCode
+
+        switch (statusCode) {
+        case 403:
+          logger.warn(`Access denied to bucket ${bucketName}`)
+          break
+        case 404:
+          logger.warn(`Bucket ${bucketName} does not exist`)
+          break
+        case 400:
+          logger.warn(`Bad request for bucket ${bucketName}`)
+          break
+        default:
+          logger.error(`Unexpected error for bucket ${bucketName}:`, error)
+          throw error
+        }
       }
 
       this.bucketCache[bucketName] = { name, region }

@@ -50,7 +50,8 @@ test('AssetBuckets - LIST mode throws if bucket list is null', async (t) => {
 })
 
 test('AssetBuckets - LIST mode throws if bucket is inaccessible', async (t) => {
-  s3Mock.on(HeadBucketCommand).resolves({
+  s3Mock.on(HeadBucketCommand).rejects({
+    name: '403',
     $metadata: { httpStatusCode: 403 }
   })
 
@@ -130,7 +131,8 @@ test('AssetBuckets - shouldProxyBucket with ALL_BUCKETS_IN_ACCOUNT mode only pro
 
 // Using serial to prevent HeadBucketCommand mock interference between tests
 test.serial('AssetBuckets - getBucket handles 403 access denied', async (t) => {
-  s3Mock.on(HeadBucketCommand).resolves({
+  s3Mock.on(HeadBucketCommand).rejects({
+    name: '403',
     $metadata: { httpStatusCode: 403 }
   })
 
@@ -143,7 +145,8 @@ test.serial('AssetBuckets - getBucket handles 403 access denied', async (t) => {
 
 // Using serial to prevent HeadBucketCommand mock interference between tests
 test.serial('AssetBuckets - getBucket handles 404 not found', async (t) => {
-  s3Mock.on(HeadBucketCommand).resolves({
+  s3Mock.on(HeadBucketCommand).rejects({
+    name: '404',
     $metadata: { httpStatusCode: 404 }
   })
 

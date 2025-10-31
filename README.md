@@ -1172,7 +1172,9 @@ When asset proxying is enabled, two endpoints are available for accessing proxie
 
 ### IAM Permissions
 
-For the Asset Proxy feature to generate pre-signed URLs, the API and ingest Lambdas must be assigned permissions for the S3 buckets containing the assets. Add the following to the IAM role statements in your `serverless.yml` file, adjusting the resources as needed:
+For the Asset Proxy feature to generate pre-signed URLs, the API and ingest Lambdas must
+be assigned permissions for the S3 buckets containing the assets. Add the following to the
+IAM role statements in your `serverless.yml` file, adjusting the resources as needed:
 
 For the `LIST` mode, you can specify the buckets listed in `ASSET_PROXY_BUCKET_LIST`:
 
@@ -1186,6 +1188,7 @@ For the `LIST` mode, you can specify the buckets listed in `ASSET_PROXY_BUCKET_L
 - Effect: Allow
   Action:
     - s3:HeadBucket
+    - s3:ListBucket
   Resource:
     - "arn:aws:s3:::my-bucket-1"
     - "arn:aws:s3:::my-bucket-2"
@@ -1201,10 +1204,12 @@ For the `ALL` mode, use wildcards:
 - Effect: Allow
   Action:
     - s3:HeadBucket
+    - s3:ListBucket
   Resource: "arn:aws:s3:::*"
 ```
 
-When using `ALL_BUCKETS_IN_ACCOUNT` mode, the Lambda also needs permission to list buckets:
+When using `ALL_BUCKETS_IN_ACCOUNT` mode, the Lambda also needs permission to list the
+account buckets:
 
 ```yaml
 - Effect: Allow
@@ -1214,6 +1219,7 @@ When using `ALL_BUCKETS_IN_ACCOUNT` mode, the Lambda also needs permission to li
 - Effect: Allow
   Action:
     - s3:HeadBucket
+    - s3:ListBucket
   Resource: "arn:aws:s3:::*"
 - Effect: Allow
   Action:

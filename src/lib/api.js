@@ -1263,8 +1263,9 @@ const populateTemporalExtentIfMissing = async (backend, collection) => {
   const id = collection.id
 
   // Check if collection already has a temporal extent defined
-  const hasTemporalExtent = collection.extent?.temporal?.interval?.[0]?.[0] !== undefined
-    || collection.extent?.temporal?.interval?.[0]?.[1] !== undefined
+  const start = collection.extent?.temporal?.interval?.[0]?.[0]
+  const end = collection.extent?.temporal?.interval?.[0]?.[1]
+  const hasTemporalExtent = start != null || end != null
 
   if (!hasTemporalExtent) {
     const temporalExtent = await backend.getTemporalExtentFromItems(id)

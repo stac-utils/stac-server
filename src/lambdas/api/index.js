@@ -9,7 +9,7 @@
 import { z } from 'zod'
 import serverless from 'serverless-http'
 import { Lambda } from '@aws-sdk/client-lambda'
-import { app } from './app.js'
+import { createApp } from './app.js'
 import _default from './types.js'
 import logger from '../../lib/logger.js'
 
@@ -29,6 +29,8 @@ const {
  * @typedef {import('aws-lambda').Context} Context
  * @typedef {z.infer<typeof LambdaErrorSchema>} LambdaError
  */
+
+const appInstance = await createApp()
 
 /** @type {APIGatewayProxyResult} */
 const internalServerError = Object.freeze({
@@ -162,7 +164,7 @@ const invokePostHook = async (lambda, postHook, payload) => {
  * @returns {Promise<APIGatewayProxyResult>}
  */
 const callServerlessApp = async (event, context) => {
-  const result = await serverless(app)(event, context)
+  const result = await serverless(appInstance)(event, context)
 
   try {
     return APIGatewayProxyResultSchema.parse(result)

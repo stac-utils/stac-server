@@ -1,3 +1,4 @@
+import { PublishCommand } from '@aws-sdk/client-sns'
 import { sns } from './aws-clients.js'
 import logger from './logger.js'
 import { getBBox, getStartAndEndDates, isCollection, isItem } from './stac-utils.js'
@@ -86,11 +87,12 @@ const attrsFromPayload = function (payload) {
 export async function publishRecordToSns(topicArn, record, error) {
   const payload = { record, error }
   try {
-    await sns().publish({
+    const command = new PublishCommand({
       Message: JSON.stringify(payload),
       TopicArn: topicArn,
       MessageAttributes: attrsFromPayload(payload)
     })
+    await sns().send(command)
     logger.info(`Wrote record ${record.id} to ${topicArn}`)
   } catch (err) {
     logger.error(`Failed to write record ${record.id} to ${topicArn}: ${err}`)

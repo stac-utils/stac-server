@@ -4,6 +4,13 @@ import { createIndex } from '../../lib/database-client.js'
 import { processMessages, publishResultsToSns } from '../../lib/ingest.js'
 import getObjectJson from '../../lib/s3-utils.js'
 import logger from '../../lib/logger.js'
+import { AssetProxy } from '../../lib/asset-proxy.js'
+
+let assetProxy = await AssetProxy.create()
+
+export const resetAssetProxy = async () => {
+  assetProxy = await AssetProxy.create()
+}
 
 const isSqsEvent = (event) => 'Records' in event
 
@@ -76,7 +83,7 @@ export const handler = async (event, _context) => {
 
     if (postIngestTopicArn) {
       logger.debug('Publishing to post-ingest topic: %s', postIngestTopicArn)
-      await publishResultsToSns(results, postIngestTopicArn)
+      await publishResultsToSns(results, postIngestTopicArn, assetProxy)
     } else {
       logger.debug('Skipping post-ingest notification since no topic is configured')
     }

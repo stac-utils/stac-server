@@ -1,5 +1,5 @@
 import winston from 'winston'
-import { app } from './app.js'
+import { createApp } from './app.js'
 
 const logger = winston.createLogger({
   level: process.env['LOG_LEVEL'] || 'warn',
@@ -11,6 +11,7 @@ const logger = winston.createLogger({
 
 const port = 3000
 
+const app = await createApp()
 app.listen(port, () => {
   logger.warn(`stac-server listening on port ${port}`)
 })

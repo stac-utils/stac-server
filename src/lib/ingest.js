@@ -164,7 +164,7 @@ export async function processMessages(msgs) {
 /* eslint-enable no-await-in-loop */
 
 // Impure - mutates record
-function updateLinksWithinRecord(record) {
+function updateLinksAndHrefsWithinRecord(record, assetProxy) {
   const endpoint = process.env['STAC_API_URL']
   if (!endpoint) {
     logger.info('STAC_API_URL not set, not updating links within ingested record')
@@ -179,14 +179,15 @@ function updateLinksWithinRecord(record) {
   } else if (isCollection(record)) {
     addCollectionLinks([record], endpoint)
   }
+  assetProxy.updateAssetHrefs([record], endpoint)
   return record
 }
 
-export async function publishResultsToSns(results, topicArn) {
+export async function publishResultsToSns(results, topicArn, assetProxy) {
   await Promise.allSettled(results.map(async (result) => {
     if (isStacEntity(result.record)) {
       if (result.record && !result.error) {
-        updateLinksWithinRecord(result.record)
+        updateLinksAndHrefsWithinRecord(result.record, assetProxy)
       }
       await publishRecordToSns(topicArn, result.record, result.error)
     }

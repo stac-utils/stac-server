@@ -793,13 +793,13 @@ npm run build
 
 Then deploy based on your authentication method:
 
-**For Fine-grained Access Control:**
+**Option A: Fine-grained Access Control**
 
 ```shell
 OPENSEARCH_MASTER_USER_PASSWORD='your-secure-password' npm run deploy
 ```
 
-**For AWS IAM Authentication:**
+**Option B: AWS IAM Authentication**
 
 ```shell
 npm run deploy

@@ -29,9 +29,10 @@ provider:
     # PRE_HOOK: ${self:service}-${self:provider.stage}-preHook
     # API_KEYS_SECRET_ID: ${self:service}-${self:provider.stage}-api-keys
     # POST_HOOK: ${self:service}-${self:provider.stage}-postHook
-    # If you will be subscribing to post-ingest SNS notifications make
-    # sure that STAC_API_URL is set so that links are updated correctly
-    STAC_API_URL: "https://some-stac-server.example.com"
+    # Uncomment this if you will be subscribing to post-ingest SNS notifications
+    # and need correct link hrefs in published the records or if you need to override
+    # the default behavior of inferring the STAC API URL from request headers.
+    # STAC_API_URL: "https://some-stac-server.example.com"
     CORS_ORIGIN: "https://ui.example.com"
     CORS_CREDENTIALS: true
     # Asset Proxy Environment Variables

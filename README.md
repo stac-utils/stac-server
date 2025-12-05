@@ -38,13 +38,14 @@
       - [Validate index mappings](#validate-index-mappings)
   - [Usage](#usage)
   - [Deployment](#deployment)
-    - [OpenSearch Configuration](#opensearch-configuration)
-      - [Disable automatic index creation](#disable-automatic-index-creation-1)
-      - [OpenSearch fine-grained access control](#opensearch-fine-grained-access-control)
-        - [Option 1 - API method](#option-1---api-method)
-        - [Option 2 - Dashboard method](#option-2---dashboard-method)
-        - [Populating and accessing credentials](#populating-and-accessing-credentials)
-      - [Create collection index](#create-collection-index)
+    - [Step 1: Review Serverless Configuration](#step-1-review-serverless-configuration)
+    - [Step 2: Choose an Authentication Method](#step-2-choose-an-authentication-method)
+    - [Step 3: Configure OpenSearch Authentication](#step-3-configure-opensearch-authentication)
+    - [Step 4: Build & Deploy](#step-4-build--deploy)
+    - [Step 5: Set Up Authentication Credentials](#step-5-set-up-authentication-credentials)
+    - [Step 6: Disable Automatic Index Creation](#step-6-disable-automatic-index-creation)
+    - [Step 7: Create Collection Index](#step-7-create-collection-index)
+  - [Additional Configuration](#additional-configuration)
     - [Proxying stac-server through CloudFront](#proxying-stac-server-through-cloudfront)
     - [Locking down transaction endpoints](#locking-down-transaction-endpoints)
     - [AWS WAF Rule Conflicts](#aws-waf-rule-conflicts)
@@ -53,6 +54,11 @@
     - [Filter Extension](#filter-extension)
     - [Query Extension](#query-extension)
   - [Aggregation](#aggregation)
+  - [Asset Proxy](#asset-proxy)
+    - [Configuration](#configuration)
+    - [Endpoints](#endpoints)
+    - [IAM Permissions](#iam-permissions)
+    - [Asset Transformation](#asset-transformation)
   - [Collections and filter parameters for authorization](#collections-and-filter-parameters-for-authorization)
     - [Collections](#collections)
     - [CQL2 Filter](#cql2-filter)
@@ -576,13 +582,18 @@ git clone https://github.com/stac-utils/stac-server.git
 cd stac-server
 ```
 
-Copy the [example serverless config file](serverless.example.yml) to a file named `serverless.yml`:
+Copy the [example serverless config file](serverless.example.yml) to a file named serverless.yml:
 
 ```shell
 cp serverless.example.yml serverless.yml
 ```
 
-There are some settings that should be reviewed and updated as needeed in the serverless config file, under provider->environment:
+### Step 1: Review Serverless Configuration
+
+Prior to deployment, review and update your serverless.yml file. In particular, update
+the `stage` and `region` with the desired values in the `provider` section, and review the
+environment variables in the `provider > environment` section with reference to the
+following table:
 
 | Name                             | Description                                                                                                                                                                                                                                                                     | Default Value                                                                        |
 | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
@@ -617,89 +628,235 @@ There are some settings that should be reviewed and updated as needeed in the se
 | ENABLE_INGEST_ACTION_TRUNCATE    | Enables support for ingest action "truncate".                                                                                                                                                                                                                                   | none (not enabled)                                                                   |
 | ENABLE_RESPONSE_COMPRESSION      | Enables response compression. Set to 'false' to disable.                                                                                                                                                                                                                        | enabled                                                                              |
 | ITEMS_MAX_LIMIT                  | The maximum limit for the number of items returned from the /search and /collections/{collection_id}/items endpoints. It is recommended that this be set to 100. There is an absolute max limit of 10000 for this.                                                              | 10000                                                                                |
+| ASSET_PROXY_BUCKET_OPTION        | Control which S3 buckets are proxied through the API. Options: `NONE` (disabled), `ALL` (all S3 assets), `ALL_BUCKETS_IN_ACCOUNT` (all buckets in AWS account), `LIST` (specific buckets only).                                                                                 | NONE                                                                                 |
+| ASSET_PROXY_BUCKET_LIST          | Comma-separated list of S3 bucket names to proxy. Required when `ASSET_PROXY_BUCKET_OPTION` is `LIST`.                                                                                                                                                                          |                                                                                      |
+| ASSET_PROXY_URL_EXPIRY           | Pre-signed URL expiry time in seconds for proxied assets.                                                                                                                                                                                                                        | 300                                                                                  |
 
-Additionally, the credential for OpenSearch must be configured, as decribed in the
-section [Populating and accessing credentials](#populating-and-accessing-credentials).
+### Step 2: Choose an Authentication Method
 
-If using STAC Server with a proxy in front of it, the base URL for the server, which
-will be used in all link URLs in response bodies, can be set with the `STAC-Endpoint` header.
+There are two types of clients that need to authenticate connections to OpenSearch:
 
-After reviewing the settings, build and deploy:
+- Stac-server's Lambda functions authenticate to read and write STAC data to OpenSearch
+- Users authenticate when accessing OpenSearch via a terminal for debugging and
+  administration
+
+The choice of an authentication method is permanent. Changing the authentication method
+after deployment requires creating a new cluster and migrating data. Stac-server supports
+two authentication methods:
+
+**Option A: Fine-grained Access Control (default)**
+
+- Uses OpenSearch's internal user management system
+- Provides granular role-based permissions within OpenSearch
+- Lambda functions use a dedicated service account
+- Users access OpenSearch with master credentials for administration
+- This is the default configuration in `serverless.example.yml`
+
+**Option B: AWS IAM Authentication**
+
+- Uses AWS IAM roles and policies via AWS Signature Version 4 (SigV4) signing
+- Lambda functions use their IAM execution role
+- Users access OpenSearch with AWS credentials (access keys, profiles, or temporary tokens)
+- Requires tools that support SigV4 signing (`curl --aws-sigv4`, `opensearch-cli`, Postman)
+- Simpler setup but less granular control within OpenSearch
+
+### Step 3: Configure OpenSearch Authentication
+
+**Option A: Fine-grained Access Control**
+
+Ensure your serverless.yml file contains these configurations:
+
+**1. OpenSearch domain configuration (master admin account):**
+
+```yaml
+OpenSearchInstance:
+  Type: AWS::OpenSearchService::Domain
+  Properties:
+    # ... other properties
+    AdvancedSecurityOptions:
+      Enabled: true
+      InternalUserDatabaseEnabled: true
+      MasterUserOptions:
+        MasterUserName: admin
+        MasterUserPassword: ${env:OPENSEARCH_MASTER_USER_PASSWORD}
+```
+
+This creates the master admin account used for OpenSearch administration via the terminal
+or Dashboard.
+
+**2. Environment variable for Lambda service account credentials (via Secrets Manager - recommended):**
+
+```yaml
+environment:
+  OPENSEARCH_CREDENTIALS_SECRET_ID: ${self:service}-${self:provider.stage}-opensearch-user-creds
+```
+
+This configures where the Lambda functions will look for the service account credentials
+(e.g., `stac_server` user). You'll create this service account and the secret in Step 5
+after deployment. Alternatively, you can set credentials directly via `OPENSEARCH_USERNAME`
+and `OPENSEARCH_PASSWORD` environment variables instead of using Secrets Manager.
+
+**3. IAM permission to access secrets:**
+
+```yaml
+iam:
+  role:
+    statements:
+      - Effect: Allow
+        Resource: arn:aws:secretsmanager:${aws:region}:${aws:accountId}:secret:${self:provider.environment.OPENSEARCH_CREDENTIALS_SECRET_ID}-*
+        Action: secretsmanager:GetSecretValue
+```
+
+**Option B: AWS IAM Authentication**
+
+Modify your serverless.yml file as follows:
+
+**1. Remove or comment out OpenSearch credential environment variables:**
+
+```yaml
+environment:
+  # OPENSEARCH_CREDENTIALS_SECRET_ID: ${self:service}-${self:provider.stage}-opensearch-user-creds
+```
+
+**2. Remove or comment out Secrets Manager IAM permission:**
+
+```yaml
+iam:
+  role:
+    statements:
+      # ... other statements
+      # Not needed for IAM authentication - only for fine-grained access control
+      # - Effect: Allow
+      #   Resource: arn:aws:secretsmanager:${aws:region}:${aws:accountId}:secret:${self:provider.environment.OPENSEARCH_CREDENTIALS_SECRET_ID}-*
+      #   Action: secretsmanager:GetSecretValue
+```
+
+**3. Disable fine-grained access control in OpenSearch domain:**
+
+```yaml
+OpenSearchInstance:
+  Type: AWS::OpenSearchService::Domain
+  Properties:
+    # ... other properties
+    AdvancedSecurityOptions:
+      Enabled: false
+      InternalUserDatabaseEnabled: false
+      # MasterUserOptions not needed for IAM authentication
+      #   MasterUserName: admin
+      #   MasterUserPassword: ${env:OPENSEARCH_MASTER_USER_PASSWORD}
+```
+
+**4. Ensure Lambda has OpenSearch permissions (already in default config):**
+
+```yaml
+iam:
+  role:
+    statements:
+      - Effect: Allow
+        Resource: "arn:aws:es:${aws:region}:${aws:accountId}:domain/*"
+        Action: "es:*"
+```
+
+**5. Configure access policy for OpenSearch domain:**
+
+When using IAM authentication without fine-grained access control, AWS requires that you
+restrict access to specific AWS accounts (you cannot use the wildcard `"AWS": "*"`, which
+allows any AWS account). Use the account root principal to restrict access to your AWS
+account only:
+
+```yaml
+OpenSearchInstance:
+  Type: AWS::OpenSearchService::Domain
+  Properties:
+    # ... other properties
+    AccessPolicies:
+      Version: "2012-10-17"
+      Statement:
+        - Effect: "Allow"
+          Principal: { "AWS": "arn:aws:iam::${aws:accountId}:root" }
+          Action: "es:ESHttp*"
+          Resource: "arn:aws:es:${aws:region}:${aws:accountId}:domain/${self:service}-${self:provider.stage}/*"
+```
+
+This restricts access to IAM principals in your AWS account only. Within your account,
+access is further controlled by the IAM permissions configured above (only principals with
+`es:*` can access).
+
+### Step 4: Build & Deploy
+
+First, build the application:
 
 ```shell
 npm install
 npm run build
-OPENSEARCH_MASTER_USER_PASSWORD='some-password' npm run deploy
 ```
 
-This will use the file `serverless.yml` and create a CloudFormation stack in the
-`us-west-2` region called `stac-server-dev`.
+Then deploy based on your authentication method:
 
-After the initial deployment, the `MasterUserOptions` option in the serverless.yml file
-can be commented out so that OPENSEARCH_MASTER_USER_PASSWORD does not need to be passed
-at every deployment.
-
-To change the region or the stage name (from `dev`) provide arguments to the deploy command
-(note the additional `--` in the command, required by `npm` to provide arguments):
+**Option A: Fine-grained Access Control**
 
 ```shell
-OPENSEARCH_MASTER_USER_PASSWORD='some-password' npm run deploy -- --stage mystage --region eu-central-1
+OPENSEARCH_MASTER_USER_PASSWORD='your-secure-password' npm run deploy
 ```
 
-Multiple deployments can be managed with multiple serverless config files and specified
-to the deploy command with:
+**Option B: AWS IAM Authentication**
 
 ```shell
-npm run deploy -- --config serverless.some-name.yml
+npm run deploy
 ```
 
-Once deployed, there are a few steps to configure OpenSearch.
+**Deployment options:**
 
-### OpenSearch Configuration
-
-#### Disable automatic index creation
-
-It is recommended to disable the automatic index creation. This prevents the situation where
-a group of Items are bulk indexed before the Collection in which they are contained has
-been created, and an OpenSearch index is created without the appropriate mappings.
-
-This can either be done by calling the `/_cluster/settings` endpoint directly:
+You can customize the deployment with these options:
 
 ```shell
-curl -X "PUT" "${HOST}/_cluster/settings" \
-     -H 'Content-Type: application/json; charset=utf-8' \
-     -u "admin:${OPENSEARCH_MASTER_USER_PASSWORD}" \
-     -d '{"persistent": {"action.auto_create_index": "false"}}'
+# Use a different stage and region:
+npm run deploy -- --stage mystage --region eu-central-1
+
+# Use a custom serverless config file:
+npm run deploy -- --config serverless.custom.yml
+
+# Combine options:
+OPENSEARCH_MASTER_USER_PASSWORD='your-secure-password' npm run deploy -- --config serverless.custom.yml --stage prod
 ```
 
-or setting that configuration via the OpenSearch Dashboard.
+### Step 5: Set Up Authentication Credentials
 
-#### OpenSearch fine-grained access control
+**Option A: Fine-grained Access Control**
 
-stac-server supports either fine-grained access control or AWS IAM authentication to
-OpenSearch. This section describes how to configure fine-grained access control.
+If you used fine-grained access control, complete these steps:
 
-**Warning**: Unfortunately, fine-grained access control cannot be enabled on an
-existing OpenSearch
-cluster through the serverless deploy, as this is a restriction of CloudFormation
-which serverless uses. A migration process between the clusters must be performed similar
-to the Elasticsearch -> OpenSearch migration process.
+**1. Comment out MasterUserOptions in serverless.yml**
 
-The AccessPolicies Statement will restrict the OpenSearch instance to only being accessible
-within AWS. This requires the user creation steps below be either executed from or proxied
-through an EC2 instance, or that the Access Policy be changed temporarily through the
-console in the domain's Security configuration to be "Only use fine-grained access control".
+After the initial deployment, comment out the `MasterUserOptions` section in serverless.yml
+to prevent accidental password changes on subsequent deployments:
 
-The next step is to create the OpenSearch user and role to use for stac-server. This can
-either be done through the OpenSearch API or Dashboard.
+```yaml
+AdvancedSecurityOptions:
+  Enabled: true
+  InternalUserDatabaseEnabled: true
+  # MasterUserOptions:
+  #   MasterUserName: admin
+  #   MasterUserPassword: ${env:OPENSEARCH_MASTER_USER_PASSWORD}
+```
 
-##### Option 1 - API method
+**2. Create a Lambda service account in OpenSearch**
 
-This assumes the master username is `admin` and creates a user with the name `stac_server`.
-Environment variables `HOST` and `OPENSEARCH_MASTER_USER_PASSWORD` should be set in the
-shell environment.
+The Lambda functions require a separate role-based user account (not the master user).
+Create this user in OpenSearch and assign it appropriate roles. You can do this via
+the OpenSearch API or Dashboard.
 
-Create the Role:
+**Via OpenSearch API:**
+
+Set environment variables in your current shell session for `HOST` (your OpenSearch endpoint)
+and `OPENSEARCH_MASTER_USER_PASSWORD`, then run the following commands:
+
+```shell
+export HOST="your-opensearch-endpoint.us-east-1.es.amazonaws.com"
+export OPENSEARCH_MASTER_USER_PASSWORD="your-secure-password"
+```
+
+Create the role:
 
 ```shell
 curl -X "PUT" "${HOST}/_plugins/_security/api/roles/stac_server_role" \
@@ -712,124 +869,118 @@ curl -X "PUT" "${HOST}/_plugins/_security/api/roles/stac_server_role" \
   ],
   "index_permissions": [
     {
-      "index_patterns": [
-        "*"
-      ],
-      "allowed_actions": [
-        "indices_all"
-      ]
+      "index_patterns": ["*"],
+      "allowed_actions": ["indices_all"]
     }
   ],
   "tenant_permissions": [
     {
-      "tenant_patterns": [
-        "global_tenant"
-      ],
-      "allowed_actions": [
-        "kibana_all_read"
-      ]
+      "tenant_patterns": ["global_tenant"],
+      "allowed_actions": ["kibana_all_read"]
     }
   ]
 }'
-
 ```
 
-Create the User:
+Create the user:
 
 ```shell
 curl -X "PUT" "${HOST}/_plugins/_security/api/internalusers/stac_server" \
      -H 'Content-Type: application/json; charset=utf-8' \
      -u "admin:${OPENSEARCH_MASTER_USER_PASSWORD}" \
-     -d $'{ "password": "xxx" }'
+     -d $'{ "password": "your-service-account-password" }'
 ```
 
-Double-check the response to ensure that the user was actually created!
-
-Map the Role to the User:
+Map the role to the user:
 
 ```shell
 curl -X "PUT" "${HOST}/_plugins/_security/api/rolesmapping/stac_server_role" \
      -H 'Content-Type: application/json; charset=utf-8' \
      -u "admin:${OPENSEARCH_MASTER_USER_PASSWORD}"  \
      -d $'{
-  "users": [
-    "stac_server"
-  ]
+  "users": ["stac_server"]
 }'
 ```
 
-##### Option 2 - Dashboard method
+**Via OpenSearch Dashboard:**
 
-Login to the OpenSearch Dashboard with the master username (e.g. `admin`) and password.
-From the left sidebar menu, select "Security". Select "Internal users", and then "Create
-internal user". Create the user with the name `stac_server`.
-
-Click "Create New Role". Create a new Role with name `stac_server_role` with:
+Login to the OpenSearch Dashboard with master username (`admin`) and password. From the
+left sidebar menu, select "Security". Create a new role named `stac_server_role` with:
 
 - Cluster permissions: `cluster:monitor/health`, `cluster_composite_ops`
 - Index permissions: `indices_all` on `*`
 - Tenant permissions: `global_tenant` Read only
 
-Note that several of the indices permissions in `cluster_composite_ops` action group
-are required to
-be applyed to the Cluster permissions. Confusingly, the `cluster_all` action group does
-not have those permissions in it because they are `indices` permissions rather than
-`cluster` permissions. This is all very confusing! [This issue](https://github.com/opensearch-project/security/issues/2336) has been filed against
-the OpenSearch Security Plugin to request improvements to the documentation.
+Then create an internal user named `stac_server` and map it to the `stac_server_role`.
 
-Add the user `stac_server` as a mapped user to this role.
+**3. Store service account credentials**
 
-##### Populating and accessing credentials
+If you configured `OPENSEARCH_CREDENTIALS_SECRET_ID` in Step 3, now create the AWS Secrets
+Manager secret to store the service account credentials:
 
-After you've created the users, you'll need to populate the credentials for the user
-so that stac-server can access them.
+- Secret type: "Other type of secret"
+- Secret name: Must match the value of `OPENSEARCH_CREDENTIALS_SECRET_ID` (e.g.,
+  `stac-server-dev-opensearch-user-creds`)
+- Keys: `username` and `password`
+- Values: `username`: `stac_server`, `password`: the password you set above when creating
+  the service account user
 
-The preferred mechanism for populating the OpenSearch credentials to stac-server is to
-create a secret in AWS Secret Manager that contains the username and password. The
-recommended name for this Secret corresponds
-to the stac-server deployment as `${service}-${stage}-opensearch-user-creds`, e.g.,
-`my-stac-server-dev-opensearch-user-creds`.
+If you configured `OPENSEARCH_USERNAME` and `OPENSEARCH_PASSWORD` directly in
+your serverless.yml file in Step 3, you can skip this step - your credentials are already
+configured.
 
-The Secret type should be "Other type of secret" and
-have two keys, `username` and `password`, with the appropriate
-values, e.g., `stac_server` and whatever you set as the password when creating that user.
+**4. Redeploy**
 
-Add the `OPENSEARCH_CREDENTIALS_SECRET_ID` variable to the serverless.yml section
-`environment`:
+After storing the service account credentials (via Secrets Manager or environment variables),
+redeploy to ensure the Lambda functions pick up the credentials:
 
-```yaml
-OPENSEARCH_CREDENTIALS_SECRET_ID: ${self:service}-${self:provider.stage}-opensearch-user-creds
+```shell
+npm run deploy
 ```
 
-Add to the IAM Role Statements:
+**Option B: AWS IAM Authentication**
 
-```yaml
-- Effect: Allow
-  Resource: arn:aws:secretsmanager:${aws:region}:${aws:accountId}:secret:${self:provider.environment.OPENSEARCH_CREDENTIALS_SECRET_ID}-*
-  Action: 'secretsmanager:GetSecretValue'
+No authentication credential configuration is required. The Lambda functions will
+automatically authenticate using their IAM execution role.
+
+### Step 6: Disable Automatic Index Creation
+
+It is recommended to disable automatic index creation. This prevents the situation where
+a group of Items are bulk indexed before the Collection in which they are contained has
+been created, and an OpenSearch index is created without the appropriate mappings.
+
+**For fine-grained access control:**
+
+```shell
+curl -X "PUT" "${HOST}/_cluster/settings" \
+     -H 'Content-Type: application/json; charset=utf-8' \
+     -u "admin:${OPENSEARCH_MASTER_USER_PASSWORD}" \
+     -d '{"persistent": {"action.auto_create_index": "false"}}'
 ```
 
-If desired, the resource ARN can be replaced with the exact ARN for the Secret instead of
-using an ARN ending with `*`.
+Alternatively, set this configuration via the OpenSearch Dashboard.
 
-Redeploy to reconfigure OpenSearch and populate the authentication configuration. The server
-should now be using fine-grained access control.
+**For AWS IAM authentication:**
 
-Alternately, instead of using the preferred mechanism of Secrets Manager,
-the `OPENSEARCH_USERNAME` and `OPENSEARCH_PASSWORD` values can be set directly
-in the `environment` section:
+```shell
+# For temporary credentials (IAM Identity Center/SSO or assumed roles):
+curl -X PUT "${HOST}/_cluster/settings" \
+  --aws-sigv4 "aws:amz:us-east-1:es" \
+  --user "$AWS_ACCESS_KEY_ID:$AWS_SECRET_ACCESS_KEY" \
+  -H "x-amz-security-token:$AWS_SESSION_TOKEN" \
+  -H 'Content-Type: application/json' \
+  -d '{"persistent": {"action.auto_create_index": "false"}}'
 
-```yaml
-OPENSEARCH_USERNAME: stac_server
-OPENSEARCH_PASSWORD: xxxxxxxxxxx
+# For permanent IAM user credentials:
+curl -X PUT "${HOST}/_cluster/settings" \
+  --aws-sigv4 "aws:amz:us-east-1:es" \
+  --user "$AWS_ACCESS_KEY_ID:$AWS_SECRET_ACCESS_KEY" \
+  -H 'Content-Type: application/json' \
+  -d '{"persistent": {"action.auto_create_index": "false"}}'
 ```
 
-Setting these as environment variables can also be useful when running stac-server
-locally.
 
-stac-server is now ready to ingest data!
-
-#### Create collection index
+### Step 7: Create Collection Index
 
 The `collection` index must be created, which stores the metadata about each Collection.
 Invoke the `stac-server-<stage>-ingest` Lambda function with a payload of:
@@ -840,7 +991,7 @@ Invoke the `stac-server-<stage>-ingest` Lambda function with a payload of:
 }
 ```
 
-This can be done with the [AWS CLI Version 2](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html).
+This can be done with the [AWS CLI Version 2](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html):
 
 ```shell
 aws lambda invoke \
@@ -850,9 +1001,17 @@ aws lambda invoke \
   /dev/stdout
 ```
 
+Stac-server is now ready to ingest STAC Collections and Items and serve API requests.
+
+## Additional Configuration
+
 ### Proxying stac-server through CloudFront
 
-The API Gateway URL associated with the deployed stac-server instance may not be the URL that you ultimately wish to expose to your API users. AWS CloudFront can be used to proxy to a more human readable URL. In order to accomplish this:
+The API Gateway URL associated with the deployed stac-server instance may not be the URL that you ultimately wish to expose to your API users. AWS CloudFront can be used to proxy to a more human readable URL.
+
+**Important:** When using STAC Server with a proxy in front of it, the base URL for the server, which will be used in all link URLs in response bodies, can be set with the `STAC-Endpoint` header.
+
+In order to set up CloudFront proxying, follow these steps:
 
 1. Create a new CloudFront distribution (or use an existing distribution).
 2. Set the origin to the Gateway API URL (obtain in the stage view of the deployed stac-server). The URL is in the form `<##abcde>.execute-api.region.amazonaws.com`.
@@ -1124,6 +1283,144 @@ Available aggregations are:
 - geometry_geohash_grid_frequency ([geohash grid](https://opensearch.org/docs/latest/aggregations/bucket/geohash-grid/) on Item.geometry)
 - geometry_geotile_grid_frequency ([geotile grid](https://opensearch.org/docs/latest/aggregations/bucket/geotile-grid/) on Item.geometry)
 
+## Asset Proxy
+
+The Asset Proxy feature enables stac-server to proxy access to S3 assets through the STAC
+API by generating pre-signed URLs. Only assets with S3 URIs (`s3://` prefix) are proxied;
+other URL schemes are ignored. When the Asset Proxy feature is enabled, asset `href`
+values pointing to S3 are replaced with proxy endpoint URLs when an Item or Collection is
+served, while the original S3 URLs are preserved in the `alternate.s3.href` field using
+the [Alternate Assets Extension](https://github.com/stac-extensions/alternate-assets).
+Subsequent GET requests to the proxy endpoint URLs are redirected to pre-signed S3 URLS
+for download. Note that the AWS account that stac-server is running under must have
+permission to access the S3 buckets containing the assets and that the stac-server AWS
+account will be charged for the S3 egress, regardless of whether the bucket is a
+"Requester Pays" bucket or not (the stac-server AWS account is the requester when
+generating the pre-signed URL).
+
+### Configuration
+
+Asset proxying uses three environment variables:
+
+- **`ASSET_PROXY_BUCKET_OPTION` -** Specifies one of four modes to control which S3 buckets are proxied.
+
+  - **NONE** (default): Asset proxy is disabled. All asset hrefs are returned unchanged.
+  - **ALL**: Proxy all S3 assets regardless of which bucket they are in.
+  - **ALL_BUCKETS_IN_ACCOUNT**: Proxy assets from any S3 bucket accessible to the AWS account credentials. The list of buckets is fetched at Lambda startup.
+  - **LIST**: Only proxy assets from specific buckets listed in `ASSET_PROXY_BUCKET_LIST`.
+
+- **`ASSET_PROXY_BUCKET_LIST`** — Comma-separated list of bucket names (required only when the `ASSET_PROXY_BUCKET_OPTION` environment variable is set to `LIST`)
+
+  ```yaml
+  ASSET_PROXY_BUCKET_OPTION: "LIST"
+  ASSET_PROXY_BUCKET_LIST: "my-bucket-1,my-bucket-2,my-bucket-3"
+  ```
+
+- **`ASSET_PROXY_URL_EXPIRY`** — Pre-signed URL expiry in seconds (default: `300`)
+
+### Endpoints
+
+When asset proxying is enabled, two endpoints are available for accessing proxied assets:
+
+- `GET /collections/{collectionId}/items/{itemId}/assets/{assetKey}` - Redirects (HTTP 302) to a pre-signed S3 URL for an item asset
+- `GET /collections/{collectionId}/assets/{assetKey}` - Redirects (HTTP 302) to a pre-signed S3 URL for a collection asset
+
+### IAM Permissions
+
+For the Asset Proxy feature to generate pre-signed URLs, the API and ingest Lambdas must
+be assigned permissions for the S3 buckets containing the assets. Add the following to the
+IAM role statements in your serverless.yml file, adjusting the resources as needed:
+
+For the `LIST` mode, you can specify the buckets listed in `ASSET_PROXY_BUCKET_LIST`:
+
+```yaml
+- Effect: Allow
+  Action:
+    - s3:GetObject
+  Resource:
+    - "arn:aws:s3:::my-bucket-1/*"
+    - "arn:aws:s3:::my-bucket-2/*"
+- Effect: Allow
+  Action:
+    - s3:HeadBucket
+    - s3:ListBucket
+  Resource:
+    - "arn:aws:s3:::my-bucket-1"
+    - "arn:aws:s3:::my-bucket-2"
+```
+
+For the `ALL` mode, use wildcards:
+
+```yaml
+- Effect: Allow
+  Action:
+    - s3:GetObject
+  Resource: "arn:aws:s3:::*/*"
+- Effect: Allow
+  Action:
+    - s3:HeadBucket
+    - s3:ListBucket
+  Resource: "arn:aws:s3:::*"
+```
+
+When using `ALL_BUCKETS_IN_ACCOUNT` mode, the Lambda also needs permission to list the
+account buckets:
+
+```yaml
+- Effect: Allow
+  Action:
+    - s3:GetObject
+  Resource: "arn:aws:s3:::*/*"
+- Effect: Allow
+  Action:
+    - s3:HeadBucket
+    - s3:ListBucket
+  Resource: "arn:aws:s3:::*"
+- Effect: Allow
+  Action:
+    - s3:ListAllMyBuckets
+  Resource: "*"
+```
+
+### Asset Transformation
+
+When asset proxying is enabled and an asset's `href` points to an S3 URL, the asset is transformed as follows:
+
+**Original asset:**
+```json
+{
+  "thumbnail": {
+    "href": "s3://my-bucket/path/to/thumbnail.png",
+    "type": "image/png",
+    "roles": ["thumbnail"]
+  }
+}
+```
+
+**Transformed asset:**
+```json
+{
+  "thumbnail": {
+    "href": "https://api.example.com/collections/my-collection/items/my-item/assets/thumbnail",
+    "type": "image/png",
+    "roles": ["thumbnail"],
+    "alternate": {
+      "s3": {
+        "href": "s3://my-bucket/path/to/thumbnail.png"
+      }
+    }
+  }
+}
+```
+
+The item or collection will also have the Alternate Assets Extension added to its `stac_extensions` array:
+
+```json
+"stac_extensions": [
+  "https://stac-extensions.github.io/alternate-assets/v1.2.0/schema.json"
+]
+```
+
 ## Collections and filter parameters for authorization
 
 One key concern in stac-server is how to restrict user's access to items.  These
@@ -1160,6 +1457,8 @@ The endpoints this applies to are:
 - /collections/:collectionId/items
 - /collections/:collectionId/items/:itemId
 - /collections/:collectionId/items/:itemId/thumbnail
+- /collections/:collectionId/items/:itemId/assets/:assetKey
+- /collections/:collectionId/assets/:assetKey
 - /search
 - /aggregate
 
@@ -1187,6 +1486,8 @@ The endpoints this applies to are:
 - /collections/:collectionId/items
 - /collections/:collectionId/items/:itemId
 - /collections/:collectionId/items/:itemId/thumbnail
+- /collections/:collectionId/items/:itemId/assets/:assetKey
+- /collections/:collectionId/assets/:assetKey
 - /search
 - /aggregate
 

@@ -380,6 +380,53 @@ paths:
           $ref: '#/components/responses/Queryables'
         default:
           $ref: '#/components/responses/Error'
+  /collections/{collectionId}/items/{featureId}/assets/{assetKey}:
+    get:
+      tags:
+        - Features
+      summary: Proxy access to an item asset
+      description: |-
+        Redirects to a pre-signed URL for accessing an item asset stored in S3.
+        This endpoint is only available when asset proxying is enabled.
+      operationId: getItemAsset
+      parameters:
+        - $ref: '#/components/parameters/collectionId'
+        - $ref: '#/components/parameters/featureId'
+        - $ref: '#/components/parameters/assetKey'
+      responses:
+        '302':
+          description: Redirect to pre-signed asset URL
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /collections/{collectionId}/assets/{assetKey}:
+    get:
+      tags:
+        - Features
+      summary: Proxy access to a collection asset
+      description: |-
+        Redirects to a pre-signed URL for accessing a collection asset stored in S3.
+        This endpoint is only available when asset proxying is enabled.
+      operationId: getCollectionAsset
+      parameters:
+        - $ref: '#/components/parameters/collectionId'
+        - $ref: '#/components/parameters/assetKey'
+      responses:
+        '302':
+          description: Redirect to pre-signed asset URL
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
 components:
   schemas:
     landingPage:
@@ -1883,6 +1930,12 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/exception'
+    Forbidden:
+      description: The requested operation is forbidden
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/exception'
     PreconditionFailed:
       description: Some condition specified by the request could not be met in the server
       content:
@@ -2156,3 +2209,10 @@ components:
       required: false
       schema:
         $ref: '#/components/schemas/filter-crs'
+    assetKey:
+      name: assetKey
+      in: path
+      description: Asset key identifier
+      required: true
+      schema:
+        type: string

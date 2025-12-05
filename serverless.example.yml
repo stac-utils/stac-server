@@ -29,11 +29,16 @@ provider:
     # PRE_HOOK: ${self:service}-${self:provider.stage}-preHook
     # API_KEYS_SECRET_ID: ${self:service}-${self:provider.stage}-api-keys
     # POST_HOOK: ${self:service}-${self:provider.stage}-postHook
-    # If you will be subscribing to post-ingest SNS notifications make
-    # sure that STAC_API_URL is set so that links are updated correctly
-    STAC_API_URL: "https://some-stac-server.example.com"
+    # Uncomment this and edit the value if you will be subscribing to post-ingest SNS
+    # notifications and need correct link hrefs in published the records or if you need to
+    # override the default behavior of inferring the STAC API URL from request headers.
+    # STAC_API_URL: "https://some-stac-server.example.com"
     CORS_ORIGIN: "https://ui.example.com"
     CORS_CREDENTIALS: true
+    # Asset Proxy Environment Variables
+    # ASSET_PROXY_BUCKET_OPTION: "NONE"  # Options: NONE, ALL, ALL_BUCKETS_IN_ACCOUNT, LIST
+    # ASSET_PROXY_BUCKET_LIST: "bucket1,bucket2,bucket3"  # Required only when ASSET_PROXY_BUCKET_OPTION is LIST
+    # ASSET_PROXY_URL_EXPIRY: 300  # Pre-signed URL expiry in seconds (default: 300)
   iam:
     role:
       statements:

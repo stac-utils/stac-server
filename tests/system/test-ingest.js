@@ -4,12 +4,16 @@ import url from 'url'
 import test from 'ava'
 import nock from 'nock'
 import { DateTime } from 'luxon'
+import { PublishCommand } from '@aws-sdk/client-sns'
+import { ReceiveMessageCommand } from '@aws-sdk/client-sqs'
+import { CreateBucketCommand, PutObjectCommand } from '@aws-sdk/client-s3'
 import { getCollectionIds, getItem } from '../helpers/api.js'
-import { handler } from '../../src/lambdas/ingest/index.js'
+import { handler, resetAssetProxy } from '../../src/lambdas/ingest/index.js'
 import { loadFixture, randomId } from '../helpers/utils.js'
 import { refreshIndices, deleteAllIndices } from '../helpers/database.js'
 import { sqsTriggerLambda, purgeQueue } from '../helpers/sqs.js'
 import { sns, sqs, s3 as _s3 } from '../../src/lib/aws-clients.js'
+import { ALTERNATE_ASSETS_EXTENSION } from '../../src/lib/asset-proxy.js'
 import { setup } from '../helpers/system-tests.js'
 import { ingestItemC, ingestFixtureC, testPostIngestSNS } from '../helpers/ingest.js'
 
@@ -53,10 +57,11 @@ test('The ingest lambda supports ingesting a collection published to SNS', async
     { id: randomId('collection') }
   )
 
-  await sns().publish({
+  const publishCommand = new PublishCommand({
     TopicArn: ingestTopicArn,
     Message: JSON.stringify(collection)
   })
+  await sns().send(publishCommand)
 
   await sqsTriggerLambda(ingestQueueUrl, handler)
 
@@ -84,23 +89,26 @@ test('The ingest lambda supports ingesting a collection sourced from S3', async 
   const sourceBucket = randomId('bucket')
   const sourceKey = randomId('key')
 
-  await s3.createBucket({
+  const createBucketCommand = new CreateBucketCommand({
     Bucket: sourceBucket,
     CreateBucketConfiguration: {
       LocationConstraint: 'us-west-2'
     }
   })
+  await s3.send(createBucketCommand)
 
-  await s3.putObject({
+  const putObjectCommand = new PutObjectCommand({
     Bucket: sourceBucket,
     Key: sourceKey,
     Body: JSON.stringify(collection)
   })
+  await s3.send(putObjectCommand)
 
-  await sns().publish({
+  const publishCommand2 = new PublishCommand({
     TopicArn: ingestTopicArn,
     Message: JSON.stringify({ href: `s3://${sourceBucket}/${sourceKey}` })
   })
+  await sns().send(publishCommand2)
 
   await sqsTriggerLambda(ingestQueueUrl, handler)
 
@@ -124,10 +132,11 @@ test('The ingest lambda supports ingesting a collection sourced from http', asyn
 
   nock('http://source.local').get('/my-file.dat').reply(200, collection)
 
-  await sns().publish({
+  const publishCommand3 = new PublishCommand({
     TopicArn: ingestTopicArn,
     Message: JSON.stringify({ href: 'http://source.local/my-file.dat' })
   })
+  await sns().send(publishCommand3)
 
   await sqsTriggerLambda(ingestQueueUrl, handler)
 
@@ -416,11 +425,12 @@ async function emptyPostIngestQueue(t) {
   //    We recommend waiting for 60 seconds regardless of your queue's size."
   let result
   do {
-    // eslint-disable-next-line no-await-in-loop
-    result = await sqs().receiveMessage({
+    const receiveCommand = new ReceiveMessageCommand({
       QueueUrl: t.context.postIngestQueueUrl,
       WaitTimeSeconds: 1
     })
+    // eslint-disable-next-line no-await-in-loop
+    result = await sqs().send(receiveCommand)
   } while (result.Message && result.Message.length > 0)
 }
 
@@ -512,6 +522,34 @@ test('Ingested item is published to post-ingest SNS topic with updated links', a
     t.truthy(message.record.links)
     t.true(message.record.links.every((/** @type {Link} */ link) => (
       link.href && url.parse(link.href).hostname === hostname)))
+  } finally {
+    process.env = envBeforeTest
+  }
+})
+
+test('Ingested item is published to post-ingest SNS topic with proxied assets', async (t) => {
+  const envBeforeTest = { ...process.env }
+  try {
+    const endpoint = 'https://some-stac-server.com'
+    process.env['STAC_API_URL'] = endpoint
+    process.env['ASSET_PROXY_BUCKET_OPTION'] = 'ALL'
+    resetAssetProxy()
+
+    const collection = await ingestCollectionAndPurgePostIngestQueue(t)
+    const item = await loadFixture(
+      'stac/ingest-item.json',
+      { id: randomId('item'), collection: collection.id }
+    )
+
+    const firstAssetKey = Object.keys(item.assets)[0]
+    const originalHref = item.assets[firstAssetKey].href
+
+    const { message } = await testPostIngestSNS(t, item)
+    const firstAsset = message.record.assets[firstAssetKey]
+
+    t.true(firstAsset.href.includes(endpoint))
+    t.is(firstAsset.alternate.s3.href, originalHref)
+    t.true(message.record.stac_extensions.includes(ALTERNATE_ASSETS_EXTENSION))
   } finally {
     process.env = envBeforeTest
   }

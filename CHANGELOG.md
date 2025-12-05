@@ -13,6 +13,17 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   and `/collections/{collectionId}` endpoints, if a collection does not have a temporal extent defined, 
   the server will automatically calculate it from the earliest and latest items in the collection. To use 
   this feature, simply omit the `extent.temporal.interval` field when ingesting a collection.
+- Asset proxying for generating pre-signed S3 URLs through proxy endpoints `GET
+  /collections/{collectionId}/items/{itemId}/assets/{assetKey}` and `GET
+  /collections/{collectionId}/assets/{assetKey}`.
+- Environment variables `ASSET_PROXY_BUCKET_OPTION`, `ASSET_PROXY_BUCKET_LIST`, and
+  `ASSET_PROXY_URL_EXPIRY` to configure asset proxying.
+
+### Changed
+
+- When asset proxying is enabled, when a STAC Item or Collection is served, asset S3 hrefs
+  are replaced with proxy endpoint URLs and the original S3 URLs are preserved in
+  `alternate.s3.href` using the Alternate Assets Extension.
 
 ## [4.4.0] - 2025-09-10
 
@@ -588,8 +599,7 @@ Initial release, forked from [sat-api](https://github.com/sat-utils/sat-api/tree
 
 Compliant with STAC 0.9.0
 
-<!-- [unreleased]: https://github.com/stac-utils/stac-api/compare/v3.6.0...main -->
-
+[unreleased]: https://github.com/stac-utils/stac-server/compare/v4.4.0...main
 [4.4.0]: https://github.com/stac-utils/stac-api/compare/v4.3.0...v4.4.0
 [4.3.0]: https://github.com/stac-utils/stac-api/compare/v4.2.0...v4.3.0
 [4.2.0]: https://github.com/stac-utils/stac-api/compare/v4.1.0...v4.2.0

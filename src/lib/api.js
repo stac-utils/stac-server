@@ -758,8 +758,9 @@ const searchItems = async function (
     })
   }
 
-  const items = addItemLinks(responseItems, endpoint)
-  return wrapResponseInFeatureCollection(items, links, numberMatched, numberReturned, limit)
+  addItemLinks(responseItems, endpoint)
+
+  return wrapResponseInFeatureCollection(responseItems, links, numberMatched, numberReturned, limit)
 }
 
 const agg = function (esAggs, name, dataType) {
@@ -1303,7 +1304,8 @@ const getCollections = async function (backend, endpoint, parameters, headers) {
     deleteUnusedFields(collection)
   }
 
-  const linkedCollections = addCollectionLinks(collections, endpoint)
+  addCollectionLinks(collections, endpoint)
+
   const resp = {
     collections,
     links: [
@@ -1327,8 +1329,8 @@ const getCollections = async function (backend, endpoint, parameters, headers) {
     resp['context'] = {
       page: 1,
       limit: COLLECTION_LIMIT,
-      matched: linkedCollections && linkedCollections.length,
-      returned: linkedCollections && linkedCollections.length
+      matched: collections && collections.length,
+      returned: collections && collections.length
     }
   }
   return resp
@@ -1348,12 +1350,9 @@ const getCollection = async function (backend, collectionId, endpoint, parameter
   await populateTemporalExtentIfMissing(backend, result)
 
   deleteUnusedFields(result)
+  addCollectionLinks([result], endpoint)
 
-  const col = addCollectionLinks([result], endpoint)
-  if (col.length > 0) {
-    return col[0]
-  }
-  return new Error('Collection retrieval failed')
+  return result
 }
 
 const createCollection = async function (backend, collection) {
@@ -1379,7 +1378,9 @@ const getItem = async function (backend, collectionId, itemId, endpoint, params,
 
   const { results } = await backend.search(itemQuery, 1)
 
-  const [it] = addItemLinks(results, endpoint)
+  addItemLinks(results, endpoint)
+
+  const [it] = results
   if (it) {
     return it
   }
@@ -1391,7 +1392,8 @@ const partialUpdateItem = async function (backend,
   const response = await backend.partialUpdateItem(collectionId, itemId, parameters)
   logger.debug('Partial Update Item: %j', response)
   if (response) {
-    return addItemLinks([response.body.get._source], endpoint)[0]
+    const items = addItemLinks([response.body.get._source], endpoint)
+    return items[0]
   }
   return new Error(`Error partially updating item ${itemId}`)
 }

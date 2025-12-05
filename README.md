@@ -1496,23 +1496,44 @@ One limitation of the header approach is that API Gateway has a hard limit of 10
 
 ## Ingesting Data
 
-STAC Collections and Items are ingested by the `ingest` Lambda function, however this Lambda is not invoked directly by a user, it consumes records from the `stac-server-<stage>-queue` SQS. To add STAC Items or Collections to the queue, publish them to the SNS Topic `stac-server-<stage>-ingest`.
+STAC Collections and Items are ingested by the `ingest` Lambda function, however this Lambda is not invoked directly
+ by a user, it consumes records from the `stac-server-<stage>-queue` SQS. To add STAC Items or Collections to the
+  queue, publish them to the SNS Topic `stac-server-<stage>-ingest`.
 
-**STAC Collections must be ingested before Items that belong to that Collection.** Items should have the `collection` field populated with the ID of an existing Collection. If an Item is ingested before ingestion of the Collection it contains,
-ingestion will either fail (in the case of a single Item ingest) or if auto-creation of indexes is enabled (default) and multiple Items are ingested in bulk, the auto-created index will have incorrect mappings.
+**STAC Collections must be ingested before Items that belong to that Collection.** Items should have the `collection` 
+field populated with the ID of an existing Collection. If an Item is ingested before ingestion of the Collection it contains,
+ingestion will either fail (in the case of a single Item ingest) or if auto-creation of indexes is enabled (default)
+and multiple Items are ingested in bulk, the auto-created index will have incorrect mappings.
 
-If a collection or item is ingested, and an item with that id already exists in STAC, the new item will completely replace the old item, except the `created` property will be retained and the `updated` property updated
+If a collection or item is ingested, and an item with that id already exists in STAC, the new item will completely 
+replace the old item, except the `created` property will be retained and the `updated` property updated
 to match the time of the new update.
 
-After a collection or item is ingested, the status of the ingest (success or failure) along with details of the collection or item are sent to a post-ingest SNS topic. To take action on items after they are ingested subscribe an endpoint to this topic.
+After a collection or item is ingested, the status of the ingest (success or failure) along with details of the 
+collection or item are sent to a post-ingest SNS topic. To take action on items after they are 
+ingested subscribe an endpoint to this topic.
 
-Messages published to the post-ingest SNS topic include the following atributes that can be used for filtering:
+Messages published to the post-ingest SNS topic include the following attributes that can be used for filtering:
 
 | attribute    | type   | values                   |
 | ------------ | ------ | ------------------------ |
 | recordType   | String | `Collection` or `Item`   |
 | ingestStatus | String | `successful` or `failed` |
 | collection   | String |                          |
+
+### Automatic Temporal Extent
+
+When ingesting Collections, the `extent.temporal.interval` field can be omitted to enable automatic temporal 
+extent calculation. When a collection is requested via the API, if it doesn't have a temporal extent defined, 
+stac-server will automatically calculate it by finding the earliest and latest `datetime` values from the items 
+in that collection. Collections with no items will have a temporal extent of `[[null, null]]`. This feature allows 
+temporal extents to stay current as items are added or removed without requiring manual collection updates. 
+The temporal extent is calculated dynamically each time the collection is requested, so it automatically reflects 
+the current state of items without requiring collection updates or persisting changes to the collection document.
+
+After a collection or item is ingested, the status of the ingest (success or failure) along with details of the c
+ollection or item are sent to a post-ingest SNS topic. To take action on items after they are ingested
+ subscribe an endpoint to this topic.
 
 ### Ingest actions
 

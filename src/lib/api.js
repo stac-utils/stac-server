@@ -1254,6 +1254,35 @@ const deleteUnusedFields = (collection) => {
   delete collection.aggregations
 }
 
+/**
+ * Populate temporal extent for a collection from its items if not already defined
+ * @param {Object} backend - Database backend
+ * @param {Object} collection - Collection object
+ * @returns {Promise<void>}
+ */
+const populateTemporalExtentIfMissing = async (backend, collection) => {
+  const id = collection.id
+
+  // Check if collection already has a temporal extent defined
+  const start = collection.extent?.temporal?.interval?.[0]?.[0]
+  const end = collection.extent?.temporal?.interval?.[0]?.[1]
+  const hasTemporalExtent = start != null || end != null
+
+  if (!hasTemporalExtent) {
+    const temporalExtent = await backend.getTemporalExtentFromItems(id)
+    if (temporalExtent) {
+      // Initialize extent structure if it doesn't exist
+      if (!collection.extent) {
+        collection.extent = {}
+      }
+      if (!collection.extent.temporal) {
+        collection.extent.temporal = {}
+      }
+      collection.extent.temporal.interval = temporalExtent
+    }
+  }
+}
+
 const getCollections = async function (backend, endpoint, parameters, headers) {
   // TODO: implement proper pagination, as this will only return up to
   // COLLECTION_LIMIT collections
@@ -1266,6 +1295,10 @@ const getCollections = async function (backend, endpoint, parameters, headers) {
   const collections = collectionsOrError.filter(
     (c) => isCollectionIdAllowed(allowedCollectionIds, c.id)
   )
+
+  // Populate temporal extent for each collection from items only if not already defined
+  await Promise.all(collections.map((collection) =>
+    populateTemporalExtentIfMissing(backend, collection)))
 
   for (const collection of collections) {
     deleteUnusedFields(collection)
@@ -1312,6 +1345,9 @@ const getCollection = async function (backend, collectionId, endpoint, parameter
   if (result instanceof Error) {
     return new NotFoundError()
   }
+
+  // Populate temporal extent from items only if not already defined
+  await populateTemporalExtentIfMissing(backend, result)
 
   deleteUnusedFields(result)
   addCollectionLinks([result], endpoint)

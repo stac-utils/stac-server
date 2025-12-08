@@ -21,6 +21,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   are replaced with proxy endpoint URLs and the original S3 URLs are preserved in
   `alternate.s3.href` using the Alternate Assets Extension.
 
+### Fixed
+
+- When using the `_filter` parameter, the combined filter was returned in the `next` link
+  body. This had the correct semantics, but the size of the filter would grow by one
+  `and` nesting each pagination request, as the `_filter` was repeatedly added to body.
+
 ## [4.4.0] - 2025-09-10
 
 ## Changed

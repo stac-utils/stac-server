@@ -576,8 +576,10 @@ const wrapResponseInFeatureCollection = function (features, links,
   return fc
 }
 
-const buildPaginationLinks = function (limit, parameters, bbox, intersects, collections, endpoint,
-  httpMethod, sortby, items) {
+const buildPaginationLinks = function (
+  limit, parameters, bbox, intersects, collections, filter,
+  endpoint, httpMethod, sortby, items
+) {
   if (items.length) {
     const dictToURI = (dict) => (
       Object.keys(dict).map(
@@ -620,7 +622,9 @@ const buildPaginationLinks = function (limit, parameters, bbox, intersects, coll
         method: httpMethod,
         type: 'application/geo+json'
       }
-      const nextParams = pickBy(assign(parameters, { bbox, intersects, limit, next, collections }))
+      const nextParams = pickBy(
+        assign(parameters, { bbox, intersects, limit, next, collections, filter })
+      )
       if (httpMethod === 'GET') {
         const nextQueryParameters = dictToURI(nextParams)
         link.href = `${endpoint}?${nextQueryParameters}`
@@ -655,8 +659,10 @@ const searchItems = async function (
 
   const sortby = extractSortby(parameters)
   const query = extractStacQuery(parameters)
-  const filter = concatenateCql2Filters(
-    extractCql2Filter(parameters),
+  const specifiedFilter = extractCql2Filter(parameters)
+
+  const combinedFilter = concatenateCql2Filters(
+    specifiedFilter,
     extractRestrictionCql2Filter(parameters, headers)
   )
   const fields = extractFields(parameters)
@@ -674,7 +680,7 @@ const searchItems = async function (
     datetime,
     intersects: geometry,
     query,
-    filter: filter,
+    filter: combinedFilter,
     sortby,
     fields,
     ids,
@@ -730,6 +736,7 @@ const searchItems = async function (
     bbox,
     intersects,
     specifiedCollectionIds,
+    specifiedFilter,
     newEndpoint,
     httpMethod,
     sortby,

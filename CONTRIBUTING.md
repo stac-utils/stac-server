@@ -1,0 +1,270 @@
+# Contributing to stac-server
+
+Thank you for your interest in contributing to stac-server! This document provides guidelines and instructions for setting up your development environment and contributing to the project.
+
+## Table of Contents
+
+- [Development Environment Setup](#development-environment-setup)
+- [Running Locally](#running-locally)
+- [Running Tests](#running-tests)
+  - [Running Unit Tests](#running-unit-tests)
+  - [Running System and Integration Tests](#running-system-and-integration-tests)
+- [Code Quality](#code-quality)
+  - [Linting](#linting)
+  - [Type Checking](#type-checking)
+  - [OpenAPI Validation](#openapi-validation)
+- [Updating the OpenAPI Specification](#updating-the-openapi-specification)
+- [Pull Request Process](#pull-request-process)
+- [Reporting Issues](#reporting-issues)
+- [Code of Conduct](#code-of-conduct)
+
+## Development Environment Setup
+
+Install [NVM](https://github.com/nvm-sh/nvm) to manage your Node.js environment:
+
+```shell
+# uses version in .nvmrc
+nvm install
+nvm use
+```
+
+The package-lock.json was built with npm 8.5.0, so use at least this version.
+
+Install dependencies:
+
+```shell
+npm install
+```
+
+Useful npm commands:
+
+```shell
+# Build the project (runs webpack)
+npm run build
+
+# Run ESLint
+npm run lint
+
+# Run both unit and system tests (requires running docker compose containers)
+npm run test
+
+# Run the API locally
+npm run serve
+```
+
+[npm-check-updates](https://www.npmjs.com/package/npm-check-updates) can be used for
+updating version dependencies to newer ones:
+
+```shell
+ncu -i
+```
+
+## Running Locally
+
+Before the API can be run, OpenSearch and Localstack need to be running. There is a `compose.yml` file to simplify running OpenSearch locally:
+
+```shell
+docker compose up -d
+```
+
+The API can then be run with:
+
+```shell
+npm run serve
+```
+
+Connect to the server on <http://localhost:3000/>
+
+Other configurations can be passed as shell environment variables, e.g.,
+
+```shell
+export ENABLE_TRANSACTIONS_EXTENSION=true
+export OPENSEARCH_HOST='https://search-stac-server-dev-7awl6h344qlpvly.us-west-2.es.amazonaws.com'
+npm run serve
+```
+
+## Running Tests
+
+stac-server uses [ava](https://github.com/avajs/ava) as its test runner.
+
+### Running Unit Tests
+
+```shell
+# Run all unit tests
+npm run test:unit
+
+# Run unit tests with coverage
+npm run test:unit:coverage
+
+# Run tests from a single test file whose titles match 'foobar*'
+npx ava tests/unit/test-es.js --match='foobar*'
+```
+
+### Running System and Integration Tests
+
+The System and Integration tests use an OpenSearch server running in Docker and a local instance of the API.
+
+When the system tests run, they:
+
+1. Wait for OpenSearch to be available
+2. Delete all indices from OpenSearch
+3. Start an instance of the API at <http://localhost:3000/dev/>
+4. Wait for the API to be available
+5. Run the system tests in `./tests/system/test-*.js`
+6. Stop the API
+
+**Prerequisites:**
+
+Before running system tests, start OpenSearch:
+
+```shell
+docker compose up -d
+```
+
+Running these tests requires the `timeout` utility. On Linux, this is probably already installed. On macOS, install it with:
+
+```shell
+brew install coreutils
+```
+
+**Running system tests:**
+
+```shell
+# Run all system tests
+npm run test:system
+
+# Run system tests with coverage
+npm run test:system:coverage
+
+# Run a subset of system tests matching a glob pattern
+npm run test:system test-api-item-*
+```
+
+**Running all tests:**
+
+```shell
+npm test
+```
+
+## Code Quality
+
+### Linting
+
+stac-server uses [ESLint](https://eslint.org/) for code linting:
+
+```shell
+# Run linter
+npm run lint
+
+# Auto-fix linting issues
+npm run lint-js-fix
+```
+
+Please ensure your code passes linting before submitting a pull request.
+
+### Type Checking
+
+stac-server uses TypeScript for type checking:
+
+```shell
+npm run typecheck
+```
+
+### OpenAPI Validation
+
+Validate the OpenAPI specification:
+
+```shell
+npm run check-openapi
+```
+
+## Updating the OpenAPI Specification
+
+The OpenAPI specification is served by the `/api` endpoint and is located at [src/lambdas/api/openapi.yaml](src/lambdas/api/openapi.yaml).
+
+When the API is updated to a new STAC API release, this file must be updated:
+
+1. Install [yq](https://github.com/mikefarah/yq)
+
+2. Run the build script:
+
+```shell
+bin/build-openapi.sh
+```
+
+This script combines all of the STAC API OpenAPI definitions for each conformance class into one file.
+
+3. Edit the file to make it specific to this server:
+   - Change the title from `STAC API - Item Search` to `STAC API`
+   - Remove all Filter Extension references (if not supported)
+   - Fix each endpoint, especially the Landing Page definition (which gets duplicated)
+   - Add definitions for each tag
+
+4. Validate the resulting OpenAPI file:
+
+```shell
+npm run check-openapi
+```
+
+Fix any errors or warnings reported.
+
+## Pull Request Process
+
+1. **Fork the repository** and create a new branch from `main` for your changes.
+
+2. **Make your changes** following the code style and conventions used in the project.
+
+3. **Write or update tests** to cover your changes. Ensure all tests pass:
+   ```shell
+   npm test
+   ```
+
+4. **Run linting and type checking**:
+   ```shell
+   npm run lint
+   npm run typecheck
+   ```
+
+5. **Update documentation** if you're adding or changing functionality:
+   - Update README.md for user-facing features
+   - Update code comments and JSDoc
+   - Update OpenAPI specification if API changes are made
+
+6. **Commit your changes** with clear, descriptive commit messages following conventional commit format when possible.
+
+7. **Push to your fork** and submit a pull request to the `main` branch.
+
+8. **Respond to feedback** from maintainers during the review process.
+
+### Pull Request Guidelines
+
+- Keep pull requests focused on a single feature or bug fix
+- Include a clear description of the problem and solution
+- Reference any related issues using GitHub keywords (e.g., "Fixes #123")
+- Ensure CI checks pass before requesting review
+- Be responsive to review feedback
+
+## Reporting Issues
+
+When reporting issues, please include:
+
+- A clear, descriptive title
+- Steps to reproduce the issue
+- Expected behavior vs actual behavior
+- Your environment (Node.js version, OS, etc.)
+- Relevant logs or error messages
+- Screenshots if applicable
+
+Use the [GitHub issue tracker](https://github.com/stac-utils/stac-server/issues) to report bugs or request features.
+
+## Code of Conduct
+
+This project follows the [Contributor Covenant Code of Conduct](https://www.contributor-covenant.org/version/2/1/code_of_conduct/). By participating, you are expected to uphold this code. Please report unacceptable behavior to the project maintainers.
+
+## Getting Help
+
+- Check existing [documentation](README.md) and [deployment guide](DEPLOYMENT.md)
+- Search [existing issues](https://github.com/stac-utils/stac-server/issues)
+- Ask questions in discussions or create a new issue
+
+Thank you for contributing to stac-server!

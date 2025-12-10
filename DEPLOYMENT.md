@@ -18,6 +18,8 @@ This guide covers deploying stac-server to AWS using the [Serverless Framework](
   - [Locking down transaction endpoints](#locking-down-transaction-endpoints)
   - [AWS WAF Rule Conflicts](#aws-waf-rule-conflicts)
   - [API Gateway Logging](#api-gateway-logging)
+  - [Supporting Cross-cluster Search and Replication](#supporting-cross-cluster-search-and-replication)
+  - [Pre- and Post-Hooks](#pre--and-post-hooks)
 - [Migration Notes](#migration-notes)
 
 ## Prerequisites
@@ -587,6 +589,117 @@ response to be logged to CloudWatch, which can be expensive.
 
 The `accessLogging` setting logs the values specified in `format` to CloudWatch, which
 can be useful for computing metrics on usage for the API.
+
+### Supporting Cross-cluster Search and Replication
+
+OpenSearch support cross-cluster connections that can be configured to either allow search
+across the clusters, treating a remote cluster as if it were another group of nodes in the
+cluster, or configure indicies to be replicated (continuously copied) from from one
+cluster to another.
+
+Configuring either cross-cluster behavior requires fine-grained access control.
+
+#### Cross-cluster Search
+
+The AWS documentation for cross-cluster search can be found
+[here](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/cross-cluster-search.html).
+
+1. Ensure fine-grained access control is enabled.
+2. Create a connection between the source and destination OpenSearch domains.
+3. Ensure there is a `es:ESCrossClusterGet` action in the destination's access policy.
+4. In the source stac-server, create a Collection for each collection to be mapped. This
+   must have the same id as the destination collection.
+5. For the source stac-server, configure a `COLLECTION_TO_INDEX_MAPPINGS`
+   environment variable with a stringified JSON object mapping the collection name to the
+   name of the index. For example, `{"collection1": "cluster2:collection1", "collection2": "cluster2:collection2"}` is a value mapping two collections through a
+   connection named `cluster2`. Deploy this change.
+
+#### Cross-cluster Replication
+
+The AWS documentation for cross-cluster replication can be found
+[here](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/replication.html).
+
+1. Ensure fine-grained access control is enabled (default as of v2.0.0)
+2. Create the replication connection in the source to the destination
+3. Create the collection in the source's stac-server instance
+
+### Pre- and Post-Hooks
+
+Stac-server supports two hooks into the request process: a pre-hook and a post-hook. These are each Lambda functions which, if configured, will be invoked by stac-server. It is assumed that the stac-server Lambda has been granted permission to invoke these Lambda functions, if configured.
+
+#### Pre-Hook
+
+If the stac-server is deployed with the `PRE_HOOK` environment variable set to the name of a Lambda function, then that function will be called as the pre-hook.
+
+The event passed into the pre-hook Lambda will be an instance of an [API Gateway Proxy Event](https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-lambda-proxy-integrations.html#api-gateway-simple-proxy-for-lambda-input-format).
+
+If the return value from the pre-hook Lambda is an instance of an [API Gateway Proxy Result](https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-lambda-proxy-integrations.html#api-gateway-simple-proxy-for-lambda-output-format), then that response will immediately be returned to the client.
+
+If the return value of the pre-hook Lambda is an instance of an [API Gateway Proxy Event](https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-lambda-proxy-integrations.html#api-gateway-simple-proxy-for-lambda-input-format), then that event will be passed along to stac-server.
+
+If the pre-hook Lambda throws an exception, an internal server error will be returned to the client.
+
+The pre-hook Lambda configuration may reference any Lambda, not only one deployed as part
+of this stack. There is an example pre-hook Lambda that can be included with this stack,
+which provides an example rudimentary authorization mechanism via a hard-coded token.
+
+To enable this example pre-hook:
+
+- Either (1) in package.json, pass the env var `BUILD_PRE_HOOK=true` in the `build`
+  command, or (2) modify bin/build.sh to always build the "pre-hook" package.
+- In the serverless.yml file, uncomment the `preHook` function, the `preHook` IAM
+  permissions, and the environment variables `PRE_HOOK` and `API_KEYS_SECRET_ID`
+- Create a Secrets Manager secret with the name used in `API_KEYS_SECRET_ID` with
+  the keys as the strings allowed for API Keys and the values as an array `["write"]`.
+- Build and deploy.
+
+#### Post-Hook
+
+If the stac-server is deployed with the `POST_HOOK` environment variable set to the name of a Lambda function, then that function will be called as the post-hook.
+
+The event passed into the post-hook labmda will be the response from the stac-server, and will be an instance of an [API Gateway Proxy Result](https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-lambda-proxy-integrations.html#api-gateway-simple-proxy-for-lambda-output-format).
+
+The return value of the post-hook Lambda must be an instance of an [API Gateway Proxy Result](https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-lambda-proxy-integrations.html#api-gateway-simple-proxy-for-lambda-output-format).
+
+If the post-hook Lambda throws an exception, an internal server error will be returned to the client.
+
+The post-hook Lambda configuration may reference any Lambda, not only one deployed as part
+of this stack. There is an example post-hook Lambda that can be included with this stack,
+which does nothing, but shows how the API Lambda response can be modified.
+
+The post-hook Lambda configuration may reference any Lambda, not only one deployed as part
+of this stack. There is an example post-hook Lambda that can be included with this stack,
+which provides an example of how to interact with the response, but does not modify it.
+
+If compression is enabled with `ENABLE_RESPONSE_COMPRESSION`, you should ensure that the
+post-hook deployed handles compressed responses, or for the example post-hook lambda,
+disable compression.
+
+To enable this example post-hook:
+
+- Modify bin/build.sh to not exclude the "post-hook" package from being built.
+- In the serverless.yml file, uncomment the `postHook` function and the `postHook`
+  IAM permissions.
+- Build and deploy.
+
+#### Request Flow
+
+```mermaid
+flowchart
+  client -- APIGatewayProxyEvent --> pre-hook
+  pre-hook[pre-hook Lambda]
+  pre-hook -- APIGatewayProxyResult --> client
+  pre-hook -- APIGatewayProxyEvent --> stac-server
+  post-hook[post-hook Lambda]
+  stac-server -- APIGatewayProxyResult --> post-hook
+  post-hook -- APIGatewayProxyResult --> client
+```
+
+#### Notes
+
+Lambda payloads and responses [must be less than 6 MB](https://docs.aws.amazon.com/lambda/latest/dg/gettingstarted-limits.html#function-configuration-deployment-and-execution). A larger payload will result in an internal server error being returned to the client.
+
+The outputs of the pre- and post-hooks are validated and, if they don't comply with the defined schemas, an internal server error will be returned to the client. Information about the invalid event, as well as details about the parsing errors, will be logged to CloudWatch.
 
 ## Migration Notes
 

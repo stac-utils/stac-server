@@ -6,38 +6,29 @@
 
 **Documentation:** [README](README.md) | [Deployment](DEPLOYMENT.md) | [Contributing](CONTRIBUTING.md) | [Security](SECURITY.md) | [Changelog](CHANGELOG.md)
 
-- [stac-server](#stac-server)
-  - [Overview](#overview)
-  - [Architecture](#architecture)
-  - [Usage](#usage)
-  - [Queryables](#queryables)
-    - [Filter Extension](#filter-extension)
-    - [Query Extension](#query-extension)
-  - [Aggregation](#aggregation)
-  - [Asset Proxy](#asset-proxy)
-    - [Configuration](#configuration)
-    - [Endpoints](#endpoints)
-    - [IAM Permissions](#iam-permissions)
-    - [Asset Transformation](#asset-transformation)
-  - [Collections and filter parameters for authorization](#collections-and-filter-parameters-for-authorization)
-    - [Collections](#collections)
-    - [CQL2 Filter](#cql2-filter)
-  - [Ingesting Data](#ingesting-data)
-    - [Ingest actions](#ingest-actions)
-    - [Ingesting large items](#ingesting-large-items)
-    - [Subscribing to SNS Topics](#subscribing-to-sns-topics)
-    - [Ingest Errors](#ingest-errors)
-  - [Supporting Cross-cluster Search and Replication](#supporting-cross-cluster-search-and-replication)
-    - [Cross-cluster Search](#cross-cluster-search)
-    - [Cross-cluster Replication](#cross-cluster-replication)
-  - [Pre- and Post-Hooks](#pre--and-post-hooks)
-    - [Pre-Hook](#pre-hook)
-    - [Post-Hook](#post-hook)
-    - [Request Flow](#request-flow)
-    - [Notes](#notes)
-  - [Contributing](#contributing)
-  - [About](#about)
-  - [License](#license)
+- [Overview](#overview)
+- [Architecture](#architecture)
+- [Usage](#usage)
+- [Queryables](#queryables)
+  - [Filter Extension](#filter-extension)
+  - [Query Extension](#query-extension)
+- [Aggregation](#aggregation)
+- [Asset Proxy](#asset-proxy)
+  - [Configuration](#configuration)
+  - [Endpoints](#endpoints)
+  - [IAM Permissions](#iam-permissions)
+  - [Asset Transformation](#asset-transformation)
+- [Collections and filter parameters for authorization](#collections-and-filter-parameters-for-authorization)
+  - [Collections](#collections)
+  - [CQL2 Filter](#cql2-filter)
+- [Ingesting Data](#ingesting-data)
+  - [Ingest actions](#ingest-actions)
+  - [Ingesting large items](#ingesting-large-items)
+  - [Subscribing to SNS Topics](#subscribing-to-sns-topics)
+  - [Ingest Errors](#ingest-errors)
+- [Contributing](#contributing)
+- [About](#about)
+- [License](#license)
 
 ## Overview
 
@@ -598,40 +589,7 @@ _Note_, that adding the subscription via the topic page does not seem to work. I
 
 Errors that occur while consuming items from the ingest queue will end up in the dead letter processing queue.
 
-## Supporting Cross-cluster Search and Replication
-
-OpenSearch support cross-cluster connections that can be configured to either allow search
-across the clusters, treating a remote cluster as if it were another group of nodes in the
-cluster, or configure indicies to be replicated (continuously copied) from from one
-cluster to another.
-
-Configuring either cross-cluster behavior requires fine-grained access control.
-
-### Cross-cluster Search
-
-The AWS documentation for cross-cluster search can be found
-[here](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/cross-cluster-search.html).
-
-1. Ensure fine-grained access control is enabled.
-2. Create a connection between the source and destination OpenSearch domains.
-3. Ensure there is a `es:ESCrossClusterGet` action in the destination's access policy.
-4. In the source stac-server, create a Collection for each collection to be mapped. This
-   must have the same id as the destination collection.
-5. For the source stac-server, configure a `COLLECTION_TO_INDEX_MAPPINGS`
-   environment variable with a stringified JSON object mapping the collection name to the
-   name of the index. For example, `{"collection1": "cluster2:collection1", "collection2": "cluster2:collection2"}` is a value mapping two collections through a
-   connection named `cluster2`. Deploy this change.
-
-### Cross-cluster Replication
-
-The AWS documentation for cross-cluster replication can be found
-[here](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/replication.html).
-
-1. Ensure fine-grained access control is enabled (default as of v2.0.0)
-2. Create the replication connection in the source to the destination
-3. Create the collection in the source's stac-server instance
-
-## Pre- and Post-Hooks
+## Contributing
 
 Stac-server supports two hooks into the request process: a pre-hook and a post-hook. These are each Lambda functions which, if configured, will be invoked by stac-server. It is assumed that the stac-server Lambda has been granted permission to invoke these Lambda functions, if configured.
 

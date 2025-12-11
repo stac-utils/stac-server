@@ -1,6 +1,10 @@
 # Deployment Guide
 
+**Documentation:** [README](README.md) | [Architecture](ARCHITECTURE.md) | [Configuration](CONFIGURATION.md) | [Deployment](DEPLOYMENT.md) | [Contributing](CONTRIBUTING.md) | [Security](SECURITY.md) | [Changelog](CHANGELOG.md)
+
 This guide covers deploying stac-server to AWS using the [Serverless Framework](https://serverless.com/).
+
+For runtime configuration (environment variables, collection-level parameters), see [CONFIGURATION.md](CONFIGURATION.md).
 
 ## Table of Contents
 
@@ -13,12 +17,6 @@ This guide covers deploying stac-server to AWS using the [Serverless Framework](
 - [Step 5: Set Up Authentication Credentials](#step-5-set-up-authentication-credentials)
 - [Step 6: Disable Automatic Index Creation](#step-6-disable-automatic-index-creation)
 - [Step 7: Create Collection Index](#step-7-create-collection-index)
-- [Configuration](#configuration)
-  - [Queryables](#queryables)
-  - [Aggregations](#aggregations)
-  - [Asset Proxy](#asset-proxy)
-  - [Authorization Parameters](#authorization-parameters)
-  - [Ingesting Data](#ingesting-data)
 - [Additional Configuration](#additional-configuration)
   - [Proxying stac-server through CloudFront](#proxying-stac-server-through-cloudfront)
   - [Locking down transaction endpoints](#locking-down-transaction-endpoints)
@@ -54,45 +52,23 @@ cp serverless.example.yml serverless.yml
 
 Prior to deployment, review and update your serverless.yml file. In particular, update
 the `stage` and `region` with the desired values in the `provider` section, and review the
-environment variables in the `provider > environment` section with reference to the
-following table:
+environment variables in the `provider > environment` section.
+
+For a complete reference of all environment variables, see [CONFIGURATION.md](CONFIGURATION.md).
+
+Key environment variables for deployment:
 
 | Name                             | Description                                                                                                                                                                                                                                                                     | Default Value                                                                        |
 | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
-| OPENSEARCH_HOST                  | The URL of the OpenSearch cluster.                                                                                                                                                                                                                                              |                                                                                      |
+| OPENSEARCH_HOST                  | The URL of the OpenSearch cluster (required)                                                                                                                                                                                                                                    |                                                                                      |
+| OPENSEARCH_CREDENTIALS_SECRET_ID | AWS Secrets Manager secret for OpenSearch username/password                                                                                                                                                                                                                     |                                                                                      |
 | STAC_ID                          | ID of this catalog                                                                                                                                                                                                                                                              | stac-server                                                                          |
 | STAC_TITLE                       | Title of this catalog                                                                                                                                                                                                                                                           | STAC API                                                                             |
 | STAC_DESCRIPTION                 | Description of this catalog                                                                                                                                                                                                                                                     | A STAC API                                                                           |
-| STAC_DOCS_URL                    | URL to documentation                                                                                                                                                                                                                                                            | [https://stac-utils.github.io/stac-server](https://stac-utils.github.io/stac-server) |
-| LOG_LEVEL                        | Level for logging (error, warn, info, http, verbose, debug, silly)                                                                                                                                                                                                              | warn                                                                                 |
-| REQUEST_LOGGING_ENABLED          | Express request logging enabled. String 'false' disables.                                                                                                                                                                                                                       | enabled                                                                              |
-| REQUEST_LOGGING_FORMAT           | Express request logging format to use. Any of the [Morgan predefined formats](https://github.com/expressjs/morgan#predefined-formats).                                                                                                                                          | tiny                                                                                 |
-| STAC_API_URL                     | The root endpoint of this API                                                                                                                                                                                                                                                   | Inferred from request                                                                |
-| ENABLE_TRANSACTIONS_EXTENSION    | Boolean specifying if the [Transaction Extension](https://github.com/radiantearth/stac-api-spec/tree/master/ogcapi-features/extensions/transaction) should be activated                                                                                                         | false                                                                                |
-| ENABLE_CONTEXT_EXTENSION         | Boolean specifying if the [Context Extension](https://github.com/stac-api-extensions/context) should be activated                                                                                                                                                               | false                                                                                |
-| STAC_API_ROOTPATH                | The path to append to URLs if this is not deployed at the server root. For example, if the server is deployed without a custom domain name, it will have the stage name (e.g., dev) in the path.                                                                                | ""                                                                                   |
-| PRE_HOOK                         | The name of a Lambda function to be called as the pre-hook.                                                                                                                                                                                                                     | none                                                                                 |
-| POST_HOOK                        | The name of a Lambda function to be called as the post-hook.                                                                                                                                                                                                                    | none                                                                                 |
-| ES_COMPAT_MODE                   | Enable Elasticsearch 7.10 compatibility mdoe within the server.                                                                                                                                                                                                                 | false                                                                                |
-| OPENSEARCH_CREDENTIALS_SECRET_ID | The AWS Secrets Manager secret use for the username and password to authenticate to OpenSearch.                                                                                                                                                                                 |                                                                                      |
-| OPENSEARCH_USERNAME              | The username to authenticate to OpenSearch when AWS Secrets Manager is not used.                                                                                                                                                                                                |                                                                                      |
-| OPENSEARCH_PASSWORD              | The password to authenticate to OpenSearch when AWS Secrets Manager is not used.                                                                                                                                                                                                |                                                                                      |
-| COLLECTION_TO_INDEX_MAPPINGS     | A JSON object representing collection id to index name mappings if they do not have the same names.                                                                                                                                                                             |                                                                                      |
-| ITEMS_INDICIES_NUM_OF_SHARDS     | Configure the number of shards for the indices that contain Items.                                                                                                                                                                                                              | none                                                                                 |
-| ITEMS_INDICIES_NUM_OF_REPLICAS   | Configure the number of replicas for the indices that contain Items.                                                                                                                                                                                                            | none                                                                                 |
-| CORS_ORIGIN                      | Configure the value to send for the `Access-Control-Allow-Origin` CORS header. Should be set to the domain name of the UI if Basic Authentication is enable (e.g., `https://ui.example.com`).                                                                                   | `*`                                                                                  |
-| CORS_CREDENTIALS                 | Configure whether or not to send the `Access-Control-Allow-Credentials` CORS header. Header will be sent if set to `true`.                                                                                                                                                      | none                                                                                 |
-| CORS_METHODS                     | Configure whether or not to send the `Access-Control-Allow-Methods` CORS header. Expects a comma-delimited string, e.g., `GET,PUT,POST`.                                                                                                                                        | `GET,HEAD,PUT,PATCH,POST,DELETE`                                                     |
-| CORS_HEADERS                     | Configure whether or not to send the `Access-Control-Allow-Headers` CORS header. Expects a comma-delimited string, e.g., `Content-Type,Authorization`. If not specified, defaults to reflecting the headers specified in the request's `Access-Control-Request-Headers` header. | none                                                                                 |
-| ENABLE_COLLECTIONS_AUTHX         | Enables support for parameter to restrict collections when set to `true`.                                                                                                                                                                                           | none (not enabled)                                                                   |
-| ENABLE_FILTER_AUTHX         | Enables support for parameter to restrict items when set to `true`.                                                                                                                                                                                           | none (not enabled)                                                                   |
-| ENABLE_THUMBNAILS                | Enables support for presigned thumbnails.                                                                                                                                                                                                                                       | none (not enabled)                                                                   |
-| ENABLE_INGEST_ACTION_TRUNCATE    | Enables support for ingest action "truncate".                                                                                                                                                                                                                                   | none (not enabled)                                                                   |
-| ENABLE_RESPONSE_COMPRESSION      | Enables response compression. Set to 'false' to disable.                                                                                                                                                                                                                        | enabled                                                                              |
-| ITEMS_MAX_LIMIT                  | The maximum limit for the number of items returned from the /search and /collections/{collection_id}/items endpoints. It is recommended that this be set to 100. There is an absolute max limit of 10000 for this.                                                              | 10000                                                                                |
-| ASSET_PROXY_BUCKET_OPTION        | Control which S3 buckets are proxied through the API. Options: `NONE` (disabled), `ALL` (all S3 assets), `ALL_BUCKETS_IN_ACCOUNT` (all buckets in AWS account), `LIST` (specific buckets only).                                                                                 | NONE                                                                                 |
-| ASSET_PROXY_BUCKET_LIST          | Comma-separated list of S3 bucket names to proxy. Required when `ASSET_PROXY_BUCKET_OPTION` is `LIST`.                                                                                                                                                                          |                                                                                      |
-| ASSET_PROXY_URL_EXPIRY           | Pre-signed URL expiry time in seconds for proxied assets.                                                                                                                                                                                                                        | 300                                                                                  |
+| ENABLE_TRANSACTIONS_EXTENSION    | Enable Transaction Extension for write operations via API                                                                                                                                                                                                                      | false                                                                                |
+| CORS_ORIGIN                      | Configure CORS allowed origins                                                                                                                                                                                                                                                  | `*`                                                                                  |
+
+See [CONFIGURATION.md](CONFIGURATION.md) for all configuration options including: API settings, CORS, extensions, asset proxy, authorization, ingest, pre/post hooks, request handling, and logging.
 
 ## Step 2: Choose an Authentication Method
 
@@ -103,8 +79,9 @@ There are two types of clients that need to authenticate connections to OpenSear
   administration
 
 The choice of an authentication method is permanent. Changing the authentication method
-after deployment requires creating a new cluster and migrating data. Stac-server supports
-two authentication methods:
+after deployment requires creating a new cluster and migrating data. 
+
+Stac-server supports two authentication methods. **Option A (Fine-grained Access Control) is the default** and recommended for most deployments.
 
 **Option A: Fine-grained Access Control (default)**
 
@@ -124,7 +101,7 @@ two authentication methods:
 
 ## Step 3: Configure OpenSearch Authentication
 
-**Option A: Fine-grained Access Control**
+**Option A: Fine-grained Access Control (default)**
 
 Ensure your serverless.yml file contains these configurations:
 
@@ -464,292 +441,7 @@ aws lambda invoke \
 
 Stac-server is now ready to ingest STAC Collections and Items and serve API requests.
 
-## Configuration
-
-This section covers configuring various stac-server features and extensions.
-
-### Queryables
-
-The [Queryables](https://docs.ogc.org/is/19-079r2/19-079r2.html#queryables) resource allows API consumers to discover which properties can be used in filter expressions. Queryables are served from:
-
-- `/collections/{collectionId}/queryables` - Collection-specific queryables
-- `/queryables` - Root-level (global) queryables
-
-**Configuring Collection Queryables:**
-
-Add a `queryables` field to your Collection JSON with a JSON Schema definition:
-
-```json
-{
-  "id": "my-collection",
-  "type": "Collection",
-  "queryables": {
-    "$schema": "https://json-schema.org/draft/2020-12/schema",
-    "$id": "https://stac-api.example.com/collections/my-collection/queryables",
-    "type": "object",
-    "title": "Queryables for My Collection",
-    "properties": {
-      "eo:cloud_cover": {
-        "description": "Cloud cover percentage",
-        "type": "number",
-        "minimum": 0,
-        "maximum": 100
-      },
-      "platform": {
-        "description": "Satellite platform",
-        "type": "string"
-      }
-    },
-    "additionalProperties": true
-  }
-}
-```
-
-**Important notes:**
-- The `queryables` field is extracted and served from the queryables endpoint
-- It is removed when the Collection itself is served from `/collections/{collectionId}`
-- `additionalProperties` must be `true` (filtering to only defined properties is not supported)
-- All Item `properties` fields are filterable regardless of queryables definition
-- Queryables are informative only - they don't restrict filtering behavior
-
-### Aggregations
-
-The [Aggregation Extension](https://github.com/stac-api-extensions/aggregation) enables statistical summaries and frequency distributions.
-
-**Configuring Collection Aggregations:**
-
-Add an `aggregations` array to your Collection JSON:
-
-```json
-{
-  "id": "my-collection",
-  "type": "Collection",
-  "aggregations": [
-    {
-      "name": "total_count",
-      "data_type": "integer"
-    },
-    {
-      "name": "datetime_min",
-      "data_type": "datetime"
-    },
-    {
-      "name": "datetime_max",
-      "data_type": "datetime"
-    },
-    {
-      "name": "cloud_cover_frequency",
-      "data_type": "frequency_distribution",
-      "frequency_distribution_data_type": "numeric"
-    },
-    {
-      "name": "platform_frequency",
-      "data_type": "frequency_distribution",
-      "frequency_distribution_data_type": "string"
-    },
-    {
-      "name": "centroid_geohash_grid_frequency",
-      "data_type": "frequency_distribution",
-      "frequency_distribution_data_type": "string"
-    }
-  ]
-}
-```
-
-**Available Aggregations:**
-
-- `total_count` - Total item count
-- `collection_frequency` - Distribution by collection
-- `platform_frequency` - Distribution by `platform` property
-- `cloud_cover_frequency` - Distribution by `eo:cloud_cover` property
-- `datetime_frequency` - Temporal distribution (monthly intervals)
-- `datetime_min` / `datetime_max` - Temporal bounds
-- `sun_elevation_frequency` - Distribution by `view:sun_elevation`
-- `sun_azimuth_frequency` - Distribution by `view:sun_azimuth`
-- `off_nadir_frequency` - Distribution by `view:off_nadir`
-- `grid_code_frequency` - Distribution by `grid:code`
-- `centroid_geohash_grid_frequency` - Geohash grid on `proj:centroid`
-- `centroid_geohex_grid_frequency` - Geohex grid on `proj:centroid`
-- `centroid_geotile_grid_frequency` - Geotile grid on `proj:centroid`
-- `geometry_geohash_grid_frequency` - Geohash grid on Item geometry
-- `geometry_geotile_grid_frequency` - Geotile grid on Item geometry
-
-### Asset Proxy
-
-Asset proxying enables stac-server to generate pre-signed S3 URLs for asset access through the API.
-
-**Environment Variables:**
-
-```yaml
-# Required: Proxy mode
-ASSET_PROXY_BUCKET_OPTION: "LIST"  # Options: NONE, ALL, ALL_BUCKETS_IN_ACCOUNT, LIST
-
-# Required for LIST mode: Comma-separated bucket names
-ASSET_PROXY_BUCKET_LIST: "bucket1,bucket2,bucket3"
-
-# Optional: Pre-signed URL expiry in seconds (default: 300)
-ASSET_PROXY_URL_EXPIRY: "600"
-```
-
-**Proxy Modes:**
-
-- `NONE` (default) - Disabled, hrefs unchanged
-- `ALL` - Proxy all S3 assets
-- `ALL_BUCKETS_IN_ACCOUNT` - Proxy assets from buckets accessible to the AWS account
-- `LIST` - Proxy only specified buckets
-
-**IAM Permissions:**
-
-Add to your serverless.yml IAM role statements:
-
-```yaml
-# For LIST mode
-- Effect: Allow
-  Action:
-    - s3:GetObject
-  Resource:
-    - "arn:aws:s3:::bucket1/*"
-    - "arn:aws:s3:::bucket2/*"
-- Effect: Allow
-  Action:
-    - s3:HeadBucket
-    - s3:ListBucket
-  Resource:
-    - "arn:aws:s3:::bucket1"
-    - "arn:aws:s3:::bucket2"
-
-# For ALL or ALL_BUCKETS_IN_ACCOUNT
-- Effect: Allow
-  Action:
-    - s3:GetObject
-  Resource: "arn:aws:s3:::*/*"
-- Effect: Allow
-  Action:
-    - s3:HeadBucket
-    - s3:ListBucket
-  Resource: "arn:aws:s3:::*"
-
-# Additional for ALL_BUCKETS_IN_ACCOUNT
-- Effect: Allow
-  Action:
-    - s3:ListAllMyBuckets
-  Resource: "*"
-```
-
-**Asset Transformation:**
-
-When enabled, S3 hrefs are replaced with proxy endpoints and originals preserved:
-
-```json
-{
-  "thumbnail": {
-    "href": "https://api.example.com/collections/col/items/item/assets/thumbnail",
-    "type": "image/png",
-    "alternate": {
-      "s3": {
-        "href": "s3://bucket/path/thumbnail.png"
-      }
-    }
-  }
-}
-```
-
-The Alternate Assets Extension is automatically added to `stac_extensions`.
-
-### Authorization Parameters
-
-Stac-server supports runtime injection of authorization parameters to restrict access by collection or filter.
-
-**Collection-Based Authorization:**
-
-Enable with `ENABLE_COLLECTIONS_AUTHX=true`. Restricts which collections users can access via:
-
-- Query parameter: `_collections`
-- POST body field: `_collections`
-- Header: `stac-collections-authx`
-
-Example:
-```
-GET /search?_collections=col1,col2
-```
-
-Or header:
-```
-stac-collections-authx: col1,col2
-```
-
-Use `*` for all collections. Empty value = no access.
-
-**Affected endpoints:**
-- `/collections`
-- `/collections/{id}`
-- `/collections/{id}/queryables`
-- `/collections/{id}/aggregations`
-- `/collections/{id}/aggregate`
-- `/collections/{id}/items`
-- `/collections/{id}/items/{itemId}`
-- `/collections/{id}/items/{itemId}/assets/{assetKey}`
-- `/collections/{id}/assets/{assetKey}`
-- `/search`
-- `/aggregate`
-
-**Filter-Based Authorization:**
-
-Enable with `ENABLE_FILTER_AUTHX=true`. Applies additional CQL2 filters via:
-
-- Query parameter: `_filter`
-- POST body field: `_filter`
-- Header: `stac-filter-authx`
-
-Example:
-```json
-{
-  "op": "<=",
-  "args": [{"property": "eo:cloud_cover"}, 20]
-}
-```
-
-**Affected endpoints:**
-- `/collections/{id}/aggregate`
-- `/collections/{id}/items`
-- `/collections/{id}/items/{itemId}`
-- `/collections/{id}/items/{itemId}/assets/{assetKey}`
-- `/collections/{id}/assets/{assetKey}`
-- `/search`
-- `/aggregate`
-
-Note: API Gateway has a header size limit (8-10KB), so large filters may not work via headers.
-
-### Ingesting Data
-
-**SNS Topic Setup:**
-
-Publish Collections and Items to: `stac-server-<stage>-ingest`
-
-**Collections must be ingested before their Items.** If Items are ingested first:
-- Single item ingest will fail
-- Bulk ingest may create incorrect index mappings (if auto-creation enabled)
-
-**Post-Ingest Notifications:**
-
-Configure subscriptions to `stac-server-<stage>-post-ingest` SNS topic for ingest events.
-
-Message attributes for filtering:
-- `recordType`: `Collection` or `Item`
-- `ingestStatus`: `successful` or `failed`
-- `collection`: Collection ID
-
-**Ingest Actions:**
-
-Enable with `ENABLE_INGEST_ACTION_TRUNCATE=true` to support data management actions.
-
-**SNS Subscriptions:**
-
-To subscribe to external SNS topics publishing STAC Items, use the Lambda console for `stac-server-<stage>-subscribe-to-sns` to add triggers.
-
-**Error Handling:**
-
-Failed ingests are sent to the dead letter queue: `stac-server-<stage>-ingest-dead-letter-queue`
+For runtime configuration (environment variables, collection parameters), see [CONFIGURATION.md](CONFIGURATION.md).
 
 ## Additional Configuration
 

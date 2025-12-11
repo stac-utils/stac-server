@@ -9,23 +9,22 @@
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![STAC](https://img.shields.io/badge/STAC-1.1.0-blue)](https://stacspec.org)
 
-**Documentation:** [README](README.md) | [Deployment](DEPLOYMENT.md) | [Contributing](CONTRIBUTING.md) | [Security](SECURITY.md) | [Changelog](CHANGELOG.md)
-
-## Table of Contents
+**Documentation:** [README](README.md) | [Architecture](ARCHITECTURE.md) | [Configuration](CONFIGURATION.md) | [Deployment](DEPLOYMENT.md) | [Contributing](CONTRIBUTING.md) | [Security](SECURITY.md) | [Changelog](CHANGELOG.md)
 
 ## Table of Contents
 
 - [Overview](#overview)
-- [Architecture](#architecture)
+- [Architecture](#-architecture)
 - [Quick Start](#-quick-start)
 - [Usage](#️-usage)
   - [Basic Search](#basic-search)
-  - [Filtering with CQL2](#filtering-with-cql2)
+  - [Filtering and Querying](#filtering-and-querying)
   - [Sorting Results](#sorting-results)
   - [Field Selection](#field-selection)
   - [Aggregations](#aggregations)
   - [Asset Proxy](#asset-proxy)
 - [API Extensions](#-api-extensions)
+- [Configuration](#-configuration)
 - [Ingesting Data](#-ingesting-data)
 - [Production Deployments](#-production-deployments)
 - [Contributing](#-contributing)
@@ -39,7 +38,7 @@ Stac-server is a production-ready implementation of the [STAC API specification]
 ### 🌟 Key Features
 
 - **📡 Full STAC API Support** - Core, Features, Collections, Item Search with extensions
-- **🔍 Advanced Querying** - CQL2 filtering, full-text search, spatial and temporal queries
+- **🔍 Advanced Querying** - STACQL and CQL2 filtering, full-text search, spatial and temporal queries
 - **📊 Aggregations** - Statistical summaries and frequency distributions  
 - **🛸 Serverless Architecture** - Auto-scaling, pay-per-use AWS Lambda and API Gateway
 - **🔐 Fine-Grained Access Control** - OpenSearch security with optional pre/post hooks
@@ -83,48 +82,36 @@ Stac-server is a production-ready implementation of the [STAC API specification]
 - Transaction Extension (disabled by default)
 - Aggregation Extension (experimental)
 
-## 🗄️ Architecture
+## 🪐 Architecture
+
+Stac-server is built on AWS serverless infrastructure with a clear separation between read (API) and write (Ingest) paths:
 
 ```mermaid
 flowchart LR
-
-itemsForIngest[Items for ingest]
-
-subgraph ingest[Ingest]
-  ingestSnsTopic[Ingest SNS Topic]
-  ingestQueue[Ingest SQS Queue]
-  ingestLambda[Ingest Lambda]
-  postIngestSnsTopic[Post-Ingest SNS Topic]
-
-  ingestDeadLetterQueue[Ingest Dead Letter Queue]
-end
-
-users[Users]
-
-subgraph api[STAC API]
-  apiGateway[API Gateway]
-  apiLambda[API Lambda]
-end
-
-opensearch[(OpenSearch)]
-
-%% Ingest workflow
-
-itemsForIngest --> ingestSnsTopic
-ingestSnsTopic --> ingestQueue
-ingestQueue --> ingestLambda
-ingestQueue --> ingestDeadLetterQueue
-ingestLambda --> opensearch
-ingestLambda --> postIngestSnsTopic
-
-
-%% API workflow
-
-users --> api
-apiGateway --> apiLambda
-apiLambda --> opensearch
-
+    client[API Clients] -->|HTTP/HTTPS| apigw[API Gateway]
+    apigw --> apiLambda[API Lambda]
+    apiLambda --> opensearch[(OpenSearch)]
+    
+    publisher[Data Publishers] -->|Publish| ingestSNS[Ingest SNS]
+    ingestSNS --> ingestSQS[Ingest SQS]
+    ingestSQS --> ingestLambda[Ingest Lambda]
+    ingestLambda --> opensearch
+    
+    ingestLambda -.->|Status| postSNS[Post-Ingest SNS]
+    
+    style opensearch fill:#ff9900
+    style apiLambda fill:#ff9900
+    style ingestLambda fill:#ff9900
+    style apigw fill:#ff4f8b
 ```
+
+**Key Components:**
+- **API Gateway + Lambda**: Handle all STAC API requests with auto-scaling
+- **OpenSearch**: Document storage and search engine with geo-spatial queries
+- **SNS + SQS**: Event-driven ingest pipeline with guaranteed delivery
+- **Separate Indices**: One index per collection for optimal performance
+
+For detailed architecture documentation including data flows, authentication, and deployment patterns, see [ARCHITECTURE.md](ARCHITECTURE.md).
 
 ## 🚀 Quick Start
 
@@ -164,11 +151,11 @@ curl -X POST "${HOST}/search" \
 }'
 ```
 
-### Filtering with CQL2
+### Filtering and Querying
 
-The [Filter Extension](https://github.com/stac-api-extensions/filter) allows complex queries using CQL2 (Common Query Language).
+Stac-server supports advanced filtering through two extensions:
 
-**Using Query Extension (simple property filters):**
+**Query Extension** - Simple property-based filters using STACQL (comparison operators):
 
 ```shell
 curl "${HOST}/search?collections=sentinel-2-l2a&query=%7B%22eo%3Acloud_cover%22%3A%7B%22gte%22%3A0%2C%22lte%22%3A5%7D%7D"
@@ -188,7 +175,7 @@ Or with POST:
 }
 ```
 
-**Using Filter Extension (CQL2 expressions):**
+**Filter Extension (recommended)** - Full CQL2 expressions for complex queries:
 
 ```json
 {
@@ -273,7 +260,7 @@ Request aggregations:
 - `*_frequency` - Distribution histograms for various properties
 - Grid aggregations (geohash, geohex, geotile) for spatial distributions
 
-See [DEPLOYMENT.md](DEPLOYMENT.md) for how to configure which aggregations are available for each collection.
+See [CONFIGURATION.md](CONFIGURATION.md) for how to configure which aggregations are available for each collection.
 
 ### Asset Proxy
 
@@ -289,7 +276,22 @@ curl "${HOST}/collections/{collectionId}/assets/{assetKey}"
 
 These endpoints return HTTP 302 redirects to pre-signed S3 URLs. When enabled, S3 hrefs in Items and Collections are automatically replaced with proxy URLs, with original URLs preserved in `alternate.s3.href`.
 
-See [DEPLOYMENT.md](DEPLOYMENT.md) for asset proxy configuration.
+See [CONFIGURATION.md](CONFIGURATION.md) for asset proxy configuration.
+
+## ⚙️ Configuration
+
+Stac-server is configured through environment variables and collection-level parameters. See [CONFIGURATION.md](CONFIGURATION.md) for complete documentation of:
+
+- **Environment Variables** - Database connection, API settings, CORS, extensions, asset proxy, authorization, logging
+- **Collection Configuration** - Queryables and aggregations defined in Collection JSON
+- **Best Practices** - Security, performance optimization, monitoring
+
+Key configuration areas:
+- **OpenSearch Connection**: `OPENSEARCH_HOST`, authentication options
+- **API Customization**: `STAC_ID`, `STAC_TITLE`, `STAC_DESCRIPTION`
+- **Extensions**: Enable/disable Context, Transactions, Thumbnails
+- **Collection Queryables**: Define searchable properties in Collection JSON
+- **Collection Aggregations**: Configure available statistical summaries
 
 ## 📨 Ingesting Data
 

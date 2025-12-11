@@ -1,5 +1,7 @@
 # Security Policy
 
+**Documentation:** [README](README.md) | [Architecture](ARCHITECTURE.md) | [Configuration](CONFIGURATION.md) | [Deployment](DEPLOYMENT.md) | [Contributing](CONTRIBUTING.md) | [Security](SECURITY.md) | [Changelog](CHANGELOG.md)
+
 ## Supported Versions
 
 Security fixes are provided on a best-effort basis for the current major version. We strongly recommend keeping stac-server updated to the latest release to ensure you have the most recent security patches.

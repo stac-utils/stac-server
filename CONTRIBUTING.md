@@ -1,5 +1,7 @@
 # Contributing to stac-server
 
+**Documentation:** [README](README.md) | [Architecture](ARCHITECTURE.md) | [Configuration](CONFIGURATION.md) | [Deployment](DEPLOYMENT.md) | [Contributing](CONTRIBUTING.md) | [Security](SECURITY.md) | [Changelog](CHANGELOG.md)
+
 Thank you for your interest in contributing to stac-server! This document provides guidelines and instructions for setting up your development environment and contributing to the project.
 
 ## Table of Contents

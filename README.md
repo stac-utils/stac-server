@@ -5,7 +5,6 @@
 **A scalable, serverless implementation of the STAC API spec for searching geospatial metadata**
 
 [![Build Status](https://github.com/stac-utils/stac-server/workflows/Push%20Event/badge.svg)](https://github.com/stac-utils/stac-server/actions)
-[![npm version](https://img.shields.io/npm/v/@stac-utils/stac-server)](https://www.npmjs.com/package/@stac-utils/stac-server)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![STAC](https://img.shields.io/badge/STAC-1.1.0-blue)](https://stacspec.org)
 

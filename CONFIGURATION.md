@@ -32,8 +32,30 @@ This document covers runtime configuration of stac-server through environment va
 | **OPENSEARCH_PASSWORD** | Password for basic authentication to OpenSearch (alternative to IAM or Secrets Manager) | None | `MySecurePassword123` |
 | **OPENSEARCH_CREDENTIALS_SECRET_ID** | AWS Secrets Manager secret ID containing OpenSearch credentials as JSON with `username` and `password` fields. Used for Lambda service account when using fine-grained access control. | None | `prod/opensearch/credentials` |
 | **COLLECTIONS_INDEX** | Name of the OpenSearch index for storing collections | `collections` | `stac-collections` |
+| **COLLECTION_TO_INDEX_MAPPINGS** | JSON object mapping collection IDs to custom OpenSearch index names. Enables using shared indices across multiple collections or custom naming schemes. | None (one index per collection) | `{"sentinel-2-l2a":"satellite","sentinel-2-l1c":"satellite"}` |
 
 **Deployment Note:** When using the provided serverless.yml template, `OPENSEARCH_HOST` is automatically configured via CloudFormation's `Fn::GetAtt` to reference the deployed OpenSearch domain endpoint. You only need to manually set this variable for external OpenSearch clusters or local development.
+
+**Advanced Index Management:**
+
+By default, each collection uses its own OpenSearch index (named after the collection ID). For advanced use cases, you can use `COLLECTION_TO_INDEX_MAPPINGS` to:
+
+- **Share a single index** across multiple collections (useful for small collections or similar data types)
+- **Apply custom naming schemes** for organizational requirements
+- **Optimize cross-collection searches** by grouping related collections
+
+**Example**: Mapping multiple Sentinel-2 collections to a shared index:
+```json
+{
+  "sentinel-2-l2a": "satellite-imagery",
+  "sentinel-2-l1c": "satellite-imagery",
+  "landsat-c2-l2": "landsat-imagery"
+}
+```
+
+Set as environment variable: `COLLECTION_TO_INDEX_MAPPINGS='{"sentinel-2-l2a":"satellite-imagery","sentinel-2-l1c":"satellite-imagery"}'`
+
+⚠️ **Important**: When using shared indices, ensure all collections have compatible item schemas. The first collection's mapping will be used for the shared index.
 
 ### API Configuration
 

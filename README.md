@@ -8,7 +8,7 @@
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![STAC](https://img.shields.io/badge/STAC-1.1.0-blue)](https://stacspec.org)
 
-**Documentation:** [README](README.md) | [Architecture](ARCHITECTURE.md) | [Configuration](CONFIGURATION.md) | [Deployment](DEPLOYMENT.md) | [Contributing](CONTRIBUTING.md) | [Security](SECURITY.md) | [Changelog](CHANGELOG.md)
+**Documentation:** [README](README.md) | [Usage Guide](USAGE.md) | [Architecture](ARCHITECTURE.md) | [Configuration](CONFIGURATION.md) | [Deployment](DEPLOYMENT.md) | [Contributing](CONTRIBUTING.md) | [Security](SECURITY.md) | [Changelog](CHANGELOG.md)
 
 ## Table of Contents
 
@@ -16,15 +16,7 @@
 - [Architecture](#-architecture)
 - [Quick Start](#-quick-start)
 - [Usage](#️-usage)
-  - [Basic Search](#basic-search)
-  - [Filtering and Querying](#filtering-and-querying)
-  - [Sorting Results](#sorting-results)
-  - [Field Selection](#field-selection)
-  - [Aggregations](#aggregations)
-  - [Asset Proxy](#asset-proxy)
-- [API Extensions](#-api-extensions)
 - [Configuration](#-configuration)
-- [Ingesting Data](#-ingesting-data)
 - [Production Deployments](#-production-deployments)
 - [Contributing](#-contributing)
 - [About](#about)
@@ -126,156 +118,30 @@ For local development and testing, see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## 🕹️ Usage
 
-Stac-server is a web API that returns JSON. See the [API documentation](http://stac-utils.github.io/stac-server) or the `/api` endpoint which provides a self-documenting OpenAPI specification. [STAC Index](https://stacindex.org) lists various [client tools](https://stacindex.org/ecosystem?category=Client) for working with STAC APIs.
+Stac-server implements the STAC API specification for searching geospatial metadata. See **[USAGE.md](USAGE.md)** for comprehensive examples and guides.
 
-### Basic Search
+### Quick Example
 
-Stac-server supports both GET and POST for Item Search requests.
-
-**GET request:**
+Search for items in a bounding box:
 
 ```shell
 curl "${HOST}/search?collections=sentinel-2-l2a&bbox=10,10,15,15&limit=10"
 ```
 
-**POST request:**
+### Key Capabilities
 
-```shell
-curl -X POST "${HOST}/search" \
-  -H 'Content-Type: application/json' \
-  -d '{
-  "collections": ["sentinel-2-l2a"],
-  "bbox": [10, 10, 15, 15],
-  "limit": 10
-}'
-```
+- **🔍 Search & Discovery** - Spatial, temporal, and property-based queries
+- **🎯 Advanced Filtering** - CQL2 and STACQL for complex queries  
+- **📊 Aggregations** - Statistical summaries and frequency distributions
+- **📋 Sorting & Field Selection** - Optimize results and response size
+- **🔐 Asset Proxy** - Secure S3 access via pre-signed URLs
 
-### Filtering and Querying
+### Documentation Resources
 
-Stac-server supports advanced filtering through two extensions:
-
-**Query Extension** - Simple property-based filters using STACQL (comparison operators):
-
-```shell
-curl "${HOST}/search?collections=sentinel-2-l2a&query=%7B%22eo%3Acloud_cover%22%3A%7B%22gte%22%3A0%2C%22lte%22%3A5%7D%7D"
-```
-
-Or with POST:
-
-```json
-{
-  "collections": ["sentinel-2-l2a"],
-  "query": {
-    "eo:cloud_cover": {
-      "gte": 0,
-      "lte": 5
-    }
-  }
-}
-```
-
-**Filter Extension (recommended)** - Full CQL2 expressions for complex queries:
-
-```json
-{
-  "collections": ["sentinel-2-l2a"],
-  "filter": {
-    "op": "and",
-    "args": [
-      {
-        "op": "<=",
-        "args": [{"property": "eo:cloud_cover"}, 10]
-      },
-      {
-        "op": ">",
-        "args": [{"property": "view:sun_elevation"}, 30]
-      }
-    ]
-  }
-}
-```
-
-**Important notes on filtering:**
-- Item `properties` fields must **not** be prefixed (use `eo:cloud_cover`, not `properties.eo:cloud_cover`)
-- Top-level fields like `id`, `collection` are also not prefixed
-- Field names must exactly match those in Item properties
-- Discover available fields using the `/collections/{collectionId}/queryables` endpoint
-
-### Sorting Results
-
-Use the [Sort Extension](https://github.com/stac-api-extensions/sort) to control result ordering:
-
-```json
-{
-  "collections": ["sentinel-2-l2a"],
-  "sortby": [
-    {
-      "field": "properties.datetime",
-      "direction": "desc"
-    }
-  ]
-}
-```
-
-### Field Selection
-
-Use the [Fields Extension](https://github.com/stac-api-extensions/fields) to include only specific fields:
-
-```json
-{
-  "collections": ["sentinel-2-l2a"],
-  "fields": {
-    "include": ["id", "geometry", "properties.datetime"],
-    "exclude": ["links"]
-  }
-}
-```
-
-### Aggregations
-
-The [Aggregation Extension](https://github.com/stac-api-extensions/aggregation) provides statistical summaries. Query available aggregations for a collection:
-
-```shell
-curl "${HOST}/collections/sentinel-2-l2a/aggregations"
-```
-
-Request aggregations:
-
-```json
-{
-  "collections": ["sentinel-2-l2a"],
-  "aggregations": [
-    {"name": "total_count"},
-    {"name": "datetime_min"},
-    {"name": "datetime_max"},
-    {"name": "cloud_cover_frequency", "interval": 10}
-  ]
-}
-```
-
-**Available aggregation types:**
-- `total_count` - Total number of items
-- `datetime_min` / `datetime_max` - Temporal bounds
-- `*_frequency` - Distribution histograms for various properties
-- Grid aggregations (geohash, geohex, geotile) for spatial distributions
-
-See [CONFIGURATION.md](CONFIGURATION.md) for how to configure which aggregations are available for each collection.
-
-### Asset Proxy
-
-When asset proxying is enabled, stac-server provides endpoints to access S3 assets via pre-signed URLs:
-
-```shell
-# Get an item asset
-curl "${HOST}/collections/{collectionId}/items/{itemId}/assets/{assetKey}"
-
-# Get a collection asset  
-curl "${HOST}/collections/{collectionId}/assets/{assetKey}"
-```
-
-These endpoints return HTTP 302 redirects to pre-signed S3 URLs. When enabled, S3 hrefs in Items and Collections are automatically replaced with proxy URLs, with original URLs preserved in `alternate.s3.href`.
-
-See [CONFIGURATION.md](CONFIGURATION.md) for asset proxy configuration.
+- **[Usage Guide](USAGE.md)** - Complete examples for searching, filtering, aggregating, and more
+- **[API Reference](http://stac-utils.github.io/stac-server)** - Full OpenAPI specification
+- **Instance `/api` endpoint** - Interactive API documentation on your deployment
+- **[STAC Index](https://stacindex.org/ecosystem?category=Client)** - Client libraries and tools
 
 ## ⚙️ Configuration
 
@@ -291,64 +157,6 @@ Key configuration areas:
 - **Extensions**: Enable/disable Context, Transactions, Thumbnails
 - **Collection Queryables**: Define searchable properties in Collection JSON
 - **Collection Aggregations**: Configure available statistical summaries
-
-## 📨 Ingesting Data
-
-STAC Collections and Items are ingested by publishing them to the SNS Topic `stac-server-<stage>-ingest`. The ingest Lambda consumes messages from an SQS queue subscribed to this topic.
-
-**Important:** Collections must be ingested before Items that belong to them.
-
-### Publishing to SNS
-
-Publish a STAC Item or Collection directly:
-
-```json
-{
-  "type": "Feature",
-  "stac_version": "1.0.0",
-  "id": "my-item",
-  "collection": "my-collection",
-  ...
-}
-```
-
-### Large Items
-
-For items exceeding the 256 KB SQS message limit, publish a reference:
-
-```json
-{
-  "href": "s3://source-bucket/path/to/item.json"
-}
-```
-
-Supported protocols: `s3://`, `http://`, `https://`
-
-### Ingest Actions
-
-The ingest pipeline supports actions for data management:
-
-**Truncate collection** (removes all items, keeps collection):
-
-```json
-{
-  "type": "action",
-  "command": "truncate",
-  "collection": "my-collection"
-}
-```
-
-Note: Requires `ENABLE_INGEST_ACTION_TRUNCATE=true` in deployment config.
-
-### Post-Ingest Notifications
-
-After ingest, success/failure events are published to a post-ingest SNS topic with attributes for filtering:
-
-- `recordType`: `Collection` or `Item`
-- `ingestStatus`: `successful` or `failed`  
-- `collection`: Collection ID
-
-For deployment configuration including SNS subscriptions and error handling, see [DEPLOYMENT.md](DEPLOYMENT.md).
 
 ## 🌍 Production Deployments
 

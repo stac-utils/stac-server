@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- **Documentation Overhaul**: Migrated all documentation to a new MkDocs-powered documentation website at [stac-utils.github.io/stac-server](https://stac-utils.github.io/stac-server/)
+  - Comprehensive documentation now organized into Getting Started, Guides, Reference, and About sections
+  - Removed top-level markdown files (ARCHITECTURE.md, USAGE.md, DEPLOYMENT.md, CONFIGURATION.md, CONTRIBUTING.md, SECURITY.md) - all content migrated to docs/
+  - Updated README.md to serve as GitHub landing page with links to full documentation
+
 ## [4.5.0]
 
 ### Added

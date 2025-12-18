@@ -39,7 +39,7 @@ provider:
     # CORS_HEADERS: "X-Custom-Header,Authorization"
     
     # Extensions Configuration
-    # ENABLE_CONTEXT_EXTENSION: false  # Deprecated - adds matched/returned counts (performance impact)
+    # ENABLE_CONTEXT_EXTENSION: false  # Deprecated - adds deprecated STAC-API context extension to responses
     # ENABLE_THUMBNAILS: false  # Enable thumbnail asset endpoints
     
     # Authorization Configuration
@@ -113,7 +113,7 @@ functions:
     timeout: 60
     environment:
       POST_INGEST_TOPIC_ARN: !Ref postIngestTopic
-      # ENABLE_INGEST_ACTION_TRUNCATE: false  # ⚠️ Enables destructive truncate action
+      # ENABLE_INGEST_ACTION_TRUNCATE: false  # Enables destructive truncate action
     package:
       artifact: dist/ingest/ingest.zip
     events:

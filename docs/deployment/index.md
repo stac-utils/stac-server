@@ -557,7 +557,7 @@ can be useful for computing metrics on usage for the API.
 
 OpenSearch support cross-cluster connections that can be configured to either allow search
 across the clusters, treating a remote cluster as if it were another group of nodes in the
-cluster, or configure indicies to be replicated (continuously copied) from from one
+cluster, or configure indices to be replicated (continuously copied) from from one
 cluster to another.
 
 Configuring either cross-cluster behavior requires fine-grained access control.
@@ -669,9 +669,9 @@ The outputs of the pre- and post-hooks are validated and, if they don't comply w
 ### Warnings
 
 - When upgrading to at least OpenSearch 2.7, there seems to be some low-level problem
-  in the Lucene data storage that is a problem with indicies created in some but not all
+  in the Lucene data storage that is a problem with indices created in some but not all
   versions older
-  than 2.7. Indicies created on the latest version in Fall of 2023 were not affected, but
+  than 2.7. Indices created on the latest version in Fall of 2023 were not affected, but
   indices created is some previous version or versions are.
   After upgrading to 2.7, items may fail with the message reason "cannot
   change field \"geometry\" from doc values type=NONE to inconsistent doc values
@@ -963,7 +963,7 @@ Elasticsearch indices each have a mapping applied that determines how the data i
 These mappings do not change the document data, but can change search behavior. One relevant mapping
 behavior is that by default, string fields are analyzed for full-text search. In most cases with STAC Items,
 values such as those in the `id` and `collection` fields should not be analyzed and should instead be searchable only
-by exact matches. In Elasticsearch, this is known as a `keyword` field type. Importantly, sorting may only be done over `keyword` typed fields. As of 0.4.0, the default sort is now by `properties.datetime`, then `id`, then `collection`, and results will not be returnd if any indicies have the `id` or `collection` fields mapped as `text` instead of `keyword`.
+by exact matches. In Elasticsearch, this is known as a `keyword` field type. Importantly, sorting may only be done over `keyword` typed fields. As of 0.4.0, the default sort is now by `properties.datetime`, then `id`, then `collection`, and results will not be returnd if any indices have the `id` or `collection` fields mapped as `text` instead of `keyword`.
 
 For each index (other than `collections`), use GET to retrieve the endpoint `GET /{collectionId}/_mapping`, and
 validate that `properties.datetime` type is `date`, and `id` and `collection` mappings are `keyword` (not `text` with a `keyword` subfield). For an AWS Opensearch Service instance, this can be done with a script similar to the one [here](#step-6-disable-automatic-index-creation).
@@ -1014,7 +1014,7 @@ The results should look simliar to this:
 If this is not the case, the easiest solution to fix it is to:
 
 1. Deploy a 0.4.0 instance.
-2. Backup and restore the 0.3.0 instance's Elasticsearch indicies to the 0.4.0 instances's
+2. Backup and restore the 0.3.0 instance's Elasticsearch indices to the 0.4.0 instances's
    Elasticsearch database.
 3. Create a collection via ingest with a new collection name similar to the existing one (e.g., if index foo exists, create foo_new).
 4. Reindex from the the existing index (foo) to the the new one (foo_new).

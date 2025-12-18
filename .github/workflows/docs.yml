@@ -8,13 +8,8 @@ on:
       - 'docs/**'
       - 'mkdocs.yml'
       - 'README.md'
-      - 'ARCHITECTURE.md'
-      - 'CONFIGURATION.md'
-      - 'DEPLOYMENT.md'
-      - 'USAGE.md'
       - 'CONTRIBUTING.md'
       - 'CHANGELOG.md'
-      - 'SECURITY.md'
       - 'src/lambdas/api/openapi.yaml'
       - '.github/workflows/docs.yml'
   workflow_dispatch:

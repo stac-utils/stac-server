@@ -29,6 +29,7 @@
     API documentation, OpenAPI spec, and architecture details.
 
     [:octicons-arrow-right-24: API Overview](reference/api.md) · 
+    [:octicons-arrow-right-24: Interactive Spec](api-spec.html) · 
     [:octicons-arrow-right-24: OpenAPI Spec](reference/openapi.md) · 
     [:octicons-arrow-right-24: Architecture](reference/architecture.md)
 

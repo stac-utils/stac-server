@@ -1,3 +1,15 @@
+#!/usr/bin/env sh
+
+# Load nvm
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+
+# Use project's Node version
+if [ -f .nvmrc ]; then
+  nvm use
+fi
+
+# Run checks
 npm run lint
 npm run typecheck
 npm run check-openapi
@@ -5,4 +17,3 @@ npm run audit-prod
 npm run test:unit
 npm run test:system
 npm run build
-npm run build-api-docs

@@ -22,5 +22,5 @@ tsconfig.tsbuildinfo
 # MkDocs
 site/
 .cache/
-docs/index.html
+docs/api-spec.html
 

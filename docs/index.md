@@ -47,7 +47,7 @@
 
 ## What is STAC Server?
 
-**STAC Server** is a production-ready implementation of the [STAC API specification](https://github.com/radiantearth/stac-api-spec) with an Elasticsearch/OpenSearch backend. It provides a scalable, standards-compliant API for searching and accessing spatiotemporal data.
+**STAC Server** is a production-ready implementation of the [STAC API specification](https://github.com/radiantearth/stac-api-spec) with an OpenSearch backend. It provides a scalable, standards-compliant API for searching and accessing spatiotemporal data.
 
 ### Key Features
 
@@ -80,6 +80,8 @@ graph LR
     G --> D
     H[S3 Bucket] --> G
 ```
+
+See [Architecture](reference/architecture.md#system-components) for a more detailed diagram.
 
 ### Standards Compliance
 

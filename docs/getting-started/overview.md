@@ -11,7 +11,7 @@ The **[SpatioTemporal Asset Catalog (STAC)](https://stacspec.org/)** specificati
 STAC Server is a production-ready implementation of the [STAC API specification](https://github.com/radiantearth/stac-api-spec). It provides:
 
 - **RESTful API**: Search and access spatiotemporal data via HTTP
-- **Elasticsearch Backend**: Scalable indexing and search capabilities
+- **OpenSearch Backend**: Scalable indexing and search capabilities
 - **Serverless Architecture**: Runs on AWS Lambda with API Gateway
 - **Extensible**: Supports multiple [STAC extensions](https://stac-api-extensions.github.io/) out of the box
 
@@ -45,7 +45,7 @@ The root endpoint that provides links to all Collections and search capabilities
 Before deploying STAC Server, ensure you have:
 
 - **AWS Account** with appropriate permissions
-- **Node.js** 18.x or later
+- **Node.js** Version defined in .nvmrc or later
 - **npm** or **yarn** package manager
 - **AWS CLI** configured with credentials
 - **Serverless Framework** (optional, for deployment)
@@ -53,7 +53,7 @@ Before deploying STAC Server, ensure you have:
 For development:
 
 - **Docker** and **Docker Compose**
-- **OpenSearch** or **Elasticsearch** 2.x
+- **OpenSearch**
 
 ## Next Steps
 

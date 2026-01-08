@@ -1,0 +1,39 @@
+name: Build lambda dist zip
+
+on:
+  release:
+    types:
+      - published
+
+jobs:
+  build-lambda-dist:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: ".nvmrc"
+          cache: npm
+          cache-dependency-path: package.json
+      - name: Upgrade npm
+        run: npm install -g npm@10
+      - name: Install dependencies
+        run: npm install
+      - name: Run build
+        run: npm run build-lambda-dist
+      - name: Get node version
+        run: echo "NODE_VERSION=$(cat .nvmrc)" >> "$GITHUB_ENV"
+      - name: Get stac-server version
+        run: echo "STAC_SERVER_VERSION=$(npm pkg get version | tr -d '\"')" >> "$GITHUB_ENV"
+      - name: Create zipfile path
+        run: |
+          DIST_ZIP_PATH=$(printf "stac-server-lambda-dist_%s_node-%s.zip" $STAC_SERVER_VERSION $NODE_VERSION)
+          echo "DIST_ZIP_PATH=$DIST_ZIP_PATH" >> "$GITHUB_ENV"
+      - name: Rename zipfiles
+        run: |
+          mv dist/lambda-dist/lambda-dist.zip $DIST_ZIP_PATH
+      - name: Add to release
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags')
+        with:
+          files: ${{ env.DIST_ZIP_PATH }}

@@ -12,6 +12,7 @@
   ],
   "scripts": {
     "build": "./bin/build.sh",
+    "build-lambda-dist": "./bin/build-lambda-dist.sh",
     "lint": "eslint . --ext .js,.ts",
     "lint-js-fix": "eslint . --ext .js,.ts --fix",
     "check-openapi": "spectral lint src/lambdas/api/openapi.yaml --ruleset .spectral.yml",

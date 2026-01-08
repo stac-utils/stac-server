@@ -20,27 +20,21 @@ jobs:
       - name: Install dependencies
         run: npm install
       - name: Run build
-        run: npm run build
-        env:
-          BUILD_PRE_HOOK: true
-          BUILD_POST_HOOK: true
+        run: npm run build-lambda-dist
       - name: Get node version
         run: echo "NODE_VERSION=$(cat .nvmrc)" >> "$GITHUB_ENV"
       - name: Get stac-server version
         run: echo "STAC_SERVER_VERSION=$(npm pkg get version)" >> "$GITHUB_ENV"
+      - name: Create zipfile path
+        run: >
+          DIST_ZIP_PATH=$(
+            printf "stac-server-lambda-dist_%s_node-%s.zip" $STAC_SERVER_VERSION $NODE_VERSION
+          ) echo "DIST_ZIP_PATH=$DIST_ZIP_PATH" >> "$GITHUB_ENV"
       - name: Rename zipfiles
         run: |
-          mv dist/api/api.zip stac-server-api-lambda_${STAC_SERVER_VERSION}_node-${NODE_VERSION}.zip
-          mv dist/ingest/ingest.zip stac-server-ingest-lambda_${STAC_SERVER_VERSION}_node-${NODE_VERSION}.zip
-          mv dist/pre-hook/pre-hook.zip stac-server-pre-hook-lambda_${STAC_SERVER_VERSION}_node-${NODE_VERSION}.zip
-          mv dist/post-hook/post-hook.zip stac-server-post-hook-lambda_${STAC_SERVER_VERSION}_node-${NODE_VERSION}.zip
+          mv dist/lambda-dist/lambda-dist.zip $DIST_ZIP_PATH
       - name: Add to release
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags')
         with:
-          files: |
-            stac-server-api-lambda_${STAC_SERVER_VERSION}_node-${NODE_VERSION}.zip
-            stac-server-ingest-lambda_${STAC_SERVER_VERSION}_node-${NODE_VERSION}.zip
-            stac-server-pre-hook-lambda_${STAC_SERVER_VERSION}_node-${NODE_VERSION}.zip
-            stac-server-post-hook-lambda_${STAC_SERVER_VERSION}_node-${NODE_VERSION}.zip
-
+          files: ${{ env.DIST_ZIP_PATH }}

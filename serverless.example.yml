@@ -35,6 +35,20 @@ provider:
     # STAC_API_URL: "https://some-stac-server.example.com"
     CORS_ORIGIN: "https://ui.example.com"
     CORS_CREDENTIALS: true
+    # CORS_METHODS: "GET,HEAD,PUT,PATCH,POST,DELETE"
+    # CORS_HEADERS: "X-Custom-Header,Authorization"
+    
+    # Extensions Configuration
+    # ENABLE_CONTEXT_EXTENSION: false  # Deprecated - adds deprecated STAC-API context extension to responses
+    # ENABLE_THUMBNAILS: false  # Enable thumbnail asset endpoints
+    
+    # Authorization Configuration
+    # ENABLE_FILTER_AUTHX: false  # Enable CQL2 filter-based authorization
+    # ENABLE_COLLECTIONS_AUTHX: false  # Enable collection-based authorization
+    
+    # Advanced Index Management
+    # COLLECTION_TO_INDEX_MAPPINGS: '{"collection1":"shared-index","collection2":"shared-index"}'
+    
     # Asset Proxy Environment Variables
     # ASSET_PROXY_BUCKET_OPTION: "NONE"  # Options: NONE, ALL, ALL_BUCKETS_IN_ACCOUNT, LIST
     # ASSET_PROXY_BUCKET_LIST: "bucket1,bucket2,bucket3"  # Required only when ASSET_PROXY_BUCKET_OPTION is LIST
@@ -99,6 +113,7 @@ functions:
     timeout: 60
     environment:
       POST_INGEST_TOPIC_ARN: !Ref postIngestTopic
+      # ENABLE_INGEST_ACTION_TRUNCATE: false  # Enables destructive truncate action
     package:
       artifact: dist/ingest/ingest.zip
     events:

@@ -2,7 +2,10 @@
 
 Thank you for your interest in contributing to stac-server! This document provides guidelines and instructions for setting up your development environment and contributing to the project.
 
-## Development Environment Setup
+## Table of Contents
+
+- [Development Environment Setup](#development-environment-setup)
+- [Contributing to Documentation](#contributing-to-documentation)
 - [Running Tests](#running-tests)
   - [Running Unit Tests](#running-unit-tests)
   - [Running System and Integration Tests](#running-system-and-integration-tests)
@@ -55,6 +58,148 @@ updating version dependencies to newer ones:
 ```shell
 ncu -i
 ```
+
+## Contributing to Documentation
+
+The stac-server documentation is built using [MkDocs](https://www.mkdocs.org/) with the [Material theme](https://squidfunk.github.io/mkdocs-material/). This section will help you set up the documentation environment and understand our documentation standards.
+
+### Setting Up Documentation Environment
+
+Install the required Python packages:
+
+```shell
+pip install -r requirements-docs.txt
+```
+
+!!! tip "Virtual Environment"
+    Consider using a Python virtual environment to avoid conflicts with system packages:
+    ```shell
+    python -m venv venv
+    source venv/bin/activate  # On Windows: venv\Scripts\activate
+    pip install -r requirements-docs.txt
+    ```
+
+### Building Documentation Locally
+
+Serve the documentation locally with live reload:
+
+```shell
+mkdocs serve
+```
+
+The documentation will be available at `http://127.0.0.1:8000/`.
+
+Build the documentation site:
+
+```shell
+mkdocs build
+```
+
+The built site will be in the `site/` directory.
+
+### Versioned Documentation
+
+We use [mike](https://github.com/jimporter/mike) for versioning documentation. To deploy a new version:
+
+```shell
+# Deploy a new version (e.g., v4.5)
+mike deploy v4.5 latest --update-aliases
+
+# Serve all versions locally
+mike serve
+```
+
+### Documentation Structure
+
+The documentation is organized in the `docs/` directory:
+
+- **getting-started/**: Installation and quick start guides
+- **usage/**: Basic usage and searching
+- **configuration/**: Configuration options
+- **deployment/**: Deployment guides for AWS, Azure, other platforms
+- **reference/**: Architecture, API reference, STAC compliance
+- **development/**: Contributing, development workflow
+- **about/**: Changelog, license, support
+
+### Documentation Standards
+
+#### Markdown Guidelines
+
+- Use ATX-style headers (`##` not underlines)
+- Use fenced code blocks with language identifiers
+- Use relative links for internal documentation
+- Include alt text for images
+
+#### MkDocs Material Features
+
+**Admonitions** for callouts:
+
+```markdown
+!!! note "Optional Title"
+    Content here
+
+!!! warning
+    Warning content
+
+!!! tip
+    Helpful tip
+```
+
+**Code blocks** with titles:
+
+```markdown
+```python title="example.py"
+def hello():
+    print("Hello, world!")
+```
+```
+
+**Tabs** for alternative content:
+
+```markdown
+=== "Tab 1"
+    Content for tab 1
+
+=== "Tab 2"
+    Content for tab 2
+```
+
+**Navigation cards** on the homepage use Material's grid system.
+
+#### Updating OpenAPI Documentation
+
+The OpenAPI specification is built from JSDoc comments in the source code and deployed to `docs/api-spec.html`. To update:
+
+1. Update JSDoc comments in TypeScript source files
+2. Run `npm run build-api-docs` to generate the OpenAPI spec
+3. The GitHub Actions workflow automatically builds and deploys it
+
+#### Linking Best Practices
+
+- Use relative paths: `[Architecture](../reference/architecture.md)`
+- Link to specific sections: `[Search](../usage/search.md#basic-search)`
+- Verify all links work by building locally
+
+#### Diagrams
+
+We use [Mermaid](https://mermaid.js.org/) for diagrams. Example:
+
+```markdown
+```mermaid
+graph LR
+    A[Client] --> B[API Gateway]
+    B --> C[Lambda]
+    C --> D[OpenSearch]
+```
+```
+
+### Documentation Workflow
+
+1. Make changes to markdown files in `docs/`
+2. Preview changes with `mkdocs serve`
+3. Verify all links and formatting work correctly
+4. Commit changes and open a pull request
+5. The GitHub Actions workflow will automatically deploy approved changes
 
 ## Running Locally
 

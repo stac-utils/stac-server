@@ -1,6 +1,9 @@
 **/node_modules/**
 **/dist/**
+**/build/**
 **/webpack.config.js
 **/.nyc_output/**
 **/coverage/**
 tmp/**
+docs/api-spec.html
+site/**

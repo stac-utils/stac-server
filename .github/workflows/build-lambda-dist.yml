@@ -23,11 +23,9 @@ jobs:
         run: npm run build-lambda-dist
       - name: Get node version
         run: echo "NODE_VERSION=$(cat .nvmrc)" >> "$GITHUB_ENV"
-      - name: Get stac-server version
-        run: echo "STAC_SERVER_VERSION=$(npm pkg get version | tr -d '\"')" >> "$GITHUB_ENV"
       - name: Create zipfile path
         run: |
-          DIST_ZIP_PATH=$(printf "stac-server-lambda-dist_%s_node-%s.zip" $STAC_SERVER_VERSION $NODE_VERSION)
+          DIST_ZIP_PATH=$(printf "stac-server-lambda-dist_%s_node-%s.zip" $GITHUB_REF $NODE_VERSION)
           echo "DIST_ZIP_PATH=$DIST_ZIP_PATH" >> "$GITHUB_ENV"
       - name: Rename zipfiles
         run: |

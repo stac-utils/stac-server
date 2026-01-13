@@ -61,7 +61,11 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git fetch --depth=1 origin gh-pages || true
 
+      - name: Get version from package.json
+        id: package-version
+        run: echo "version=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
+
       - name: Deploy documentation with mike
         run: |
-          mike deploy --push --update-aliases 4.5 latest
+          mike deploy --push --update-aliases ${{ steps.package-version.outputs.version }} latest
           mike set-default --push latest

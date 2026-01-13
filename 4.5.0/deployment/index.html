@@ -1,0 +1,3451 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="A STAC API implementation with Elasticsearch backend">
+      
+      
+        <meta name="author" content="STAC Utils Community">
+      
+      
+        <link rel="canonical" href="https://stac-utils.github.io/stac-server/4.5.0/deployment/">
+      
+      
+        <link rel="prev" href="../configuration/">
+      
+      
+        <link rel="next" href="../reference/api/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
+    
+    
+      
+        <title>Deployment - STAC Server Documentation</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  
+<meta property="og:type" content="website" />
+<meta property="og:title" content="Deployment - STAC Server Documentation" />
+<meta property="og:description" content="A STAC API implementation with Elasticsearch backend" />
+<meta property="og:image" content="https://stac-utils.github.io/stac-server/4.5.0/assets/images/social/deployment/index.png" />
+<meta property="og:image:type" content="image/png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:url" content="https://stac-utils.github.io/stac-server/4.5.0/deployment/" />
+<meta property="twitter:card" content="summary_large_image" />
+<meta property="twitter:title" content="Deployment - STAC Server Documentation" />
+<meta property="twitter:description" content="A STAC API implementation with Elasticsearch backend" />
+<meta property="twitter:image" content="https://stac-utils.github.io/stac-server/4.5.0/assets/images/social/deployment/index.png" />
+</head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#deployment-guide" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
+        
+      </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="STAC Server Documentation" class="md-header__button md-logo" aria-label="STAC Server Documentation" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            STAC Server Documentation
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Deployment
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/stac-utils/stac-server" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    stac-utils/stac-server
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../getting-started/overview/" class="md-tabs__link">
+          
+  
+  
+  Getting Started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../usage/" class="md-tabs__link">
+          
+  
+  
+  Guides
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../reference/api/" class="md-tabs__link">
+          
+  
+  
+  Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../development/contributing/" class="md-tabs__link">
+          
+  
+  
+  About
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="STAC Server Documentation" class="md-nav__button md-logo" aria-label="STAC Server Documentation" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    STAC Server Documentation
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/stac-utils/stac-server" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    stac-utils/stac-server
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Getting Started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quick Start
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Guides
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Guides
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../usage/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Usage
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deployment
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deployment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+  
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#prerequisites" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Prerequisites
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#getting-started" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Getting Started
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-1-review-serverless-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 1: Review Serverless Configuration
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-2-choose-an-authentication-method" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 2: Choose an Authentication Method
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-3-configure-opensearch-authentication" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 3: Configure OpenSearch Authentication
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-4-build-deploy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 4: Build &amp; Deploy
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-5-set-up-authentication-credentials" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 5: Set Up Authentication Credentials
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-6-disable-automatic-index-creation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 6: Disable Automatic Index Creation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-7-create-collection-index" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 7: Create Collection Index
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#additional-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Additional Configuration
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Additional Configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#proxying-stac-server-through-cloudfront" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Proxying stac-server through CloudFront
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#locking-down-transaction-endpoints" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Locking down transaction endpoints
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#aws-waf-rule-conflicts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        AWS WAF Rule Conflicts
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#api-gateway-logging" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        API Gateway Logging
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#supporting-cross-cluster-search-and-replication" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Supporting Cross-cluster Search and Replication
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Supporting Cross-cluster Search and Replication">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#cross-cluster-search" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cross-cluster Search
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cross-cluster-replication" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cross-cluster Replication
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pre-and-post-hooks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pre- and Post-Hooks
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Pre- and Post-Hooks">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#pre-hook" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pre-Hook
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#post-hook" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Post-Hook
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#request-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Request Flow
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#notes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Notes
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#migration-notes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Migration Notes
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Migration Notes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#warnings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Warnings
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#410" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.1.0
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4.1.0">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#thumbnails-feature-disabled-by-default" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Thumbnails feature disabled by default
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#400" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.0.0
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4.0.0">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#context-extension-disabled-by-default" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Context Extension disabled by default
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#node-22-update" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Node 22 update
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#hidden-collections-filter" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Hidden collections filter
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3100" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.10.0
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3.10.0">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#node-20-update" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Node 20 update
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#310" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.1.0
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3.1.0">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#opensearch-version-211" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        OpenSearch Version 2.11
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#300" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.0.0
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3.0.0">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#node-18-update" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Node 18 update
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#240" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.4.0
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2.4.0">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#opensearch-version-29" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        OpenSearch Version 2.9
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#230" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.3.0
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2.3.0">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#opensearch-version-27" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        OpenSearch Version 2.7
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#0x-or-1x-2x" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0.x or 1.x -&gt; 2.x
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0.x or 1.x -&gt; 2.x">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fine-grained-access-control" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fine-grained Access Control
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#enabling-post-ingest-sns-publishing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Enabling Post-ingest SNS publishing
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#04x-05x" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0.4.x -&gt; 0.5.x
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0.4.x -&gt; 0.5.x">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#elasticsearch-to-opensearch-migration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Elasticsearch to OpenSearch Migration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#preferred-elasticsearch-to-opensearch-migration-process" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Preferred Elasticsearch to OpenSearch Migration Process
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#granting-access-for-thumbnails" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Granting Access for Thumbnails
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#03x-04x" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0.3.x -&gt; 0.4.x
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0.3.x -&gt; 0.4.x">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#elasticsearch-upgrade-from-79-to-710" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Elasticsearch upgrade from 7.9 to 7.10
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#disable-automatic-index-creation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Disable automatic index creation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#validate-index-mappings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Validate index mappings
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#next-steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Next Steps
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/openapi/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    OpenAPI Specification
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    About
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    About
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../development/contributing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../about/security/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../about/changelog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Changelog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../about/license/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    License
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+  
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#prerequisites" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Prerequisites
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#getting-started" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Getting Started
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-1-review-serverless-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 1: Review Serverless Configuration
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-2-choose-an-authentication-method" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 2: Choose an Authentication Method
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-3-configure-opensearch-authentication" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 3: Configure OpenSearch Authentication
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-4-build-deploy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 4: Build &amp; Deploy
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-5-set-up-authentication-credentials" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 5: Set Up Authentication Credentials
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-6-disable-automatic-index-creation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 6: Disable Automatic Index Creation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-7-create-collection-index" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 7: Create Collection Index
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#additional-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Additional Configuration
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Additional Configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#proxying-stac-server-through-cloudfront" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Proxying stac-server through CloudFront
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#locking-down-transaction-endpoints" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Locking down transaction endpoints
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#aws-waf-rule-conflicts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        AWS WAF Rule Conflicts
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#api-gateway-logging" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        API Gateway Logging
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#supporting-cross-cluster-search-and-replication" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Supporting Cross-cluster Search and Replication
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Supporting Cross-cluster Search and Replication">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#cross-cluster-search" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cross-cluster Search
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cross-cluster-replication" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cross-cluster Replication
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pre-and-post-hooks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pre- and Post-Hooks
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Pre- and Post-Hooks">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#pre-hook" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pre-Hook
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#post-hook" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Post-Hook
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#request-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Request Flow
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#notes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Notes
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#migration-notes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Migration Notes
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Migration Notes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#warnings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Warnings
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#410" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.1.0
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4.1.0">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#thumbnails-feature-disabled-by-default" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Thumbnails feature disabled by default
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#400" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.0.0
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4.0.0">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#context-extension-disabled-by-default" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Context Extension disabled by default
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#node-22-update" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Node 22 update
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#hidden-collections-filter" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Hidden collections filter
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3100" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.10.0
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3.10.0">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#node-20-update" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Node 20 update
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#310" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.1.0
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3.1.0">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#opensearch-version-211" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        OpenSearch Version 2.11
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#300" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.0.0
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3.0.0">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#node-18-update" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Node 18 update
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#240" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.4.0
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2.4.0">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#opensearch-version-29" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        OpenSearch Version 2.9
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#230" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.3.0
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2.3.0">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#opensearch-version-27" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        OpenSearch Version 2.7
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#0x-or-1x-2x" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0.x or 1.x -&gt; 2.x
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0.x or 1.x -&gt; 2.x">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fine-grained-access-control" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fine-grained Access Control
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#enabling-post-ingest-sns-publishing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Enabling Post-ingest SNS publishing
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#04x-05x" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0.4.x -&gt; 0.5.x
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0.4.x -&gt; 0.5.x">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#elasticsearch-to-opensearch-migration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Elasticsearch to OpenSearch Migration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#preferred-elasticsearch-to-opensearch-migration-process" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Preferred Elasticsearch to OpenSearch Migration Process
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#granting-access-for-thumbnails" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Granting Access for Thumbnails
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#03x-04x" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0.3.x -&gt; 0.4.x
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0.3.x -&gt; 0.4.x">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#elasticsearch-upgrade-from-79-to-710" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Elasticsearch upgrade from 7.9 to 7.10
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#disable-automatic-index-creation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Disable automatic index creation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#validate-index-mappings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Validate index mappings
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#next-steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Next Steps
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+    <a href="https://github.com/stac-utils/stac-server/edit/main/docs/deployment/index.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
+    </a>
+  
+  
+
+
+<h1 id="deployment-guide">Deployment Guide<a class="headerlink" href="#deployment-guide" title="Permanent link">&para;</a></h1>
+<p>Complete guide to deploying stac-server to AWS using the <a href="https://serverless.com/">Serverless Framework</a>.</p>
+<p>For runtime configuration (environment variables, collection-level parameters), see the <a href="../configuration/">Configuration Guide</a>.</p>
+<h2 id="prerequisites">Prerequisites<a class="headerlink" href="#prerequisites" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="https://nodejs.org/">Node.js</a> (version specified in package.json)</li>
+<li><a href="https://serverless.com/">Serverless Framework</a> installed globally or as a dev dependency</li>
+<li>AWS account with appropriate permissions</li>
+<li>AWS CLI configured with credentials</li>
+</ul>
+<h2 id="getting-started">Getting Started<a class="headerlink" href="#getting-started" title="Permanent link">&para;</a></h2>
+<p>Clone the repository and navigate to the project directory:</p>
+<div class="language-shell highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/stac-utils/stac-server.git
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="nb">cd</span><span class="w"> </span>stac-server
+</span></code></pre></div>
+<p>Copy the <a href="https://github.com/stac-utils/stac-server/blob/main/serverless.example.yml">example serverless config file</a> to a file named serverless.yml:</p>
+<div class="language-shell highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>cp<span class="w"> </span>serverless.example.yml<span class="w"> </span>serverless.yml
+</span></code></pre></div>
+<h2 id="step-1-review-serverless-configuration">Step 1: Review Serverless Configuration<a class="headerlink" href="#step-1-review-serverless-configuration" title="Permanent link">&para;</a></h2>
+<p>Prior to deployment, review and update your serverless.yml file. In particular, update
+the <code>stage</code> and <code>region</code> with the desired values in the <code>provider</code> section, and review the
+environment variables in the <code>provider &gt; environment</code> section.</p>
+<p>For a complete reference of all environment variables, see the <a href="../configuration/">Configuration Guide</a>.</p>
+<p>Key environment variables for deployment:</p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Description</th>
+<th>Default Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>OPENSEARCH_HOST</td>
+<td>The URL of the OpenSearch cluster (required)</td>
+<td></td>
+</tr>
+<tr>
+<td>OPENSEARCH_CREDENTIALS_SECRET_ID</td>
+<td>AWS Secrets Manager secret for OpenSearch username/password</td>
+<td></td>
+</tr>
+<tr>
+<td>STAC_ID</td>
+<td>ID of this catalog</td>
+<td>stac-server</td>
+</tr>
+<tr>
+<td>STAC_TITLE</td>
+<td>Title of this catalog</td>
+<td>STAC API</td>
+</tr>
+<tr>
+<td>STAC_DESCRIPTION</td>
+<td>Description of this catalog</td>
+<td>A STAC API</td>
+</tr>
+<tr>
+<td>ENABLE_TRANSACTIONS_EXTENSION</td>
+<td>Enable Transaction Extension for write operations via API</td>
+<td>false</td>
+</tr>
+<tr>
+<td>CORS_ORIGIN</td>
+<td>Configure CORS allowed origins</td>
+<td><code>*</code></td>
+</tr>
+</tbody>
+</table>
+<p>See the <a href="../configuration/">Configuration Guide</a> for all configuration options including: API settings, CORS, extensions, asset proxy, authorization, ingest, pre/post hooks, request handling, and logging.</p>
+<h2 id="step-2-choose-an-authentication-method">Step 2: Choose an Authentication Method<a class="headerlink" href="#step-2-choose-an-authentication-method" title="Permanent link">&para;</a></h2>
+<p>There are two types of clients that need to authenticate connections to OpenSearch:</p>
+<ul>
+<li>Stac-server's Lambda functions authenticate to read and write STAC data to OpenSearch</li>
+<li>Users authenticate when accessing OpenSearch via a terminal for debugging and
+  administration</li>
+</ul>
+<p>The choice of an authentication method is permanent. Changing the authentication method
+after deployment requires creating a new cluster and migrating data. </p>
+<p>Stac-server supports two authentication methods. <strong>Option A (Fine-grained Access Control) is the default</strong> and recommended for most deployments.</p>
+<p><strong>Option A: Fine-grained Access Control (default)</strong></p>
+<ul>
+<li>Uses OpenSearch's internal user management system</li>
+<li>Provides granular role-based permissions within OpenSearch</li>
+<li>Lambda functions use a dedicated service account</li>
+<li>Users access OpenSearch with master credentials for administration</li>
+<li>This is the default configuration in <code>serverless.example.yml</code></li>
+</ul>
+<p><strong>Option B: AWS IAM Authentication</strong></p>
+<ul>
+<li>Uses AWS IAM roles and policies via AWS Signature Version 4 (SigV4) signing</li>
+<li>Lambda functions use their IAM execution role</li>
+<li>Users access OpenSearch with AWS credentials (access keys, profiles, or temporary tokens)</li>
+<li>Requires tools that support SigV4 signing (<code>curl --aws-sigv4</code>, <code>opensearch-cli</code>, Postman)</li>
+<li>Simpler setup but less granular control within OpenSearch</li>
+</ul>
+<h2 id="step-3-configure-opensearch-authentication">Step 3: Configure OpenSearch Authentication<a class="headerlink" href="#step-3-configure-opensearch-authentication" title="Permanent link">&para;</a></h2>
+<p><strong>Option A: Fine-grained Access Control (default)</strong></p>
+<p>Ensure your serverless.yml file contains these configurations:</p>
+<p><strong>1. OpenSearch domain configuration (master admin account):</strong></p>
+<div class="language-yaml highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="nt">OpenSearchInstance</span><span class="p">:</span>
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">  </span><span class="nt">Type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">AWS::OpenSearchService::Domain</span>
+</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">  </span><span class="nt">Properties</span><span class="p">:</span>
+</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">    </span><span class="c1"># ... other properties</span>
+</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="w">    </span><span class="nt">AdvancedSecurityOptions</span><span class="p">:</span>
+</span><span id="__span-2-6"><a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="w">      </span><span class="nt">Enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+</span><span id="__span-2-7"><a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="w">      </span><span class="nt">InternalUserDatabaseEnabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+</span><span id="__span-2-8"><a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="w">      </span><span class="nt">MasterUserOptions</span><span class="p">:</span>
+</span><span id="__span-2-9"><a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="w">        </span><span class="nt">MasterUserName</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">admin</span>
+</span><span id="__span-2-10"><a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a><span class="w">        </span><span class="nt">MasterUserPassword</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${env:OPENSEARCH_MASTER_USER_PASSWORD}</span>
+</span></code></pre></div>
+<p>This creates the master admin account used for OpenSearch administration via the terminal
+or Dashboard.</p>
+<p><strong>2. Environment variable for Lambda service account credentials (via Secrets Manager - recommended):</strong></p>
+<div class="language-yaml highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="nt">environment</span><span class="p">:</span>
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">  </span><span class="nt">OPENSEARCH_CREDENTIALS_SECRET_ID</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${self:service}-${self:provider.stage}-opensearch-user-creds</span>
+</span></code></pre></div>
+<p>This configures where the Lambda functions will look for the service account credentials
+(e.g., <code>stac_server</code> user). You'll create this service account and the secret in Step 5
+after deployment. Alternatively, you can set credentials directly via <code>OPENSEARCH_USERNAME</code>
+and <code>OPENSEARCH_PASSWORD</code> environment variables instead of using Secrets Manager.</p>
+<p><strong>3. IAM permission to access secrets:</strong></p>
+<div class="language-yaml highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="nt">iam</span><span class="p">:</span>
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">  </span><span class="nt">role</span><span class="p">:</span>
+</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">    </span><span class="nt">statements</span><span class="p">:</span>
+</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">Effect</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Allow</span>
+</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="w">        </span><span class="nt">Resource</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">arn:aws:secretsmanager:${aws:region}:${aws:accountId}:secret:${self:provider.environment.OPENSEARCH_CREDENTIALS_SECRET_ID}-*</span>
+</span><span id="__span-4-6"><a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="w">        </span><span class="nt">Action</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">secretsmanager:GetSecretValue</span>
+</span></code></pre></div>
+<p><strong>Option B: AWS IAM Authentication</strong></p>
+<p>Modify your serverless.yml file as follows:</p>
+<p><strong>1. Remove or comment out OpenSearch credential environment variables:</strong></p>
+<div class="language-yaml highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="nt">environment</span><span class="p">:</span>
+</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">  </span><span class="c1"># OPENSEARCH_CREDENTIALS_SECRET_ID: ${self:service}-${self:provider.stage}-opensearch-user-creds</span>
+</span></code></pre></div>
+<p><strong>2. Remove or comment out Secrets Manager IAM permission:</strong></p>
+<div class="language-yaml highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="nt">iam</span><span class="p">:</span>
+</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">  </span><span class="nt">role</span><span class="p">:</span>
+</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">    </span><span class="nt">statements</span><span class="p">:</span>
+</span><span id="__span-6-4"><a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="w">      </span><span class="c1"># ... other statements</span>
+</span><span id="__span-6-5"><a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="w">      </span><span class="c1"># Not needed for IAM authentication - only for fine-grained access control</span>
+</span><span id="__span-6-6"><a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="w">      </span><span class="c1"># - Effect: Allow</span>
+</span><span id="__span-6-7"><a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="w">      </span><span class="c1">#   Resource: arn:aws:secretsmanager:${aws:region}:${aws:accountId}:secret:${self:provider.environment.OPENSEARCH_CREDENTIALS_SECRET_ID}-*</span>
+</span><span id="__span-6-8"><a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="w">      </span><span class="c1">#   Action: secretsmanager:GetSecretValue</span>
+</span></code></pre></div>
+<p><strong>3. Disable fine-grained access control in OpenSearch domain:</strong></p>
+<div class="language-yaml highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="nt">OpenSearchInstance</span><span class="p">:</span>
+</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="w">  </span><span class="nt">Type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">AWS::OpenSearchService::Domain</span>
+</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">  </span><span class="nt">Properties</span><span class="p">:</span>
+</span><span id="__span-7-4"><a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="w">    </span><span class="c1"># ... other properties</span>
+</span><span id="__span-7-5"><a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="w">    </span><span class="nt">AdvancedSecurityOptions</span><span class="p">:</span>
+</span><span id="__span-7-6"><a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="w">      </span><span class="nt">Enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+</span><span id="__span-7-7"><a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="w">      </span><span class="nt">InternalUserDatabaseEnabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+</span><span id="__span-7-8"><a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a><span class="w">      </span><span class="c1"># MasterUserOptions not needed for IAM authentication</span>
+</span><span id="__span-7-9"><a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a><span class="w">      </span><span class="c1">#   MasterUserName: admin</span>
+</span><span id="__span-7-10"><a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a><span class="w">      </span><span class="c1">#   MasterUserPassword: ${env:OPENSEARCH_MASTER_USER_PASSWORD}</span>
+</span></code></pre></div>
+<p><strong>4. Ensure Lambda has OpenSearch permissions (already in default config):</strong></p>
+<div class="language-yaml highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="nt">iam</span><span class="p">:</span>
+</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="w">  </span><span class="nt">role</span><span class="p">:</span>
+</span><span id="__span-8-3"><a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="w">    </span><span class="nt">statements</span><span class="p">:</span>
+</span><span id="__span-8-4"><a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">Effect</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Allow</span>
+</span><span id="__span-8-5"><a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="w">        </span><span class="nt">Resource</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;arn:aws:es:${aws:region}:${aws:accountId}:domain/*&quot;</span>
+</span><span id="__span-8-6"><a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="w">        </span><span class="nt">Action</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;es:*&quot;</span>
+</span></code></pre></div>
+<p><strong>5. Configure access policy for OpenSearch domain:</strong></p>
+<p>When using IAM authentication without fine-grained access control, AWS requires that you
+restrict access to specific AWS accounts (you cannot use the wildcard <code>"AWS": "*"</code>, which
+allows any AWS account). Use the account root principal to restrict access to your AWS
+account only:</p>
+<div class="language-yaml highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="nt">OpenSearchInstance</span><span class="p">:</span>
+</span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="w">  </span><span class="nt">Type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">AWS::OpenSearchService::Domain</span>
+</span><span id="__span-9-3"><a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="w">  </span><span class="nt">Properties</span><span class="p">:</span>
+</span><span id="__span-9-4"><a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="w">    </span><span class="c1"># ... other properties</span>
+</span><span id="__span-9-5"><a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="w">    </span><span class="nt">AccessPolicies</span><span class="p">:</span>
+</span><span id="__span-9-6"><a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a><span class="w">      </span><span class="nt">Version</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;2012-10-17&quot;</span>
+</span><span id="__span-9-7"><a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="w">      </span><span class="nt">Statement</span><span class="p">:</span>
+</span><span id="__span-9-8"><a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a><span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">Effect</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Allow&quot;</span>
+</span><span id="__span-9-9"><a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a><span class="w">          </span><span class="nt">Principal</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="w"> </span><span class="s">&quot;AWS&quot;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="s">&quot;arn:aws:iam::${aws:accountId}:root&quot;</span><span class="w"> </span><span class="p p-Indicator">}</span>
+</span><span id="__span-9-10"><a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a><span class="w">          </span><span class="nt">Action</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;es:ESHttp*&quot;</span>
+</span><span id="__span-9-11"><a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a><span class="w">          </span><span class="nt">Resource</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;arn:aws:es:${aws:region}:${aws:accountId}:domain/${self:service}-${self:provider.stage}/*&quot;</span>
+</span></code></pre></div>
+<p>This restricts access to IAM principals in your AWS account only. Within your account,
+access is further controlled by the IAM permissions configured above (only principals with
+<code>es:*</code> can access).</p>
+<h2 id="step-4-build-deploy">Step 4: Build &amp; Deploy<a class="headerlink" href="#step-4-build-deploy" title="Permanent link">&para;</a></h2>
+<p>First, build the application:</p>
+<div class="language-shell highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>npm<span class="w"> </span>install
+</span><span id="__span-10-2"><a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>npm<span class="w"> </span>run<span class="w"> </span>build
+</span></code></pre></div>
+<p>Then deploy based on your authentication method:</p>
+<p><strong>Option A: Fine-grained Access Control</strong></p>
+<div class="language-shell highlight"><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="nv">OPENSEARCH_MASTER_USER_PASSWORD</span><span class="o">=</span><span class="s1">&#39;your-secure-password&#39;</span><span class="w"> </span>npm<span class="w"> </span>run<span class="w"> </span>deploy
+</span></code></pre></div>
+<p><strong>Option B: AWS IAM Authentication</strong></p>
+<div class="language-shell highlight"><pre><span></span><code><span id="__span-12-1"><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>npm<span class="w"> </span>run<span class="w"> </span>deploy
+</span></code></pre></div>
+<p><strong>Deployment options:</strong></p>
+<p>You can customize the deployment with these options:</p>
+<div class="language-shell highlight"><pre><span></span><code><span id="__span-13-1"><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="c1"># Use a different stage and region:</span>
+</span><span id="__span-13-2"><a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>npm<span class="w"> </span>run<span class="w"> </span>deploy<span class="w"> </span>--<span class="w"> </span>--stage<span class="w"> </span>mystage<span class="w"> </span>--region<span class="w"> </span>eu-central-1
+</span><span id="__span-13-3"><a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a>
+</span><span id="__span-13-4"><a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a><span class="c1"># Use a custom serverless config file:</span>
+</span><span id="__span-13-5"><a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a>npm<span class="w"> </span>run<span class="w"> </span>deploy<span class="w"> </span>--<span class="w"> </span>--config<span class="w"> </span>serverless.custom.yml
+</span><span id="__span-13-6"><a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a>
+</span><span id="__span-13-7"><a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a><span class="c1"># Combine options:</span>
+</span><span id="__span-13-8"><a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a><span class="nv">OPENSEARCH_MASTER_USER_PASSWORD</span><span class="o">=</span><span class="s1">&#39;your-secure-password&#39;</span><span class="w"> </span>npm<span class="w"> </span>run<span class="w"> </span>deploy<span class="w"> </span>--<span class="w"> </span>--config<span class="w"> </span>serverless.custom.yml<span class="w"> </span>--stage<span class="w"> </span>prod
+</span></code></pre></div>
+<h2 id="step-5-set-up-authentication-credentials">Step 5: Set Up Authentication Credentials<a class="headerlink" href="#step-5-set-up-authentication-credentials" title="Permanent link">&para;</a></h2>
+<p><strong>Option A: Fine-grained Access Control</strong></p>
+<p>If you used fine-grained access control, complete these steps:</p>
+<p><strong>1. Comment out MasterUserOptions in serverless.yml</strong></p>
+<p>After the initial deployment, comment out the <code>MasterUserOptions</code> section in serverless.yml
+to prevent accidental password changes on subsequent deployments:</p>
+<div class="language-yaml highlight"><pre><span></span><code><span id="__span-14-1"><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="nt">AdvancedSecurityOptions</span><span class="p">:</span>
+</span><span id="__span-14-2"><a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="w">  </span><span class="nt">Enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+</span><span id="__span-14-3"><a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a><span class="w">  </span><span class="nt">InternalUserDatabaseEnabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+</span><span id="__span-14-4"><a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="w">  </span><span class="c1"># MasterUserOptions:</span>
+</span><span id="__span-14-5"><a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a><span class="w">  </span><span class="c1">#   MasterUserName: admin</span>
+</span><span id="__span-14-6"><a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a><span class="w">  </span><span class="c1">#   MasterUserPassword: ${env:OPENSEARCH_MASTER_USER_PASSWORD}</span>
+</span></code></pre></div>
+<p><strong>2. Create a Lambda service account in OpenSearch</strong></p>
+<p>The Lambda functions require a separate role-based user account (not the master user).
+Create this user in OpenSearch and assign it appropriate roles. You can do this via
+the OpenSearch API or Dashboard.</p>
+<p><strong>Via OpenSearch API:</strong></p>
+<p>Set environment variables in your current shell session for <code>HOST</code> (your OpenSearch endpoint)
+and <code>OPENSEARCH_MASTER_USER_PASSWORD</code>, then run the following commands:</p>
+<div class="language-shell highlight"><pre><span></span><code><span id="__span-15-1"><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="nb">export</span><span class="w"> </span><span class="nv">HOST</span><span class="o">=</span><span class="s2">&quot;your-opensearch-endpoint.us-east-1.es.amazonaws.com&quot;</span>
+</span><span id="__span-15-2"><a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a><span class="nb">export</span><span class="w"> </span><span class="nv">OPENSEARCH_MASTER_USER_PASSWORD</span><span class="o">=</span><span class="s2">&quot;your-secure-password&quot;</span>
+</span></code></pre></div>
+<p>Create the role:</p>
+<div class="language-shell highlight"><pre><span></span><code><span id="__span-16-1"><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>curl<span class="w"> </span>-X<span class="w"> </span><span class="s2">&quot;PUT&quot;</span><span class="w"> </span><span class="s2">&quot;</span><span class="si">${</span><span class="nv">HOST</span><span class="si">}</span><span class="s2">/_plugins/_security/api/roles/stac_server_role&quot;</span><span class="w"> </span><span class="se">\</span>
+</span><span id="__span-16-2"><a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span class="w">     </span>-H<span class="w"> </span><span class="s1">&#39;Content-Type: application/json; charset=utf-8&#39;</span><span class="w"> </span><span class="se">\</span>
+</span><span id="__span-16-3"><a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a><span class="w">     </span>-u<span class="w"> </span><span class="s2">&quot;admin:</span><span class="si">${</span><span class="nv">OPENSEARCH_MASTER_USER_PASSWORD</span><span class="si">}</span><span class="s2">&quot;</span><span class="w"> </span><span class="se">\</span>
+</span><span id="__span-16-4"><a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a><span class="w">     </span>-d<span class="w"> </span><span class="s1">$&#39;{</span>
+</span><span id="__span-16-5"><a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a><span class="s1">  &quot;cluster_permissions&quot;: [</span>
+</span><span id="__span-16-6"><a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a><span class="s1">    &quot;cluster_composite_ops&quot;,</span>
+</span><span id="__span-16-7"><a id="__codelineno-16-7" name="__codelineno-16-7" href="#__codelineno-16-7"></a><span class="s1">    &quot;cluster:monitor/health&quot;</span>
+</span><span id="__span-16-8"><a id="__codelineno-16-8" name="__codelineno-16-8" href="#__codelineno-16-8"></a><span class="s1">  ],</span>
+</span><span id="__span-16-9"><a id="__codelineno-16-9" name="__codelineno-16-9" href="#__codelineno-16-9"></a><span class="s1">  &quot;index_permissions&quot;: [</span>
+</span><span id="__span-16-10"><a id="__codelineno-16-10" name="__codelineno-16-10" href="#__codelineno-16-10"></a><span class="s1">    {</span>
+</span><span id="__span-16-11"><a id="__codelineno-16-11" name="__codelineno-16-11" href="#__codelineno-16-11"></a><span class="s1">      &quot;index_patterns&quot;: [&quot;*&quot;],</span>
+</span><span id="__span-16-12"><a id="__codelineno-16-12" name="__codelineno-16-12" href="#__codelineno-16-12"></a><span class="s1">      &quot;allowed_actions&quot;: [&quot;indices_all&quot;]</span>
+</span><span id="__span-16-13"><a id="__codelineno-16-13" name="__codelineno-16-13" href="#__codelineno-16-13"></a><span class="s1">    }</span>
+</span><span id="__span-16-14"><a id="__codelineno-16-14" name="__codelineno-16-14" href="#__codelineno-16-14"></a><span class="s1">  ],</span>
+</span><span id="__span-16-15"><a id="__codelineno-16-15" name="__codelineno-16-15" href="#__codelineno-16-15"></a><span class="s1">  &quot;tenant_permissions&quot;: [</span>
+</span><span id="__span-16-16"><a id="__codelineno-16-16" name="__codelineno-16-16" href="#__codelineno-16-16"></a><span class="s1">    {</span>
+</span><span id="__span-16-17"><a id="__codelineno-16-17" name="__codelineno-16-17" href="#__codelineno-16-17"></a><span class="s1">      &quot;tenant_patterns&quot;: [&quot;global_tenant&quot;],</span>
+</span><span id="__span-16-18"><a id="__codelineno-16-18" name="__codelineno-16-18" href="#__codelineno-16-18"></a><span class="s1">      &quot;allowed_actions&quot;: [&quot;kibana_all_read&quot;]</span>
+</span><span id="__span-16-19"><a id="__codelineno-16-19" name="__codelineno-16-19" href="#__codelineno-16-19"></a><span class="s1">    }</span>
+</span><span id="__span-16-20"><a id="__codelineno-16-20" name="__codelineno-16-20" href="#__codelineno-16-20"></a><span class="s1">  ]</span>
+</span><span id="__span-16-21"><a id="__codelineno-16-21" name="__codelineno-16-21" href="#__codelineno-16-21"></a><span class="s1">}&#39;</span>
+</span></code></pre></div>
+<p>Create the user:</p>
+<div class="language-shell highlight"><pre><span></span><code><span id="__span-17-1"><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>curl<span class="w"> </span>-X<span class="w"> </span><span class="s2">&quot;PUT&quot;</span><span class="w"> </span><span class="s2">&quot;</span><span class="si">${</span><span class="nv">HOST</span><span class="si">}</span><span class="s2">/_plugins/_security/api/internalusers/stac_server&quot;</span><span class="w"> </span><span class="se">\</span>
+</span><span id="__span-17-2"><a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a><span class="w">     </span>-H<span class="w"> </span><span class="s1">&#39;Content-Type: application/json; charset=utf-8&#39;</span><span class="w"> </span><span class="se">\</span>
+</span><span id="__span-17-3"><a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a><span class="w">     </span>-u<span class="w"> </span><span class="s2">&quot;admin:</span><span class="si">${</span><span class="nv">OPENSEARCH_MASTER_USER_PASSWORD</span><span class="si">}</span><span class="s2">&quot;</span><span class="w"> </span><span class="se">\</span>
+</span><span id="__span-17-4"><a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a><span class="w">     </span>-d<span class="w"> </span><span class="s1">$&#39;{ &quot;password&quot;: &quot;your-service-account-password&quot; }&#39;</span>
+</span></code></pre></div>
+<p>Map the role to the user:</p>
+<div class="language-shell highlight"><pre><span></span><code><span id="__span-18-1"><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>curl<span class="w"> </span>-X<span class="w"> </span><span class="s2">&quot;PUT&quot;</span><span class="w"> </span><span class="s2">&quot;</span><span class="si">${</span><span class="nv">HOST</span><span class="si">}</span><span class="s2">/_plugins/_security/api/rolesmapping/stac_server_role&quot;</span><span class="w"> </span><span class="se">\</span>
+</span><span id="__span-18-2"><a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a><span class="w">     </span>-H<span class="w"> </span><span class="s1">&#39;Content-Type: application/json; charset=utf-8&#39;</span><span class="w"> </span><span class="se">\</span>
+</span><span id="__span-18-3"><a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a><span class="w">     </span>-u<span class="w"> </span><span class="s2">&quot;admin:</span><span class="si">${</span><span class="nv">OPENSEARCH_MASTER_USER_PASSWORD</span><span class="si">}</span><span class="s2">&quot;</span><span class="w">  </span><span class="se">\</span>
+</span><span id="__span-18-4"><a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a><span class="w">     </span>-d<span class="w"> </span><span class="s1">$&#39;{</span>
+</span><span id="__span-18-5"><a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a><span class="s1">  &quot;users&quot;: [&quot;stac_server&quot;]</span>
+</span><span id="__span-18-6"><a id="__codelineno-18-6" name="__codelineno-18-6" href="#__codelineno-18-6"></a><span class="s1">}&#39;</span>
+</span></code></pre></div>
+<p><strong>Via OpenSearch Dashboard:</strong></p>
+<p>Login to the OpenSearch Dashboard with master username (<code>admin</code>) and password. From the
+left sidebar menu, select "Security". Create a new role named <code>stac_server_role</code> with:</p>
+<ul>
+<li>Cluster permissions: <code>cluster:monitor/health</code>, <code>cluster_composite_ops</code></li>
+<li>Index permissions: <code>indices_all</code> on <code>*</code></li>
+<li>Tenant permissions: <code>global_tenant</code> Read only</li>
+</ul>
+<p>Then create an internal user named <code>stac_server</code> and map it to the <code>stac_server_role</code>.</p>
+<p><strong>3. Store service account credentials</strong></p>
+<p>If you configured <code>OPENSEARCH_CREDENTIALS_SECRET_ID</code> in Step 3, now create the AWS Secrets
+Manager secret to store the service account credentials:</p>
+<ul>
+<li>Secret type: "Other type of secret"</li>
+<li>Secret name: Must match the value of <code>OPENSEARCH_CREDENTIALS_SECRET_ID</code> (e.g.,
+  <code>stac-server-dev-opensearch-user-creds</code>)</li>
+<li>Keys: <code>username</code> and <code>password</code></li>
+<li>Values: <code>username</code>: <code>stac_server</code>, <code>password</code>: the password you set above when creating
+  the service account user</li>
+</ul>
+<p>If you configured <code>OPENSEARCH_USERNAME</code> and <code>OPENSEARCH_PASSWORD</code> directly in
+your serverless.yml file in Step 3, you can skip this step - your credentials are already
+configured.</p>
+<p><strong>4. Redeploy</strong></p>
+<p>After storing the service account credentials (via Secrets Manager or environment variables),
+redeploy to ensure the Lambda functions pick up the credentials:</p>
+<div class="language-shell highlight"><pre><span></span><code><span id="__span-19-1"><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>npm<span class="w"> </span>run<span class="w"> </span>deploy
+</span></code></pre></div>
+<p><strong>Option B: AWS IAM Authentication</strong></p>
+<p>No authentication credential configuration is required. The Lambda functions will
+automatically authenticate using their IAM execution role.</p>
+<h2 id="step-6-disable-automatic-index-creation">Step 6: Disable Automatic Index Creation<a class="headerlink" href="#step-6-disable-automatic-index-creation" title="Permanent link">&para;</a></h2>
+<p>It is recommended to disable automatic index creation. This prevents the situation where
+a group of Items are bulk indexed before the Collection in which they are contained has
+been created, and an OpenSearch index is created without the appropriate mappings.</p>
+<p><strong>For fine-grained access control:</strong></p>
+<div class="language-shell highlight"><pre><span></span><code><span id="__span-20-1"><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>curl<span class="w"> </span>-X<span class="w"> </span><span class="s2">&quot;PUT&quot;</span><span class="w"> </span><span class="s2">&quot;</span><span class="si">${</span><span class="nv">HOST</span><span class="si">}</span><span class="s2">/_cluster/settings&quot;</span><span class="w"> </span><span class="se">\</span>
+</span><span id="__span-20-2"><a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a><span class="w">     </span>-H<span class="w"> </span><span class="s1">&#39;Content-Type: application/json; charset=utf-8&#39;</span><span class="w"> </span><span class="se">\</span>
+</span><span id="__span-20-3"><a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a><span class="w">     </span>-u<span class="w"> </span><span class="s2">&quot;admin:</span><span class="si">${</span><span class="nv">OPENSEARCH_MASTER_USER_PASSWORD</span><span class="si">}</span><span class="s2">&quot;</span><span class="w"> </span><span class="se">\</span>
+</span><span id="__span-20-4"><a id="__codelineno-20-4" name="__codelineno-20-4" href="#__codelineno-20-4"></a><span class="w">     </span>-d<span class="w"> </span><span class="s1">&#39;{&quot;persistent&quot;: {&quot;action.auto_create_index&quot;: &quot;false&quot;}}&#39;</span>
+</span></code></pre></div>
+<p>Alternatively, set this configuration via the OpenSearch Dashboard.</p>
+<p><strong>For AWS IAM authentication:</strong></p>
+<div class="language-shell highlight"><pre><span></span><code><span id="__span-21-1"><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a><span class="c1"># For temporary credentials (IAM Identity Center/SSO or assumed roles):</span>
+</span><span id="__span-21-2"><a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a>curl<span class="w"> </span>-X<span class="w"> </span>PUT<span class="w"> </span><span class="s2">&quot;</span><span class="si">${</span><span class="nv">HOST</span><span class="si">}</span><span class="s2">/_cluster/settings&quot;</span><span class="w"> </span><span class="se">\</span>
+</span><span id="__span-21-3"><a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a><span class="w">  </span>--aws-sigv4<span class="w"> </span><span class="s2">&quot;aws:amz:us-east-1:es&quot;</span><span class="w"> </span><span class="se">\</span>
+</span><span id="__span-21-4"><a id="__codelineno-21-4" name="__codelineno-21-4" href="#__codelineno-21-4"></a><span class="w">  </span>--user<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$AWS_ACCESS_KEY_ID</span><span class="s2">:</span><span class="nv">$AWS_SECRET_ACCESS_KEY</span><span class="s2">&quot;</span><span class="w"> </span><span class="se">\</span>
+</span><span id="__span-21-5"><a id="__codelineno-21-5" name="__codelineno-21-5" href="#__codelineno-21-5"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;x-amz-security-token:</span><span class="nv">$AWS_SESSION_TOKEN</span><span class="s2">&quot;</span><span class="w"> </span><span class="se">\</span>
+</span><span id="__span-21-6"><a id="__codelineno-21-6" name="__codelineno-21-6" href="#__codelineno-21-6"></a><span class="w">  </span>-H<span class="w"> </span><span class="s1">&#39;Content-Type: application/json&#39;</span><span class="w"> </span><span class="se">\</span>
+</span><span id="__span-21-7"><a id="__codelineno-21-7" name="__codelineno-21-7" href="#__codelineno-21-7"></a><span class="w">  </span>-d<span class="w"> </span><span class="s1">&#39;{&quot;persistent&quot;: {&quot;action.auto_create_index&quot;: &quot;false&quot;}}&#39;</span>
+</span><span id="__span-21-8"><a id="__codelineno-21-8" name="__codelineno-21-8" href="#__codelineno-21-8"></a>
+</span><span id="__span-21-9"><a id="__codelineno-21-9" name="__codelineno-21-9" href="#__codelineno-21-9"></a><span class="c1"># For permanent IAM user credentials:</span>
+</span><span id="__span-21-10"><a id="__codelineno-21-10" name="__codelineno-21-10" href="#__codelineno-21-10"></a>curl<span class="w"> </span>-X<span class="w"> </span>PUT<span class="w"> </span><span class="s2">&quot;</span><span class="si">${</span><span class="nv">HOST</span><span class="si">}</span><span class="s2">/_cluster/settings&quot;</span><span class="w"> </span><span class="se">\</span>
+</span><span id="__span-21-11"><a id="__codelineno-21-11" name="__codelineno-21-11" href="#__codelineno-21-11"></a><span class="w">  </span>--aws-sigv4<span class="w"> </span><span class="s2">&quot;aws:amz:us-east-1:es&quot;</span><span class="w"> </span><span class="se">\</span>
+</span><span id="__span-21-12"><a id="__codelineno-21-12" name="__codelineno-21-12" href="#__codelineno-21-12"></a><span class="w">  </span>--user<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$AWS_ACCESS_KEY_ID</span><span class="s2">:</span><span class="nv">$AWS_SECRET_ACCESS_KEY</span><span class="s2">&quot;</span><span class="w"> </span><span class="se">\</span>
+</span><span id="__span-21-13"><a id="__codelineno-21-13" name="__codelineno-21-13" href="#__codelineno-21-13"></a><span class="w">  </span>-H<span class="w"> </span><span class="s1">&#39;Content-Type: application/json&#39;</span><span class="w"> </span><span class="se">\</span>
+</span><span id="__span-21-14"><a id="__codelineno-21-14" name="__codelineno-21-14" href="#__codelineno-21-14"></a><span class="w">  </span>-d<span class="w"> </span><span class="s1">&#39;{&quot;persistent&quot;: {&quot;action.auto_create_index&quot;: &quot;false&quot;}}&#39;</span>
+</span></code></pre></div>
+<h2 id="step-7-create-collection-index">Step 7: Create Collection Index<a class="headerlink" href="#step-7-create-collection-index" title="Permanent link">&para;</a></h2>
+<p>The <code>collection</code> index must be created, which stores the metadata about each Collection.
+Invoke the <code>stac-server-&lt;stage&gt;-ingest</code> Lambda function with a payload of:</p>
+<div class="language-json highlight"><pre><span></span><code><span id="__span-22-1"><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a><span class="p">{</span>
+</span><span id="__span-22-2"><a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a><span class="w">  </span><span class="nt">&quot;create_indices&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span>
+</span><span id="__span-22-3"><a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a><span class="p">}</span>
+</span></code></pre></div>
+<p>This can be done with the <a href="https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html">AWS CLI Version 2</a>:</p>
+<div class="language-shell highlight"><pre><span></span><code><span id="__span-23-1"><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a>aws<span class="w"> </span>lambda<span class="w"> </span>invoke<span class="w"> </span><span class="se">\</span>
+</span><span id="__span-23-2"><a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a><span class="w">  </span>--function-name<span class="w"> </span>stac-server-dev-ingest<span class="w"> </span><span class="se">\</span>
+</span><span id="__span-23-3"><a id="__codelineno-23-3" name="__codelineno-23-3" href="#__codelineno-23-3"></a><span class="w">  </span>--cli-binary-format<span class="w"> </span>raw-in-base64-out<span class="w"> </span><span class="se">\</span>
+</span><span id="__span-23-4"><a id="__codelineno-23-4" name="__codelineno-23-4" href="#__codelineno-23-4"></a><span class="w">  </span>--payload<span class="w"> </span><span class="s1">&#39;{ &quot;create_indices&quot;: true }&#39;</span><span class="w"> </span><span class="se">\</span>
+</span><span id="__span-23-5"><a id="__codelineno-23-5" name="__codelineno-23-5" href="#__codelineno-23-5"></a><span class="w">  </span>/dev/stdout
+</span></code></pre></div>
+<p>Stac-server is now ready to ingest STAC Collections and Items and serve API requests.</p>
+<p>For runtime configuration (environment variables, collection parameters), see the <a href="../configuration/">Configuration Guide</a>.</p>
+<h2 id="additional-configuration">Additional Configuration<a class="headerlink" href="#additional-configuration" title="Permanent link">&para;</a></h2>
+<h3 id="proxying-stac-server-through-cloudfront">Proxying stac-server through CloudFront<a class="headerlink" href="#proxying-stac-server-through-cloudfront" title="Permanent link">&para;</a></h3>
+<p>The API Gateway URL associated with the deployed stac-server instance may not be the URL that you ultimately wish to expose to your API users. AWS CloudFront can be used to proxy to a more human readable URL.</p>
+<p><strong>Important:</strong> When using STAC Server with a proxy in front of it, the base URL for the server, which will be used in all link URLs in response bodies, can be set with the <code>STAC-Endpoint</code> header.</p>
+<p>In order to set up CloudFront proxying, follow these steps:</p>
+<ol>
+<li>Create a new CloudFront distribution (or use an existing distribution).</li>
+<li>Set the origin to the Gateway API URL (obtain in the stage view of the deployed stac-server). The URL is in the form <code>&lt;##abcde&gt;.execute-api.region.amazonaws.com</code>.</li>
+<li>Set the origin path to the deployed stage name prepended with a <code>/</code>, (e.g., /dev or /prod).</li>
+<li>Under behaviors, add a new behavior for the desired URL endpoint or subdomain (e.g., /api or /v0.4.0).</li>
+<li>Set the 'Origin and origin groups to the URL defined above ('<code>&lt;##abcde&gt;.execute-api.region.amazonaws.com</code>').</li>
+<li>Set Viewer to HTTPS only and Allowed HTTP Methods to 'GET, HEAD, OPTIONS, PUT, POST, PATCH, DELETE'.</li>
+<li>Set the Cache Policy to a custom policy that forwards query strings. If one simply disables caching, CloudFront strips the query strings.</li>
+<li>Optionally, define a LambdaEdge to perform a URL rewrite. This is necessary if your API URL is appended to the root URL (e.g., mydomain.com/api). The Lambda must rewrite the URL to remove the /api. For example:</li>
+</ol>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-24-1"><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">re</span><span class="w"> </span><span class="kn">import</span> <span class="n">sub</span>
+</span><span id="__span-24-2"><a id="__codelineno-24-2" name="__codelineno-24-2" href="#__codelineno-24-2"></a>
+</span><span id="__span-24-3"><a id="__codelineno-24-3" name="__codelineno-24-3" href="#__codelineno-24-3"></a><span class="k">def</span><span class="w"> </span><span class="nf">lambda_handler</span><span class="p">(</span><span class="n">event</span><span class="p">,</span> <span class="n">context</span><span class="p">):</span>
+</span><span id="__span-24-4"><a id="__codelineno-24-4" name="__codelineno-24-4" href="#__codelineno-24-4"></a>    <span class="n">request</span> <span class="o">=</span> <span class="n">event</span><span class="p">[</span><span class="s1">&#39;Records&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;cf&#39;</span><span class="p">][</span><span class="s1">&#39;request&#39;</span><span class="p">]</span>
+</span><span id="__span-24-5"><a id="__codelineno-24-5" name="__codelineno-24-5" href="#__codelineno-24-5"></a>    <span class="n">uri</span> <span class="o">=</span> <span class="n">request</span><span class="p">[</span><span class="s2">&quot;uri&quot;</span><span class="p">]</span>
+</span><span id="__span-24-6"><a id="__codelineno-24-6" name="__codelineno-24-6" href="#__codelineno-24-6"></a>
+</span><span id="__span-24-7"><a id="__codelineno-24-7" name="__codelineno-24-7" href="#__codelineno-24-7"></a>    <span class="k">if</span> <span class="n">uri</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;/&quot;</span><span class="p">,</span> <span class="s2">&quot;/index.html&quot;</span><span class="p">]:</span>
+</span><span id="__span-24-8"><a id="__codelineno-24-8" name="__codelineno-24-8" href="#__codelineno-24-8"></a>        <span class="n">response</span> <span class="o">=</span> <span class="p">{</span>
+</span><span id="__span-24-9"><a id="__codelineno-24-9" name="__codelineno-24-9" href="#__codelineno-24-9"></a>            <span class="s2">&quot;status&quot;</span><span class="p">:</span> <span class="mi">302</span><span class="p">,</span>
+</span><span id="__span-24-10"><a id="__codelineno-24-10" name="__codelineno-24-10" href="#__codelineno-24-10"></a>            <span class="s2">&quot;statusDescription&quot;</span><span class="p">:</span> <span class="s2">&quot;Found&quot;</span><span class="p">,</span>
+</span><span id="__span-24-11"><a id="__codelineno-24-11" name="__codelineno-24-11" href="#__codelineno-24-11"></a>            <span class="s2">&quot;headers&quot;</span><span class="p">:</span> <span class="p">{</span>
+</span><span id="__span-24-12"><a id="__codelineno-24-12" name="__codelineno-24-12" href="#__codelineno-24-12"></a>                <span class="s2">&quot;location&quot;</span><span class="p">:</span> <span class="p">[{</span>
+</span><span id="__span-24-13"><a id="__codelineno-24-13" name="__codelineno-24-13" href="#__codelineno-24-13"></a>                    <span class="s2">&quot;key&quot;</span><span class="p">:</span> <span class="s2">&quot;Location&quot;</span><span class="p">,</span>
+</span><span id="__span-24-14"><a id="__codelineno-24-14" name="__codelineno-24-14" href="#__codelineno-24-14"></a>                    <span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="s2">&quot;/api/&quot;</span>
+</span><span id="__span-24-15"><a id="__codelineno-24-15" name="__codelineno-24-15" href="#__codelineno-24-15"></a>                <span class="p">}]</span>
+</span><span id="__span-24-16"><a id="__codelineno-24-16" name="__codelineno-24-16" href="#__codelineno-24-16"></a>            <span class="p">}</span>
+</span><span id="__span-24-17"><a id="__codelineno-24-17" name="__codelineno-24-17" href="#__codelineno-24-17"></a>        <span class="p">}</span>
+</span><span id="__span-24-18"><a id="__codelineno-24-18" name="__codelineno-24-18" href="#__codelineno-24-18"></a>        <span class="k">return</span> <span class="n">response</span>
+</span><span id="__span-24-19"><a id="__codelineno-24-19" name="__codelineno-24-19" href="#__codelineno-24-19"></a>
+</span><span id="__span-24-20"><a id="__codelineno-24-20" name="__codelineno-24-20" href="#__codelineno-24-20"></a>    <span class="n">request</span><span class="p">[</span><span class="s2">&quot;uri&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">sub</span><span class="p">(</span><span class="s2">&quot;^/api&quot;</span><span class="p">,</span> <span class="s2">&quot;/&quot;</span><span class="p">,</span> <span class="n">uri</span><span class="p">)</span>
+</span><span id="__span-24-21"><a id="__codelineno-24-21" name="__codelineno-24-21" href="#__codelineno-24-21"></a>    <span class="nb">print</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
+</span><span id="__span-24-22"><a id="__codelineno-24-22" name="__codelineno-24-22" href="#__codelineno-24-22"></a>    <span class="k">return</span> <span class="n">request</span>
+</span></code></pre></div>
+<h3 id="locking-down-transaction-endpoints">Locking down transaction endpoints<a class="headerlink" href="#locking-down-transaction-endpoints" title="Permanent link">&para;</a></h3>
+<p>If you wanted to deploy STAC Server in a way which ensures certain endpoints have restricted access but others don't, you can deploy it into a VPC and add conditions that allow only certain IP addresses to access certain endpoints. Once you deploy STAC Server into a VPC, you can modify the Resource Policy of the API Gateway endpoint that gets deployed to restrict access to certain endpoints. Here is a hypothetical example. Assume that the account into which STAC Server is deployed is numbered 1234-5678-9123, the API ID is ab1c23def, and the region in which it is deployed is us-west-2. You might want to give the general public access to use any GET or POST endpoints with the API such as the "/search" endpoint, but lock down access to the transaction endpoints (see <a href="https://github.com/radiantearth/stac-api-spec/tree/master/ogcapi-features/extensions/transaction">https://github.com/radiantearth/stac-api-spec/tree/master/ogcapi-features/extensions/transaction</a>) to only allow certain IP addresses to access them. These IP addresses can be, for example: 94.61.192.106, 204.176.50.129, and 11.27.65.78. In order to do this, you can impose a condition on the API Gateway that only allows API transactions such as adding, updating, and deleting STAC items from the whitelisted endpoints. For example, here is a Resource Policy containing two statements that allow this to happen:</p>
+<div class="language-json highlight"><pre><span></span><code><span id="__span-25-1"><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a><span class="p">{</span>
+</span><span id="__span-25-2"><a id="__codelineno-25-2" name="__codelineno-25-2" href="#__codelineno-25-2"></a><span class="w">  </span><span class="nt">&quot;Version&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2012-10-17&quot;</span><span class="p">,</span>
+</span><span id="__span-25-3"><a id="__codelineno-25-3" name="__codelineno-25-3" href="#__codelineno-25-3"></a><span class="w">  </span><span class="nt">&quot;Statement&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+</span><span id="__span-25-4"><a id="__codelineno-25-4" name="__codelineno-25-4" href="#__codelineno-25-4"></a><span class="w">    </span><span class="p">{</span>
+</span><span id="__span-25-5"><a id="__codelineno-25-5" name="__codelineno-25-5" href="#__codelineno-25-5"></a><span class="w">      </span><span class="nt">&quot;Effect&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Allow&quot;</span><span class="p">,</span>
+</span><span id="__span-25-6"><a id="__codelineno-25-6" name="__codelineno-25-6" href="#__codelineno-25-6"></a><span class="w">      </span><span class="nt">&quot;Principal&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;*&quot;</span><span class="p">,</span>
+</span><span id="__span-25-7"><a id="__codelineno-25-7" name="__codelineno-25-7" href="#__codelineno-25-7"></a><span class="w">      </span><span class="nt">&quot;Action&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;execute-api:Invoke&quot;</span><span class="p">,</span>
+</span><span id="__span-25-8"><a id="__codelineno-25-8" name="__codelineno-25-8" href="#__codelineno-25-8"></a><span class="w">      </span><span class="nt">&quot;Resource&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+</span><span id="__span-25-9"><a id="__codelineno-25-9" name="__codelineno-25-9" href="#__codelineno-25-9"></a><span class="w">        </span><span class="s2">&quot;arn:aws:execute-api:us-west-2:123456789123:ab1c23def/v1/POST/search&quot;</span><span class="p">,</span>
+</span><span id="__span-25-10"><a id="__codelineno-25-10" name="__codelineno-25-10" href="#__codelineno-25-10"></a><span class="w">        </span><span class="s2">&quot;arn:aws:execute-api:us-west-2:123456789123:ab1c23def/v1/POST/search/*&quot;</span><span class="p">,</span>
+</span><span id="__span-25-11"><a id="__codelineno-25-11" name="__codelineno-25-11" href="#__codelineno-25-11"></a><span class="w">        </span><span class="s2">&quot;arn:aws:execute-api:us-west-2:123456789123:ab1c23def/v1/GET/search/*&quot;</span><span class="p">,</span>
+</span><span id="__span-25-12"><a id="__codelineno-25-12" name="__codelineno-25-12" href="#__codelineno-25-12"></a><span class="w">        </span><span class="s2">&quot;arn:aws:execute-api:us-west-2:123456789123:ab1c23def/v1/GET/*&quot;</span>
+</span><span id="__span-25-13"><a id="__codelineno-25-13" name="__codelineno-25-13" href="#__codelineno-25-13"></a><span class="w">      </span><span class="p">]</span>
+</span><span id="__span-25-14"><a id="__codelineno-25-14" name="__codelineno-25-14" href="#__codelineno-25-14"></a><span class="w">    </span><span class="p">},</span>
+</span><span id="__span-25-15"><a id="__codelineno-25-15" name="__codelineno-25-15" href="#__codelineno-25-15"></a><span class="w">    </span><span class="p">{</span>
+</span><span id="__span-25-16"><a id="__codelineno-25-16" name="__codelineno-25-16" href="#__codelineno-25-16"></a><span class="w">      </span><span class="nt">&quot;Effect&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Allow&quot;</span><span class="p">,</span>
+</span><span id="__span-25-17"><a id="__codelineno-25-17" name="__codelineno-25-17" href="#__codelineno-25-17"></a><span class="w">      </span><span class="nt">&quot;Principal&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;*&quot;</span><span class="p">,</span>
+</span><span id="__span-25-18"><a id="__codelineno-25-18" name="__codelineno-25-18" href="#__codelineno-25-18"></a><span class="w">      </span><span class="nt">&quot;Action&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;execute-api:Invoke&quot;</span><span class="p">,</span>
+</span><span id="__span-25-19"><a id="__codelineno-25-19" name="__codelineno-25-19" href="#__codelineno-25-19"></a><span class="w">      </span><span class="nt">&quot;Resource&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+</span><span id="__span-25-20"><a id="__codelineno-25-20" name="__codelineno-25-20" href="#__codelineno-25-20"></a><span class="w">        </span><span class="s2">&quot;arn:aws:execute-api:us-west-2:123456789123:ab1c23def/v1/POST/collections/*/items&quot;</span><span class="p">,</span>
+</span><span id="__span-25-21"><a id="__codelineno-25-21" name="__codelineno-25-21" href="#__codelineno-25-21"></a><span class="w">        </span><span class="s2">&quot;arn:aws:execute-api:us-west-2:123456789123:ab1c23def/v1/PUT/collections/*/items/*&quot;</span><span class="p">,</span>
+</span><span id="__span-25-22"><a id="__codelineno-25-22" name="__codelineno-25-22" href="#__codelineno-25-22"></a><span class="w">        </span><span class="s2">&quot;arn:aws:execute-api:us-west-2:123456789123:ab1c23def/v1/PATCH/collections/*/items/*&quot;</span><span class="p">,</span>
+</span><span id="__span-25-23"><a id="__codelineno-25-23" name="__codelineno-25-23" href="#__codelineno-25-23"></a><span class="w">        </span><span class="s2">&quot;arn:aws:execute-api:us-west-2:123456789123:ab1c23def/v1/DELETE/collections/*/items/*&quot;</span>
+</span><span id="__span-25-24"><a id="__codelineno-25-24" name="__codelineno-25-24" href="#__codelineno-25-24"></a><span class="w">      </span><span class="p">],</span>
+</span><span id="__span-25-25"><a id="__codelineno-25-25" name="__codelineno-25-25" href="#__codelineno-25-25"></a><span class="w">      </span><span class="nt">&quot;Condition&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-25-26"><a id="__codelineno-25-26" name="__codelineno-25-26" href="#__codelineno-25-26"></a><span class="w">        </span><span class="nt">&quot;IpAddress&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-25-27"><a id="__codelineno-25-27" name="__codelineno-25-27" href="#__codelineno-25-27"></a><span class="w">          </span><span class="nt">&quot;aws:sourceIp&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;94.61.192.106&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;204.176.50.129&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;11.27.65.78&quot;</span><span class="p">]</span>
+</span><span id="__span-25-28"><a id="__codelineno-25-28" name="__codelineno-25-28" href="#__codelineno-25-28"></a><span class="w">        </span><span class="p">}</span>
+</span><span id="__span-25-29"><a id="__codelineno-25-29" name="__codelineno-25-29" href="#__codelineno-25-29"></a><span class="w">      </span><span class="p">}</span>
+</span><span id="__span-25-30"><a id="__codelineno-25-30" name="__codelineno-25-30" href="#__codelineno-25-30"></a><span class="w">    </span><span class="p">}</span>
+</span><span id="__span-25-31"><a id="__codelineno-25-31" name="__codelineno-25-31" href="#__codelineno-25-31"></a><span class="w">  </span><span class="p">]</span>
+</span><span id="__span-25-32"><a id="__codelineno-25-32" name="__codelineno-25-32" href="#__codelineno-25-32"></a><span class="p">}</span>
+</span></code></pre></div>
+<p>The first statement in the Resource Policy above grants access to STAC API endpoints for use in general operations like searching, and the second statement restricts access to the Transaction endpoints to a set of source IP addresses. According to this policy, POST, PUT, PATCH, and DELETE operations on items within collections are only allowed if the request originates from the IP addresses 94.61.192.106, 204.176.50.129, or 11.27.65.78. The second statement can also be written in another manner, denying access to the Transaction endpoints for all addresses that don't match a set of source IP addresses. This is shown below.</p>
+<div class="language-json highlight"><pre><span></span><code><span id="__span-26-1"><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a><span class="p">{</span>
+</span><span id="__span-26-2"><a id="__codelineno-26-2" name="__codelineno-26-2" href="#__codelineno-26-2"></a><span class="w">  </span><span class="nt">&quot;Effect&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Deny&quot;</span><span class="p">,</span>
+</span><span id="__span-26-3"><a id="__codelineno-26-3" name="__codelineno-26-3" href="#__codelineno-26-3"></a><span class="w">  </span><span class="nt">&quot;Principal&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;*&quot;</span><span class="p">,</span>
+</span><span id="__span-26-4"><a id="__codelineno-26-4" name="__codelineno-26-4" href="#__codelineno-26-4"></a><span class="w">  </span><span class="nt">&quot;Action&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;execute-api:Invoke&quot;</span><span class="p">,</span>
+</span><span id="__span-26-5"><a id="__codelineno-26-5" name="__codelineno-26-5" href="#__codelineno-26-5"></a><span class="w">  </span><span class="nt">&quot;Resource&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+</span><span id="__span-26-6"><a id="__codelineno-26-6" name="__codelineno-26-6" href="#__codelineno-26-6"></a><span class="w">    </span><span class="s2">&quot;arn:aws:execute-api:us-west-2:123456789123:ab1c23def/v1/POST/collections/*/items&quot;</span><span class="p">,</span>
+</span><span id="__span-26-7"><a id="__codelineno-26-7" name="__codelineno-26-7" href="#__codelineno-26-7"></a><span class="w">    </span><span class="s2">&quot;arn:aws:execute-api:us-west-2:123456789123:ab1c23def/v1/PUT/collections/*/items/*&quot;</span><span class="p">,</span>
+</span><span id="__span-26-8"><a id="__codelineno-26-8" name="__codelineno-26-8" href="#__codelineno-26-8"></a><span class="w">    </span><span class="s2">&quot;arn:aws:execute-api:us-west-2:123456789123:ab1c23def/v1/PATCH/collections/*/items/*&quot;</span><span class="p">,</span>
+</span><span id="__span-26-9"><a id="__codelineno-26-9" name="__codelineno-26-9" href="#__codelineno-26-9"></a><span class="w">    </span><span class="s2">&quot;arn:aws:execute-api:us-west-2:123456789123:ab1c23def/v1/DELETE/collections/*/items/*&quot;</span>
+</span><span id="__span-26-10"><a id="__codelineno-26-10" name="__codelineno-26-10" href="#__codelineno-26-10"></a><span class="w">  </span><span class="p">],</span>
+</span><span id="__span-26-11"><a id="__codelineno-26-11" name="__codelineno-26-11" href="#__codelineno-26-11"></a><span class="w">  </span><span class="nt">&quot;Condition&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-26-12"><a id="__codelineno-26-12" name="__codelineno-26-12" href="#__codelineno-26-12"></a><span class="w">    </span><span class="nt">&quot;NotIpAddress&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-26-13"><a id="__codelineno-26-13" name="__codelineno-26-13" href="#__codelineno-26-13"></a><span class="w">      </span><span class="nt">&quot;aws:sourceIp&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;94.61.192.106&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;204.176.50.129&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;11.27.65.78&quot;</span><span class="p">]</span>
+</span><span id="__span-26-14"><a id="__codelineno-26-14" name="__codelineno-26-14" href="#__codelineno-26-14"></a><span class="w">    </span><span class="p">}</span>
+</span><span id="__span-26-15"><a id="__codelineno-26-15" name="__codelineno-26-15" href="#__codelineno-26-15"></a><span class="w">  </span><span class="p">}</span>
+</span><span id="__span-26-16"><a id="__codelineno-26-16" name="__codelineno-26-16" href="#__codelineno-26-16"></a><span class="p">}</span>
+</span></code></pre></div>
+<h3 id="aws-waf-rule-conflicts">AWS WAF Rule Conflicts<a class="headerlink" href="#aws-waf-rule-conflicts" title="Permanent link">&para;</a></h3>
+<p>Frequently, stac-server is deployed with AWS WAF protection. When making a POST request
+that only has the <code>limit</code> parameter in the body, a WAF SQL injection protection rule
+incurs a false positive and returns a Forbidden status code. This request is an example:</p>
+<div class="language-shell highlight"><pre><span></span><code><span id="__span-27-1"><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span><span class="si">${</span><span class="nv">HOST</span><span class="si">}</span>/search<span class="w"> </span>-d<span class="w"> </span><span class="s1">&#39;{&quot;limit&quot;: 1}&#39;</span>
+</span></code></pre></div>
+<p>This is also triggered when using pystac_client with no filtering parameters.</p>
+<p>The fix is to disable the WAF SQL injection rule, which is unnecessary because
+stac-server does not use SQL.</p>
+<h3 id="api-gateway-logging">API Gateway Logging<a class="headerlink" href="#api-gateway-logging" title="Permanent link">&para;</a></h3>
+<p>The example serverless.yml config contains disabled configuration for setting up
+API Gateway logging of API requests. More information about these configuration can be
+found in the <a href="https://www.serverless.com/framework/docs/providers/aws/events/apigateway#logs">Serverless Framework API Gateway Documentation</a>.</p>
+<p>The <code>executionLogging</code> setting causes logging of the actual execution of the API Gateway
+endpoints and backing Lambda, with <code>fullExecutionData</code> causing the entire request and
+response to be logged to CloudWatch, which can be expensive.</p>
+<p>The <code>accessLogging</code> setting logs the values specified in <code>format</code> to CloudWatch, which
+can be useful for computing metrics on usage for the API.</p>
+<h3 id="supporting-cross-cluster-search-and-replication">Supporting Cross-cluster Search and Replication<a class="headerlink" href="#supporting-cross-cluster-search-and-replication" title="Permanent link">&para;</a></h3>
+<p>OpenSearch support cross-cluster connections that can be configured to either allow search
+across the clusters, treating a remote cluster as if it were another group of nodes in the
+cluster, or configure indices to be replicated (continuously copied) from from one
+cluster to another.</p>
+<p>Configuring either cross-cluster behavior requires fine-grained access control.</p>
+<h4 id="cross-cluster-search">Cross-cluster Search<a class="headerlink" href="#cross-cluster-search" title="Permanent link">&para;</a></h4>
+<p>The AWS documentation for cross-cluster search can be found
+<a href="https://docs.aws.amazon.com/opensearch-service/latest/developerguide/cross-cluster-search.html">here</a>.</p>
+<ol>
+<li>Ensure fine-grained access control is enabled.</li>
+<li>Create a connection between the source and destination OpenSearch domains.</li>
+<li>Ensure there is a <code>es:ESCrossClusterGet</code> action in the destination's access policy.</li>
+<li>In the source stac-server, create a Collection for each collection to be mapped. This
+   must have the same id as the destination collection.</li>
+<li>For the source stac-server, configure a <code>COLLECTION_TO_INDEX_MAPPINGS</code>
+   environment variable with a stringified JSON object mapping the collection name to the
+   name of the index. For example, <code>{"collection1": "cluster2:collection1", "collection2": "cluster2:collection2"}</code> is a value mapping two collections through a
+   connection named <code>cluster2</code>. Deploy this change.</li>
+</ol>
+<h4 id="cross-cluster-replication">Cross-cluster Replication<a class="headerlink" href="#cross-cluster-replication" title="Permanent link">&para;</a></h4>
+<p>The AWS documentation for cross-cluster replication can be found
+<a href="https://docs.aws.amazon.com/opensearch-service/latest/developerguide/replication.html">here</a>.</p>
+<ol>
+<li>Ensure fine-grained access control is enabled (default as of v2.0.0)</li>
+<li>Create the replication connection in the source to the destination</li>
+<li>Create the collection in the source's stac-server instance</li>
+</ol>
+<h3 id="pre-and-post-hooks">Pre- and Post-Hooks<a class="headerlink" href="#pre-and-post-hooks" title="Permanent link">&para;</a></h3>
+<p>Stac-server supports two hooks into the request process: a pre-hook and a post-hook. These are each Lambda functions which, if configured, will be invoked by stac-server. It is assumed that the stac-server Lambda has been granted permission to invoke these Lambda functions, if configured.</p>
+<h4 id="pre-hook">Pre-Hook<a class="headerlink" href="#pre-hook" title="Permanent link">&para;</a></h4>
+<p>If the stac-server is deployed with the <code>PRE_HOOK</code> environment variable set to the name of a Lambda function, then that function will be called as the pre-hook.</p>
+<p>The event passed into the pre-hook Lambda will be an instance of an <a href="https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-lambda-proxy-integrations.html#api-gateway-simple-proxy-for-lambda-input-format">API Gateway Proxy Event</a>.</p>
+<p>If the return value from the pre-hook Lambda is an instance of an <a href="https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-lambda-proxy-integrations.html#api-gateway-simple-proxy-for-lambda-output-format">API Gateway Proxy Result</a>, then that response will immediately be returned to the client.</p>
+<p>If the return value of the pre-hook Lambda is an instance of an <a href="https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-lambda-proxy-integrations.html#api-gateway-simple-proxy-for-lambda-input-format">API Gateway Proxy Event</a>, then that event will be passed along to stac-server.</p>
+<p>If the pre-hook Lambda throws an exception, an internal server error will be returned to the client.</p>
+<p>The pre-hook Lambda configuration may reference any Lambda, not only one deployed as part
+of this stack. There is an example pre-hook Lambda that can be included with this stack,
+which provides an example rudimentary authorization mechanism via a hard-coded token.</p>
+<p>To enable this example pre-hook:</p>
+<ul>
+<li>Either (1) in package.json, pass the env var <code>BUILD_PRE_HOOK=true</code> in the <code>build</code>
+  command, or (2) modify bin/build.sh to always build the "pre-hook" package.</li>
+<li>In the serverless.yml file, uncomment the <code>preHook</code> function, the <code>preHook</code> IAM
+  permissions, and the environment variables <code>PRE_HOOK</code> and <code>API_KEYS_SECRET_ID</code></li>
+<li>Create a Secrets Manager secret with the name used in <code>API_KEYS_SECRET_ID</code> with
+  the keys as the strings allowed for API Keys and the values as an array <code>["write"]</code>.</li>
+<li>Build and deploy.</li>
+</ul>
+<h4 id="post-hook">Post-Hook<a class="headerlink" href="#post-hook" title="Permanent link">&para;</a></h4>
+<p>If the stac-server is deployed with the <code>POST_HOOK</code> environment variable set to the name of a Lambda function, then that function will be called as the post-hook.</p>
+<p>The event passed into the post-hook labmda will be the response from the stac-server, and will be an instance of an <a href="https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-lambda-proxy-integrations.html#api-gateway-simple-proxy-for-lambda-output-format">API Gateway Proxy Result</a>.</p>
+<p>The return value of the post-hook Lambda must be an instance of an <a href="https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-lambda-proxy-integrations.html#api-gateway-simple-proxy-for-lambda-output-format">API Gateway Proxy Result</a>.</p>
+<p>If the post-hook Lambda throws an exception, an internal server error will be returned to the client.</p>
+<p>The post-hook Lambda configuration may reference any Lambda, not only one deployed as part
+of this stack. There is an example post-hook Lambda that can be included with this stack,
+which does nothing, but shows how the API Lambda response can be modified.</p>
+<p>The post-hook Lambda configuration may reference any Lambda, not only one deployed as part
+of this stack. There is an example post-hook Lambda that can be included with this stack,
+which provides an example of how to interact with the response, but does not modify it.</p>
+<p>If compression is enabled with <code>ENABLE_RESPONSE_COMPRESSION</code>, you should ensure that the
+post-hook deployed handles compressed responses, or for the example post-hook lambda,
+disable compression.</p>
+<p>To enable this example post-hook:</p>
+<ul>
+<li>Modify bin/build.sh to not exclude the "post-hook" package from being built.</li>
+<li>In the serverless.yml file, uncomment the <code>postHook</code> function and the <code>postHook</code>
+  IAM permissions.</li>
+<li>Build and deploy.</li>
+</ul>
+<h4 id="request-flow">Request Flow<a class="headerlink" href="#request-flow" title="Permanent link">&para;</a></h4>
+<pre class="mermaid"><code>flowchart
+  client -- APIGatewayProxyEvent --&gt; pre-hook
+  pre-hook[pre-hook Lambda]
+  pre-hook -- APIGatewayProxyResult --&gt; client
+  pre-hook -- APIGatewayProxyEvent --&gt; stac-server
+  post-hook[post-hook Lambda]
+  stac-server -- APIGatewayProxyResult --&gt; post-hook
+  post-hook -- APIGatewayProxyResult --&gt; client</code></pre>
+<h4 id="notes">Notes<a class="headerlink" href="#notes" title="Permanent link">&para;</a></h4>
+<p>Lambda payloads and responses <a href="https://docs.aws.amazon.com/lambda/latest/dg/gettingstarted-limits.html#function-configuration-deployment-and-execution">must be less than 6 MB</a>. A larger payload will result in an internal server error being returned to the client.</p>
+<p>The outputs of the pre- and post-hooks are validated and, if they don't comply with the defined schemas, an internal server error will be returned to the client. Information about the invalid event, as well as details about the parsing errors, will be logged to CloudWatch.</p>
+<h2 id="migration-notes">Migration Notes<a class="headerlink" href="#migration-notes" title="Permanent link">&para;</a></h2>
+<h3 id="warnings">Warnings<a class="headerlink" href="#warnings" title="Permanent link">&para;</a></h3>
+<ul>
+<li>When upgrading to at least OpenSearch 2.7, there seems to be some low-level problem
+  in the Lucene data storage that is a problem with indices created in some but not all
+  versions older
+  than 2.7. Indices created on the latest version in Fall of 2023 were not affected, but
+  indices created is some previous version or versions are.
+  After upgrading to 2.7, items may fail with the message reason "cannot
+  change field \"geometry\" from doc values type=NONE to inconsistent doc values
+  type=BINARY". There is no publicly-available information about this being a problem.
+  The solution is to create a new index by creating a new collection with a different
+  name, reindex the existing index into the newly-created index, delete and re-created
+  the existing index by creating a collection, and reindex back into the index.</li>
+</ul>
+<h3 id="410">4.1.0<a class="headerlink" href="#410" title="Permanent link">&para;</a></h3>
+<h4 id="thumbnails-feature-disabled-by-default">Thumbnails feature disabled by default<a class="headerlink" href="#thumbnails-feature-disabled-by-default" title="Permanent link">&para;</a></h4>
+<p>The thumbnails behavior is now disabled by default, and can be enabled with
+<code>ENABLE_THUMBNAILS</code> = <code>true</code>.</p>
+<h3 id="400">4.0.0<a class="headerlink" href="#400" title="Permanent link">&para;</a></h3>
+<h4 id="context-extension-disabled-by-default">Context Extension disabled by default<a class="headerlink" href="#context-extension-disabled-by-default" title="Permanent link">&para;</a></h4>
+<p>Context Extension is now disabled by default, and can be enabled with ENABLE_CONTEXT_EXTENSION
+env var. Usage of the "context" object "limit", "matched", and "returned" fields can be replaced
+with the root-level fields "numberMatched" and "numberReturned".</p>
+<h4 id="node-22-update">Node 22 update<a class="headerlink" href="#node-22-update" title="Permanent link">&para;</a></h4>
+<p>The default Lambda deployment environment is now Node 22.</p>
+<p>To update the deployment to use Node 22, modify the serverless config file value
+<code>provider.runtime</code> to be <code>nodejs22.x</code> and the application re-deployed.</p>
+<h4 id="hidden-collections-filter">Hidden collections filter<a class="headerlink" href="#hidden-collections-filter" title="Permanent link">&para;</a></h4>
+<p>To all endpoints that depend on collections, there is now support for a query parameter
+(GET) or body field (POST) <code>_collections</code> that will filter to only those collections, but
+will not reveal that in link contents. This is useful for the application of permissions
+to only certain collections.</p>
+<h3 id="3100">3.10.0<a class="headerlink" href="#3100" title="Permanent link">&para;</a></h3>
+<h4 id="node-20-update">Node 20 update<a class="headerlink" href="#node-20-update" title="Permanent link">&para;</a></h4>
+<p>The default Lambda deployment environment is now Node 20. The major difference between
+the Node 18 and Node 20 Lambda environment is the update of the underlying Linux version
+from Amazon Linux 2 to Amazon Linux 2023.</p>
+<p>To update the deployment to use Node 20, modify the serverless config file value
+<code>provider.runtime</code> to be <code>nodejs20.x</code> and the application re-deployed.</p>
+<h3 id="310">3.1.0<a class="headerlink" href="#310" title="Permanent link">&para;</a></h3>
+<h4 id="opensearch-version-211">OpenSearch Version 2.11<a class="headerlink" href="#opensearch-version-211" title="Permanent link">&para;</a></h4>
+<ul>
+<li>Update the <code>EngineVersion</code> setting in the serverless config file to <code>OpenSearch_2.11</code>
+  and re-deploy</li>
+</ul>
+<h3 id="300">3.0.0<a class="headerlink" href="#300" title="Permanent link">&para;</a></h3>
+<h4 id="node-18-update">Node 18 update<a class="headerlink" href="#node-18-update" title="Permanent link">&para;</a></h4>
+<p>The default Lambda deployment environment is now Node 18. The major difference between
+the Node 16 and Node 18 Lambda environment is that the Node 16 env includes AWS SDK
+for JS v2, and Node 18 includes v3. This code has been updated to use v3, so the
+Node 18 environment must be used, or the build must be modified to install the v3 libraries.</p>
+<p>To update the deployment to use Node 18, modify the serverless config file value
+<code>provider.runtime</code> to be <code>nodejs18.x</code> and the application re-deployed.</p>
+<h3 id="240">2.4.0<a class="headerlink" href="#240" title="Permanent link">&para;</a></h3>
+<h4 id="opensearch-version-29">OpenSearch Version 2.9<a class="headerlink" href="#opensearch-version-29" title="Permanent link">&para;</a></h4>
+<ul>
+<li>Update the <code>EngineVersion</code> setting in the serverless config file to <code>OpenSearch_2.9</code>
+  and re-deploy</li>
+</ul>
+<h3 id="230">2.3.0<a class="headerlink" href="#230" title="Permanent link">&para;</a></h3>
+<h4 id="opensearch-version-27">OpenSearch Version 2.7<a class="headerlink" href="#opensearch-version-27" title="Permanent link">&para;</a></h4>
+<ul>
+<li>Update the <code>EngineVersion</code> setting in the serverless config file to <code>OpenSearch_2.7</code>
+  and re-deploy</li>
+</ul>
+<h3 id="0x-or-1x-2x">0.x or 1.x -&gt; 2.x<a class="headerlink" href="#0x-or-1x-2x" title="Permanent link">&para;</a></h3>
+<h4 id="fine-grained-access-control">Fine-grained Access Control<a class="headerlink" href="#fine-grained-access-control" title="Permanent link">&para;</a></h4>
+<p>As of 2.0.0, only OpenSearch is supported and only using fine-grained access control.
+It is recommended to follow the migration path to upgrade to fine-grained access control
+first and then upgrade to stac-server 2.x.</p>
+<h4 id="enabling-post-ingest-sns-publishing">Enabling Post-ingest SNS publishing<a class="headerlink" href="#enabling-post-ingest-sns-publishing" title="Permanent link">&para;</a></h4>
+<p>stac-server now has the ability to publish all ingested entities (Items and Collections)
+to an SNS topic. Follow these steps to add this to an existing deployment. These
+configurations are also in the serverless.example.yml file, so reference that if it is
+unclear exactly where to add this in your config.</p>
+<p>The following changes should be added to the serverless.yml file.</p>
+<p>Explicitly set the provider/environment setting for STAC_API_URL so the ingested entities
+published to the topic will have their link hrefs set correctly. If this is not set,
+the entities will still be published, with with incorrect link hrefs.</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-28-1"><a id="__codelineno-28-1" name="__codelineno-28-1" href="#__codelineno-28-1"></a>STAC_API_URL: &quot;https://some-stac-server.com&quot;
+</span></code></pre></div>
+<p>Add the SNS topic resource:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-29-1"><a id="__codelineno-29-1" name="__codelineno-29-1" href="#__codelineno-29-1"></a>postIngestTopic:
+</span><span id="__span-29-2"><a id="__codelineno-29-2" name="__codelineno-29-2" href="#__codelineno-29-2"></a>  Type: AWS::SNS::Topic
+</span><span id="__span-29-3"><a id="__codelineno-29-3" name="__codelineno-29-3" href="#__codelineno-29-3"></a>  Properties:
+</span><span id="__span-29-4"><a id="__codelineno-29-4" name="__codelineno-29-4" href="#__codelineno-29-4"></a>    TopicName: ${self:service}-${self:provider.stage}-post-ingest
+</span></code></pre></div>
+<p>For the <code>ingest</code> Lambda resource definition, configure the ARN to publish to by adding:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-30-1"><a id="__codelineno-30-1" name="__codelineno-30-1" href="#__codelineno-30-1"></a>environment:
+</span><span id="__span-30-2"><a id="__codelineno-30-2" name="__codelineno-30-2" href="#__codelineno-30-2"></a>  POST_INGEST_TOPIC_ARN: !Ref postIngestTopic
+</span></code></pre></div>
+<p>Add IAM permissions with the statement:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-31-1"><a id="__codelineno-31-1" name="__codelineno-31-1" href="#__codelineno-31-1"></a>- Effect: Allow
+</span><span id="__span-31-2"><a id="__codelineno-31-2" name="__codelineno-31-2" href="#__codelineno-31-2"></a>  Action:
+</span><span id="__span-31-3"><a id="__codelineno-31-3" name="__codelineno-31-3" href="#__codelineno-31-3"></a>    - sns:Publish
+</span><span id="__span-31-4"><a id="__codelineno-31-4" name="__codelineno-31-4" href="#__codelineno-31-4"></a>  Resource:
+</span><span id="__span-31-5"><a id="__codelineno-31-5" name="__codelineno-31-5" href="#__codelineno-31-5"></a>    Fn::GetAtt: [postIngestTopic, TopicArn]
+</span></code></pre></div>
+<h3 id="04x-05x">0.4.x -&gt; 0.5.x<a class="headerlink" href="#04x-05x" title="Permanent link">&para;</a></h3>
+<h4 id="elasticsearch-to-opensearch-migration">Elasticsearch to OpenSearch Migration<a class="headerlink" href="#elasticsearch-to-opensearch-migration" title="Permanent link">&para;</a></h4>
+<p>By default, a new deployment of 0.5.x will use OpenSearch instead of Elasticsearch. There
+are three options if you have an existing deployment that uses Elasticsearch:</p>
+<ol>
+<li>Use stac-server in compatibility mode</li>
+<li>Add to serverless.yml environment variables <code>ES_COMPAT_MODE: "true"</code> and retain the
+      existing Elasticsearch 7.10 resource description.</li>
+<li>Manage the Elasticsearch/OpenSearch domain outside the stac-server serverless deployment.</li>
+<li>With the 0.4.x stac-server code, add <code>DeletionPolicy: Retain</code> to the <code>AWS::Elasticsearch::Domain</code> resource</li>
+<li>Deploy the stack to update this property in the deployed CloudFormation Stack.</li>
+<li>Remove the <code>AWS::Elasticsearch::Domain</code> resource from serverless.yml, modify all of the variables that were previously dynamically populated by the Elasticsearch resource values to be hard-coded, and re-deploy.</li>
+<li>The Elasticsearch domain is now independent of the CF Stack.</li>
+<li>With the 0.5.x stac-server code, update the serverless.yml environment variable <code>ES_COMPAT_MODE: "true"</code></li>
+<li>Deploy the 0.5.x stac-server code with the updated serverless.yml file</li>
+<li>Through the AWS Console, upgrade the OpenSearch Service domain from Elasticsearch 7.10
+      to OpenSearch 1.3, retaining the compatibilty mode enabled configuration.</li>
+<li>Upgrade the OpenSearch 1.3 domain to OpenSearch 2.5.</li>
+<li>Re-deploy the stack without the ES_COMPAT_MODE environment variable set.</li>
+<li>(Preferred) Disconnect the Elasticsearch domain from the stac-server CF Stack, deploy a new stac-server CF Stack,
+   upgrade the Elasticsearch domain to OpenSearch, and connect the domain to the new CF Stack.
+   This is described below.</li>
+</ol>
+<p>Additionally, the <code>ES_HOST</code> variable used in the serverless.yml file has been
+renamed <code>OPENSEARCH_HOST</code>.</p>
+<h4 id="preferred-elasticsearch-to-opensearch-migration-process">Preferred Elasticsearch to OpenSearch Migration Process<a class="headerlink" href="#preferred-elasticsearch-to-opensearch-migration-process" title="Permanent link">&para;</a></h4>
+<p><strong>Note! The migration must be done carefully to avoid losing the database!</strong></p>
+<p>The major part of this migration is the use of OpenSearch 2.5 instead of Elasticsearch
+7.10. Confusingly, both of these are options in the AWS OpenSearch Service, but the Elasticsearch option
+is no longer being updated by AWS in favor of OpenSearch.</p>
+<p>The migration generally follows the outline in <a href="https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-opensearchservice-domain.html#aws-resource-opensearchservice-domain--remarks">here</a>. The underlying problem being solved
+here is that the CloudFormation resource AWS::Elasticsearch::Domain is used for Elasticsearch,
+but AWS::OpenSearchService::Domain is used for OpenSearch, and a CloudFormation update
+can't "migrate" between these resource types. So, the approach is to upgrade the domain
+to OpenSearch in compatibility mode, then clone the CloudFormation Stack, and import
+the OpenSearch domain into it.</p>
+<ol>
+<li>With the 0.4.x codebase, change the serverless.yml file to add <code>DeletionPolicy: Retain</code> and <code>UpdateReplacePolicy: Retain</code> to the <code>AWS::Elasticsearch::Domain</code> definition at the same level as the <code>Type</code> and deploy. See instructions for deploying <a href="https://github.com/stac-utils/stac-server/blob/main/README.md#deployment">here</a>.</li>
+</ol>
+<div class="language-yaml highlight"><pre><span></span><code><span id="__span-32-1"><a id="__codelineno-32-1" name="__codelineno-32-1" href="#__codelineno-32-1"></a><span class="nt">Type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">AWS::Elasticsearch::Domain</span>
+</span><span id="__span-32-2"><a id="__codelineno-32-2" name="__codelineno-32-2" href="#__codelineno-32-2"></a><span class="nt">DeletionPolicy</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Retain</span>
+</span><span id="__span-32-3"><a id="__codelineno-32-3" name="__codelineno-32-3" href="#__codelineno-32-3"></a><span class="nt">UpdateReplacePolicy</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Retain</span>
+</span><span id="__span-32-4"><a id="__codelineno-32-4" name="__codelineno-32-4" href="#__codelineno-32-4"></a><span class="nt">Properties</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">. . .</span>
+</span></code></pre></div>
+<ol>
+<li>
+<p>The existing Elasticsearch domain must be manually migrated to OpenSearch. Prior to
+   re-deploying the stack, use the AWS Console to manually upgrade the
+   Elasticsearch domain (<code>Actions-&gt;Upgrade</code>) to OpenSearch 1.3. Select "Enable
+   compatibility mode" to support the existing stac-server 0.4.x code using the Elasticsearch
+   JavaScript client library (@elastic/elasticsearch version 7.9.0). After this upgrade to
+   OpenSearch 1.3, then upgrade the domain to OpenSearch 2.5.</p>
+</li>
+<li>
+<p>Create a clone of the stac-server 0.5.x code. Copy and update the serverless.yml file used for the 0.4.0 deployment with these changes:</p>
+</li>
+<li>
+<p><code>ElasticSearchInstance</code> should be renamed to <code>OpenSearchInstance</code></p>
+</li>
+<li>The <code>Type</code> of this resource should be changed from <code>AWS::Elasticsearch::Domain</code> to
+    <code>AWS::OpenSearchService::Domain</code></li>
+<li><code>ElasticsearchClusterConfig</code> is now <code>ClusterConfig</code></li>
+<li><code>InstanceType</code> values have changed, e.g., t3.small.elasticsearch is now t3.small.search</li>
+<li><code>ElasticsearchVersion</code> is replaced with <code>EngineVersion</code> and set to <code>OpenSearch_2.5</code></li>
+<li><code>EsEndpoint</code> should be renamed to <code>OpenSearchEndpoint</code> and the exported name suffixed
+  with <code>-os-endpoint</code> instead of <code>-es-endpoint</code></li>
+<li>
+<p>Environment variable <code>STAC_API_VERSION</code> should be removed to instead defer to the current default version</p>
+</li>
+<li>
+<p>The <code>DomainName</code> value
+  <strong>must</strong> remain the same as it is for the current deployment so
+  the CloudFormation deployment will import the existing resource. Instead of a parameterized
+  value of <code>${self:service}-${self:provider.stage}</code> as in the example serverless.yml file,
+  it would have a hard-coded service name and <code>-es</code> suffix, e.g., <code>my-stac-server-${self:provider.stage}-es</code>.</p>
+</li>
+<li>
+<p>Note: these changes can be checked against the <a href="https://github.com/stac-utils/stac-server/blob/main/serverless.example.yml">serverless.example.yml</a> file.</p>
+</li>
+<li>
+<p>Run <code>npm run package</code> to generate the CloudFormation templates in the <code>.serverless</code> directory.
+   Extract from the file <code>.serverless/cloudformation-template-update-stack.json</code> a template
+   that only has the OpenSearchInstance resource in it. For example:</p>
+</li>
+</ol>
+<div class="language-json highlight"><pre><span></span><code><span id="__span-33-1"><a id="__codelineno-33-1" name="__codelineno-33-1" href="#__codelineno-33-1"></a><span class="p">{</span>
+</span><span id="__span-33-2"><a id="__codelineno-33-2" name="__codelineno-33-2" href="#__codelineno-33-2"></a><span class="w">  </span><span class="nt">&quot;AWSTemplateFormatVersion&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2010-09-09&quot;</span><span class="p">,</span>
+</span><span id="__span-33-3"><a id="__codelineno-33-3" name="__codelineno-33-3" href="#__codelineno-33-3"></a><span class="w">  </span><span class="nt">&quot;Description&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;A STAC API running on stac-server&quot;</span><span class="p">,</span>
+</span><span id="__span-33-4"><a id="__codelineno-33-4" name="__codelineno-33-4" href="#__codelineno-33-4"></a><span class="w">  </span><span class="nt">&quot;Resources&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-33-5"><a id="__codelineno-33-5" name="__codelineno-33-5" href="#__codelineno-33-5"></a><span class="w">    </span><span class="nt">&quot;OpenSearchInstance&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-33-6"><a id="__codelineno-33-6" name="__codelineno-33-6" href="#__codelineno-33-6"></a><span class="w">      </span><span class="nt">&quot;Type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;AWS::OpenSearchService::Domain&quot;</span><span class="p">,</span>
+</span><span id="__span-33-7"><a id="__codelineno-33-7" name="__codelineno-33-7" href="#__codelineno-33-7"></a><span class="w">      </span><span class="nt">&quot;DeletionPolicy&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Retain&quot;</span><span class="p">,</span>
+</span><span id="__span-33-8"><a id="__codelineno-33-8" name="__codelineno-33-8" href="#__codelineno-33-8"></a><span class="w">      </span><span class="nt">&quot;UpdateReplacePolicy&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Retain&quot;</span><span class="p">,</span>
+</span><span id="__span-33-9"><a id="__codelineno-33-9" name="__codelineno-33-9" href="#__codelineno-33-9"></a><span class="w">      </span><span class="nt">&quot;UpdatePolicy&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-33-10"><a id="__codelineno-33-10" name="__codelineno-33-10" href="#__codelineno-33-10"></a><span class="w">        </span><span class="nt">&quot;EnableVersionUpgrade&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span>
+</span><span id="__span-33-11"><a id="__codelineno-33-11" name="__codelineno-33-11" href="#__codelineno-33-11"></a><span class="w">      </span><span class="p">},</span>
+</span><span id="__span-33-12"><a id="__codelineno-33-12" name="__codelineno-33-12" href="#__codelineno-33-12"></a><span class="w">      </span><span class="nt">&quot;Properties&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-33-13"><a id="__codelineno-33-13" name="__codelineno-33-13" href="#__codelineno-33-13"></a><span class="w">        </span><span class="nt">&quot;DomainName&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;my-stac-server-dev-es&quot;</span><span class="p">,</span>
+</span><span id="__span-33-14"><a id="__codelineno-33-14" name="__codelineno-33-14" href="#__codelineno-33-14"></a><span class="w">        </span><span class="nt">&quot;EBSOptions&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-33-15"><a id="__codelineno-33-15" name="__codelineno-33-15" href="#__codelineno-33-15"></a><span class="w">          </span><span class="nt">&quot;EBSEnabled&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+</span><span id="__span-33-16"><a id="__codelineno-33-16" name="__codelineno-33-16" href="#__codelineno-33-16"></a><span class="w">          </span><span class="nt">&quot;VolumeType&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;gp2&quot;</span><span class="p">,</span>
+</span><span id="__span-33-17"><a id="__codelineno-33-17" name="__codelineno-33-17" href="#__codelineno-33-17"></a><span class="w">          </span><span class="nt">&quot;VolumeSize&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">35</span>
+</span><span id="__span-33-18"><a id="__codelineno-33-18" name="__codelineno-33-18" href="#__codelineno-33-18"></a><span class="w">        </span><span class="p">},</span>
+</span><span id="__span-33-19"><a id="__codelineno-33-19" name="__codelineno-33-19" href="#__codelineno-33-19"></a><span class="w">        </span><span class="nt">&quot;ClusterConfig&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-33-20"><a id="__codelineno-33-20" name="__codelineno-33-20" href="#__codelineno-33-20"></a><span class="w">          </span><span class="nt">&quot;InstanceType&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;t3.small.search&quot;</span><span class="p">,</span>
+</span><span id="__span-33-21"><a id="__codelineno-33-21" name="__codelineno-33-21" href="#__codelineno-33-21"></a><span class="w">          </span><span class="nt">&quot;InstanceCount&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">2</span><span class="p">,</span>
+</span><span id="__span-33-22"><a id="__codelineno-33-22" name="__codelineno-33-22" href="#__codelineno-33-22"></a><span class="w">          </span><span class="nt">&quot;DedicatedMasterEnabled&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
+</span><span id="__span-33-23"><a id="__codelineno-33-23" name="__codelineno-33-23" href="#__codelineno-33-23"></a><span class="w">          </span><span class="nt">&quot;ZoneAwarenessEnabled&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span>
+</span><span id="__span-33-24"><a id="__codelineno-33-24" name="__codelineno-33-24" href="#__codelineno-33-24"></a><span class="w">        </span><span class="p">},</span>
+</span><span id="__span-33-25"><a id="__codelineno-33-25" name="__codelineno-33-25" href="#__codelineno-33-25"></a><span class="w">        </span><span class="nt">&quot;EngineVersion&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;OpenSearch_2.3&quot;</span><span class="p">,</span>
+</span><span id="__span-33-26"><a id="__codelineno-33-26" name="__codelineno-33-26" href="#__codelineno-33-26"></a><span class="w">        </span><span class="nt">&quot;DomainEndpointOptions&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-33-27"><a id="__codelineno-33-27" name="__codelineno-33-27" href="#__codelineno-33-27"></a><span class="w">          </span><span class="nt">&quot;EnforceHTTPS&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span>
+</span><span id="__span-33-28"><a id="__codelineno-33-28" name="__codelineno-33-28" href="#__codelineno-33-28"></a><span class="w">        </span><span class="p">}</span>
+</span><span id="__span-33-29"><a id="__codelineno-33-29" name="__codelineno-33-29" href="#__codelineno-33-29"></a><span class="w">      </span><span class="p">}</span>
+</span><span id="__span-33-30"><a id="__codelineno-33-30" name="__codelineno-33-30" href="#__codelineno-33-30"></a><span class="w">    </span><span class="p">}</span>
+</span><span id="__span-33-31"><a id="__codelineno-33-31" name="__codelineno-33-31" href="#__codelineno-33-31"></a><span class="w">  </span><span class="p">}</span>
+</span><span id="__span-33-32"><a id="__codelineno-33-32" name="__codelineno-33-32" href="#__codelineno-33-32"></a><span class="p">}</span>
+</span></code></pre></div>
+<ol>
+<li>
+<p>Within CloudFormation, choose <code>Create stack</code> and <code>With existing resources (import resources)</code>.
+   Upload the template that contains only the OpenSearch resource. Choose a new stack name for this similar to the old one, e.g., <code>my-stac-server-2-{deploy-stage}</code> and update <code>service</code> name in the serverless.yml file with this name without the deploy stage e.g., <code>my-stac-server-2</code>. When prompted for the name of the OpenSearch Domain, put in the name of the existing one, e.g., <code>my-stac-server-dev-es</code>.</p>
+</li>
+<li>
+<p>Deploy the new stack with <code>npm run deploy -- --stage {deploy-stage}</code>. This should appear as an update to the CloudFormation stack that was just created manually, and should use the existing OpenSearch domain.</p>
+</li>
+<li>
+<p>Switch the DNS entry for the domain name to the API Gateway endpoint for the new Stack. See instructions <a href="https://github.com/stac-utils/stac-server/blob/main/README.md#proxying-stac-server-through-cloudfront">here</a>.</p>
+</li>
+<li>
+<p>Double-check that the <code>DeletionPolicy: Retain</code> is set on the old Stack for the Elasticsearch/OpenSearch resource, and then delete the old Stack.</p>
+</li>
+</ol>
+<h4 id="granting-access-for-thumbnails">Granting Access for Thumbnails<a class="headerlink" href="#granting-access-for-thumbnails" title="Permanent link">&para;</a></h4>
+<p>The new experimental endpoint <code>/collections/{c_id}/items/{item_id}/thumbnail</code> will
+redirect to a URL providing a thumbnail as determined by the assets in an item. This is
+enabled only if <code>ENABLE_THUMBNAILS</code> is set to <code>true</code>. If the
+href for this is an AWS S3 ARN, IAM permissions must be granted for the API Lambda to
+generate a pre-signed HTTP URL instead. For example:</p>
+<div class="language-yaml highlight"><pre><span></span><code><span id="__span-34-1"><a id="__codelineno-34-1" name="__codelineno-34-1" href="#__codelineno-34-1"></a><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">Effect</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Allow</span>
+</span><span id="__span-34-2"><a id="__codelineno-34-2" name="__codelineno-34-2" href="#__codelineno-34-2"></a><span class="w">  </span><span class="nt">Action</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">s3:GetObject</span>
+</span><span id="__span-34-3"><a id="__codelineno-34-3" name="__codelineno-34-3" href="#__codelineno-34-3"></a><span class="w">  </span><span class="nt">Resource</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;arn:aws:s3:::usgs-landsat/*&#39;</span>
+</span></code></pre></div>
+<h3 id="03x-04x">0.3.x -&gt; 0.4.x<a class="headerlink" href="#03x-04x" title="Permanent link">&para;</a></h3>
+<p>Create a new deployment, copy the elasticsearch database, and rename indexes.</p>
+<h4 id="elasticsearch-upgrade-from-79-to-710">Elasticsearch upgrade from 7.9 to 7.10<a class="headerlink" href="#elasticsearch-upgrade-from-79-to-710" title="Permanent link">&para;</a></h4>
+<p>The Serverless Framework supports provisioning AWS resources, but it does not support updating existing resources. In 0.4, the default Elasticsearch version has been updated from 7.9 to 7.10. Continuing to use 7.9 should not cause any problems, but it recommended that you manually upgrade to 7.10 by going to <a href="https://console.aws.amazon.com/esv3/home">AWS Console - Amazon OpenSearch Service</a>, choosing the Elasticsearch domain used by your stac-server deployment (e.g., stac-server-{stage}-es), choose Upgrade from the Actions menu, and then upgrade to Elasticsearch 7.10.</p>
+<h4 id="disable-automatic-index-creation">Disable automatic index creation<a class="headerlink" href="#disable-automatic-index-creation" title="Permanent link">&para;</a></h4>
+<p>It is now recommended to <a href="#step-6-disable-automatic-index-creation">disable automatic index creation</a>.</p>
+<h4 id="validate-index-mappings">Validate index mappings<a class="headerlink" href="#validate-index-mappings" title="Permanent link">&para;</a></h4>
+<p>Elasticsearch indices each have a mapping applied that determines how the data is indexed and searched over.
+These mappings do not change the document data, but can change search behavior. One relevant mapping
+behavior is that by default, string fields are analyzed for full-text search. In most cases with STAC Items,
+values such as those in the <code>id</code> and <code>collection</code> fields should not be analyzed and should instead be searchable only
+by exact matches. In Elasticsearch, this is known as a <code>keyword</code> field type. Importantly, sorting may only be done over <code>keyword</code> typed fields. As of 0.4.0, the default sort is now by <code>properties.datetime</code>, then <code>id</code>, then <code>collection</code>, and results will not be returnd if any indices have the <code>id</code> or <code>collection</code> fields mapped as <code>text</code> instead of <code>keyword</code>.</p>
+<p>For each index (other than <code>collections</code>), use GET to retrieve the endpoint <code>GET /{collectionId}/_mapping</code>, and
+validate that <code>properties.datetime</code> type is <code>date</code>, and <code>id</code> and <code>collection</code> mappings are <code>keyword</code> (not <code>text</code> with a <code>keyword</code> subfield). For an AWS Opensearch Service instance, this can be done with a script similar to the one <a href="#step-6-disable-automatic-index-creation">here</a>.</p>
+<p>The results should look simliar to this:</p>
+<div class="language-json highlight"><pre><span></span><code><span id="__span-35-1"><a id="__codelineno-35-1" name="__codelineno-35-1" href="#__codelineno-35-1"></a><span class="p">{</span>
+</span><span id="__span-35-2"><a id="__codelineno-35-2" name="__codelineno-35-2" href="#__codelineno-35-2"></a><span class="w">  </span><span class="nt">&quot;my_collection_name&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-35-3"><a id="__codelineno-35-3" name="__codelineno-35-3" href="#__codelineno-35-3"></a><span class="w">    </span><span class="nt">&quot;mappings&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-35-4"><a id="__codelineno-35-4" name="__codelineno-35-4" href="#__codelineno-35-4"></a><span class="w">      </span><span class="nt">&quot;dynamic_templates&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+</span><span id="__span-35-5"><a id="__codelineno-35-5" name="__codelineno-35-5" href="#__codelineno-35-5"></a><span class="w">        </span><span class="err">...</span>
+</span><span id="__span-35-6"><a id="__codelineno-35-6" name="__codelineno-35-6" href="#__codelineno-35-6"></a><span class="w">        </span><span class="p">{</span>
+</span><span id="__span-35-7"><a id="__codelineno-35-7" name="__codelineno-35-7" href="#__codelineno-35-7"></a><span class="w">          </span><span class="nt">&quot;strings&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-35-8"><a id="__codelineno-35-8" name="__codelineno-35-8" href="#__codelineno-35-8"></a><span class="w">            </span><span class="nt">&quot;match_mapping_type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;string&quot;</span><span class="p">,</span>
+</span><span id="__span-35-9"><a id="__codelineno-35-9" name="__codelineno-35-9" href="#__codelineno-35-9"></a><span class="w">            </span><span class="nt">&quot;mapping&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-35-10"><a id="__codelineno-35-10" name="__codelineno-35-10" href="#__codelineno-35-10"></a><span class="w">              </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;keyword&quot;</span>
+</span><span id="__span-35-11"><a id="__codelineno-35-11" name="__codelineno-35-11" href="#__codelineno-35-11"></a><span class="w">            </span><span class="p">}</span>
+</span><span id="__span-35-12"><a id="__codelineno-35-12" name="__codelineno-35-12" href="#__codelineno-35-12"></a><span class="w">          </span><span class="p">}</span>
+</span><span id="__span-35-13"><a id="__codelineno-35-13" name="__codelineno-35-13" href="#__codelineno-35-13"></a><span class="w">        </span><span class="p">},</span>
+</span><span id="__span-35-14"><a id="__codelineno-35-14" name="__codelineno-35-14" href="#__codelineno-35-14"></a><span class="w">        </span><span class="err">...</span>
+</span><span id="__span-35-15"><a id="__codelineno-35-15" name="__codelineno-35-15" href="#__codelineno-35-15"></a><span class="w">      </span><span class="p">],</span>
+</span><span id="__span-35-16"><a id="__codelineno-35-16" name="__codelineno-35-16" href="#__codelineno-35-16"></a><span class="w">      </span><span class="nt">&quot;properties&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-35-17"><a id="__codelineno-35-17" name="__codelineno-35-17" href="#__codelineno-35-17"></a><span class="w">        </span><span class="err">....</span>
+</span><span id="__span-35-18"><a id="__codelineno-35-18" name="__codelineno-35-18" href="#__codelineno-35-18"></a><span class="w">        </span><span class="nt">&quot;id&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-35-19"><a id="__codelineno-35-19" name="__codelineno-35-19" href="#__codelineno-35-19"></a><span class="w">          </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;keyword&quot;</span>
+</span><span id="__span-35-20"><a id="__codelineno-35-20" name="__codelineno-35-20" href="#__codelineno-35-20"></a><span class="w">        </span><span class="p">},</span>
+</span><span id="__span-35-21"><a id="__codelineno-35-21" name="__codelineno-35-21" href="#__codelineno-35-21"></a><span class="w">        </span><span class="nt">&quot;collection&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-35-22"><a id="__codelineno-35-22" name="__codelineno-35-22" href="#__codelineno-35-22"></a><span class="w">          </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;keyword&quot;</span>
+</span><span id="__span-35-23"><a id="__codelineno-35-23" name="__codelineno-35-23" href="#__codelineno-35-23"></a><span class="w">        </span><span class="p">},</span>
+</span><span id="__span-35-24"><a id="__codelineno-35-24" name="__codelineno-35-24" href="#__codelineno-35-24"></a><span class="w">        </span><span class="err">....</span>
+</span><span id="__span-35-25"><a id="__codelineno-35-25" name="__codelineno-35-25" href="#__codelineno-35-25"></a><span class="w">        </span><span class="nt">&quot;properties&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-35-26"><a id="__codelineno-35-26" name="__codelineno-35-26" href="#__codelineno-35-26"></a><span class="w">          </span><span class="nt">&quot;properties&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-35-27"><a id="__codelineno-35-27" name="__codelineno-35-27" href="#__codelineno-35-27"></a><span class="w">            </span><span class="err">...</span>
+</span><span id="__span-35-28"><a id="__codelineno-35-28" name="__codelineno-35-28" href="#__codelineno-35-28"></a><span class="w">            </span><span class="nt">&quot;datetime&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-35-29"><a id="__codelineno-35-29" name="__codelineno-35-29" href="#__codelineno-35-29"></a><span class="w">              </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;date&quot;</span>
+</span><span id="__span-35-30"><a id="__codelineno-35-30" name="__codelineno-35-30" href="#__codelineno-35-30"></a><span class="w">            </span><span class="p">},</span>
+</span><span id="__span-35-31"><a id="__codelineno-35-31" name="__codelineno-35-31" href="#__codelineno-35-31"></a><span class="w">            </span><span class="err">...</span>
+</span><span id="__span-35-32"><a id="__codelineno-35-32" name="__codelineno-35-32" href="#__codelineno-35-32"></a><span class="w">          </span><span class="p">}</span>
+</span><span id="__span-35-33"><a id="__codelineno-35-33" name="__codelineno-35-33" href="#__codelineno-35-33"></a><span class="w">        </span><span class="p">},</span>
+</span><span id="__span-35-34"><a id="__codelineno-35-34" name="__codelineno-35-34" href="#__codelineno-35-34"></a><span class="w">        </span><span class="err">...</span>
+</span><span id="__span-35-35"><a id="__codelineno-35-35" name="__codelineno-35-35" href="#__codelineno-35-35"></a><span class="w">      </span><span class="p">}</span>
+</span><span id="__span-35-36"><a id="__codelineno-35-36" name="__codelineno-35-36" href="#__codelineno-35-36"></a><span class="w">    </span><span class="p">}</span>
+</span><span id="__span-35-37"><a id="__codelineno-35-37" name="__codelineno-35-37" href="#__codelineno-35-37"></a><span class="w">  </span><span class="p">}</span>
+</span><span id="__span-35-38"><a id="__codelineno-35-38" name="__codelineno-35-38" href="#__codelineno-35-38"></a><span class="p">}</span>
+</span></code></pre></div>
+<p>If this is not the case, the easiest solution to fix it is to:</p>
+<ol>
+<li>Deploy a 0.4.0 instance.</li>
+<li>Backup and restore the 0.3.0 instance's Elasticsearch indices to the 0.4.0 instances's
+   Elasticsearch database.</li>
+<li>Create a collection via ingest with a new collection name similar to the existing one (e.g., if index foo exists, create foo_new).</li>
+<li>Reindex from the the existing index (foo) to the the new one (foo_new).</li>
+<li>Delete the exiting index and rename the new one to the name of the formerly-existing one (e.g. foo_new -&gt; foo).</li>
+</ol>
+<h2 id="next-steps">Next Steps<a class="headerlink" href="#next-steps" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Guides &gt; <a href="../usage/">Usage</a></strong> - Learn how to ingest data and use the API</li>
+<li><strong>Guides &gt; <a href="../configuration/">Configuration</a></strong> - Configure collections, extensions, and environment variables</li>
+<li><strong>Reference &gt; <a href="../reference/architecture/">Architecture</a></strong> - Understand the system architecture</li>
+</ul>
+
+
+
+
+
+
+
+  
+    
+  
+  
+    
+  
+
+
+  <aside class="md-source-file">
+    
+      
+  <span class="md-source-file__fact">
+    <span class="md-icon" title="Last update">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
+    </span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="January 12, 2026 21:24:22 UTC">January 12, 2026</span>
+  </span>
+
+    
+    
+      
+  <span class="md-source-file__fact">
+    <span class="md-icon" title="Created">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M14.47 15.08 11 13V7h1.5v5.25l3.08 1.83c-.41.28-.79.62-1.11 1m-1.39 4.84c-.36.05-.71.08-1.08.08-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8c0 .37-.03.72-.08 1.08.69.1 1.33.32 1.92.64.1-.56.16-1.13.16-1.72 0-5.5-4.5-10-10-10S2 6.5 2 12s4.47 10 10 10c.59 0 1.16-.06 1.72-.16-.32-.59-.54-1.23-.64-1.92M18 15v3h-3v2h3v3h2v-3h3v-2h-3v-3z"/></svg>
+    </span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="January 12, 2026 21:24:22 UTC">January 12, 2026</span>
+  </span>
+
+    
+    
+    
+  </aside>
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../configuration/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Configuration">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                Configuration
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../reference/api/" class="md-footer__link md-footer__link--next" aria-label="Next: API Overview">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                API Overview
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; 2018-2025 STAC Utils Contributors
+    </div>
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/stac-utils/stac-server" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://hub.docker.com/r/stac-utils/stac-server" target="_blank" rel="noopener" title="hub.docker.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M349.9 236.3h-66.1v-59.4h66.1zm0-204.3h-66.1v60.7h66.1zm78.2 144.8H362v59.4h66.1zm-156.3-72.1h-66.1v60.1h66.1zm78.1 0h-66.1v60.1h66.1zm276.8 100c-14.4-9.7-47.6-13.2-73.1-8.4-3.3-24-16.7-44.9-41.1-63.7l-14-9.3-9.3 14c-18.4 27.8-23.4 73.6-3.7 103.8-8.7 4.7-25.8 11.1-48.4 10.7H2.4c-8.7 50.8 5.8 116.8 44 162.1 37.1 43.9 92.7 66.2 165.4 66.2 157.4 0 273.9-72.5 328.4-204.2 21.4.4 67.6.1 91.3-45.2 1.5-2.5 6.6-13.2 8.5-17.1zm-511.1-27.9h-66v59.4h66.1v-59.4zm78.1 0h-66.1v59.4h66.1zm78.1 0h-66.1v59.4h66.1zm-78.1-72.1h-66.1v60.1h66.1z"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.instant", "navigation.tracking", "navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.expand", "navigation.top", "navigation.footer", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate", "content.action.edit", "toc.follow"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"default": "latest", "provider": "mike"}}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

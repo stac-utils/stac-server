@@ -9,8 +9,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Changed
 
-- If an invalid sortby parameter is supplied, a 400 status is returned (instead of 500) with
-  a helpful error message.
+- **Documentation Overhaul**: Migrated all documentation to a new MkDocs-powered documentation website at [stac-utils.github.io/stac-server](https://stac-utils.github.io/stac-server/)
+  - Comprehensive documentation now organized into Getting Started, Guides, Reference, and About sections
+  - Removed top-level markdown files (ARCHITECTURE.md, USAGE.md, DEPLOYMENT.md, CONFIGURATION.md, CONTRIBUTING.md, SECURITY.md) - all content migrated to docs/
+  - Updated README.md to serve as GitHub landing page with links to full documentation
+  - If an invalid sortby parameter is supplied, a 400 status is returned (instead of 500) with
+    a helpful error message.
 
 ## [4.5.0]
 
@@ -444,7 +448,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Landing Page (root) now has links for both GET and POST methods of search link relation
 - The STAC API version is now 1.0.0-rc.2
 - AWS OpenSearch Service OpenSearch 2.3 is used as the default instead of Elasticsearch 7.10.
-  See [migration section in README.md](README.md#04x---05x).
+  See [migration section in README.md](https://github.com/stac-utils/stac-server/blob/main/README.md#04x---05x).
 - The serverless.example.yml file now has zone awareness enabled and an even number of
   Elasticsearch nodes
 - Upgrade serverless to 3.x

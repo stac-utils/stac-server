@@ -7,12 +7,13 @@ on:
 
 jobs:
   build-lambda-dist:
-    environment:
+    env:
       PRODUCTION: "true"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v4
+        id: setup-node
         with:
           node-version-file: ".nvmrc"
           cache: npm
@@ -23,11 +24,9 @@ jobs:
         run: npm install
       - name: Run build
         run: npm run build-lambda-dist
-      - name: Get node version
-        run: echo "NODE_VERSION=$(cat .nvmrc)" >> "$GITHUB_ENV"
       - name: Create zipfile path
         run: |
-          DIST_ZIP_PATH=$(printf "stac-server-lambda-dist_%s_node-%s.zip" $GITHUB_REF $NODE_VERSION)
+          DIST_ZIP_PATH=$(printf "stac-server-lambda-dist_%s_node-%s.zip" $GITHUB_REF_NAME ${{ steps.setup-node.outputs.node-version }})
           echo "DIST_ZIP_PATH=$DIST_ZIP_PATH" >> "$GITHUB_ENV"
       - name: Rename zipfiles
         run: |

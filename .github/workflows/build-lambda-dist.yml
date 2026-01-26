@@ -22,11 +22,15 @@ jobs:
         run: npm install -g npm@10
       - name: Install dependencies
         run: npm install
+      - name: Get stac-server version
+        run: echo "STAC_SERVER_VERSION=$(npm pkg get version | tr -d '\"')" >> "$GITHUB_ENV"
+      - name: Check that release tag name matches JS package version
+        run: test $STAC_SERVER_VERSION = $GITHUB_REF_NAME
       - name: Run build
         run: npm run build-lambda-dist
       - name: Create zipfile path
         run: |
-          DIST_ZIP_PATH=$(printf "stac-server-lambda-dist_%s_node-%s.zip" $GITHUB_REF_NAME ${{ steps.setup-node.outputs.node-version }})
+          DIST_ZIP_PATH=$(printf "stac-server-lambda-dist_%s_node-%s.zip" $STAC_SERVER_VERSION ${{ steps.setup-node.outputs.node-version }})
           echo "DIST_ZIP_PATH=$DIST_ZIP_PATH" >> "$GITHUB_ENV"
       - name: Rename zipfiles
         run: |

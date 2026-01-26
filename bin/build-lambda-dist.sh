@@ -2,4 +2,5 @@
 
 set -e
 
-(cd src/lambdas && webpack)
+cd src/lambdas
+webpack

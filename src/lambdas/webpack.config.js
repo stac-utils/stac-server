@@ -5,6 +5,9 @@ import CopyPlugin from 'copy-webpack-plugin'
 const __dirname = resolve()
 
 let mode = 'development'
+/**
+ * @type string | boolean
+ */
 let devtool = 'inline-source-map'
 
 if (process.env['PRODUCTION']) {

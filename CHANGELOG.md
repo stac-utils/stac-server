@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - Comprehensive documentation now organized into Getting Started, Guides, Reference, and About sections
   - Removed top-level markdown files (ARCHITECTURE.md, USAGE.md, DEPLOYMENT.md, CONFIGURATION.md, CONTRIBUTING.md, SECURITY.md) - all content migrated to docs/
   - Updated README.md to serve as GitHub landing page with links to full documentation
+  - Bbox queries outside of [-180, -90, 180, 90] return a 400 error
 
 ## [4.5.0]
 

@@ -385,3 +385,17 @@ test('GET /search with filter restriction returns filtered results', async (t) =
     t.is(r.body.features.length, 3)
   }
 })
+
+test('/search invalid bbox throws error', async (t) => {
+  const error = await t.throwsAsync(async () => t.context.api.client.get('search', {
+    searchParams: {
+      bbox: '-190,-90,180,90'
+    }
+  }))
+  t.is(error.response.statusCode, 400)
+  t.is(error.response.body.code, 'BadRequest')
+  t.regex(
+    error.response.body.description,
+    /Invalid bbox, extent should not exceed \[-180, -90, 180, 90\]/
+  )
+})

@@ -300,3 +300,21 @@ test('GET /collections/:collectionId/items with filter restriction', async (t) =
     t.is(r.body.features.length, 1)
   }
 })
+
+test('/GET /collections/:collectionId/items invalid bbox throws error', async (t) => {
+  const { collectionId } = t.context
+  const error = await t.throwsAsync(
+    async () => t.context.api.client.get(`collections/${collectionId}/items`, {
+      searchParams: {
+        bbox: '-190,-90,180,90'
+      }
+    })
+  )
+
+  t.is(error.response.statusCode, 400)
+  t.is(error.response.body.code, 'BadRequest')
+  t.regex(
+    error.response.body.description,
+    /Invalid bbox, extent should not exceed \[-180, -90, 180, 90\]/
+  )
+})

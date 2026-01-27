@@ -150,6 +150,20 @@ test('/search sort', async (t) => {
   t.is(response.features[0].id, 'LC80100102015082LGN00')
 })
 
+test('/search sort unqualified field names fails', async (t) => {
+  const error = await t.throwsAsync(async () => t.context.api.client.post('search', {
+    json: {
+      sortby: [{
+        field: 'datetime',
+        direction: 'desc'
+      }]
+    }
+  }))
+
+  t.is(error.response.statusCode, 400)
+  t.truthy(error.response.body.description.includes('Hint: `sortby` requires fully qualified identifiers'))
+})
+
 test('/search flattened collection properties', async (t) => {
   let response = await t.context.api.client.post('search', {
     json: {

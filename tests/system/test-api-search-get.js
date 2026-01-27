@@ -386,6 +386,15 @@ test('GET /search with filter restriction returns filtered results', async (t) =
   }
 })
 
+test('/search sort unqualified field names fails', async (t) => {
+  const error = await t.throwsAsync(async () => t.context.api.client.get('search', {
+    searchParams: { sortby: '-datetime' }
+  }))
+
+  t.is(error.response.statusCode, 400)
+  t.truthy(error.response.body.description.includes('Hint: `sortby` requires fully qualified identifiers'))
+})
+
 test('/search invalid bbox throws error', async (t) => {
   const error = await t.throwsAsync(async () => t.context.api.client.get('search', {
     searchParams: {

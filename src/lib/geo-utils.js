@@ -30,7 +30,7 @@ export const bboxToPolygon = function (bbox, fromString) {
 
     if ((bboxArray[0] < -180) || (bboxArray[1] < -90)
         || (bboxArray[2] > 180) || (bboxArray[3] > 90)) {
-        throw new ValidationError('Invalid bbox, extent should not exceed [-180, -90, 180, 90]')
+      throw new ValidationError('Invalid bbox, extent should not exceed [-180, -90, 180, 90]')
     }
 
     return extent(bboxArray).polygon()

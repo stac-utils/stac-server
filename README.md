@@ -70,13 +70,13 @@ Comprehensive documentation is available at **[stac-utils.github.io/stac-server]
 
 ### Quick Links
 
-- **[Getting Started](https://stac-utils.github.io/stac-server/getting-started/overview/)** - Installation and quick setup
-- **[Usage Guide](https://stac-utils.github.io/stac-server/usage/)** - Searching, filtering, aggregations, and more
-- **[Configuration](https://stac-utils.github.io/stac-server/configuration/)** - Environment variables and collection settings
-- **[Deployment](https://stac-utils.github.io/stac-server/deployment/)** - AWS deployment with Serverless Framework
-- **[API Reference](https://stac-utils.github.io/stac-server/reference/api/)** - Complete endpoint documentation
-- **[Architecture](https://stac-utils.github.io/stac-server/reference/architecture/)** - System design and data flows
-- **[Contributing](https://stac-utils.github.io/stac-server/development/contributing/)** - Development setup and guidelines
+- **[Getting Started](https://stac-utils.github.io/stac-server/latest/getting-started/overview/)** - Installation and quick setup
+- **[Usage Guide](https://stac-utils.github.io/stac-server/latest/usage/)** - Searching, filtering, aggregations, and more
+- **[Configuration](https://stac-utils.github.io/stac-server/latest/configuration/)** - Environment variables and collection settings
+- **[Deployment](https://stac-utils.github.io/stac-server/latest/deployment/)** - AWS deployment with Serverless Framework
+- **[API Reference](https://stac-utils.github.io/stac-server/latest/reference/api/)** - Complete endpoint documentation
+- **[Architecture](https://stac-utils.github.io/stac-server/latest/reference/architecture/)** - System design and data flows
+- **[Contributing](https://stac-utils.github.io/stac-server/latest/development/contributing/)** - Development setup and guidelines
 
 ### Supported Versions
 

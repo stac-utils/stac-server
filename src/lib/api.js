@@ -718,6 +718,15 @@ const searchItems = async function (
       let errorMessage
       if ('caused_by' in e) {
         errorMessage = JSON.stringify(e?.caused_by?.reason)
+      } else if ('root_cause' in e) {
+        const reason = e?.root_cause[0]?.reason
+        errorMessage = reason
+        if (reason.includes('No mapping found for')
+            && reason.includes('to sort on')) {
+          errorMessage += '. (Hint: `sortby` requires fully '
+                + 'qualified identifiers, e.g. `properties.datetime` '
+                + 'instead of `datetime`)'
+        }
       } else if (JSON.stringify(e).includes('failed to create query')) {
         errorMessage = `Query failed with invalid parameters: ${JSON.stringify(e)}`
       } else {

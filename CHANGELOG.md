@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - If an invalid sortby parameter is supplied, a 400 status is returned (instead of 500) with
     a helpful error message.
   - Bbox queries outside of [-180, -90, 180, 90] return a 400 error
+  - STAC Items passed to the ingest lambda require the collection field to be set
 
 ## [4.5.0]
 

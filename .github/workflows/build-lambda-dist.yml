@@ -25,7 +25,7 @@ jobs:
       - name: Get stac-server version
         run: echo "STAC_SERVER_VERSION=$(npm pkg get version | tr -d '\"')" >> "$GITHUB_ENV"
       - name: Check that release tag name matches JS package version
-        run: test $STAC_SERVER_VERSION = $GITHUB_REF_NAME
+        run: test "$STAC_SERVER_VERSION" = "$GITHUB_REF_NAME"
       - name: Run build
         run: npm run build-lambda-dist
       - name: Create zipfile path
@@ -34,7 +34,7 @@ jobs:
           echo "DIST_ZIP_PATH=$DIST_ZIP_PATH" >> "$GITHUB_ENV"
       - name: Rename zipfiles
         run: |
-          mv dist/lambda-dist/lambda-dist.zip $DIST_ZIP_PATH
+          mv dist/lambda-dist/lambda-dist.zip "$DIST_ZIP_PATH"
       - name: Add to release
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags')

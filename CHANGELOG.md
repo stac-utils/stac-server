@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+
+- New Github Action that attaches zip archives of lambdas to releases.
 ### Changed
 
 - **Documentation Overhaul**: Migrated all documentation to a new MkDocs-powered documentation website at [stac-utils.github.io/stac-server](https://stac-utils.github.io/stac-server/)

@@ -4,11 +4,14 @@ import ZipPlugin from 'zip-webpack-plugin'
 const __dirname = resolve()
 
 let mode = 'development'
+/**
+ * @type string | boolean
+ */
 let devtool = 'inline-source-map'
 
 if (process.env['PRODUCTION']) {
   mode = 'production'
-  devtool = 'false'
+  devtool = false
 }
 
 export default {

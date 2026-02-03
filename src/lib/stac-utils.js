@@ -16,7 +16,7 @@ export function isItem(record) {
     if ('collection' in record) {
       return true
     }
-    throw new InvalidSTACItemException('STAC Item must specify a collection')
+    throw new InvalidSTACItemException('STAC Items must include a "collection" field')
   }
   return false
 }

@@ -519,7 +519,7 @@ function buildSearchAfter(parameters) {
 function buildFieldsFilter(parameters) {
   const { fields } = parameters
   let _sourceIncludes = []
-  if (parameters.hasOwnProperty('fields')) {
+  if (!parameters.hasOwnProperty('fields')) {
     // if fields parameters supplied at all, start with this initial set, otherwise return all
     _sourceIncludes = [
       'id',

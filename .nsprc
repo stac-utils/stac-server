@@ -1,2 +1,10 @@
 {
+    "1112862": {
+        "active": true,
+        "notes": "Only used in build steps, so DoS risk is irrelevant"
+    },
+    "1112708": {
+        "active": true,
+        "notes": "Only used in build steps, so DoS risk is irrelevant"
+    }
 }

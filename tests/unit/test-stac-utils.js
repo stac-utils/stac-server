@@ -1,13 +1,15 @@
 // @ts-nocheck
 
 import test from 'ava'
-import { getStartAndEndDates } from '../../src/lib/stac-utils.js'
+import { getStartAndEndDates, InvalidSTACItemException, isItem } from '../../src/lib/stac-utils.js'
+import { loadFixture } from '../helpers/utils.js'
 
 test('getStartandEndDates uses item datetime', (t) => {
   const stringDate = '1955-11-05T13:00:00Z'
   const { startDate, endDate } = getStartAndEndDates({
     type: 'Feature',
     id: 'test',
+    collection: 'test',
     properties: {
       datetime: stringDate
     }
@@ -24,6 +26,7 @@ test('getStartandEndDates uses item start_datetime and end_datetime', (t) => {
   const { startDate, endDate } = getStartAndEndDates({
     type: 'Feature',
     id: 'test',
+    collection: 'test',
     properties: {
       datetime,
       start_datetime: startDatetime,
@@ -40,6 +43,7 @@ test('getStartandEndDates uses item start_datetime and end_datetime with null da
   const { startDate, endDate } = getStartAndEndDates({
     type: 'Feature',
     id: 'test',
+    collection: 'test',
     properties: {
       datetime: null,
       start_datetime: startDatetime,
@@ -54,6 +58,7 @@ test('getStartandEndDates returns undefineds if item datetime is null', (t) => {
   const { startDate, endDate } = getStartAndEndDates({
     type: 'Feature',
     id: 'test',
+    collection: 'test',
     properties: {
       datetime: null
     }
@@ -134,4 +139,15 @@ test('getStartandEndDates only looks at first collection interval', (t) => {
   })
   t.deepEqual(undefined, startDate, 'startDate is not undefined')
   t.deepEqual(undefined, endDate, 'endDate is not undefined')
+})
+
+test('isItem requires collection field', async (t) => {
+  const record = await loadFixture('stac/LC80100102015050LGN00.json')
+  delete record.collection
+
+  t.throws(() => {
+    isItem(record)
+  }, {
+    instanceOf: InvalidSTACItemException,
+  }, 'STAC Item must specify a collection')
 })

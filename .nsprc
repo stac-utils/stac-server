@@ -1,10 +1,12 @@
 {
-    "1112862": {
+    "1112954": {
         "active": true,
-        "notes": "Only used in build steps, so DoS risk is irrelevant"
+        "notes": "Only used in build steps, so DoS risk is irrelevant",
+        "expiry": "2026-03-05"
     },
     "1112708": {
         "active": true,
-        "notes": "Only used in build steps, so DoS risk is irrelevant"
+        "notes": "Only used in build steps, so DoS risk is irrelevant",
+        "expiry": "2026-03-05"
     }
 }

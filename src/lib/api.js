@@ -313,6 +313,7 @@ const extractSortby = function (params) {
     if (typeof sortby === 'string') {
       // GET request - different syntax
       const sortbys = sortby.split(',')
+      console.log('SORTBYS', sortbys)
 
       sortbyRules = sortbys.map((sortbyRule) => {
         if (sortbyRule[0] === '-') {
@@ -328,11 +329,12 @@ const extractSortby = function (params) {
       sortbyRules = sortby.slice()
     }
   }
+  console.log(sortbyRules)
   return sortbyRules
 }
 
 const extractFields = function (params) {
-  let fieldRules
+  let fieldRules = {}
   const { fields } = params
   if (fields) {
     if (typeof fields === 'string') {
@@ -341,23 +343,38 @@ const extractFields = function (params) {
       const include = []
       _fields.forEach((fieldRule) => {
         if (fieldRule[0] !== '-') {
-          include.push(fieldRule)
+          if (fieldRule[0] === '+') {
+            include.push(fieldRule.slice(1))
+          } else {
+            include.push(fieldRule)
+          }
         }
       })
+      if (include.length) {
+        fieldRules.include = include
+      }
+
       const exclude = []
       _fields.forEach((fieldRule) => {
         if (fieldRule[0] === '-') {
           exclude.push(fieldRule.slice(1))
         }
       })
-      fieldRules = { include, exclude }
+      if (exclude.length) {
+        fieldRules.exclude = exclude
+      }
     } else {
       // POST request - JSON
       fieldRules = fields
     }
   } else if (params.hasOwnProperty('fields')) {
     // fields was provided as an empty object
-    fieldRules = {}
+    if (params.fields === null) {
+      throw new ValidationError(
+        '`fields` parameter must be an object, optionally with one or '
+          + 'both of the keys "include" and "exclude"'
+      )
+    }
   }
   return fieldRules
 }

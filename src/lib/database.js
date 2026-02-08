@@ -528,7 +528,6 @@ function fieldsParamIsEmpty(fieldsSpec, paramName) {
 
 function buildFieldsFilter(parameters) {
   const { fields } = parameters
-  console.log(fields)
   let _sourceIncludes = []
   let _sourceExcludes = []
   const DEFAULT_FIELDS = [
@@ -794,7 +793,6 @@ export async function constructSearchParams(parameters, page, limit) {
   if (_sourceIncludes.length) {
     searchParams._sourceIncludes = _sourceIncludes
   }
-  console.log('SEARCH PARAMS', searchParams)
 
   return searchParams
 }

@@ -313,7 +313,6 @@ const extractSortby = function (params) {
     if (typeof sortby === 'string') {
       // GET request - different syntax
       const sortbys = sortby.split(',')
-      console.log('SORTBYS', sortbys)
 
       sortbyRules = sortbys.map((sortbyRule) => {
         if (sortbyRule[0] === '-') {
@@ -329,7 +328,6 @@ const extractSortby = function (params) {
       sortbyRules = sortby.slice()
     }
   }
-  console.log(sortbyRules)
   return sortbyRules
 }
 

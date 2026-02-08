@@ -121,7 +121,10 @@ test('POST /search - item asset hrefs unchanged when proxy disabled', async (t) 
   const item = await loadFixture(ITEM_FIXTURE)
 
   const response = await t.context.api.client.post('search', {
-    json: { limit: 1 }
+    json: {
+      limit: 1,
+      fields: { include: ['assets', 'stac_extensions'] }
+    }
   })
 
   t.is(response.type, 'FeatureCollection')

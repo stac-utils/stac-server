@@ -36,6 +36,17 @@ const UNPREFIXED_FIELDS = [
 ]
 const GEOMETRY_TYPES = ['Point', 'LineString', 'Polygon', 'MultiPoint',
   'MultiLineString', 'MultiPolygon', 'GeometryCollection']
+export const DEFAULT_FIELDS = [
+  'id',
+  'type',
+  'stac_version',
+  'geometry',
+  'bbox',
+  'links',
+  'assets',
+  'collection',
+  'properties.datetime'
+]
 
 let collectionToIndexMapping = null
 let unrestrictedIndices = null
@@ -518,29 +529,17 @@ function buildSearchAfter(parameters) {
 
 function fieldsParamIsEmpty(fieldsSpec, paramName) {
   // Check if include or exclude is either:
-  //   a. not present in `fields`
-  //   b. null
-  //   c. an empty array
-  return !fieldsSpec.hasOwnProperty(paramName)
-    || fieldsSpec[paramName] === null
-    || (Array.isArray(fieldsSpec[paramName]) && !fieldsSpec[paramName].length)
+  //   a. null
+  //   b. an empty array
+  return fieldsSpec.hasOwnProperty(paramName)
+    && (fieldsSpec[paramName] === null
+    || (Array.isArray(fieldsSpec[paramName]) && !fieldsSpec[paramName].length))
 }
 
-function buildFieldsFilter(parameters) {
+export function buildFieldsFilter(parameters) {
   const { fields } = parameters
   let _sourceIncludes = []
   let _sourceExcludes = []
-  const DEFAULT_FIELDS = [
-    'id',
-    'type',
-    'stac_version',
-    'geometry',
-    'bbox',
-    'links',
-    'assets',
-    'collection',
-    'properties.datetime'
-  ]
   if (parameters.hasOwnProperty('fields')) {
     if (fieldsParamIsEmpty(fields, 'include')
           && fieldsParamIsEmpty(fields, 'exclude')) {
@@ -794,6 +793,7 @@ export async function constructSearchParams(parameters, page, limit) {
     searchParams._sourceIncludes = _sourceIncludes
   }
 
+  console.log(searchParams)
   return searchParams
 }
 
@@ -1063,5 +1063,6 @@ export default {
   aggregate,
   constructSearchParams,
   buildDatetimeQuery,
+  buildFieldsFilter,
   healthCheck
 }

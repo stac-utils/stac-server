@@ -331,7 +331,7 @@ const extractSortby = function (params) {
   return sortbyRules
 }
 
-const extractFields = function (params) {
+export const extractFields = function (params) {
   let fieldRules = {}
   const { fields } = params
   if (fields) {

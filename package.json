@@ -51,12 +51,12 @@
     "url": "https://github.com/stac-utils/stac-server/issues"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.972.0",
-    "@aws-sdk/client-secrets-manager": "^3.972.0",
-    "@aws-sdk/client-sns": "^3.972.0",
-    "@aws-sdk/client-sqs": "^3.972.0",
-    "@aws-sdk/credential-provider-node": "^3.972.0",
-    "@aws-sdk/s3-request-presigner": "^3.972.0",
+    "@aws-sdk/client-s3": "^3.987.0",
+    "@aws-sdk/client-secrets-manager": "^3.987.0",
+    "@aws-sdk/client-sns": "^3.987.0",
+    "@aws-sdk/client-sqs": "^3.987.0",
+    "@aws-sdk/credential-provider-node": "^3.972.6",
+    "@aws-sdk/s3-request-presigner": "^3.987.0",
     "@mapbox/extent": "^0.4.0",
     "@opensearch-project/opensearch": "^2.13.0",
     "@redocly/cli": "^2.15.1",

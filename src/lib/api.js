@@ -339,12 +339,12 @@ export const extractFields = function (params) {
       // GET request - different syntax
       const _fields = fields.split(',')
       const include = []
-      _fields.forEach((fieldRule) => {
-        if (fieldRule[0] !== '-') {
-          if (fieldRule[0] === '+') {
-            include.push(fieldRule.slice(1))
+      _fields.forEach((rule) => {
+        if (rule[0] !== '-') {
+          if (rule[0] === '+') {
+            include.push(rule.slice(1))
           } else {
-            include.push(fieldRule)
+            include.push(rule)
           }
         }
       })
@@ -353,9 +353,9 @@ export const extractFields = function (params) {
       }
 
       const exclude = []
-      _fields.forEach((fieldRule) => {
-        if (fieldRule[0] === '-') {
-          exclude.push(fieldRule.slice(1))
+      _fields.forEach((rule) => {
+        if (rule[0] === '-') {
+          exclude.push(rule.slice(1))
         }
       })
       if (exclude.length) {

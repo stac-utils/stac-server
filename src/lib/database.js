@@ -793,7 +793,8 @@ export async function constructSearchParams(parameters, page, limit) {
     searchParams._sourceIncludes = _sourceIncludes
   }
 
-  console.log(searchParams)
+  logger.debug('Search Params: %j', searchParams)
+
   return searchParams
 }
 

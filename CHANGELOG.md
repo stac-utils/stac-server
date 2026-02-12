@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
     a helpful error message.
   - Bbox queries outside of [-180, -90, 180, 90] return a 400 error
   - STAC Items passed to the ingest lambda require the collection field to be set
+  - `POST /collections/:collectionId/items` now accepts ItemCollections
 
 ## [4.5.0]
 

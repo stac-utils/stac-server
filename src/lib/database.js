@@ -36,6 +36,17 @@ const UNPREFIXED_FIELDS = [
 ]
 const GEOMETRY_TYPES = ['Point', 'LineString', 'Polygon', 'MultiPoint',
   'MultiLineString', 'MultiPolygon', 'GeometryCollection']
+export const DEFAULT_FIELDS = [
+  'id',
+  'type',
+  'stac_version',
+  'geometry',
+  'bbox',
+  'links',
+  'assets',
+  'collection',
+  'properties.datetime'
+]
 
 let collectionToIndexMapping = null
 let unrestrictedIndices = null
@@ -516,38 +527,47 @@ function buildSearchAfter(parameters) {
   return undefined
 }
 
-function buildFieldsFilter(parameters) {
+function fieldsParamIsEmpty(fieldsSpec, paramName) {
+  // Check if include or exclude is either:
+  //   a. null
+  //   b. an empty array
+  return fieldsSpec.hasOwnProperty(paramName)
+    && (fieldsSpec[paramName] === null
+    || (Array.isArray(fieldsSpec[paramName]) && !fieldsSpec[paramName].length))
+}
+
+export function buildFieldsFilter(parameters) {
   const { fields } = parameters
   let _sourceIncludes = []
-  if (parameters.hasOwnProperty('fields')) {
-    // if fields parameters supplied at all, start with this initial set, otherwise return all
-    _sourceIncludes = [
-      'id',
-      'type',
-      'stac_version',
-      'geometry',
-      'bbox',
-      'links',
-      'assets',
-      'collection',
-      'properties.datetime'
-    ]
-  }
   let _sourceExcludes = []
-  if (fields) {
-    const { include, exclude } = fields
-    // Add include fields to the source include list if they're not already in it
-    if (include && include.length > 0) {
-      include.forEach((field) => {
-        if (_sourceIncludes.indexOf(field) < 0) {
-          _sourceIncludes.push(field)
-        }
-      })
-    }
-    // Remove exclude fields from the default include list and add them to the source exclude list
-    if (exclude && exclude.length > 0) {
-      _sourceIncludes = _sourceIncludes.filter((field) => !exclude.includes(field))
-      _sourceExcludes = exclude
+  if (parameters.hasOwnProperty('fields')) {
+    if (fieldsParamIsEmpty(fields, 'include')
+          && fieldsParamIsEmpty(fields, 'exclude')) {
+      // if fields parameters are supplied but empty,
+      // start with this initial set, otherwise return all
+      _sourceIncludes = DEFAULT_FIELDS
+    } else if (fieldsParamIsEmpty(fields, 'include')) {
+      _sourceExcludes = fields.exclude
+      _sourceIncludes = DEFAULT_FIELDS.filter((item) => !_sourceExcludes.includes(item))
+    } else if (fieldsParamIsEmpty(fields, 'exclude')) {
+      _sourceIncludes = fields.include
+    } else {
+      const { include, exclude } = fields
+      // Add include fields to the source include list if they're not already in it
+      if (include && include.length > 0) {
+        include.forEach((field) => {
+          if (_sourceIncludes.indexOf(field) < 0) {
+            _sourceIncludes.push(field)
+          }
+        })
+      }
+      // Remove exclude fields from the default include list and add them to the source exclude list
+      if (exclude && exclude.length > 0) {
+        //_sourceIncludes = _sourceIncludes.filter((field) => !exclude.includes(field))
+        _sourceExcludes = exclude.filter((excludeField) =>
+          !_sourceIncludes.includes(excludeField)
+            && !_sourceIncludes.some((includeField) => includeField.startsWith(`${excludeField}.`)))
+      }
     }
   }
   return { _sourceIncludes, _sourceExcludes }
@@ -772,6 +792,8 @@ export async function constructSearchParams(parameters, page, limit) {
   if (_sourceIncludes.length) {
     searchParams._sourceIncludes = _sourceIncludes
   }
+
+  logger.debug('Search Params: %j', searchParams)
 
   return searchParams
 }
@@ -1042,5 +1064,6 @@ export default {
   aggregate,
   constructSearchParams,
   buildDatetimeQuery,
+  buildFieldsFilter,
   healthCheck
 }

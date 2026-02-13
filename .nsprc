@@ -4,9 +4,9 @@
         "notes": "Only used in build steps, so DoS risk is irrelevant",
         "expiry": "2026-03-05"
     },
-    "1112708": {
+    "1113161": {
         "active": true,
-        "notes": "Only used in build steps, so DoS risk is irrelevant",
-        "expiry": "2026-03-05"
+        "notes": "qs dependency comes from express which hasn't released an update yet",
+        "expiry": "2026-03-12"
     }
 }

@@ -331,33 +331,48 @@ const extractSortby = function (params) {
   return sortbyRules
 }
 
-const extractFields = function (params) {
-  let fieldRules
+export const extractFields = function (params) {
+  let fieldRules = {}
   const { fields } = params
   if (fields) {
     if (typeof fields === 'string') {
       // GET request - different syntax
       const _fields = fields.split(',')
       const include = []
-      _fields.forEach((fieldRule) => {
-        if (fieldRule[0] !== '-') {
-          include.push(fieldRule)
+      _fields.forEach((rule) => {
+        if (rule[0] !== '-') {
+          if (rule[0] === '+') {
+            include.push(rule.slice(1))
+          } else {
+            include.push(rule)
+          }
         }
       })
+      if (include.length) {
+        fieldRules.include = include
+      }
+
       const exclude = []
-      _fields.forEach((fieldRule) => {
-        if (fieldRule[0] === '-') {
-          exclude.push(fieldRule.slice(1))
+      _fields.forEach((rule) => {
+        if (rule[0] === '-') {
+          exclude.push(rule.slice(1))
         }
       })
-      fieldRules = { include, exclude }
+      if (exclude.length) {
+        fieldRules.exclude = exclude
+      }
     } else {
       // POST request - JSON
       fieldRules = fields
     }
   } else if (params.hasOwnProperty('fields')) {
     // fields was provided as an empty object
-    fieldRules = {}
+    if (params.fields === null) {
+      throw new ValidationError(
+        '`fields` parameter must be an object, optionally with one or '
+          + 'both of the keys "include" and "exclude"'
+      )
+    }
   }
   return fieldRules
 }

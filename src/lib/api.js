@@ -472,42 +472,49 @@ export const addCollectionLinks = function (results, endpoint) {
     links.splice(0, 0, {
       rel: 'self',
       type: 'application/json',
-      href: `${endpoint}/collections/${id}`
+      href: `${endpoint}/collections/${id}`,
+      title: id
     })
     // parent catalog
     links.push({
       rel: 'parent',
       type: 'application/json',
-      href: `${endpoint}`
+      href: `${endpoint}`,
+      title: 'Catalog'
     })
     // root catalog
     links.push({
       rel: 'root',
       type: 'application/json',
-      href: `${endpoint}`
+      href: `${endpoint}`,
+      title: 'Catalog'
     })
     // child items
     links.push({
       rel: 'items',
       type: 'application/geo+json',
-      href: `${endpoint}/collections/${id}/items`
+      href: `${endpoint}/collections/${id}/items`,
+      title: 'Child Items'
     })
     // queryables
     links.push({
       rel: 'http://www.opengis.net/def/rel/ogc/1.0/queryables',
       type: 'application/schema+json',
-      href: `${endpoint}/collections/${id}/queryables`
+      href: `${endpoint}/collections/${id}/queryables`,
+      title: 'Queryables'
     })
     links.push({
       rel: 'aggregate',
       type: 'application/json',
       href: `${endpoint}/collections/${id}/aggregate`,
-      method: 'GET'
+      method: 'GET',
+      title: 'STAC aggregation [GET]'
     })
     links.push({
       rel: 'aggregations',
       type: 'application/json',
-      href: `${endpoint}/collections/${id}/aggregations`
+      href: `${endpoint}/collections/${id}/aggregations`,
+      title: 'Aggregations'
     })
   })
   return results
@@ -1188,60 +1195,71 @@ const getCatalog = async function (txnEnabled, endpoint = '') {
     {
       rel: 'self',
       type: 'application/json',
-      href: `${endpoint}`
+      href: `${endpoint}`,
+      title: 'Root Catalog'
     },
     {
       rel: 'root',
       type: 'application/json',
-      href: `${endpoint}`
+      href: `${endpoint}`,
+      title: 'Root Catalog'
     },
     {
       rel: 'conformance',
       type: 'application/json',
-      href: `${endpoint}/conformance`
+      href: `${endpoint}/conformance`,
+      title: 'STAC/OGC confromance classes implemented by this server'
     },
     {
       rel: 'data',
       type: 'application/json',
-      href: `${endpoint}/collections`
+      href: `${endpoint}/collections`,
+      title: 'Collections available for this Catalog'
     },
     {
       rel: 'search',
       type: 'application/geo+json',
       href: `${endpoint}/search`,
       method: 'GET',
+      title: 'STAC search [GET]'
     },
     {
       rel: 'search',
       type: 'application/geo+json',
       href: `${endpoint}/search`,
       method: 'POST',
+      title: 'STAC search [POST]'
     },
     {
       rel: 'aggregate',
       type: 'application/json',
       href: `${endpoint}/aggregate`,
       method: 'GET',
+      title: 'STAC aggregate [GET]'
     },
     {
       rel: 'aggregations',
       type: 'application/json',
-      href: `${endpoint}/aggregations`
+      href: `${endpoint}/aggregations`,
+      title: 'Aggregations available for this Catalog'
     },
     {
       rel: 'service-desc',
       type: 'application/vnd.oai.openapi',
-      href: `${endpoint}/api`
+      href: `${endpoint}/api`,
+      title: 'OpenAPI service description'
     },
     {
       rel: 'service-doc',
       type: 'text/html',
-      href: `${endpoint}/api.html`
+      href: `${endpoint}/api.html`,
+      title: 'OpenAPI service documentation'
     },
     {
       rel: 'http://www.opengis.net/def/rel/ogc/1.0/queryables',
       type: 'application/schema+json',
-      href: `${endpoint}/queryables`
+      href: `${endpoint}/queryables`,
+      title: 'Queryables available for this Catalog'
     },
   ]
 
@@ -1250,6 +1268,7 @@ const getCatalog = async function (txnEnabled, endpoint = '') {
       rel: 'server',
       type: 'text/html',
       href: process.env['STAC_DOCS_URL'],
+      title: 'API documentation'
     })
   }
 
@@ -1296,11 +1315,13 @@ const getCollections = async function (backend, endpoint, parameters, headers) {
         rel: 'self',
         type: 'application/json',
         href: `${endpoint}/collections`,
+        title: 'Collections available for this Catalog'
       },
       {
         rel: 'root',
         type: 'application/json',
         href: `${endpoint}`,
+        title: 'Root Catalog'
       },
     ],
   }

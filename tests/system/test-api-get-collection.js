@@ -53,6 +53,11 @@ test('GET /collections/:collectionId returns a collection', async (t) => {
   t.true(aggregateLink?.href.endsWith(`/collections/${collectionId}/aggregate`))
   const aggregationsLink = response.body.links.find((l) => l.rel === 'aggregations')
   t.true(aggregationsLink?.href.endsWith(`/collections/${collectionId}/aggregations`))
+
+  // Check that proper link titles are generated
+  response.body.links.forEach((link) => {
+    t.true(link.hasOwnProperty('title') && link.title)
+  })
 })
 
 test('GET /collection/:collectionId for non-existent collection returns Not Found', async (t) => {

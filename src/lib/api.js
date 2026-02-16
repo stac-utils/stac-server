@@ -509,7 +509,7 @@ export const addCollectionLinks = function (results, endpoint) {
       rel: 'items',
       type: 'application/geo+json',
       href: `${endpoint}/collections/${id}/items`,
-      title: 'Child Items'
+      title: 'Items'
     })
     // queryables
     links.push({
@@ -1223,13 +1223,13 @@ const getCatalog = async function (txnEnabled, endpoint = '') {
       rel: 'conformance',
       type: 'application/json',
       href: `${endpoint}/conformance`,
-      title: 'STAC/OGC confromance classes implemented by this server'
+      title: 'STAC/OGC confromance classes'
     },
     {
       rel: 'data',
       type: 'application/json',
       href: `${endpoint}/collections`,
-      title: 'Collections available for this Catalog'
+      title: 'Collections'
     },
     {
       rel: 'search',
@@ -1256,7 +1256,7 @@ const getCatalog = async function (txnEnabled, endpoint = '') {
       rel: 'aggregations',
       type: 'application/json',
       href: `${endpoint}/aggregations`,
-      title: 'Aggregations available for this Catalog'
+      title: 'Aggregations'
     },
     {
       rel: 'service-desc',
@@ -1274,7 +1274,7 @@ const getCatalog = async function (txnEnabled, endpoint = '') {
       rel: 'http://www.opengis.net/def/rel/ogc/1.0/queryables',
       type: 'application/schema+json',
       href: `${endpoint}/queryables`,
-      title: 'Queryables available for this Catalog'
+      title: 'Queryables'
     },
   ]
 
@@ -1330,7 +1330,7 @@ const getCollections = async function (backend, endpoint, parameters, headers) {
         rel: 'self',
         type: 'application/json',
         href: `${endpoint}/collections`,
-        title: 'Collections available for this Catalog'
+        title: 'Collections'
       },
       {
         rel: 'root',

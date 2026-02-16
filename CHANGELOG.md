@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - Bbox queries outside of [-180, -90, 180, 90] return a 400 error
   - STAC Items passed to the ingest lambda require the collection field to be set
   - The behavior when a `fields` parameter is passed now matches [the spec](https://github.com/stac-api-extensions/fields) ([469](https://github.com/stac-utils/stac-server/pull/1032))
+  - Link titles were added to dynamically generated Catalog and Collection links ([468](https://github.com/stac-utils/stac-server/pull/1037))
 
 ## [4.5.0]
 

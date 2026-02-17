@@ -1,4 +1,4 @@
-import { getItemCreated } from './database.js'
+import { getItemCreated, collectionUniqueIndexID } from './database.js'
 import { addItemLinks, addCollectionLinks } from './api.js'
 import { dbClient, createIndex } from './database-client.js'
 import logger from './logger.js'
@@ -24,10 +24,10 @@ export async function convertIngestMsgToDbOperation(data) {
     index = COLLECTIONS_INDEX
     action = 'index'
   } else if (isItem(data)) {
-    index = data.collection
+    index = collectionUniqueIndexID(data.collection)
     action = 'index'
   } else if (isAction(data)) {
-    index = data.collection
+    index = collectionUniqueIndexID(data.collection)
     action = data.command
   } else {
     throw new InvalidIngestError(
@@ -93,7 +93,8 @@ export async function executeDbOperation(
 
     // if this was a collection, then add a new index with collection name
     if (index === COLLECTIONS_INDEX) {
-      await createIndex(id)
+      const itemIndex = collectionUniqueIndexID(id)
+      await createIndex(itemIndex)
     }
   } else if (action === 'truncate') {
     if (process.env['ENABLE_INGEST_ACTION_TRUNCATE'] !== 'true') {

@@ -48,7 +48,7 @@ export const isIndexNotFoundError = (e) => (
 /*
 This module is used for connecting to a search database instance, writing records,
 searching records, and managing the indexes. It looks for the OPENSEARCH_HOST environment
-variable which is the URL to the search database host
+variable which is the URL to the search database host line
 */
 
 function buildRangeQuery(property, operators, operatorsObject) {
@@ -376,6 +376,42 @@ function buildFilterExtQuery(filter) {
   }
 }
 
+/**
+ * Hash function that converts a string into a hexadecimal string.
+ * A variant of the well-known "djb2" algorithm.
+ *
+ * @param {string} collection
+ * @returns {string} An 8-character hexadecimal hash string.
+ */
+function collectionHash(collection) {
+  let hash = 0
+  if (collection.length === 0) {
+    return '00000000'
+  }
+  for (let i = 0; i < collection.length; i += 1) {
+    const charCode = collection.charCodeAt(i)
+    hash = (hash << 5) - hash + charCode //eslint-disable-line no-bitwise
+    // converts to a 32-bit integer.
+    hash |= 0 //eslint-disable-line no-bitwise
+  }
+
+  // coonvert to hex string
+  return (hash >>> 0).toString(16).padStart(8, '0') //eslint-disable-line no-bitwise
+}
+
+/**
+ * Translates any collection ID into a fully unique ID to be
+ * used as index by OpenSearch
+ * Necessary because OpenSearch does not allow upper case letters in indicies.
+ * Using a short hash facilitates generating unique lower case IDs
+ *  regardless of case
+ * @param {string} collection
+ * @returns {string} unique OpenSearch compatible string
+ */
+export function collectionUniqueIndexID(collection) {
+  return `${collection.toLowerCase()}-${collectionHash(collection)}`
+}
+
 function buildItemSearchQuery(parameters) {
   const { intersects, collections, ids } = parameters
   const filterQueries = []
@@ -564,7 +600,8 @@ async function indexCollection(collection) {
   if (!exists.body) {
     await createIndex(COLLECTIONS_INDEX)
   }
-
+  const idHash = collectionUniqueIndexID(collection.id)
+  // call the hash function
   const collectionDocResponse = await client.index({
     index: COLLECTIONS_INDEX,
     id: collection.id,
@@ -572,7 +609,7 @@ async function indexCollection(collection) {
     opType: 'create'
   })
 
-  const indexCreateResponse = await createIndex(collection.id)
+  const indexCreateResponse = await createIndex(idHash)
 
   return [collectionDocResponse, indexCreateResponse]
 }
@@ -583,12 +620,11 @@ async function indexCollection(collection) {
  */
 async function indexItem(item) {
   const client = await _client()
-
-  const exists = await client.indices.exists({ index: item.collection })
+  const hashedIndex = collectionUniqueIndexID(item.collection)
+  const exists = await client.indices.exists({ index: hashedIndex })
   if (!exists.body) {
-    return new Error(`Index ${item.collection} does not exist, add before creating items`)
+    return new Error(`Index ${hashedIndex} does not exist, add before creating items`)
   }
-
   const now = new Date().toISOString()
   Object.assign(item.properties, {
     created: now,
@@ -596,7 +632,7 @@ async function indexItem(item) {
   })
 
   const response = await client.index({
-    index: item.collection,
+    index: hashedIndex,
     id: item.id,
     body: item,
     opType: 'create'
@@ -625,9 +661,8 @@ async function partialUpdateItem(collectionId, itemId, updateFields) {
   } else {
     updateFields.properties = requiredProperties
   }
-
   const response = await client.update({
-    index: collectionId,
+    index: collectionUniqueIndexID(collectionId),
     id: itemId,
     _source: true,
     body: {
@@ -642,7 +677,7 @@ async function deleteItem(collectionId, itemId) {
   const client = await _client()
   if (client === undefined) throw new Error('Client is undefined')
   return await client.delete_by_query({
-    index: collectionId,
+    index: collectionUniqueIndexID(collectionId),
     body: buildIdQuery(itemId),
     waitForCompletion: true
   })
@@ -752,6 +787,13 @@ export async function constructSearchParams(parameters, page, limit) {
     }
     indices = unrestrictedIndices
   }
+  // hash indices
+  indices = indices.map((index) => {
+    if (DEFAULT_INDICES.includes(index)) {
+      return index
+    }
+    return collectionUniqueIndexID(index)
+  })
 
   const searchParams = {
     index: indices,
@@ -998,9 +1040,10 @@ export const getItemCreated = async (collectionId, itemId) => {
 async function updateItem(item) {
   const client = await _client()
 
-  const exists = await client.indices.exists({ index: item.collection })
+  const hashedIndex = collectionUniqueIndexID(item.collection)
+  const exists = await client.indices.exists({ index: hashedIndex })
   if (!exists.body) {
-    return new Error(`Index ${item.collection} does not exist, add before creating items`)
+    return new Error(`Index ${hashedIndex} does not exist, add before creating items`)
   }
 
   const now = new Date().toISOString()
@@ -1012,7 +1055,7 @@ async function updateItem(item) {
   })
 
   const response = await client.index({
-    index: item.collection,
+    index: hashedIndex,
     id: item.id,
     body: item,
     opType: 'index'
@@ -1042,5 +1085,5 @@ export default {
   aggregate,
   constructSearchParams,
   buildDatetimeQuery,
-  healthCheck
+  healthCheck,
 }

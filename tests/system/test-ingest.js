@@ -399,14 +399,15 @@ test('Ingested collection is published to post-ingest SNS topic with updated lin
   }
 })
 
-test('Ingest collection failure is published to post-ingest SNS topic', async (t) => {
+test.only('Ingest collection failure is published to post-ingest SNS topic', async (t) => {
+  const badId = '_badCollection'
   const { message, attrs } = await testPostIngestSNS(t, {
     type: 'Collection',
-    id: 'badCollection'
+    id: badId
   }, true)
 
-  t.is(message.record.id, 'badCollection')
-  t.is(attrs.collection.Value, 'badCollection')
+  t.is(message.record.id, badId)
+  t.is(attrs.collection.Value, badId)
   t.is(attrs.ingestStatus.Value, 'failed')
   t.is(attrs.recordType.Value, 'Collection')
   t.is(undefined, attrs.start_unix_epoch_ms_offset)

@@ -4,19 +4,14 @@
         "notes": "Only used in build steps, so DoS risk is irrelevant",
         "expiry": "2026-03-05"
     },
-    "1113041": {
-        "active": true,
-        "notes": "webpack is only used in build steps, so DoS risk is irrelevant",
-        "expiry": "2026-06-05"
-    },
-    "1113042": {
-        "active": true,
-        "notes": "webpack is only used in build steps, so DoS risk is irrelevant",
-        "expiry": "2026-06-05"
-    },
     "1113161": {
         "active": true,
         "notes": "qs is used by express/webpack, low severity DoS risk acceptable",
         "expiry": "2026-03-12"
+    },
+    "1113214": {
+        "active": true,
+        "notes": "we do not make any direct uses of the vulnerability",
+        "expiry": "2026-03-05"
     }
 }

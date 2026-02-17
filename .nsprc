@@ -17,6 +17,6 @@
     "1113161": {
         "active": true,
         "notes": "qs is used by express/webpack, low severity DoS risk acceptable",
-        "expiry": "2026-06-05"
+        "expiry": "2026-03-12"
     }
 }

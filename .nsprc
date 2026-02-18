@@ -16,7 +16,7 @@
     },
     "1113240": {
         "active": true,
-        "notes": "Transitive dependency vulnerability - not directly used by application code, risk mitigated by usage pattern",
-        "expiry": "2026-03-05"
+        "notes": "requires a major version upgrade to serverless to resolve, only executed at deploy time anyway",
+        "expiry": "2026-03-18"
     }
 }

@@ -6,7 +6,7 @@
     },
     "1113161": {
         "active": true,
-        "notes": "qs dependency comes from express which hasn't released an update yet",
+        "notes": "qs is used by express/webpack, low severity DoS risk acceptable",
         "expiry": "2026-03-12"
     },
     "1113214": {

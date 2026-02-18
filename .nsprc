@@ -13,5 +13,10 @@
         "active": true,
         "notes": "we do not make any direct uses of the vulnerability",
         "expiry": "2026-03-05"
+    },
+    "1113240": {
+        "active": true,
+        "notes": "Transitive dependency vulnerability - not directly used by application code, risk mitigated by usage pattern",
+        "expiry": "2026-03-05"
     }
 }

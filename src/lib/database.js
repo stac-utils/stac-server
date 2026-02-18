@@ -1108,4 +1108,5 @@ export default {
   constructSearchParams,
   buildDatetimeQuery,
   healthCheck,
+  buildFieldsFilter
 }

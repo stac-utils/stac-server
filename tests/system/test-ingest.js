@@ -399,7 +399,7 @@ test('Ingested collection is published to post-ingest SNS topic with updated lin
   }
 })
 
-test.only('Ingest collection failure is published to post-ingest SNS topic', async (t) => {
+test('Ingest collection failure is published to post-ingest SNS topic', async (t) => {
   const badId = '_badCollection'
   const { message, attrs } = await testPostIngestSNS(t, {
     type: 'Collection',

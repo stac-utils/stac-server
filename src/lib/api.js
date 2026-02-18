@@ -331,33 +331,48 @@ const extractSortby = function (params) {
   return sortbyRules
 }
 
-const extractFields = function (params) {
-  let fieldRules
+export const extractFields = function (params) {
+  let fieldRules = {}
   const { fields } = params
   if (fields) {
     if (typeof fields === 'string') {
       // GET request - different syntax
       const _fields = fields.split(',')
       const include = []
-      _fields.forEach((fieldRule) => {
-        if (fieldRule[0] !== '-') {
-          include.push(fieldRule)
+      _fields.forEach((rule) => {
+        if (rule[0] !== '-') {
+          if (rule[0] === '+') {
+            include.push(rule.slice(1))
+          } else {
+            include.push(rule)
+          }
         }
       })
+      if (include.length) {
+        fieldRules.include = include
+      }
+
       const exclude = []
-      _fields.forEach((fieldRule) => {
-        if (fieldRule[0] === '-') {
-          exclude.push(fieldRule.slice(1))
+      _fields.forEach((rule) => {
+        if (rule[0] === '-') {
+          exclude.push(rule.slice(1))
         }
       })
-      fieldRules = { include, exclude }
+      if (exclude.length) {
+        fieldRules.exclude = exclude
+      }
     } else {
       // POST request - JSON
       fieldRules = fields
     }
   } else if (params.hasOwnProperty('fields')) {
     // fields was provided as an empty object
-    fieldRules = {}
+    if (params.fields === null) {
+      throw new ValidationError(
+        '`fields` parameter must be an object, optionally with one or '
+          + 'both of the keys "include" and "exclude"'
+      )
+    }
   }
   return fieldRules
 }
@@ -472,42 +487,49 @@ export const addCollectionLinks = function (results, endpoint) {
     links.splice(0, 0, {
       rel: 'self',
       type: 'application/json',
-      href: `${endpoint}/collections/${id}`
+      href: `${endpoint}/collections/${id}`,
+      title: id
     })
     // parent catalog
     links.push({
       rel: 'parent',
       type: 'application/json',
-      href: `${endpoint}`
+      href: `${endpoint}`,
+      title: 'Catalog'
     })
     // root catalog
     links.push({
       rel: 'root',
       type: 'application/json',
-      href: `${endpoint}`
+      href: `${endpoint}`,
+      title: 'Catalog'
     })
     // child items
     links.push({
       rel: 'items',
       type: 'application/geo+json',
-      href: `${endpoint}/collections/${id}/items`
+      href: `${endpoint}/collections/${id}/items`,
+      title: 'Items'
     })
     // queryables
     links.push({
       rel: 'http://www.opengis.net/def/rel/ogc/1.0/queryables',
       type: 'application/schema+json',
-      href: `${endpoint}/collections/${id}/queryables`
+      href: `${endpoint}/collections/${id}/queryables`,
+      title: 'Queryables'
     })
     links.push({
       rel: 'aggregate',
       type: 'application/json',
       href: `${endpoint}/collections/${id}/aggregate`,
-      method: 'GET'
+      method: 'GET',
+      title: 'STAC aggregation [GET]'
     })
     links.push({
       rel: 'aggregations',
       type: 'application/json',
-      href: `${endpoint}/collections/${id}/aggregations`
+      href: `${endpoint}/collections/${id}/aggregations`,
+      title: 'Aggregations'
     })
   })
   return results
@@ -1188,60 +1210,71 @@ const getCatalog = async function (txnEnabled, endpoint = '') {
     {
       rel: 'self',
       type: 'application/json',
-      href: `${endpoint}`
+      href: `${endpoint}`,
+      title: 'Root Catalog'
     },
     {
       rel: 'root',
       type: 'application/json',
-      href: `${endpoint}`
+      href: `${endpoint}`,
+      title: 'Root Catalog'
     },
     {
       rel: 'conformance',
       type: 'application/json',
-      href: `${endpoint}/conformance`
+      href: `${endpoint}/conformance`,
+      title: 'STAC/OGC confromance classes'
     },
     {
       rel: 'data',
       type: 'application/json',
-      href: `${endpoint}/collections`
+      href: `${endpoint}/collections`,
+      title: 'Collections'
     },
     {
       rel: 'search',
       type: 'application/geo+json',
       href: `${endpoint}/search`,
       method: 'GET',
+      title: 'STAC search [GET]'
     },
     {
       rel: 'search',
       type: 'application/geo+json',
       href: `${endpoint}/search`,
       method: 'POST',
+      title: 'STAC search [POST]'
     },
     {
       rel: 'aggregate',
       type: 'application/json',
       href: `${endpoint}/aggregate`,
       method: 'GET',
+      title: 'STAC aggregate [GET]'
     },
     {
       rel: 'aggregations',
       type: 'application/json',
-      href: `${endpoint}/aggregations`
+      href: `${endpoint}/aggregations`,
+      title: 'Aggregations'
     },
     {
       rel: 'service-desc',
       type: 'application/vnd.oai.openapi',
-      href: `${endpoint}/api`
+      href: `${endpoint}/api`,
+      title: 'OpenAPI service description'
     },
     {
       rel: 'service-doc',
       type: 'text/html',
-      href: `${endpoint}/api.html`
+      href: `${endpoint}/api.html`,
+      title: 'OpenAPI service documentation'
     },
     {
       rel: 'http://www.opengis.net/def/rel/ogc/1.0/queryables',
       type: 'application/schema+json',
-      href: `${endpoint}/queryables`
+      href: `${endpoint}/queryables`,
+      title: 'Queryables'
     },
   ]
 
@@ -1250,6 +1283,7 @@ const getCatalog = async function (txnEnabled, endpoint = '') {
       rel: 'server',
       type: 'text/html',
       href: process.env['STAC_DOCS_URL'],
+      title: 'API documentation'
     })
   }
 
@@ -1296,11 +1330,13 @@ const getCollections = async function (backend, endpoint, parameters, headers) {
         rel: 'self',
         type: 'application/json',
         href: `${endpoint}/collections`,
+        title: 'Collections'
       },
       {
         rel: 'root',
         type: 'application/json',
         href: `${endpoint}`,
+        title: 'Root Catalog'
       },
     ],
   }

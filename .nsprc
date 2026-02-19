@@ -18,5 +18,10 @@
         "active": true,
         "notes": "requires a major version upgrade to serverless to resolve, only executed at deploy time anyway",
         "expiry": "2026-03-18"
+    },
+    "1113296": {
+        "active": true,
+        "notes": "minimatch is a transitive dependency of @redocly/cli and redoc, which are used only for API documentation rendering. The vulnerable wildcard pattern matching is not exposed to user input in our usage context, making ReDoS exploitation not feasible.",
+        "expiry": "2026-04-19"
     }
 }

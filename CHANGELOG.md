@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Fixed
+
+- Added more robust checks on valid/invalid latitude and longitudes for bounding box inputs ([1041](https://github.com/stac-utils/stac-server/pull/1041))
+
 ### Added
 
 - New Github Action that attaches zip archives of lambdas to releases.

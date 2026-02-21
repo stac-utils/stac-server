@@ -5,6 +5,7 @@ import compression from 'compression'
 import morgan from 'morgan'
 import path from 'path'
 import { fileURLToPath } from 'url'
+import { z } from 'zod'
 import database from '../../lib/database.js'
 import api from '../../lib/api.js'
 import { NotFoundError, ValidationError } from '../../lib/errors.js'
@@ -12,6 +13,7 @@ import { readFile } from '../../lib/fs.js'
 import addEndpoint from './middleware/add-endpoint.js'
 import logger from '../../lib/logger.js'
 import { AssetProxy } from '../../lib/asset-proxy.js'
+import { TransactionPostRequest, SearchCollectionItemsPostRequest } from '../../lib/models.js'
 
 /**
  * @typedef {import('express').Request} Request
@@ -281,17 +283,45 @@ export const createApp = async () => {
       }
     })
 
-  app.get('/collections/:collectionId/items', async (req, res, next) => {
+  async function transactionPost(req, res, next) {
     const { collectionId } = req.params
-    try {
-      if (
-        (await api.getCollection(database, collectionId, req.endpoint, req.query, req.headers)
-        ) instanceof Error) {
-        next(createError(404))
-      }
+    const itemId = req.body.id
 
+    if (req.body.collection && req.body.collection !== collectionId) {
+      next(createError(400, 'Collection resource URI must match collection in body'))
+    } else {
+      const collectionRes = await api.getCollection(
+        database, collectionId, req.endpoint, req.query, req.headers
+      )
+      if (collectionRes instanceof Error) next(createError(404))
+      else {
+        try {
+          req.body.collection = collectionId
+          await api.createItem(database, req.body)
+          res.location(`${req.endpoint}/collections/${collectionId}/items/${itemId}`)
+          res.sendStatus(201)
+        } catch (error) {
+          if (error instanceof Error
+              && error.name === 'ResponseError'
+              && error.message.includes('version_conflict_engine_exception')) {
+            res.sendStatus(409)
+          } else {
+            next(error)
+          }
+        }
+      }
+    }
+  }
+
+  async function searchPost(req, res, next) {
+    // Mimic /search endpoint body with single collection
+    const { collectionId } = req.params
+    const body = req.body
+    body.collections = [collectionId]
+
+    try {
       const result = await api.searchItems(
-        database, 'GET', collectionId, req.endpoint, req.query, req.headers
+        database, 'POST', null, req.endpoint, req.body, req.headers
       )
       req.app.locals['assetProxy'].updateAssetHrefs(result.features, req.endpoint)
       res.type('application/geo+json')
@@ -303,39 +333,33 @@ export const createApp = async () => {
         next(error)
       }
     }
-  })
+  }
 
   app.post('/collections/:collectionId/items', async (req, res, next) => {
-    if (txnEnabled) {
-      const { collectionId } = req.params
-      const itemId = req.body.id
-
-      if (req.body.collection && req.body.collection !== collectionId) {
-        next(createError(400, 'Collection resource URI must match collection in body'))
+    try {
+      if (txnEnabled) {
+        TransactionPostRequest.parse(req.body)
+        await transactionPost(req, res, next)
       } else {
-        const collectionRes = await api.getCollection(
-          database, collectionId, req.endpoint, req.query, req.headers
-        )
-        if (collectionRes instanceof Error) next(createError(404))
-        else {
-          try {
-            req.body.collection = collectionId
-            await api.createItem(database, req.body)
-            res.location(`${req.endpoint}/collections/${collectionId}/items/${itemId}`)
-            res.sendStatus(201)
-          } catch (error) {
-            if (error instanceof Error
-                && error.name === 'ResponseError'
-                && error.message.includes('version_conflict_engine_exception')) {
-              res.sendStatus(409)
-            } else {
-              next(error)
-            }
-          }
-        }
+        SearchCollectionItemsPostRequest.parse(req.body)
+        await searchPost(req, res, next)
       }
-    } else {
-      next(createError(404))
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        const expectedEndpoint = txnEnabled ? 'transaction' : 'search'
+        const otherEndpoint = txnEnabled ? 'search' : 'transaction'
+        const message = `Payload is not a valid ${expectedEndpoint} request. `
+          + `This API is configured to use this URL for a ${expectedEndpoint} endpoint, `
+          + `although it is common for it to be used as a ${otherEndpoint} endpoint.`
+        const parsingErrors = error.issues
+        res.status(400).json({
+          code: 'BadRequest',
+          message,
+          parsingErrors
+        })
+      } else {
+        next(error)
+      }
     }
   })
 

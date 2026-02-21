@@ -362,11 +362,9 @@ export const createApp = async () => {
   app.post('/collections/:collectionId/items', async (req, res, next) => {
     try {
       if (txnEnabled) {
-        console.log("Validating TXN payload")
         TransactionPostRequest.parse(req.body)
         await transactionPost(req, res, next)
       } else {
-        console.log("Validating search payload")
         SearchCollectionItemsPostRequest.parse(req.body)
         await searchPost(req, res, next)
       }

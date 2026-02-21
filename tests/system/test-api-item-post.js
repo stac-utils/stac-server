@@ -104,7 +104,7 @@ test('POST /collections/:collectionId/items with mismatched collection id', asyn
   t.is(badResponse.statusCode, 400)
 })
 
-test('POST /collections/:collectionId/items fails with search payload', async(t) => {
+test('POST /collections/:collectionId/items fails with search payload', async (t) => {
   const { collectionId } = t.context
   const searchPayload = {
     datetime: '2015-03-22T00:00:00Z/2015-03-24T00:00:00Z'

@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - `POST /collections/:collectionId/items` now accepts ItemCollections
   - The behavior when a `fields` parameter is passed now matches [the spec](https://github.com/stac-api-extensions/fields) ([469](https://github.com/stac-utils/stac-server/pull/1032))
   - Link titles were added to dynamically generated Catalog and Collection links ([468](https://github.com/stac-utils/stac-server/pull/1037))
+  - Change route behavior so search is performed if `ENABLE_TRANSACTIONS_ENDPOINT` is set to false, otherwise perform transaction insert. ([1008](https://github.com/stac-utils/stac-server/pull/1042))
 
 ### ⚠️ Breaking
 

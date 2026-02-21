@@ -6,7 +6,6 @@ TEST_PATTERN=${1:-test-*.[jt]s}
 
 export AWS_ACCESS_KEY_ID='none'
 export AWS_SECRET_ACCESS_KEY='none'
-export ENABLE_TRANSACTIONS_EXTENSION=true
 export REQUEST_LOGGING_ENABLED=false
 # export ENABLE_RESPONSE_COMPRESSION=false
 

@@ -6,7 +6,17 @@
     },
     "1113161": {
         "active": true,
-        "notes": "qs dependency comes from express which hasn't released an update yet",
+        "notes": "qs is used by express/webpack, low severity DoS risk acceptable",
         "expiry": "2026-03-12"
+    },
+    "1113214": {
+        "active": true,
+        "notes": "we do not make any direct uses of the vulnerability",
+        "expiry": "2026-03-05"
+    },
+    "1113240": {
+        "active": true,
+        "notes": "requires a major version upgrade to serverless to resolve, only executed at deploy time anyway",
+        "expiry": "2026-03-18"
     }
 }

@@ -21,9 +21,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
     a helpful error message.
   - Bbox queries outside of [-180, -90, 180, 90] return a 400 error
   - STAC Items passed to the ingest lambda require the collection field to be set
+  - `POST /collections/:collectionId/items` now accepts ItemCollections
   - The behavior when a `fields` parameter is passed now matches [the spec](https://github.com/stac-api-extensions/fields) ([469](https://github.com/stac-utils/stac-server/pull/1032))
   - Link titles were added to dynamically generated Catalog and Collection links ([468](https://github.com/stac-utils/stac-server/pull/1037))
   - Change route behavior so search is performed if `ENABLE_TRANSACTIONS_ENDPOINT` is set to false, otherwise perform transaction insert. ([1008](https://github.com/stac-utils/stac-server/pull/1042))
+
+### ⚠️ Breaking
+
+- Added hashing function to hash indicies before storing them in OpenSearch to ensure stac-server is compliant with STAC spec that permits upper and lower case on collection names ([1038](https://github.com/stac-utils/stac-server/pull/1038)).  This is a core change in how indicies are stored and looked up and will fail to look up indicies made before this version
 
 ## [4.5.0]
 

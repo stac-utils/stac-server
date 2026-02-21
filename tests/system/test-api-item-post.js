@@ -103,3 +103,18 @@ test('POST /collections/:collectionId/items with mismatched collection id', asyn
 
   t.is(badResponse.statusCode, 400)
 })
+
+test('POST /collections/:collectionId/items fails with search payload', async(t) => {
+  const { collectionId } = t.context
+  const searchPayload = {
+    datetime: '2015-03-22T00:00:00Z/2015-03-24T00:00:00Z'
+  }
+
+  const response = await t.context.api.client.post(
+    `collections/${collectionId}/items`,
+    { throwHttpErrors: false, resolveBodyOnly: false, json: searchPayload }
+  )
+
+  t.is(response.statusCode, 400)
+  t.regex(response.body.message, /Payload is not a valid transaction request\..+/)
+})

@@ -28,9 +28,11 @@ const apiClient = (url) => got.extend({
  */
 
 /**
+ * @param {string} enableTxn
  * @returns {Promise<ApiInstance>}
  */
-export const startApi = async () => {
+export const startApi = async (enableTxn = 'true') => {
+  process.env['ENABLE_TRANSACTIONS_EXTENSION'] = enableTxn
   const app = await createApp()
   const server = app.listen(0, '127.0.0.1')
 

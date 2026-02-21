@@ -283,6 +283,30 @@ export const createApp = async () => {
       }
     })
 
+  app.get('/collections/:collectionId/items', async (req, res, next) => {
+    const { collectionId } = req.params
+    try {
+      if (
+        (await api.getCollection(database, collectionId, req.endpoint, req.query, req.headers)
+        ) instanceof Error) {
+        next(createError(404))
+      }
+
+      const result = await api.searchItems(
+        database, 'GET', collectionId, req.endpoint, req.query, req.headers
+      )
+      req.app.locals['assetProxy'].updateAssetHrefs(result.features, req.endpoint)
+      res.type('application/geo+json')
+      res.json(result)
+    } catch (error) {
+      if (error instanceof ValidationError) {
+        next(createError(400, error.message))
+      } else {
+        next(error)
+      }
+    }
+  })
+
   async function transactionPost(req, res, next) {
     const { collectionId } = req.params
     const itemId = req.body.id
@@ -338,9 +362,11 @@ export const createApp = async () => {
   app.post('/collections/:collectionId/items', async (req, res, next) => {
     try {
       if (txnEnabled) {
+        console.log("Validating TXN payload")
         TransactionPostRequest.parse(req.body)
         await transactionPost(req, res, next)
       } else {
+        console.log("Validating search payload")
         SearchCollectionItemsPostRequest.parse(req.body)
         await searchPost(req, res, next)
       }

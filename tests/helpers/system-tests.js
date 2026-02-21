@@ -61,9 +61,10 @@ export const setupResources = async () => {
  */
 
 /**
+ * @param {string} enableTxn
  * @returns {Promise<StandUpResult>}
  */
-export const setup = async () => {
+export const setup = async (enableTxn = 'true') => {
   nock.disableNetConnect()
   nock.enableNetConnect(/127\.0\.0\.1|localhost/)
 
@@ -74,7 +75,7 @@ export const setup = async () => {
     postIngestTopicArn,
   } = await setupResources()
 
-  const api = await startApi()
+  const api = await startApi(enableTxn)
 
   return {
     api,

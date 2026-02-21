@@ -2,7 +2,7 @@ import { z } from 'zod'
 import { GeoJSONGeometrySchema } from 'zod-geojson'
 
 const Link = z.object({
-  href: z.url(),
+  href: z.string(),
   rel: z.string(),
   type: z.string().optional(),
   title: z.string().optional(),
@@ -19,7 +19,7 @@ const PartialItemRequest = z.object({
   bbox: z.array(z.number()),
   geometry: GeoJSONGeometrySchema,
   type: z.literal('Feature'),
-  properties: z.looseObject({ datetime: z.iso.datetime() }),
+  properties: z.looseObject({ datetime: z.iso.datetime({ offset: true }) }),
   links: z.array(Link).optional(),
   assets: z.looseObject({}).optional()
 })
@@ -35,11 +35,10 @@ export const TransactionPostRequest = z.union([
   PartialItemCollectionRequest
 ])
 
-export const SearchCollectionItemsPostRequest = z.object({
+export const SearchCollectionItemsPostRequest = z.strictObject({
   bbox: z.array(z.number()).min(4).max(6).optional(),
-  datetime: z.iso.datetime().optional(),
+  datetime: z.string().optional(),
   intersects: GeoJSONGeometrySchema.optional(),
-  collections: z.array(z.string()).optional(),
   ids: z.array(z.string()).optional(),
   limit: z.number().default(10),
 })

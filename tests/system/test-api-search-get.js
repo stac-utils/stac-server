@@ -396,15 +396,51 @@ test('/search sort unqualified field names fails', async (t) => {
 })
 
 test('/search invalid bbox throws error', async (t) => {
-  const error = await t.throwsAsync(async () => t.context.api.client.get('search', {
-    searchParams: {
-      bbox: '-190,-90,180,90'
-    }
-  }))
-  t.is(error.response.statusCode, 400)
-  t.is(error.response.body.code, 'BadRequest')
-  t.regex(
-    error.response.body.description,
-    /Invalid bbox, extent should not exceed \[-180, -90, 180, 90\]/
-  )
+  // test invalid longitude
+  {
+    const error = await t.throwsAsync(async () => t.context.api.client.post('search', {
+      json: {
+        bbox: [-190, -90, 180, 90]
+      }
+    }))
+    t.is(error.response.statusCode, 400)
+    t.is(error.response.body.code, 'BadRequest')
+    t.regex(
+      error.response.body.description,
+      // eslint-disable-next-line max-len
+      /Invalid \[lon, lat, lon, lat, z, z\] bbox\. {2}Longitudes must be between -180\/180, latitudes must be between {1}-90\/90, extent should not exceed \[-180, -90, 180, 90\]/
+    )
+  }
+
+  // test invalid latitude
+  {
+    const error = await t.throwsAsync(async () => t.context.api.client.post('search', {
+      json: {
+        bbox: [-110, -100, 180, 90]
+      }
+    }))
+    t.is(error.response.statusCode, 400)
+    t.is(error.response.body.code, 'BadRequest')
+    t.regex(
+      error.response.body.description,
+      // eslint-disable-next-line max-len
+      /Invalid \[lon, lat, lon, lat, z, z\] bbox\. {2}Longitudes must be between -180\/180, latitudes must be between {1}-90\/90, extent should not exceed \[-180, -90, 180, 90\]/
+    )
+  }
+
+  // test 6 coords with invalid values
+  {
+    const error = await t.throwsAsync(async () => t.context.api.client.post('search', {
+      json: {
+        bbox: [-190, -90, 180, 100, 10, 10]
+      }
+    }))
+    t.is(error.response.statusCode, 400)
+    t.is(error.response.body.code, 'BadRequest')
+    t.regex(
+      error.response.body.description,
+      // eslint-disable-next-line max-len
+      /Invalid \[lon, lat, lon, lat, z, z\] bbox\. {2}Longitudes must be between -180\/180, latitudes must be between {1}-90\/90, extent should not exceed \[-180, -90, 180, 90\]/
+    )
+  }
 })

@@ -9,14 +9,29 @@
         "notes": "qs is used by express/webpack, low severity DoS risk acceptable",
         "expiry": "2026-03-12"
     },
-    "1113214": {
+    "1113331": {
         "active": true,
-        "notes": "we do not make any direct uses of the vulnerability",
-        "expiry": "2026-03-05"
+        "notes": "requires a major version upgrade to serverless",
+        "expiry": "2026-03-23"
     },
-    "1113240": {
+    "1113407": {
         "active": true,
-        "notes": "requires a major version upgrade to serverless to resolve, only executed at deploy time anyway",
+        "notes": "requires a major version upgrade to serverless",
+        "expiry": "2026-03-23"
+    },
+    "1113398": {
+        "active": true,
+        "notes": "redocly/cli hasn't updated deps yet, only used in build steps",
+        "expiry": "2026-03-18"
+    },
+    "1113399": {
+        "active": true,
+        "notes": "redocly/cli hasn't updated deps yet, only used in build steps",
+        "expiry": "2026-03-18"
+    },
+    "1113371": {
+        "active": true,
+        "notes": "redocly/cli hasn't updated deps yet, only used in build steps",
         "expiry": "2026-03-18"
     }
 }

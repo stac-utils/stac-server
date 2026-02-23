@@ -59,7 +59,7 @@
     "@aws-sdk/s3-request-presigner": "^3.992.0",
     "@mapbox/extent": "^0.4.0",
     "@opensearch-project/opensearch": "^2.13.0",
-    "@redocly/cli": "^2.19.0",
+    "@redocly/cli": "^2.19.1",
     "ansi-regex": "<6.2.1 || >6.2.1",
     "ansi-styles": "<6.2.2 || >6.2.2",
     "chalk": "<5.6.1 || >5.6.1",

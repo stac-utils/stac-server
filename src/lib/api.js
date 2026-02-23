@@ -198,6 +198,27 @@ const validateStartAndEndDatetimes = function (startDateTime, endDateTime) {
   }
 }
 
+/**
+ * ensure that fields necessary for creating links i.e. 'collection' and 'id'
+ * are not excluded from query.  These fields will be removed later to ensure
+ * results match user expectations
+ * @param {Object} fields
+ * @returns {Object}
+ */
+export const createQueryFields = function (fields) {
+  const { exclude } = fields
+  if (exclude) {
+    const filteredExclude = exclude.filter(
+      (field) => field !== 'id' && field !== 'collection'
+    )
+    return {
+      ...fields,
+      exclude: filteredExclude
+    }
+  }
+  return fields
+}
+
 export const extractDatetime = function (params) {
   const { datetime } = params
 
@@ -538,9 +559,9 @@ export const addCollectionLinks = function (results, endpoint) {
 // Impure - mutates results
 export const addItemLinks = function (results, endpoint) {
   results.forEach((result) => {
+    logger.info('DEBUG - result: %j', result)
     let { links } = result
     const { id, collection } = result
-
     links = (links === undefined) ? [] : links
     // self link
     links.splice(0, 0, {
@@ -688,6 +709,8 @@ const searchItems = async function (
     extractRestrictionCql2Filter(parameters, headers)
   )
   const fields = extractFields(parameters)
+  // const queryFields = createQueryFields(fields)
+  // console.log("DEBUG: fields %j", fields)
   const ids = extractIds(parameters)
   const allowedCollectionIds = extractAllowedCollectionIds(
     parameters,
@@ -761,6 +784,7 @@ const searchItems = async function (
   }
 
   const { results: responseItems, numberMatched, numberReturned } = esResponse
+  logger.debug('DEBUG - responseItems from esResponse: %j', responseItems)
   const paginationLinks = buildPaginationLinks(
     limit,
     searchParams,
@@ -797,6 +821,9 @@ const searchItems = async function (
   }
 
   addItemLinks(responseItems, endpoint)
+  // removeFields(responseItems, )
+
+  // strip out 'colleciton' and 'id' if in 'exclude' to remove from results
 
   return wrapResponseInFeatureCollection(responseItems, links, numberMatched, numberReturned, limit)
 }

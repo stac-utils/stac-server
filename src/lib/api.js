@@ -211,6 +211,11 @@ export const createQueryFields = function (fields) {
     const filteredExclude = exclude.filter(
       (field) => field !== 'id' && field !== 'collection'
     )
+    if (filteredExclude.length === 0) {
+      const { exclude: _removed, ...rest } = fields
+      return rest
+    }
+
     return {
       ...fields,
       exclude: filteredExclude
@@ -559,7 +564,6 @@ export const addCollectionLinks = function (results, endpoint) {
 // Impure - mutates results
 export const addItemLinks = function (results, endpoint) {
   results.forEach((result) => {
-    logger.info('DEBUG - result: %j', result)
     let { links } = result
     const { id, collection } = result
     links = (links === undefined) ? [] : links
@@ -594,6 +598,32 @@ export const addItemLinks = function (results, endpoint) {
     }
     result.type = 'Feature'
     return result
+  })
+  return results
+}
+
+/**
+ * If 'id' or 'collection' were in the 'excluded' fields, they must
+ * be removed.  They were necessary for STAC Item link generation and
+ * can now be removed after link generation if a user wanted to exclude them
+ * Impure, we are potentially mutating 'results'
+ * @param {Object} results
+ * @param {Object} fields - {'exclude': [string], 'include': [string]}
+ * @returns {Object}
+ */
+export const removeSpecialExcludeFields = function (results, fields) {
+  const { exclude } = fields
+  if (!exclude) return results
+
+  const removeId = exclude.includes('id')
+  const removeCollection = exclude.includes('collection')
+
+  // exit early and avoid forEach loop if possible
+  if (!removeId && !removeCollection) return results
+
+  results.forEach((item) => {
+    if (removeId) delete item.id
+    if (removeCollection) delete item.collection
   })
   return results
 }
@@ -709,8 +739,7 @@ const searchItems = async function (
     extractRestrictionCql2Filter(parameters, headers)
   )
   const fields = extractFields(parameters)
-  // const queryFields = createQueryFields(fields)
-  // console.log("DEBUG: fields %j", fields)
+  const queryFields = createQueryFields(fields)
   const ids = extractIds(parameters)
   const allowedCollectionIds = extractAllowedCollectionIds(
     parameters,
@@ -727,7 +756,7 @@ const searchItems = async function (
     query,
     filter: combinedFilter,
     sortby,
-    fields,
+    fields: queryFields,
     ids,
     collections,
     next
@@ -784,7 +813,6 @@ const searchItems = async function (
   }
 
   const { results: responseItems, numberMatched, numberReturned } = esResponse
-  logger.debug('DEBUG - responseItems from esResponse: %j', responseItems)
   const paginationLinks = buildPaginationLinks(
     limit,
     searchParams,
@@ -821,9 +849,7 @@ const searchItems = async function (
   }
 
   addItemLinks(responseItems, endpoint)
-  // removeFields(responseItems, )
-
-  // strip out 'colleciton' and 'id' if in 'exclude' to remove from results
+  removeSpecialExcludeFields(responseItems, fields)
 
   return wrapResponseInFeatureCollection(responseItems, links, numberMatched, numberReturned, limit)
 }

@@ -1679,3 +1679,62 @@ test('/search invalid bbox throws error', async (t) => {
     )
   }
 })
+
+test('POST /search with fields extension generates links correctly when', async (t) => {
+  {
+    const response = await t.context.api.client.post(
+      'search',
+      {
+        resolveBodyOnly: false,
+        json: {
+          collections: ['landsat-8-l1'],
+          limit: 1,
+          fields: { exclude: ['assets', 'bbox', 'stac_version', 'id', 'collection'] }
+        } }
+    )
+    t.is(response.statusCode, 200)
+    t.is(response.body.features.length, 1)
+    // console.log(response.body.features[0].links)
+
+    const selfLink = response.body.features[0].links.find((l) => l.rel === 'self')
+    const selfPath = new URL(selfLink.href).pathname
+    // console.log(response.body.features[0].links[0])
+    t.is(selfPath, '/collections/landsat-8-l1/items/LC80100102015082LGN00')
+
+    const parentLink = response.body.features[0].links.find((l) => l.rel === 'parent')
+    const parentPath = new URL(parentLink.href).pathname
+    t.is(parentPath, '/collections/landsat-8-l1')
+
+    const collectionLink = response.body.features[0].links.find((l) => l.rel === 'collection')
+    const collectionPath = new URL(collectionLink.href).pathname
+    t.is(collectionPath, '/collections/landsat-8-l1')
+  }
+  {
+    const response = await t.context.api.client.post(
+      'search',
+      {
+        resolveBodyOnly: false,
+        json: {
+          collections: ['landsat-8-l1'],
+          limit: 1,
+          fields: { exclude: ['assets', 'bbox', 'stac_version'] }
+        } }
+    )
+    t.is(response.statusCode, 200)
+    t.is(response.body.features.length, 1)
+    // console.log(response.body.features[0].links)
+
+    const selfLink = response.body.features[0].links.find((l) => l.rel === 'self')
+    const selfPath = new URL(selfLink.href).pathname
+    // console.log(response.body.features[0].links[0])
+    t.is(selfPath, '/collections/landsat-8-l1/items/LC80100102015082LGN00')
+
+    const parentLink = response.body.features[0].links.find((l) => l.rel === 'parent')
+    const parentPath = new URL(parentLink.href).pathname
+    t.is(parentPath, '/collections/landsat-8-l1')
+
+    const collectionLink = response.body.features[0].links.find((l) => l.rel === 'collection')
+    const collectionPath = new URL(collectionLink.href).pathname
+    t.is(collectionPath, '/collections/landsat-8-l1')
+  }
+})

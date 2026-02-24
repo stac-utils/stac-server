@@ -1,4 +1,4 @@
-import { pickBy, assign, get as getNested } from 'lodash-es'
+import { pickBy, assign, get as _getNested } from 'lodash-es'
 import { DateTime } from 'luxon'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3'
@@ -600,7 +600,7 @@ const wrapResponseInFeatureCollection = function (features, links,
 
 const buildPaginationLinks = function (
   limit, parameters, bbox, intersects, collections, filter,
-  endpoint, httpMethod, sortby, items
+  endpoint, httpMethod, _sortby, items, lastItemSort
 ) {
   if (items.length) {
     const dictToURI = (dict) => (
@@ -630,14 +630,14 @@ const buildPaginationLinks = function (
       ).join('&')
     )
 
-    const lastItem = items[items.length - 1]
+    //const lastItem = items[items.length - 1]
 
-    const nextKeys = sortby ? sortby.map((x) => x.field)
-      : ['properties.datetime', 'id', 'collection']
+    //const nextKeys = sortby ? sortby.map((x) => x.field)
+    //  : ['properties.datetime', 'id', 'collection']
 
-    const next = nextKeys.map((k) => getNested(lastItem, k)).join(',')
+    //const next = nextKeys.map((k) => getNested(lastItem, k)).join(',')
 
-    if (next) {
+    if (lastItemSort) {
       const link = {
         rel: 'next',
         title: 'Next page of Items',
@@ -645,7 +645,7 @@ const buildPaginationLinks = function (
         type: 'application/geo+json'
       }
       const nextParams = pickBy(
-        assign(parameters, { bbox, intersects, limit, next, collections, filter })
+        assign(parameters, { bbox, intersects, limit, next: lastItemSort, collections, filter })
       )
       if (httpMethod === 'GET') {
         const nextQueryParameters = dictToURI(nextParams)
@@ -760,7 +760,7 @@ const searchItems = async function (
     }
   }
 
-  const { results: responseItems, numberMatched, numberReturned } = esResponse
+  const { results: responseItems, numberMatched, numberReturned, lastItemSort } = esResponse
   const paginationLinks = buildPaginationLinks(
     limit,
     searchParams,
@@ -771,7 +771,8 @@ const searchItems = async function (
     newEndpoint,
     httpMethod,
     sortby,
-    responseItems
+    responseItems,
+    lastItemSort
   )
 
   // @ts-ignore

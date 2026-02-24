@@ -848,11 +848,19 @@ async function search(parameters, limit, page) {
     ...searchParams
   })
 
-  const results = dbResponse.body.hits.hits.map((r) => (r._source))
+  const hits = dbResponse.body.hits.hits
+  const results = hits.map((r) => (r._source))
+  const lastItem = hits.at(-1)
+  let lastItemSort = null
+  if (lastItem && lastItem.sort) {
+    lastItemSort = lastItem.sort.join(',')
+  }
+
   const response = {
     results,
     numberMatched: dbResponse.body.hits.total.value,
-    numberReturned: results.length
+    numberReturned: results.length,
+    lastItemSort
   }
 
   return response

@@ -1680,8 +1680,9 @@ test('/search invalid bbox throws error', async (t) => {
   }
 })
 
-test('POST /search with fields extension generates links correctly when', async (t) => {
+test('POST /search using "exclude" returns properly formatted links', async (t) => {
   {
+    // test by excluding fields required to generate links ('id' and 'collection')
     const response = await t.context.api.client.post(
       'search',
       {
@@ -1694,11 +1695,9 @@ test('POST /search with fields extension generates links correctly when', async 
     )
     t.is(response.statusCode, 200)
     t.is(response.body.features.length, 1)
-    // console.log(response.body.features[0].links)
 
     const selfLink = response.body.features[0].links.find((l) => l.rel === 'self')
     const selfPath = new URL(selfLink.href).pathname
-    // console.log(response.body.features[0].links[0])
     t.is(selfPath, '/collections/landsat-8-l1/items/LC80100102015082LGN00')
 
     const parentLink = response.body.features[0].links.find((l) => l.rel === 'parent')
@@ -1710,6 +1709,7 @@ test('POST /search with fields extension generates links correctly when', async 
     t.is(collectionPath, '/collections/landsat-8-l1')
   }
   {
+    // test without excluding fields required to generate links
     const response = await t.context.api.client.post(
       'search',
       {
@@ -1722,11 +1722,9 @@ test('POST /search with fields extension generates links correctly when', async 
     )
     t.is(response.statusCode, 200)
     t.is(response.body.features.length, 1)
-    // console.log(response.body.features[0].links)
 
     const selfLink = response.body.features[0].links.find((l) => l.rel === 'self')
     const selfPath = new URL(selfLink.href).pathname
-    // console.log(response.body.features[0].links[0])
     t.is(selfPath, '/collections/landsat-8-l1/items/LC80100102015082LGN00')
 
     const parentLink = response.body.features[0].links.find((l) => l.rel === 'parent')

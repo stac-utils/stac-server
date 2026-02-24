@@ -31,7 +31,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### ⚠️ Breaking
 
-- Added hashing function to hash indicies before storing them in OpenSearch to ensure stac-server is compliant with STAC spec that permits upper and lower case on collection names ([1038](https://github.com/stac-utils/stac-server/pull/1038)).  This is a core change in how indicies are stored and looked up and will fail to look up indicies made before this version
+- Added hashing function to hash indices before storing them in OpenSearch to ensure stac-server is compliant with STAC spec that permits upper and lower case on collection names ([1038](https://github.com/stac-utils/stac-server/pull/1038)).  This is a core change in how indices are stored and looked up and will fail to look up indices made before this version. Closes ([#110](https://github.com/stac-utils/stac-server/issues/110))
 
 ## [4.5.0]
 
@@ -242,7 +242,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 
-- Better error handling when create_index fails.
+- Better error handling when create_index fails. Closes ([#291](https://github.com/stac-utils/stac-server/issues/291))
 
 ### Fixed
 
@@ -341,15 +341,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 
-- Publish ingest results to a post-ingest SNS topic
+- Publish ingest results to a post-ingest SNS topic. Closes ([#45](https://github.com/stac-utils/stac-server/issues/45))
 - Add datetime and bbox attributes to post-ingest SNS messages
 - Support for Query Extension operators neq, startsWith, endsWith, and contains.
 - Validate intersects geometry before sending to Search + better response parsing.
 
 ### Changed
 
-- Remove node streams-based ingest code to prepare for post-ingest notifications
-- Use the `type` field to determine if ingest is a Collection or Item
+- Remove node streams-based ingest code to prepare for post-ingest notifications. Closes ([#220](https://github.com/stac-utils/stac-server/issues/220)), ([#234](https://github.com/stac-utils/stac-server/issues/234))
+- Use the `type` field to determine if ingest is a Collection or Item. Closes ([#363](https://github.com/stac-utils/stac-server/issues/363))
 - Aggregations `grid_code_frequency` and `grid_code_landsat_frequency` are no longer
   restricted to 2000 buckets
 

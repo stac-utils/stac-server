@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - `POST /collections/:collectionId/items` now accepts ItemCollections
   - The behavior when a `fields` parameter is passed now matches [the spec](https://github.com/stac-api-extensions/fields) ([469](https://github.com/stac-utils/stac-server/pull/1032))
   - Link titles were added to dynamically generated Catalog and Collection links ([468](https://github.com/stac-utils/stac-server/pull/1037))
+  - Change implementation of `buildPaginationLinks` to use the `sort` object returned by OpenSearch ([242](https://github.com/stac-utils/stac-server/pull/1046))
 
 ### ⚠️ Breaking
 

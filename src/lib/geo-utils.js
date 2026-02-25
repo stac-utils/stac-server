@@ -2,7 +2,7 @@ import extent from '@mapbox/extent'
 import { ValidationError } from './errors.js'
 
 /**
- * Conver tboundng box input to useable format and check bounds
+ * Convert boundng box input to useable format and check bounds
  * @param {*} bbox - bounding box from request.  Expected format is either an
  *  array as a single string or array formatted [x_min, y_min, x_max, y_max,
  * z_min, z_max]'. Z values are optional

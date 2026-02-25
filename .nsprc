@@ -14,11 +14,6 @@
         "notes": "fast-xml-parser is a transitive dependency of @aws-sdk/xml-builder and is not directly used by application code. XML parsing from untrusted sources is not part of our usage context.",
         "expiry": "2026-04-23"
     },
-    "1113371": {
-        "active": true,
-        "notes": "minimatch is a transitive dependency of @redocly/cli and redoc, used only for API documentation rendering. The vulnerable wildcard pattern matching is not exposed to user input in our usage context, making ReDoS exploitation not feasible.",
-        "expiry": "2026-04-23"
-    },
     "1113407": {
         "active": true,
         "notes": "fast-xml-parser is a transitive dependency of @aws-sdk/xml-builder and is not directly used by application code. Entity encoding bypass via regex injection in DOCTYPE is not exploitable as we do not parse untrusted XML input.",
@@ -33,5 +28,15 @@
         "active": true,
         "notes": "ajv is a transitive dependency used by webpack build tooling and schema-utils. The $data option ReDoS vulnerability is not exploitable as we do not use ajv directly or pass untrusted data through it.",
         "expiry": "2026-04-24"
+    },
+    "1113461": {
+        "active": true,
+        "notes": "minimatch is a transitive dependency of @redocly/cli and redoc, used only for API documentation rendering. The vulnerable wildcard pattern matching is not exposed to user input in our usage context, making ReDoS exploitation not feasible.",
+        "expiry": "2026-04-25"
+    },
+    "1113466": {
+        "active": true,
+        "notes": "minimatch is a transitive dependency of @redocly/cli and redoc, used only for API documentation rendering. The vulnerable wildcard pattern matching is not exposed to user input in our usage context, making ReDoS exploitation not feasible.",
+        "expiry": "2026-04-25"
     }
 }

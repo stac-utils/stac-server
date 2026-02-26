@@ -779,6 +779,7 @@ async function populateUnrestrictedIndices() {
 }
 
 export async function constructSearchParams(parameters, page, limit) {
+  // console.log('DEBUG - parameters %j', parameters)
   const { id, collections, filter } = parameters
 
   let body

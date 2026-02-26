@@ -47,6 +47,7 @@ export const DEFAULT_FIELDS = [
   'collection',
   'properties.datetime'
 ]
+const MAX_COLLECTIONS_IN_QUERY_PATH = 10
 
 let collectionToIndexMapping = null
 let unrestrictedIndices = null
@@ -795,7 +796,9 @@ export async function constructSearchParams(parameters, page, limit) {
 
   let indices
   if (Array.isArray(collections) && collections.length) {
-    if (process.env['COLLECTION_TO_INDEX_MAPPINGS']) {
+    if (collections.length > MAX_COLLECTIONS_IN_QUERY_PATH) {
+      indices = ['_all']
+    } else if (process.env['COLLECTION_TO_INDEX_MAPPINGS']) {
       if (!collectionToIndexMapping) await populateCollectionToIndexMapping()
       indices = await Promise.all(collections.map(async (x) => await indexForCollection(x)))
     } else {
@@ -809,7 +812,7 @@ export async function constructSearchParams(parameters, page, limit) {
   }
   // hash indices
   indices = indices.map((index) => {
-    if (DEFAULT_INDICES.includes(index)) {
+    if (DEFAULT_INDICES.includes(index) || index === '_all') {
       return index
     }
     return collectionUniqueIndexID(index)

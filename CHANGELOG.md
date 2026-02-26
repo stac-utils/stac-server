@@ -30,6 +30,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - `POST /collections/:collectionId/items` now accepts ItemCollections
   - The behavior when a `fields` parameter is passed now matches [the spec](https://github.com/stac-api-extensions/fields) ([469](https://github.com/stac-utils/stac-server/pull/1032))
   - Link titles were added to dynamically generated Catalog and Collection links ([468](https://github.com/stac-utils/stac-server/pull/1037))
+  - Fixed bug that throws OpenSearch error when too many collections are specified in a search ([770](https://github.com/stac-utils/stac-server/pull/1047))
 
 ### ⚠️ Breaking
 

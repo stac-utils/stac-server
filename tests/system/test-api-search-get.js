@@ -444,3 +444,67 @@ test('/search invalid bbox throws error', async (t) => {
     )
   }
 })
+
+test('GET /search using "exclude" returns properly formatted links', async (t) => {
+  const fixtureFiles = [
+    'LC80100102015050LGN00.json',
+    'LC80100102015082LGN00.json'
+  ]
+  const items = await Promise.all(fixtureFiles.map((x) => loadJson(x)))
+  await processMessages(items)
+  await refreshIndices()
+
+  // specificall testing that using 'collection' and/or 'id' does not return
+  // any 'undefined' links, fields required to generate links
+  {
+    const response = await t.context.api.client.get('search', {
+      resolveBodyOnly: false,
+      searchParams: new URLSearchParams({
+        collections: 'landsat-8-l1',
+        limit: 1,
+        fields: '-assets,-bbox,-stac_version,-collection,-id',
+      })
+    })
+    t.is(response.statusCode, 200)
+    t.is(response.body.features.length, 1)
+
+    // check 'self' link
+    const selfLink = response.body.features[0].links.find((l) => l.rel === 'self')
+    const selfPath = new URL(selfLink.href).pathname
+    t.is(selfPath, '/collections/landsat-8-l1/items/LC80100102015082LGN00')
+
+    const parentLink = response.body.features[0].links.find((l) => l.rel === 'parent')
+    const parentPath = new URL(parentLink.href).pathname
+    t.is(parentPath, '/collections/landsat-8-l1')
+
+    const collectionLink = response.body.features[0].links.find((l) => l.rel === 'collection')
+    const collectionPath = new URL(collectionLink.href).pathname
+    t.is(collectionPath, '/collections/landsat-8-l1')
+  }
+  {
+    // test without excluding required 'id' or 'collection' fields to generate link
+    const response = await t.context.api.client.get('search', {
+      resolveBodyOnly: false,
+      searchParams: new URLSearchParams({
+        collections: 'landsat-8-l1',
+        limit: 1,
+        fields: '-assets,-bbox,-stac_version',
+      })
+    })
+    t.is(response.statusCode, 200)
+    t.is(response.body.features.length, 1)
+
+    // check 'self' link
+    const selfLink = response.body.features[0].links.find((l) => l.rel === 'self')
+    const selfPath = new URL(selfLink.href).pathname
+    t.is(selfPath, '/collections/landsat-8-l1/items/LC80100102015082LGN00')
+
+    const parentLink = response.body.features[0].links.find((l) => l.rel === 'parent')
+    const parentPath = new URL(parentLink.href).pathname
+    t.is(parentPath, '/collections/landsat-8-l1')
+
+    const collectionLink = response.body.features[0].links.find((l) => l.rel === 'collection')
+    const collectionPath = new URL(collectionLink.href).pathname
+    t.is(collectionPath, '/collections/landsat-8-l1')
+  }
+})

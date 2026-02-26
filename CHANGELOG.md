@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Fixed
 
 - Added more robust checks on valid/invalid latitude and longitudes for bounding box inputs ([1041](https://github.com/stac-utils/stac-server/pull/1041))
+- Fixed issue where using `fields` extension to `exclude` either `id` or `collection` fields resulted in malformed links with 'undefined' in them due to those fields being required to generate item links.  Those fields, if excluded are now removed after backend opensearch query ([1045](https://github.com/stac-utils/stac-server/pull/1045))
+
 
 ### Added
 

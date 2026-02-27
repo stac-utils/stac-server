@@ -68,7 +68,7 @@ test('/search preserve bbox in next links', async (t) => {
 
   t.deepEqual(nextUrl.searchParams.get('next'),
     [
-      response.features[1].properties.datetime,
+      new Date(response.features[1].properties.datetime).getTime(),
       response.features[1].id,
       response.features[1].collection
     ].join(','))
@@ -106,7 +106,7 @@ test('/search preserve bbox and datetime in next links', async (t) => {
   const nextUrl = new URL(nextLink.href)
   t.deepEqual(nextUrl.searchParams.get('next'),
     [
-      response.features[0].properties.datetime,
+      new Date(response.features[0].properties.datetime).getTime(),
       response.features[0].id,
       response.features[0].collection
     ].join(','))

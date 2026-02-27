@@ -681,13 +681,6 @@ const buildPaginationLinks = function (
       ).join('&')
     )
 
-    //const lastItem = items[items.length - 1]
-
-    //const nextKeys = sortby ? sortby.map((x) => x.field)
-    //  : ['properties.datetime', 'id', 'collection']
-
-    //const next = nextKeys.map((k) => getNested(lastItem, k)).join(',')
-
     if (lastItemSort) {
       const link = {
         rel: 'next',

@@ -1,12 +1,7 @@
 {
-    "1113331": {
+    "1113565": {
         "active": true,
         "notes": "fast-xml-parser is a transitive dependency of @aws-sdk/xml-builder and is not directly used by application code. XML parsing from untrusted sources is not part of our usage context.",
-        "expiry": "2026-04-23"
-    },
-    "1113407": {
-        "active": true,
-        "notes": "fast-xml-parser is a transitive dependency of @aws-sdk/xml-builder and is not directly used by application code. Entity encoding bypass via regex injection in DOCTYPE is not exploitable as we do not parse untrusted XML input.",
         "expiry": "2026-04-23"
     },
     "1113461": {
@@ -15,6 +10,26 @@
         "expiry": "2026-04-25"
     },
     "1113466": {
+        "active": true,
+        "notes": "minimatch is a transitive dependency of @redocly/cli and redoc, used only for API documentation rendering. The vulnerable wildcard pattern matching is not exposed to user input in our usage context, making ReDoS exploitation not feasible.",
+        "expiry": "2026-04-25"
+    },
+    "1113540": {
+        "active": true,
+        "notes": "minimatch is a transitive dependency of @redocly/cli and redoc, used only for API documentation rendering. The vulnerable wildcard pattern matching is not exposed to user input in our usage context, making ReDoS exploitation not feasible.",
+        "expiry": "2026-04-25"
+    },
+    "1113545": {
+        "active": true,
+        "notes": "minimatch is a transitive dependency of @redocly/cli and redoc, used only for API documentation rendering. The vulnerable wildcard pattern matching is not exposed to user input in our usage context, making ReDoS exploitation not feasible.",
+        "expiry": "2026-04-25"
+    },
+    "1113548": {
+        "active": true,
+        "notes": "minimatch is a transitive dependency of @redocly/cli and redoc, used only for API documentation rendering. The vulnerable wildcard pattern matching is not exposed to user input in our usage context, making ReDoS exploitation not feasible.",
+        "expiry": "2026-04-25"
+    },
+    "1113553": {
         "active": true,
         "notes": "minimatch is a transitive dependency of @redocly/cli and redoc, used only for API documentation rendering. The vulnerable wildcard pattern matching is not exposed to user input in our usage context, making ReDoS exploitation not feasible.",
         "expiry": "2026-04-25"

@@ -78,3 +78,10 @@ test('search datetime parameter instants are correctly parsed', async (t) => {
     t.is(dtQuery.term['properties.datetime'], datetime, 'datetime instant parses correctly')
   })
 })
+
+test('if more than 10 collections are specified then all indices are searched', async (t) => {
+  const queryParams = { collections: ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k'] }
+  const params = await constructSearchParams(queryParams, 1)
+
+  t.deepEqual(params.index, ['_all'])
+})

@@ -1,9 +1,9 @@
 {
   "displayName": "stac-server",
   "description": "A STAC API running on stac-server",
-  "version": "4.5.0",
+  "version": "5.0.0-rc1",
   "repository": "https://github.com/stac-utils/stac-server",
-  "author": "Alireza Jazayeri, Matthew Hanson, Sean Harkins, Phil Varner",
+  "author": "Alireza Jazayeri, Matthew Hanson, Sean Harkins, Phil Varner, Nate Rubin",
   "license": "MIT",
   "type": "module",
   "moduleDirectories": [

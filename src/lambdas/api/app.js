@@ -317,7 +317,7 @@ export const createApp = async () => {
           database, collectionId, req.endpoint, req.query, req.headers
         )
         if (collectionRes instanceof Error) next(createError(404))
-        else {
+        else if (req.body.type === 'Feature') {
           try {
             req.body.collection = collectionId
             await api.createItem(database, req.body)
@@ -331,6 +331,32 @@ export const createApp = async () => {
             } else {
               next(error)
             }
+          }
+        } else if (req.body.type === 'FeatureCollection') {
+          const duplicateItemErrors = []
+          let itemsCreated = 0
+          for (const item of req.body.features) {
+            try {
+              item.collection = collectionId
+              await api.createItem(database, item) // eslint-disable-line no-await-in-loop
+              itemsCreated += 1
+            } catch (error) {
+              if (error instanceof Error
+                  && error.name === 'ResponseError'
+                  && error.message.includes('version_conflict_engine_exception')) {
+                duplicateItemErrors.push(item)
+              } else {
+                next(error)
+              }
+            }
+          }
+          if (duplicateItemErrors.length) {
+            res.status(409).send(
+              `${itemsCreated} items created. `
+              + `The following items were duplicates and not inserted: ${duplicateItemErrors}`
+            )
+          } else {
+            res.sendStatus(201)
           }
         }
       }

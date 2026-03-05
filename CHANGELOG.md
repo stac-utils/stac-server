@@ -7,6 +7,40 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [5.0.0]
+
+### Fixed
+
+- Added more robust checks on valid/invalid latitude and longitudes for bounding box inputs ([1041](https://github.com/stac-utils/stac-server/pull/1041))
+- Fixed issue where using `fields` extension to `exclude` either `id` or `collection` fields resulted in malformed links with 'undefined' in them due to those fields being required to generate item links.  Those fields, if excluded are now removed after backend opensearch query ([1045](https://github.com/stac-utils/stac-server/pull/1045))
+
+
+### Added
+
+- New Github Action that attaches zip archives of lambdas to releases.
+
+### Changed
+
+- **Documentation Overhaul**: Migrated all documentation to a new MkDocs-powered documentation website at [stac-utils.github.io/stac-server](https://stac-utils.github.io/stac-server/)
+  - Comprehensive documentation now organized into Getting Started, Guides, Reference, and About sections
+  - Removed top-level markdown files (ARCHITECTURE.md, USAGE.md, DEPLOYMENT.md, CONFIGURATION.md, CONTRIBUTING.md, SECURITY.md) - all content migrated to docs/
+  - Updated README.md to serve as GitHub landing page with links to full documentation
+- If an invalid sortby parameter is supplied, a 400 status is returned (instead of 500) with
+  a helpful error message.
+- Bbox queries outside of [-180, -90, 180, 90] return a 400 error
+- STAC Items passed to the ingest lambda require the collection field to be set
+- `POST /collections/:collectionId/items` now accepts ItemCollections
+- The behavior when a `fields` parameter is passed now matches [the spec](https://github.com/stac-api-extensions/fields) ([469](https://github.com/stac-utils/stac-server/pull/1032))
+- Link titles were added to dynamically generated Catalog and Collection links ([468](https://github.com/stac-utils/stac-server/pull/1037))
+- Change implementation of `buildPaginationLinks` to use the `sort` object returned by OpenSearch ([242](https://github.com/stac-utils/stac-server/pull/1046))
+- Fixed bug that throws OpenSearch error when too many collections are specified in a search ([770](https://github.com/stac-utils/stac-server/pull/1047))
+
+### ⚠️ Breaking
+
+- Added hashing function to hash indicies before storing them in OpenSearch to ensure stac-server is compliant with STAC spec that permits upper and lower case on collection names ([1038](https://github.com/stac-utils/stac-server/pull/1038)).  This is a core change in how indicies are stored and looked up and will fail to look up indicies made before this version
+
+## [4.5.0]
+
 ### Added
 
 - Automatic temporal extent calculation for collections. When serving collections via the `/collections` 
@@ -24,6 +58,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - When asset proxying is enabled, when a STAC Item or Collection is served, asset S3 hrefs
   are replaced with proxy endpoint URLs and the original S3 URLs are preserved in
   `alternate.s3.href` using the Alternate Assets Extension.
+
+### Fixed
+
+- When using the `_filter` parameter, the combined filter was returned in the `next` link
+  body. This had the correct semantics, but the size of the filter would grow by one
+  `and` nesting each pagination request, as the `_filter` was repeatedly added to body.
 
 ## [4.4.0] - 2025-09-10
 
@@ -435,7 +475,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Landing Page (root) now has links for both GET and POST methods of search link relation
 - The STAC API version is now 1.0.0-rc.2
 - AWS OpenSearch Service OpenSearch 2.3 is used as the default instead of Elasticsearch 7.10.
-  See [migration section in README.md](README.md#04x---05x).
+  See [migration section in README.md](https://github.com/stac-utils/stac-server/blob/main/README.md#04x---05x).
 - The serverless.example.yml file now has zone awareness enabled and an even number of
   Elasticsearch nodes
 - Upgrade serverless to 3.x
@@ -599,7 +639,9 @@ Initial release, forked from [sat-api](https://github.com/sat-utils/sat-api/tree
 
 Compliant with STAC 0.9.0
 
-[unreleased]: https://github.com/stac-utils/stac-server/compare/v4.4.0...main
+[unreleased]: https://github.com/stac-utils/stac-server/compare/v5.0.0...main
+[5.0.0]: https://github.com/stac-utils/stac-api/compare/v4.5.0...v5.0.0
+[4.5.0]: https://github.com/stac-utils/stac-api/compare/v4.4.0...v4.5.0
 [4.4.0]: https://github.com/stac-utils/stac-api/compare/v4.3.0...v4.4.0
 [4.3.0]: https://github.com/stac-utils/stac-api/compare/v4.2.0...v4.3.0
 [4.2.0]: https://github.com/stac-utils/stac-api/compare/v4.1.0...v4.2.0

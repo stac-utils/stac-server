@@ -81,6 +81,76 @@ test('POST /collections/:collectionId/items', async (t) => {
   t.is(getResponse.body.collection, collectionId)
 })
 
+test('POST /collections/:collectionId/items with ItemCollection', async (t) => {
+  const item1Id = randomId('item')
+  const item1 = await loadFixture(
+    'stac/LC80100102015082LGN00.json',
+    {
+      id: item1Id,
+      collection: t.context.collectionId
+    }
+  )
+  delete item1.collection
+
+  const item2Id = randomId('item')
+  const item2 = await loadFixture(
+    'stac/LC80100102015050LGN00.json',
+    {
+      id: item2Id,
+      collection: t.context.collectionId
+    }
+  )
+  delete item2.collection
+
+  const itemCollection = {
+    type: 'FeatureCollection',
+    features: [item1, item2],
+    links: []
+  }
+
+  const { collectionId } = t.context
+
+  let response = await t.context.api.client.post(
+    `collections/${collectionId}/items`,
+    { json: itemCollection, resolveBodyOnly: false, responseType: 'text' }
+  )
+
+  t.is(response.statusCode, 201)
+  t.is(response.headers['content-type'], 'text/plain; charset=utf-8')
+  t.is(response.body, 'Created')
+
+  // ES needs a second to process the create request
+  // eslint-disable-next-line no-promise-executor-return
+  await new Promise((r) => setTimeout(r, 1000))
+
+  let getResponse = await t.context.api.client.get(
+    `collections/${collectionId}/items/${item1Id}`,
+    { resolveBodyOnly: false }
+  )
+
+  t.is(getResponse.body.collection, collectionId)
+
+  getResponse = await t.context.api.client.get(
+    `collections/${collectionId}/items/${item2Id}`,
+    { resolveBodyOnly: false }
+  )
+
+  t.is(getResponse.body.collection, collectionId)
+
+  const item3Id = randomId('item')
+  const item3 = item1
+  item3.id = item3Id
+  itemCollection.features = [item2, item3]
+
+  response = await t.context.api.client.post(
+    `collections/${collectionId}/items`,
+    { json: itemCollection, resolveBodyOnly: false, throwHttpErrors: false, responseType: 'text' }
+  )
+
+  t.is(response.statusCode, 409)
+  t.regex(response.body, /1 items created\. .+/)
+})
+
 test('POST /collections/:collectionId/items with mismatched collection id', async (t) => {
   t.context.itemId = randomId('item')
 

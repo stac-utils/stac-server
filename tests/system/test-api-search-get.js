@@ -68,7 +68,7 @@ test('/search preserve bbox in next links', async (t) => {
 
   t.deepEqual(nextUrl.searchParams.get('next'),
     [
-      response.features[1].properties.datetime,
+      new Date(response.features[1].properties.datetime).getTime(),
       response.features[1].id,
       response.features[1].collection
     ].join(','))
@@ -106,7 +106,7 @@ test('/search preserve bbox and datetime in next links', async (t) => {
   const nextUrl = new URL(nextLink.href)
   t.deepEqual(nextUrl.searchParams.get('next'),
     [
-      response.features[0].properties.datetime,
+      new Date(response.features[0].properties.datetime).getTime(),
       response.features[0].id,
       response.features[0].collection
     ].join(','))
@@ -383,5 +383,128 @@ test('GET /search with filter restriction returns filtered results', async (t) =
 
     t.is(r.statusCode, 200)
     t.is(r.body.features.length, 3)
+  }
+})
+
+test('/search sort unqualified field names fails', async (t) => {
+  const error = await t.throwsAsync(async () => t.context.api.client.get('search', {
+    searchParams: { sortby: '-datetime' }
+  }))
+
+  t.is(error.response.statusCode, 400)
+  t.truthy(error.response.body.description.includes('Hint: `sortby` requires fully qualified identifiers'))
+})
+
+test('/search invalid bbox throws error', async (t) => {
+  // test invalid longitude
+  {
+    const error = await t.throwsAsync(async () => t.context.api.client.post('search', {
+      json: {
+        bbox: [-190, -90, 180, 90]
+      }
+    }))
+    t.is(error.response.statusCode, 400)
+    t.is(error.response.body.code, 'BadRequest')
+    t.regex(
+      error.response.body.description,
+      // eslint-disable-next-line max-len
+      /Invalid \[lon, lat, lon, lat, z, z\] bbox\. {2}Longitudes must be between -180\/180, latitudes must be between {1}-90\/90, extent should not exceed \[-180, -90, 180, 90\]/
+    )
+  }
+
+  // test invalid latitude
+  {
+    const error = await t.throwsAsync(async () => t.context.api.client.post('search', {
+      json: {
+        bbox: [-110, -100, 180, 90]
+      }
+    }))
+    t.is(error.response.statusCode, 400)
+    t.is(error.response.body.code, 'BadRequest')
+    t.regex(
+      error.response.body.description,
+      // eslint-disable-next-line max-len
+      /Invalid \[lon, lat, lon, lat, z, z\] bbox\. {2}Longitudes must be between -180\/180, latitudes must be between {1}-90\/90, extent should not exceed \[-180, -90, 180, 90\]/
+    )
+  }
+
+  // test 6 coords with invalid values
+  {
+    const error = await t.throwsAsync(async () => t.context.api.client.post('search', {
+      json: {
+        bbox: [-190, -90, 180, 100, 10, 10]
+      }
+    }))
+    t.is(error.response.statusCode, 400)
+    t.is(error.response.body.code, 'BadRequest')
+    t.regex(
+      error.response.body.description,
+      // eslint-disable-next-line max-len
+      /Invalid \[lon, lat, lon, lat, z, z\] bbox\. {2}Longitudes must be between -180\/180, latitudes must be between {1}-90\/90, extent should not exceed \[-180, -90, 180, 90\]/
+    )
+  }
+})
+
+test('GET /search using "exclude" returns properly formatted links', async (t) => {
+  const fixtureFiles = [
+    'LC80100102015050LGN00.json',
+    'LC80100102015082LGN00.json'
+  ]
+  const items = await Promise.all(fixtureFiles.map((x) => loadJson(x)))
+  await processMessages(items)
+  await refreshIndices()
+
+  // specificall testing that using 'collection' and/or 'id' does not return
+  // any 'undefined' links, fields required to generate links
+  {
+    const response = await t.context.api.client.get('search', {
+      resolveBodyOnly: false,
+      searchParams: new URLSearchParams({
+        collections: 'landsat-8-l1',
+        limit: 1,
+        fields: '-assets,-bbox,-stac_version,-collection,-id',
+      })
+    })
+    t.is(response.statusCode, 200)
+    t.is(response.body.features.length, 1)
+
+    // check 'self' link
+    const selfLink = response.body.features[0].links.find((l) => l.rel === 'self')
+    const selfPath = new URL(selfLink.href).pathname
+    t.is(selfPath, '/collections/landsat-8-l1/items/LC80100102015082LGN00')
+
+    const parentLink = response.body.features[0].links.find((l) => l.rel === 'parent')
+    const parentPath = new URL(parentLink.href).pathname
+    t.is(parentPath, '/collections/landsat-8-l1')
+
+    const collectionLink = response.body.features[0].links.find((l) => l.rel === 'collection')
+    const collectionPath = new URL(collectionLink.href).pathname
+    t.is(collectionPath, '/collections/landsat-8-l1')
+  }
+  {
+    // test without excluding required 'id' or 'collection' fields to generate link
+    const response = await t.context.api.client.get('search', {
+      resolveBodyOnly: false,
+      searchParams: new URLSearchParams({
+        collections: 'landsat-8-l1',
+        limit: 1,
+        fields: '-assets,-bbox,-stac_version',
+      })
+    })
+    t.is(response.statusCode, 200)
+    t.is(response.body.features.length, 1)
+
+    // check 'self' link
+    const selfLink = response.body.features[0].links.find((l) => l.rel === 'self')
+    const selfPath = new URL(selfLink.href).pathname
+    t.is(selfPath, '/collections/landsat-8-l1/items/LC80100102015082LGN00')
+
+    const parentLink = response.body.features[0].links.find((l) => l.rel === 'parent')
+    const parentPath = new URL(parentLink.href).pathname
+    t.is(parentPath, '/collections/landsat-8-l1')
+
+    const collectionLink = response.body.features[0].links.find((l) => l.rel === 'collection')
+    const collectionPath = new URL(collectionLink.href).pathname
+    t.is(collectionPath, '/collections/landsat-8-l1')
   }
 })

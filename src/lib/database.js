@@ -36,6 +36,18 @@ const UNPREFIXED_FIELDS = [
 ]
 const GEOMETRY_TYPES = ['Point', 'LineString', 'Polygon', 'MultiPoint',
   'MultiLineString', 'MultiPolygon', 'GeometryCollection']
+export const DEFAULT_FIELDS = [
+  'id',
+  'type',
+  'stac_version',
+  'geometry',
+  'bbox',
+  'links',
+  'assets',
+  'collection',
+  'properties.datetime'
+]
+const MAX_COLLECTIONS_IN_QUERY_PATH = 10
 
 let collectionToIndexMapping = null
 let unrestrictedIndices = null
@@ -48,7 +60,7 @@ export const isIndexNotFoundError = (e) => (
 /*
 This module is used for connecting to a search database instance, writing records,
 searching records, and managing the indexes. It looks for the OPENSEARCH_HOST environment
-variable which is the URL to the search database host
+variable which is the URL to the search database host line
 */
 
 function buildRangeQuery(property, operators, operatorsObject) {
@@ -376,6 +388,42 @@ function buildFilterExtQuery(filter) {
   }
 }
 
+/**
+ * Hash function that converts a string into a hexadecimal string.
+ * A variant of the well-known "djb2" algorithm.
+ *
+ * @param {string} collection
+ * @returns {string} An 8-character hexadecimal hash string.
+ */
+function collectionHash(collection) {
+  let hash = 0
+  if (collection.length === 0) {
+    return '00000000'
+  }
+  for (let i = 0; i < collection.length; i += 1) {
+    const charCode = collection.charCodeAt(i)
+    hash = (hash << 5) - hash + charCode //eslint-disable-line no-bitwise
+    // converts to a 32-bit integer.
+    hash |= 0 //eslint-disable-line no-bitwise
+  }
+
+  // coonvert to hex string
+  return (hash >>> 0).toString(16).padStart(8, '0') //eslint-disable-line no-bitwise
+}
+
+/**
+ * Translates any collection ID into a fully unique ID to be
+ * used as index by OpenSearch
+ * Necessary because OpenSearch does not allow upper case letters in indicies.
+ * Using a short hash facilitates generating unique lower case IDs
+ *  regardless of case
+ * @param {string} collection
+ * @returns {string} unique OpenSearch compatible string
+ */
+export function collectionUniqueIndexID(collection) {
+  return `${collection.toLowerCase()}-${collectionHash(collection)}`
+}
+
 function buildItemSearchQuery(parameters) {
   const { intersects, collections, ids } = parameters
   const filterQueries = []
@@ -516,38 +564,47 @@ function buildSearchAfter(parameters) {
   return undefined
 }
 
-function buildFieldsFilter(parameters) {
+function fieldsParamIsEmpty(fieldsSpec, paramName) {
+  // Check if include or exclude is either:
+  //   a. null
+  //   b. an empty array
+  return fieldsSpec.hasOwnProperty(paramName)
+    && (fieldsSpec[paramName] === null
+    || (Array.isArray(fieldsSpec[paramName]) && !fieldsSpec[paramName].length))
+}
+
+export function buildFieldsFilter(parameters) {
   const { fields } = parameters
   let _sourceIncludes = []
-  if (parameters.hasOwnProperty('fields')) {
-    // if fields parameters supplied at all, start with this initial set, otherwise return all
-    _sourceIncludes = [
-      'id',
-      'type',
-      'stac_version',
-      'geometry',
-      'bbox',
-      'links',
-      'assets',
-      'collection',
-      'properties.datetime'
-    ]
-  }
   let _sourceExcludes = []
-  if (fields) {
-    const { include, exclude } = fields
-    // Add include fields to the source include list if they're not already in it
-    if (include && include.length > 0) {
-      include.forEach((field) => {
-        if (_sourceIncludes.indexOf(field) < 0) {
-          _sourceIncludes.push(field)
-        }
-      })
-    }
-    // Remove exclude fields from the default include list and add them to the source exclude list
-    if (exclude && exclude.length > 0) {
-      _sourceIncludes = _sourceIncludes.filter((field) => !exclude.includes(field))
-      _sourceExcludes = exclude
+  if (parameters.hasOwnProperty('fields')) {
+    if (fieldsParamIsEmpty(fields, 'include')
+          && fieldsParamIsEmpty(fields, 'exclude')) {
+      // if fields parameters are supplied but empty,
+      // start with this initial set, otherwise return all
+      _sourceIncludes = DEFAULT_FIELDS
+    } else if (fieldsParamIsEmpty(fields, 'include')) {
+      _sourceExcludes = fields.exclude
+      _sourceIncludes = DEFAULT_FIELDS.filter((item) => !_sourceExcludes.includes(item))
+    } else if (fieldsParamIsEmpty(fields, 'exclude')) {
+      _sourceIncludes = fields.include
+    } else {
+      const { include, exclude } = fields
+      // Add include fields to the source include list if they're not already in it
+      if (include && include.length > 0) {
+        include.forEach((field) => {
+          if (_sourceIncludes.indexOf(field) < 0) {
+            _sourceIncludes.push(field)
+          }
+        })
+      }
+      // Remove exclude fields from the default include list and add them to the source exclude list
+      if (exclude && exclude.length > 0) {
+        //_sourceIncludes = _sourceIncludes.filter((field) => !exclude.includes(field))
+        _sourceExcludes = exclude.filter((excludeField) =>
+          !_sourceIncludes.includes(excludeField)
+            && !_sourceIncludes.some((includeField) => includeField.startsWith(`${excludeField}.`)))
+      }
     }
   }
   return { _sourceIncludes, _sourceExcludes }
@@ -564,7 +621,8 @@ async function indexCollection(collection) {
   if (!exists.body) {
     await createIndex(COLLECTIONS_INDEX)
   }
-
+  const idHash = collectionUniqueIndexID(collection.id)
+  // call the hash function
   const collectionDocResponse = await client.index({
     index: COLLECTIONS_INDEX,
     id: collection.id,
@@ -572,7 +630,7 @@ async function indexCollection(collection) {
     opType: 'create'
   })
 
-  const indexCreateResponse = await createIndex(collection.id)
+  const indexCreateResponse = await createIndex(idHash)
 
   return [collectionDocResponse, indexCreateResponse]
 }
@@ -583,12 +641,11 @@ async function indexCollection(collection) {
  */
 async function indexItem(item) {
   const client = await _client()
-
-  const exists = await client.indices.exists({ index: item.collection })
+  const hashedIndex = collectionUniqueIndexID(item.collection)
+  const exists = await client.indices.exists({ index: hashedIndex })
   if (!exists.body) {
-    return new Error(`Index ${item.collection} does not exist, add before creating items`)
+    return new Error(`Index ${hashedIndex} does not exist, add before creating items`)
   }
-
   const now = new Date().toISOString()
   Object.assign(item.properties, {
     created: now,
@@ -596,7 +653,7 @@ async function indexItem(item) {
   })
 
   const response = await client.index({
-    index: item.collection,
+    index: hashedIndex,
     id: item.id,
     body: item,
     opType: 'create'
@@ -625,9 +682,8 @@ async function partialUpdateItem(collectionId, itemId, updateFields) {
   } else {
     updateFields.properties = requiredProperties
   }
-
   const response = await client.update({
-    index: collectionId,
+    index: collectionUniqueIndexID(collectionId),
     id: itemId,
     _source: true,
     body: {
@@ -642,7 +698,7 @@ async function deleteItem(collectionId, itemId) {
   const client = await _client()
   if (client === undefined) throw new Error('Client is undefined')
   return await client.delete_by_query({
-    index: collectionId,
+    index: collectionUniqueIndexID(collectionId),
     body: buildIdQuery(itemId),
     waitForCompletion: true
   })
@@ -723,6 +779,7 @@ async function populateUnrestrictedIndices() {
 }
 
 export async function constructSearchParams(parameters, page, limit) {
+  // console.log('DEBUG - parameters %j', parameters)
   const { id, collections, filter } = parameters
 
   let body
@@ -740,7 +797,9 @@ export async function constructSearchParams(parameters, page, limit) {
 
   let indices
   if (Array.isArray(collections) && collections.length) {
-    if (process.env['COLLECTION_TO_INDEX_MAPPINGS']) {
+    if (collections.length > MAX_COLLECTIONS_IN_QUERY_PATH) {
+      indices = ['_all']
+    } else if (process.env['COLLECTION_TO_INDEX_MAPPINGS']) {
       if (!collectionToIndexMapping) await populateCollectionToIndexMapping()
       indices = await Promise.all(collections.map(async (x) => await indexForCollection(x)))
     } else {
@@ -752,6 +811,13 @@ export async function constructSearchParams(parameters, page, limit) {
     }
     indices = unrestrictedIndices
   }
+  // hash indices
+  indices = indices.map((index) => {
+    if (DEFAULT_INDICES.includes(index) || index === '_all') {
+      return index
+    }
+    return collectionUniqueIndexID(index)
+  })
 
   const searchParams = {
     index: indices,
@@ -773,6 +839,8 @@ export async function constructSearchParams(parameters, page, limit) {
     searchParams._sourceIncludes = _sourceIncludes
   }
 
+  logger.debug('Search Params: %j', searchParams)
+
   return searchParams
 }
 
@@ -784,11 +852,19 @@ async function search(parameters, limit, page) {
     ...searchParams
   })
 
-  const results = dbResponse.body.hits.hits.map((r) => (r._source))
+  const hits = dbResponse.body.hits.hits
+  const results = hits.map((r) => (r._source))
+  const lastItem = hits.at(-1)
+  let lastItemSort = null
+  if (lastItem && lastItem.sort) {
+    lastItemSort = lastItem.sort.join(',')
+  }
+
   const response = {
     results,
     numberMatched: dbResponse.body.hits.total.value,
-    numberReturned: results.length
+    numberReturned: results.length,
+    lastItemSort
   }
 
   return response
@@ -998,9 +1074,10 @@ export const getItemCreated = async (collectionId, itemId) => {
 async function updateItem(item) {
   const client = await _client()
 
-  const exists = await client.indices.exists({ index: item.collection })
+  const hashedIndex = collectionUniqueIndexID(item.collection)
+  const exists = await client.indices.exists({ index: hashedIndex })
   if (!exists.body) {
-    return new Error(`Index ${item.collection} does not exist, add before creating items`)
+    return new Error(`Index ${hashedIndex} does not exist, add before creating items`)
   }
 
   const now = new Date().toISOString()
@@ -1012,7 +1089,7 @@ async function updateItem(item) {
   })
 
   const response = await client.index({
-    index: item.collection,
+    index: hashedIndex,
     id: item.id,
     body: item,
     opType: 'index'
@@ -1106,5 +1183,6 @@ export default {
   constructSearchParams,
   buildDatetimeQuery,
   healthCheck,
-  getTemporalExtentFromItems
+  getTemporalExtentFromItems,
+  buildFieldsFilter
 }

@@ -4,8 +4,21 @@ export function isCollection(record) {
   return record && record.type === 'Collection'
 }
 
+export class InvalidSTACItemException extends Error {
+  constructor(message) {
+    super(message)
+    this.name = this.constructor.name
+  }
+}
+
 export function isItem(record) {
-  return record && record.type === 'Feature'
+  if (record && record.type === 'Feature') {
+    if ('collection' in record) {
+      return true
+    }
+    throw new InvalidSTACItemException('STAC Items must include a "collection" field')
+  }
+  return false
 }
 
 export function isStacEntity(record) {

@@ -1,4 +1,4 @@
-import { pickBy, assign, get as getNested } from 'lodash-es'
+import { pickBy, assign, get as _getNested } from 'lodash-es'
 import { DateTime } from 'luxon'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3'
@@ -198,6 +198,32 @@ const validateStartAndEndDatetimes = function (startDateTime, endDateTime) {
   }
 }
 
+/**
+ * ensure that fields necessary for creating links i.e. 'collection' and 'id'
+ * are not excluded from query.  These fields will be removed later to ensure
+ * results match user expectations
+ * @param {Object} fields
+ * @returns {Object}
+ */
+export const createQueryFields = function (fields) {
+  const { exclude } = fields
+  if (exclude) {
+    const filteredExclude = exclude.filter(
+      (field) => field !== 'id' && field !== 'collection'
+    )
+    if (filteredExclude.length === 0) {
+      const { exclude: _removed, ...rest } = fields
+      return rest
+    }
+
+    return {
+      ...fields,
+      exclude: filteredExclude
+    }
+  }
+  return fields
+}
+
 export const extractDatetime = function (params) {
   const { datetime } = params
 
@@ -331,33 +357,48 @@ const extractSortby = function (params) {
   return sortbyRules
 }
 
-const extractFields = function (params) {
-  let fieldRules
+export const extractFields = function (params) {
+  let fieldRules = {}
   const { fields } = params
   if (fields) {
     if (typeof fields === 'string') {
       // GET request - different syntax
       const _fields = fields.split(',')
       const include = []
-      _fields.forEach((fieldRule) => {
-        if (fieldRule[0] !== '-') {
-          include.push(fieldRule)
+      _fields.forEach((rule) => {
+        if (rule[0] !== '-') {
+          if (rule[0] === '+') {
+            include.push(rule.slice(1))
+          } else {
+            include.push(rule)
+          }
         }
       })
+      if (include.length) {
+        fieldRules.include = include
+      }
+
       const exclude = []
-      _fields.forEach((fieldRule) => {
-        if (fieldRule[0] === '-') {
-          exclude.push(fieldRule.slice(1))
+      _fields.forEach((rule) => {
+        if (rule[0] === '-') {
+          exclude.push(rule.slice(1))
         }
       })
-      fieldRules = { include, exclude }
+      if (exclude.length) {
+        fieldRules.exclude = exclude
+      }
     } else {
       // POST request - JSON
       fieldRules = fields
     }
   } else if (params.hasOwnProperty('fields')) {
     // fields was provided as an empty object
-    fieldRules = {}
+    if (params.fields === null) {
+      throw new ValidationError(
+        '`fields` parameter must be an object, optionally with one or '
+          + 'both of the keys "include" and "exclude"'
+      )
+    }
   }
   return fieldRules
 }
@@ -472,42 +513,49 @@ export const addCollectionLinks = function (results, endpoint) {
     links.splice(0, 0, {
       rel: 'self',
       type: 'application/json',
-      href: `${endpoint}/collections/${id}`
+      href: `${endpoint}/collections/${id}`,
+      title: id
     })
     // parent catalog
     links.push({
       rel: 'parent',
       type: 'application/json',
-      href: `${endpoint}`
+      href: `${endpoint}`,
+      title: 'Catalog'
     })
     // root catalog
     links.push({
       rel: 'root',
       type: 'application/json',
-      href: `${endpoint}`
+      href: `${endpoint}`,
+      title: 'Catalog'
     })
     // child items
     links.push({
       rel: 'items',
       type: 'application/geo+json',
-      href: `${endpoint}/collections/${id}/items`
+      href: `${endpoint}/collections/${id}/items`,
+      title: 'Items'
     })
     // queryables
     links.push({
       rel: 'http://www.opengis.net/def/rel/ogc/1.0/queryables',
       type: 'application/schema+json',
-      href: `${endpoint}/collections/${id}/queryables`
+      href: `${endpoint}/collections/${id}/queryables`,
+      title: 'Queryables'
     })
     links.push({
       rel: 'aggregate',
       type: 'application/json',
       href: `${endpoint}/collections/${id}/aggregate`,
-      method: 'GET'
+      method: 'GET',
+      title: 'STAC aggregation [GET]'
     })
     links.push({
       rel: 'aggregations',
       type: 'application/json',
-      href: `${endpoint}/collections/${id}/aggregations`
+      href: `${endpoint}/collections/${id}/aggregations`,
+      title: 'Aggregations'
     })
   })
   return results
@@ -518,7 +566,6 @@ export const addItemLinks = function (results, endpoint) {
   results.forEach((result) => {
     let { links } = result
     const { id, collection } = result
-
     links = (links === undefined) ? [] : links
     // self link
     links.splice(0, 0, {
@@ -555,6 +602,32 @@ export const addItemLinks = function (results, endpoint) {
   return results
 }
 
+/**
+ * If 'id' or 'collection' were in the 'excluded' fields, they must
+ * be removed.  They were necessary for STAC Item link generation and
+ * can now be removed after link generation if a user wanted to exclude them
+ * Impure, we are potentially mutating 'results'
+ * @param {Object} results
+ * @param {Object} fields - {'exclude': [string], 'include': [string]}
+ * @returns {Object}
+ */
+export const removeSpecialExcludeFields = function (results, fields) {
+  const { exclude } = fields
+  if (!exclude) return results
+
+  const removeId = exclude.includes('id')
+  const removeCollection = exclude.includes('collection')
+
+  // exit early and avoid forEach loop if possible
+  if (!removeId && !removeCollection) return results
+
+  results.forEach((item) => {
+    if (removeId) delete item.id
+    if (removeCollection) delete item.collection
+  })
+  return results
+}
+
 const wrapResponseInFeatureCollection = function (features, links,
   numberMatched, numberReturned, limit) {
   const fc = {
@@ -576,8 +649,10 @@ const wrapResponseInFeatureCollection = function (features, links,
   return fc
 }
 
-const buildPaginationLinks = function (limit, parameters, bbox, intersects, collections, endpoint,
-  httpMethod, sortby, items) {
+const buildPaginationLinks = function (
+  limit, parameters, bbox, intersects, collections, filter,
+  endpoint, httpMethod, _sortby, items, lastItemSort
+) {
   if (items.length) {
     const dictToURI = (dict) => (
       Object.keys(dict).map(
@@ -606,21 +681,16 @@ const buildPaginationLinks = function (limit, parameters, bbox, intersects, coll
       ).join('&')
     )
 
-    const lastItem = items[items.length - 1]
-
-    const nextKeys = sortby ? sortby.map((x) => x.field)
-      : ['properties.datetime', 'id', 'collection']
-
-    const next = nextKeys.map((k) => getNested(lastItem, k)).join(',')
-
-    if (next) {
+    if (lastItemSort) {
       const link = {
         rel: 'next',
         title: 'Next page of Items',
         method: httpMethod,
         type: 'application/geo+json'
       }
-      const nextParams = pickBy(assign(parameters, { bbox, intersects, limit, next, collections }))
+      const nextParams = pickBy(
+        assign(parameters, { bbox, intersects, limit, next: lastItemSort, collections, filter })
+      )
       if (httpMethod === 'GET') {
         const nextQueryParameters = dictToURI(nextParams)
         link.href = `${endpoint}?${nextQueryParameters}`
@@ -655,11 +725,14 @@ const searchItems = async function (
 
   const sortby = extractSortby(parameters)
   const query = extractStacQuery(parameters)
-  const filter = concatenateCql2Filters(
-    extractCql2Filter(parameters),
+  const specifiedFilter = extractCql2Filter(parameters)
+
+  const combinedFilter = concatenateCql2Filters(
+    specifiedFilter,
     extractRestrictionCql2Filter(parameters, headers)
   )
   const fields = extractFields(parameters)
+  const queryFields = createQueryFields(fields)
   const ids = extractIds(parameters)
   const allowedCollectionIds = extractAllowedCollectionIds(
     parameters,
@@ -674,9 +747,9 @@ const searchItems = async function (
     datetime,
     intersects: geometry,
     query,
-    filter: filter,
+    filter: combinedFilter,
     sortby,
-    fields,
+    fields: queryFields,
     ids,
     collections,
     next
@@ -712,6 +785,15 @@ const searchItems = async function (
       let errorMessage
       if ('caused_by' in e) {
         errorMessage = JSON.stringify(e?.caused_by?.reason)
+      } else if ('root_cause' in e) {
+        const reason = e?.root_cause[0]?.reason
+        errorMessage = reason
+        if (reason.includes('No mapping found for')
+            && reason.includes('to sort on')) {
+          errorMessage += '. (Hint: `sortby` requires fully '
+                + 'qualified identifiers, e.g. `properties.datetime` '
+                + 'instead of `datetime`)'
+        }
       } else if (JSON.stringify(e).includes('failed to create query')) {
         errorMessage = `Query failed with invalid parameters: ${JSON.stringify(e)}`
       } else {
@@ -723,17 +805,19 @@ const searchItems = async function (
     }
   }
 
-  const { results: responseItems, numberMatched, numberReturned } = esResponse
+  const { results: responseItems, numberMatched, numberReturned, lastItemSort } = esResponse
   const paginationLinks = buildPaginationLinks(
     limit,
     searchParams,
     bbox,
     intersects,
     specifiedCollectionIds,
+    specifiedFilter,
     newEndpoint,
     httpMethod,
     sortby,
-    responseItems
+    responseItems,
+    lastItemSort
   )
 
   // @ts-ignore
@@ -759,6 +843,7 @@ const searchItems = async function (
   }
 
   addItemLinks(responseItems, endpoint)
+  removeSpecialExcludeFields(responseItems, fields)
 
   return wrapResponseInFeatureCollection(responseItems, links, numberMatched, numberReturned, limit)
 }
@@ -1172,60 +1257,71 @@ const getCatalog = async function (txnEnabled, endpoint = '') {
     {
       rel: 'self',
       type: 'application/json',
-      href: `${endpoint}`
+      href: `${endpoint}`,
+      title: 'Root Catalog'
     },
     {
       rel: 'root',
       type: 'application/json',
-      href: `${endpoint}`
+      href: `${endpoint}`,
+      title: 'Root Catalog'
     },
     {
       rel: 'conformance',
       type: 'application/json',
-      href: `${endpoint}/conformance`
+      href: `${endpoint}/conformance`,
+      title: 'STAC/OGC confromance classes'
     },
     {
       rel: 'data',
       type: 'application/json',
-      href: `${endpoint}/collections`
+      href: `${endpoint}/collections`,
+      title: 'Collections'
     },
     {
       rel: 'search',
       type: 'application/geo+json',
       href: `${endpoint}/search`,
       method: 'GET',
+      title: 'STAC search [GET]'
     },
     {
       rel: 'search',
       type: 'application/geo+json',
       href: `${endpoint}/search`,
       method: 'POST',
+      title: 'STAC search [POST]'
     },
     {
       rel: 'aggregate',
       type: 'application/json',
       href: `${endpoint}/aggregate`,
       method: 'GET',
+      title: 'STAC aggregate [GET]'
     },
     {
       rel: 'aggregations',
       type: 'application/json',
-      href: `${endpoint}/aggregations`
+      href: `${endpoint}/aggregations`,
+      title: 'Aggregations'
     },
     {
       rel: 'service-desc',
       type: 'application/vnd.oai.openapi',
-      href: `${endpoint}/api`
+      href: `${endpoint}/api`,
+      title: 'OpenAPI service description'
     },
     {
       rel: 'service-doc',
       type: 'text/html',
-      href: `${endpoint}/api.html`
+      href: `${endpoint}/api.html`,
+      title: 'OpenAPI service documentation'
     },
     {
       rel: 'http://www.opengis.net/def/rel/ogc/1.0/queryables',
       type: 'application/schema+json',
-      href: `${endpoint}/queryables`
+      href: `${endpoint}/queryables`,
+      title: 'Queryables'
     },
   ]
 
@@ -1234,6 +1330,7 @@ const getCatalog = async function (txnEnabled, endpoint = '') {
       rel: 'server',
       type: 'text/html',
       href: process.env['STAC_DOCS_URL'],
+      title: 'API documentation'
     })
   }
 
@@ -1313,11 +1410,13 @@ const getCollections = async function (backend, endpoint, parameters, headers) {
         rel: 'self',
         type: 'application/json',
         href: `${endpoint}/collections`,
+        title: 'Collections'
       },
       {
         rel: 'root',
         type: 'application/json',
         href: `${endpoint}`,
+        title: 'Root Catalog'
       },
     ],
   }

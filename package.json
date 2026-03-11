@@ -109,7 +109,7 @@
     "aws-sdk-client-mock": "^4.1.0",
     "better-npm-audit": "^3.11.0",
     "c8": "^11.0.0",
-    "copy-webpack-plugin": "^13.0.1",
+    "copy-webpack-plugin": "^14.0.0",
     "crypto-random-string": "^5.0.0",
     "eslint": "^8.57.0",
     "eslint-config-airbnb": "^19.0.4",

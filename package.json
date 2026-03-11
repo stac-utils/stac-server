@@ -78,7 +78,7 @@
     "morgan": "^1.10.1",
     "p-filter": "^4.1.0",
     "serverless-http": "^3.2.0",
-    "simple-swizzle": "<0.2.3 || >0.2.3",
+    "simple-swizzle": "<0.2.5 || >0.2.3",
     "strip-ansi": "<7.1.1 || >7.1.1",
     "supports-color": "<10.2.1 || >10.2.1",
     "through2": "^4.0.2",

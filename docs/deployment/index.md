@@ -680,6 +680,44 @@ The outputs of the pre- and post-hooks are validated and, if they don't comply w
   name, reindex the existing index into the newly-created index, delete and re-created
   the existing index by creating a collection, and reindex back into the index.
 
+### 5.0.0
+
+#### New collection to index name mapping
+
+In previous versions, stac-server named OpenSearch indices identically
+to the collections that they backed. Due to OpenSearch's inflexibility
+in naming indices (only lowercase letters are allowed), stac-server now
+uses the naming scheme
+
+```
+lowercase(collectionName) + simpleHash(collectionName)
+```
+
+This means that if a stac-server instance of version `5.0.0` or newer
+connects to a OpenSearch cluster created with an onlder version of
+stac-server, the newer server will not be able to find collection
+indices. The recommended work around for this is to add all existing
+collections to `COLLECTION_TO_INDEX_MAPPINGS` before upgrading to `v5`.
+
+Here is an example `jq` script that will accomplish this:
+
+```jq
+# script.jq
+(
+  .collections
+  | map({(.id): .id})
+  | map(to_entries)
+  | flatten
+  | from_entries
+) + $EXISTING_MAPPINGS
+```
+
+```sh
+curl $STAC_SERVER_URL/collections | jq --argjson EXISTING_MAPPINGS $COLLECTION_TO_INDEX_MAPPINGS -f script.jq | tee new-mappings.json
+export COLLECTION_TO_INDEX_MAPPINGS=$(cat new-mappings.json)
+```
+
+
 ### 4.1.0
 
 #### Thumbnails feature disabled by default

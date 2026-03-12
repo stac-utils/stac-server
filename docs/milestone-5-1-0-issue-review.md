@@ -40,10 +40,11 @@ are no longer relevant, or remain open and actionable.
 
 **Status: 🔵 Still Open**
 
-The [collection-search extension](https://github.com/stac-api-extensions/collection-search)
-has not been implemented. No filter/search parameters are supported on the `GET /collections`
-endpoint. The current implementation simply returns all collections without any CQL2 filter,
-text search, or other search parameters. This is a legitimate open item.
+**Finding:** The [collection-search extension](https://github.com/stac-api-extensions/collection-search)
+has not been implemented. The `GET /collections` handler in `src/lambdas/api/app.js` passes
+the request query parameters to `api.getCollections()`, but that function does not apply any
+CQL2 filter, free-text search, or sorting logic to the OpenSearch query—it simply returns all
+collections. No POST `/collections` search endpoint exists either. This is a legitimate open item.
 
 ---
 
@@ -51,9 +52,12 @@ text search, or other search parameters. This is a legitimate open item.
 
 **Status: 🔵 Still Open**
 
-The project is still using `express: "^4.21.2"` as of the current `package.json`. The
-issue correctly describes that upgrading to Express 5.x causes `params.hasOwnProperty is
-not a function` errors throughout `api.js`. This remains an open item.
+**Finding:** `package.json` still lists `"express": "^4.21.2"`. The issue was filed after
+attempting the upgrade and discovering that Express 5.x uses
+[`Object.create(null)`](https://github.com/expressjs/express/blob/5.x/lib/request.js) for
+`req.params`, which does not inherit from `Object.prototype`, causing `.hasOwnProperty()`
+calls throughout `src/lib/api.js` to throw `TypeError: params.hasOwnProperty is not a function`.
+No PR has been merged to resolve this.
 
 ---
 
@@ -61,12 +65,15 @@ not a function` errors throughout `api.js`. This remains an open item.
 
 **Status: ✅ Already Completed**
 
-This was implemented in [v4.4.0](https://github.com/stac-utils/stac-server/blob/main/CHANGELOG.md).
-The `extractRestrictionCql2Filter` function in `src/lib/api.js` extracts a `_filter`
-query parameter or `stac-filter-authx` header and ANDs it into the query without
-revealing it in response links. This function is called by the `aggregate` function
-(used by both `/aggregate` and `/collections/{collectionId}/aggregate`), and is
-controlled by the `ENABLE_FILTER_AUTHX` environment variable.
+**Finding:** This was fully implemented in
+[v4.4.0](https://github.com/stac-utils/stac-server/blob/main/CHANGELOG.md#440---2025-09-10)
+(released 2025-09-10). The `extractRestrictionCql2Filter` function in `src/lib/api.js`
+reads a `_filter` query/body parameter or a `STAC-Filter-Authx` header, ANDs it with the
+user's own `filter` via `concatenateCql2Filters`, and never writes the restriction filter
+back into pagination links. The `aggregate` function (which powers both
+`GET /aggregate` and `GET /collections/{collectionId}/aggregate`) calls
+`extractRestrictionCql2Filter(parameters, headers)` on every request. The feature is
+gated by the `ENABLE_FILTER_AUTHX=true` environment variable.
 
 **Recommendation:** Close this issue as completed.
 
@@ -76,12 +83,14 @@ controlled by the `ENABLE_FILTER_AUTHX` environment variable.
 
 **Status: ✅ Already Completed**
 
-This was implemented in [v4.4.0](https://github.com/stac-utils/stac-server/blob/main/CHANGELOG.md),
-alongside #864. The `extractRestrictionCql2Filter` function in `src/lib/api.js` extracts
-a `_filter` query parameter or `stac-filter-authx` header and ANDs it into the query
-without revealing it in pagination links. This function is called by the `searchItems`
-function (used by `/search` and `/collections/{collectionId}/items`), and is controlled
-by the `ENABLE_FILTER_AUTHX` environment variable.
+**Finding:** Implemented alongside #864 in
+[v4.4.0](https://github.com/stac-utils/stac-server/blob/main/CHANGELOG.md#440---2025-09-10)
+(released 2025-09-10). The same `extractRestrictionCql2Filter` function in `src/lib/api.js`
+is called by the `searchItems` function, which handles `POST /search`, `GET /search`, and
+`GET /collections/{collectionId}/items`. The restriction filter is ANDs into every query but
+is never included in `next` or `prev` pagination link bodies, so callers cannot see or
+tamper with the authorization constraint. The feature is gated by the
+`ENABLE_FILTER_AUTHX=true` environment variable.
 
 **Recommendation:** Close this issue as completed.
 
@@ -91,17 +100,18 @@ by the `ENABLE_FILTER_AUTHX` environment variable.
 
 **Status: 🔵 Still Open**
 
-The LIKE operator is explicitly not implemented. In `src/lib/database.js`, the `LIKE` case
-in the filter operator `switch` statement explicitly throws:
+**Finding:** The LIKE operator is explicitly stubbed out as unsupported. In
+`src/lib/database.js`, the CQL2 operator `switch` block contains:
 
 ```javascript
 case OP.LIKE:
   throw new ValidationError("The 'like' operator is not currently supported")
 ```
 
-This remains an open item that, once implemented, would allow advertising the
-`http://www.opengis.net/spec/cql2/1.0/conf/advanced-comparison-operators` conformance
-class (since `IN` and `BETWEEN` are already supported).
+The `IN` and `BETWEEN` operators were added in
+[v3.11.0](https://github.com/stac-utils/stac-server/blob/main/CHANGELOG.md#3110---2025-03-27),
+but LIKE was deliberately deferred. Implementing it (via OpenSearch `regexp` queries) would
+complete the `advanced-comparison-operators` conformance class.
 
 ---
 
@@ -109,9 +119,10 @@ class (since `IN` and `BETWEEN` are already supported).
 
 **Status: 🔵 Still Open**
 
-The project is still using `@opensearch-project/opensearch: "^2.13.0"` as of the current
-`package.json`. This major version upgrade requires updating the code to use the new
-API (e.g., `opType` renamed to `op_type` / `type`). This remains an open item.
+**Finding:** `package.json` still lists `"@opensearch-project/opensearch": "^2.13.0"`. The
+v3.x release regenerated the JavaScript client from the OpenSearch API spec, which renamed
+several parameters (e.g., `opType` → `op_type`). A manual attempt to upgrade broke system
+tests, as documented in the issue. No PR has landed to complete this migration.
 
 ---
 
@@ -119,7 +130,7 @@ API (e.g., `opType` renamed to `op_type` / `type`). This remains an open item.
 
 **Status: 🔵 Still Open**
 
-In `src/lib/database-client.js` (line 93), the following code still exists:
+**Finding:** `src/lib/database-client.js` line 93 still reads:
 
 ```javascript
 } else {
@@ -127,10 +138,12 @@ In `src/lib/database-client.js` (line 93), the following code still exists:
 }
 ```
 
-This generates a misleading error-level log message when updating an existing collection
-(which is expected behavior, not an error). The message should be downgraded to `info` or
-`debug` level with a more descriptive message like "Index for collection X already exists,
-skipping creation". This remains an open item.
+This `logger.error` fires every time a collection is re-ingested (its OpenSearch index
+already exists), producing an alarming error-level log entry even though no failure has
+occurred. The fix is straightforward: downgrade to `logger.debug` (or `logger.info`) and
+improve the message to something like
+`"Index for collection '${index}' already exists, skipping creation"`. No PR has addressed
+this yet.
 
 ---
 
@@ -138,15 +151,17 @@ skipping creation". This remains an open item.
 
 **Status: ✅ Already Completed**
 
-This was fixed in [v5.0.0](https://github.com/stac-utils/stac-server/blob/main/CHANGELOG.md)
-via [PR #1046](https://github.com/stac-utils/stac-server/pull/1046). The implementation
-of `buildPaginationLinks` was changed to use the `sort` object returned by OpenSearch in
-the `hits.sort` field of each hit, rather than deriving the sort cursor from the document
-field values. Since `hits.sort` is always populated by OpenSearch regardless of which
-`_source` fields are included, pagination now works correctly even when the sort field is
-excluded from the results.
+**Finding:** Fixed in [v5.0.0](https://github.com/stac-utils/stac-server/blob/main/CHANGELOG.md#500)
+via [PR #1046](https://github.com/stac-utils/stac-server/pull/1046) (merged 2026-02-27).
 
-Relevant code in `src/lib/database.js`:
+The root cause was that the old implementation derived the pagination cursor from the
+*document source fields* (e.g., `properties.updated`). If the `fields` parameter excluded
+that field, OpenSearch omitted it from `_source`, leaving no value to use as the cursor,
+and so `lastItemSort` was null—causing no `next` link to be generated.
+
+The fix changed `src/lib/database.js` to read the cursor from the `sort` array that
+OpenSearch attaches to every hit (populated regardless of `_source` field selection):
+
 ```javascript
 const lastItem = hits.at(-1)
 let lastItemSort = null
@@ -163,19 +178,15 @@ if (lastItem && lastItem.sort) {
 
 **Status: 🟡 OBE / No Longer Relevant**
 
-The project is currently using `ava: "^5.3"` in `package.json`, not ava 6.0. This issue
-was opened to track problems that would need to be resolved before upgrading to ava 6.0.
-Since the upgrade to ava 6.0 has not been made, and the project is still on ava 5.x, the
-specific problem described (worker threads not exiting via `process.exit()`) is not
-encountered in the current test setup.
+**Finding:** `package.json` still pins `"ava": "^5.3"`. This issue was a pre-upgrade
+tracking ticket for a breaking change in ava 6.0 (`process.exit()` is no longer called
+automatically when worker threads finish, causing the test run to hang if any test file
+leaves open handles). Because the project never upgraded to ava 6.0, the problem
+described in the issue does not affect the current codebase. If an ava 6.0 upgrade is
+not planned as part of 5.1.0, this ticket should be removed from the milestone (or
+closed as "not planned").
 
-If/when the project decides to upgrade to ava 6.0, this issue would become relevant again.
-However, at this time the issue is not blocking any current work. If upgrading to ava 6.0
-is not planned for the 5.1.0 milestone, this issue should either be removed from the
-milestone or closed as "not planned".
-
-**Recommendation:** Remove from the 5.1.0 milestone or close as "not planned" since the
-project has not upgraded to ava 6.0 and the issue only applies to ava 6.0+.
+**Recommendation:** Remove from the 5.1.0 milestone or close as "not planned".
 
 ---
 
@@ -183,16 +194,21 @@ project has not upgraded to ava 6.0 and the issue only applies to ava 6.0+.
 
 **Status: 🔵 Still Open**
 
-While the IAM authentication *implementation* for AWS OpenSearch Serverless (`aoss`) was
-added in [v3.1.0](https://github.com/stac-utils/stac-server/blob/main/CHANGELOG.md)
-(with the code in `src/lib/database-client.js` automatically detecting
-`aoss.amazonaws.com` hosts and using the `aoss` service for SigV4 signing), the
-*documentation* specific to using stac-server with the AWS OpenSearch Serverless
-managed service does not exist in the docs. The deployment documentation covers IAM
-authentication for standard AWS OpenSearch Service domains, but does not specifically
-cover [AWS OpenSearch Serverless](https://aws.amazon.com/opensearch-service/features/serverless/),
-which has different setup requirements (e.g., data access policies instead of resource
-policies). This remains an open item.
+**Finding:** The *implementation* for AWS OpenSearch Serverless has existed since
+[v3.1.0](https://github.com/stac-utils/stac-server/blob/main/CHANGELOG.md#310---2023-11-28)
+(released 2023-11-28). In `src/lib/database-client.js`, the client auto-detects
+`aoss.amazonaws.com` hosts and switches the SigV4 service name from `es` to `aoss`:
+
+```javascript
+service: host.endsWith('aoss.amazonaws.com') ? 'aoss' : 'es',
+```
+
+However, the *docs* (`docs/deployment/index.md`) cover IAM authentication only for the
+standard AWS OpenSearch Service (managed domains). There is no documentation for
+[AWS OpenSearch Serverless](https://aws.amazon.com/opensearch-service/features/serverless/),
+which has a different set-up (data access policies, collection-level endpoints, no
+fine-grained access control, etc.). A dedicated documentation section explaining how to
+point stac-server at an OpenSearch Serverless collection is still missing.
 
 ---
 
@@ -200,18 +216,20 @@ policies). This remains an open item.
 
 **Status: ✅ Likely Completed**
 
-This error occurred when the `search_after` cursor had a different number of values than
-the number of sort fields. This was caused by the old implementation deriving the
-pagination cursor from document field values, which could be inconsistent with the
-actual sort configuration.
+**Finding:** This OpenSearch error occurred when the `search_after` array had fewer
+elements than the sort array. The old pagination implementation built the cursor by
+extracting field values from the last document's `_source`, which only stored values
+for fields that the user explicitly requested. The default sort has three fields
+(`properties.datetime`, `id`, `collection`); if any were absent from `_source` the
+cursor ended up with fewer than three values.
 
-The fix in [v5.0.0](https://github.com/stac-utils/stac-server/blob/main/CHANGELOG.md)
-via [PR #1046](https://github.com/stac-utils/stac-server/pull/1046) now derives the
-pagination cursor from `hits.sort` (the OpenSearch-returned sort values for each hit),
-which always has the same number of elements as the configured sort fields. This
-eliminates the mismatch that caused the original error.
+The fix in [v5.0.0](https://github.com/stac-utils/stac-server/blob/main/CHANGELOG.md#500)
+via [PR #1046](https://github.com/stac-utils/stac-server/pull/1046) (merged 2026-02-27)
+switched to reading the cursor from `hits[n].sort` (the array OpenSearch appends to each
+hit containing the actual sort-key values), which always has exactly as many elements as
+the sort definition. This makes the mismatch structurally impossible.
 
-**Recommendation:** Close this issue as completed, noting the fix from PR #1046.
+**Recommendation:** Close this issue as completed, noting the fix landed in PR #1046.
 
 ---
 
@@ -219,13 +237,16 @@ eliminates the mismatch that caused the original error.
 
 **Status: 🔵 Still Open**
 
-Only GET endpoints are implemented for the aggregation extension:
+**Finding:** `src/lambdas/api/app.js` registers only GET handlers for aggregation routes:
 - `GET /aggregate`
 - `GET /aggregations`
 - `GET /collections/{collectionId}/aggregate`
 - `GET /collections/{collectionId}/aggregations`
 
-No POST equivalents exist in `src/lambdas/api/app.js`. This remains an open item.
+No POST variants of these routes exist. Per the
+[Aggregation Extension spec](https://github.com/stac-api-extensions/aggregation), POST
+equivalents are required to support request bodies for large queries. This is a
+legitimate open item.
 
 ---
 
@@ -233,7 +254,32 @@ No POST equivalents exist in `src/lambdas/api/app.js`. This remains an open item
 
 **Status: ✅ Already Closed**
 
-This issue was closed as completed on March 5, 2026. It has already been resolved.
+**Finding:** This issue was closed as completed on 2026-03-05 by @matthewhanson who
+identified that the fix was actually committed years earlier (circa 2023) in
+[`5a6a93f`](https://github.com/stac-utils/stac-server/commit/5a6a93f7c4b721645eea7df68135ea1e51fbb39f).
+
+The original problem was that the ingest path used heuristics (e.g., presence of `extent`)
+to tell items from collections, which was fragile. Today, `src/lib/stac-utils.js` uses
+the STAC-spec `type` field directly and throws an explicit error for anything else:
+
+```javascript
+export function isCollection(record) {
+  return record && record.type === 'Collection'
+}
+
+export function isItem(record) {
+  if (record && record.type === 'Feature') {
+    if ('collection' in record) { return true }
+    throw new InvalidSTACItemException('STAC Items must include a "collection" field')
+  }
+  return false
+}
+```
+
+If neither `isCollection` nor `isItem` matches, `convertIngestMsgToDbOperation` in
+`src/lib/ingest.js` throws `InvalidIngestError`.
+
+This issue was already closed before this review; it is included here for completeness.
 
 ---
 
@@ -241,24 +287,26 @@ This issue was closed as completed on March 5, 2026. It has already been resolve
 
 **Status: 🔵 Still Open**
 
-The transaction endpoints currently return `204 No Content` rather than `200 OK` with the
-item body:
+**Finding:** All mutating transaction endpoints still return `204 No Content` rather than
+`200 OK` with the updated item body:
 
 - `PUT /collections/{collectionId}/items/{itemId}` → `res.sendStatus(204)`
 - `PATCH /collections/{collectionId}/items/{itemId}` → `res.sendStatus(204)`
+- `POST /collections/{collectionId}/items` (single item) → `res.sendStatus(201)`
+  (correct status code, but no body returned)
 
-There is commented-out code in the PATCH handler that suggests this was considered but
-not completed:
+There is commented-out dead code in the PATCH handler that shows this was attempted but
+left incomplete:
 
 ```javascript
 //const item =
-await api.partialUpdateItem(...)
+await api.partialUpdateItem(database, collectionId, itemId, endpoint, req.body)
 // res.type('application/geo+json')
 // res.json(item)
 res.sendStatus(204)
 ```
 
-This remains an open item.
+No PR has finished this work.
 
 ---
 
@@ -266,19 +314,20 @@ This remains an open item.
 
 **Status: 🔵 Still Open (Partial)**
 
-The TypeScript migration is partially complete. The issue's checklist shows:
+**Finding:** The migration has made meaningful progress but is far from complete. Current
+state of the codebase:
 
-- [x] Enable use of ts files — Done
-- [x] ESM instead of CommonJS modules — Done
-- [ ] Flip ts-check / ts-nocheck — Effectively done (0 `@ts-nocheck` comments remain)
-- [ ] Remove all ts-nocheck — Done (no `@ts-nocheck` comments exist)
-- [ ] Remove all ts-ignores — **Not done** (7 `@ts-ignore` comments remain in
-  `src/lib/api.js` and `src/lib/ingest.js`)
-- [ ] Start converting leaf dependency files to TS — **Not done** (26 `.js` files remain,
-  only 2 `.ts` files: `src/lib/s3-utils.ts` and `src/lambdas/api/local.ts`)
+| Checklist item | Status |
+|---|---|
+| Enable use of `.ts` files | ✅ Done |
+| ESM instead of CommonJS modules | ✅ Done (all files use `import`/`export`) |
+| Remove all `@ts-nocheck` | ✅ Done (0 occurrences found) |
+| Remove all `@ts-ignore` | ❌ 7 occurrences remain (`src/lib/api.js` and `src/lib/ingest.js`) |
+| Start converting leaf files to `.ts` | ❌ Only 2 `.ts` files (`src/lib/s3-utils.ts`, `src/lambdas/api/local.ts`) vs. 26 remaining `.js` files |
 
-Significant work remains to complete the full TypeScript migration. This is a
-long-running item that may warrant breaking into smaller sub-tasks.
+The TypeScript compiler is set up and `tsconfig.json` is in place, but the bulk of the
+source files have not been converted. This is a long-running migration that may warrant
+breaking into smaller per-file sub-tasks.
 
 ---
 

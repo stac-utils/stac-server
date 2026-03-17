@@ -28,5 +28,30 @@
         "active": true,
         "notes": "minimatch is a transitive dependency of @redocly/cli and redoc, used only for API documentation rendering. The vulnerable wildcard pattern matching is not exposed to user input in our usage context, making ReDoS exploitation not feasible.",
         "expiry": "2026-04-25"
+    },
+    "1114592": {
+        "active": true,
+        "notes": "undici is a transitive dependency of @redocly/cli, used only as a build tool to generate static API documentation. The WebSocket 64-bit length overflow vulnerability is not exploitable as we do not use undici directly or expose it to untrusted WebSocket input.",
+        "expiry": "2026-05-17"
+    },
+    "1114594": {
+        "active": true,
+        "notes": "undici is a transitive dependency of @redocly/cli, used only as a build tool to generate static API documentation. HTTP request/response smuggling via undici is not exploitable in our usage context as @redocly/cli is never used to proxy or forward untrusted HTTP traffic.",
+        "expiry": "2026-05-17"
+    },
+    "1114638": {
+        "active": true,
+        "notes": "undici is a transitive dependency of @redocly/cli, used only as a build tool to generate static API documentation. The WebSocket permessage-deflate unbounded memory consumption vulnerability is not exploitable as we do not use undici directly or expose it to untrusted WebSocket input.",
+        "expiry": "2026-05-17"
+    },
+    "1114640": {
+        "active": true,
+        "notes": "undici is a transitive dependency of @redocly/cli, used only as a build tool to generate static API documentation. The WebSocket invalid server_max_window_bits unhandled exception is not exploitable as we do not use undici directly or expose it to untrusted WebSocket input.",
+        "expiry": "2026-05-17"
+    },
+    "1114642": {
+        "active": true,
+        "notes": "undici is a transitive dependency of @redocly/cli, used only as a build tool to generate static API documentation. CRLF injection via the upgrade option is not exploitable as @redocly/cli is never used to make HTTP requests with untrusted input.",
+        "expiry": "2026-05-17"
     }
 }

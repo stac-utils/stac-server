@@ -25,6 +25,23 @@ export default {
   devtool,
   resolve: {
     extensions: ["", ".webpack.js", ".web.js", ".ts", ".js"],
+    extensionAlias: {
+      ".js": [".ts", ".js"],
+    },
+  },
+  module: {
+    rules: [
+      {
+        test: /\.ts$/,
+        use: {
+          loader: 'ts-loader',
+          options: {
+            transpileOnly: true,
+          },
+        },
+        exclude: /node_modules/,
+      },
+    ],
   },
   target: 'node',
   plugins: [

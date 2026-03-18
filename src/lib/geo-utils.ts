@@ -1,9 +1,10 @@
 import extent from '@mapbox/extent'
+import { BBox } from 'geojson'
 import { ValidationError } from './errors.js'
 
 /**
  * Convert boundng box input to useable format and check bounds
- * @param {*} bbox - bounding box from request.  Expected format is either an
+ * @param {string | Bbox} bbox - bounding box from request.  Expected format is either an
  *  array as a single string or array formatted [x_min, y_min, x_max, y_max,
  * z_min, z_max]'. Z values are optional
  * @param {boolean} fromString - bool to indicate if we are parsing from a
@@ -11,7 +12,7 @@ import { ValidationError } from './errors.js'
  * @returns {Array | undefined}
  */
 // eslint-disable-next-line import/prefer-default-export
-export const bboxToPolygon = function (bbox, fromString) {
+export const bboxToPolygon = function (bbox: BBox | string | undefined, fromString: boolean) {
   if (bbox) {
     let bboxArray
     if (fromString && typeof bbox === 'string') {

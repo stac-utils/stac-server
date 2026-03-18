@@ -20,6 +20,9 @@
           ".js",
           ".ts"
         ]
+      },
+      "typescript": {
+        "alwaysUseFieldTypeScript": true
       }
     },
     "react": {
@@ -92,7 +95,8 @@
       {
         "ignore": [
           "^ava$",
-          "\\.js$"
+          "\\.js$",
+          "geojson"
         ]
       }
     ],

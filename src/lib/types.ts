@@ -1,4 +1,4 @@
-import type { Geometry } from 'geojson'
+import type { Geometry, BBox } from 'geojson'
 
 export interface StacItem {
   type: 'Feature'
@@ -6,7 +6,7 @@ export interface StacItem {
   stac_extensions?: string[]
   id: string
   geometry: Geometry| null
-  bbox?: number[] // only required if geometry is not null
+  bbox?: BBox | string // only required if geometry is not null
   properties: ItemProperties
   links: Link[]
   assets: {[key: string]: ItemAsset}
@@ -72,7 +72,7 @@ export interface Extent {
 }
 
 export interface SpatialExtent {
-  bbox: number[][]
+  bbox: BBox
 }
 
 export interface TemporalExtent {

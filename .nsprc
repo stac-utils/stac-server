@@ -28,5 +28,10 @@
         "active": true,
         "notes": "minimatch is a transitive dependency of @redocly/cli and redoc, used only for API documentation rendering. The vulnerable wildcard pattern matching is not exposed to user input in our usage context, making ReDoS exploitation not feasible.",
         "expiry": "2026-04-25"
+    },
+    "1114772": {
+        "active": true,
+        "notes": "Transitive dependency of aws-sdk, will be updated when that library is",
+        "expiry": "2026-04-19"
     }
 }

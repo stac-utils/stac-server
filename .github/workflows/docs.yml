@@ -63,7 +63,7 @@ jobs:
 
       - name: Build documentation with mike
         run: |
-          mike deploy --no-redirect ${{ steps.package-version.outputs.version }} latest
+          mike deploy --alias-type=copy --update-aliases ${{ steps.package-version.outputs.version }} latest
           mike set-default latest
 
       - name: Setup Pages

@@ -1,3 +1,6 @@
+// @ts-nocheck
+// convert to ts further along in migration
+
 import { getItemCreated, collectionUniqueIndexID } from './database.js'
 import { addItemLinks, addCollectionLinks } from './api.js'
 import { dbClient, createIndex } from './database-client.js'
@@ -35,9 +38,11 @@ export async function convertIngestMsgToDbOperation(data) {
     )
   }
 
-  const links = (data.links || []).filter(
-    (/** @type {{ rel: string; }} */ link) => !hierarchyLinks.includes(link.rel)
-  )
+  const links = isStacEntity(data)
+    ? (data.links || []).filter(
+      (link) => !hierarchyLinks.includes(link.rel)
+    )
+    : []
   const dbDataObject = { ...data, links }
 
   if (data.hasOwnProperty('properties')) {

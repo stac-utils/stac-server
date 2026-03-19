@@ -1,6 +1,15 @@
+import type { BBox } from 'geojson'
 import logger from './logger.js'
+import {
+  StacRecord,
+  StacCollection,
+  StacItem,
+  StacServerMessage,
+  DbAction,
+  DateRange
+} from './types.js'
 
-export function isCollection(record) {
+export function isCollection(record: StacServerMessage): record is StacCollection {
   return record && record.type === 'Collection'
 }
 
@@ -11,7 +20,7 @@ export class InvalidSTACItemException extends Error {
   }
 }
 
-export function isItem(record) {
+export function isItem(record: StacServerMessage): record is StacItem {
   if (record && record.type === 'Feature') {
     if ('collection' in record) {
       return true
@@ -21,15 +30,15 @@ export function isItem(record) {
   return false
 }
 
-export function isStacEntity(record) {
+export function isStacEntity(record: StacServerMessage): record is StacRecord {
   return isItem(record) || isCollection(record)
 }
 
-export function isAction(record) {
+export function isAction(record: StacServerMessage): record is DbAction {
   return record && record.type === 'action'
 }
 
-export function getStartAndEndDates(record) {
+export function getStartAndEndDates(record: StacServerMessage): DateRange {
   let startDate
   let endDate
 
@@ -70,7 +79,7 @@ export function getStartAndEndDates(record) {
   return { startDate, endDate }
 }
 
-export function getBBox(record) {
+export function getBBox(record: StacRecord): string | BBox | undefined {
   if (isCollection(record)) {
     return record.extent?.spatial?.bbox?.length > 0
       ? record.extent.spatial.bbox[0]

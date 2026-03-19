@@ -10,7 +10,7 @@ export interface StacItem {
   properties: ItemProperties
   links: Link[]
   assets: {[key: string]: ItemAsset}
-  collection?: string
+  collection: string
 }
 
 export interface StacCollection {
@@ -28,8 +28,9 @@ export interface StacCollection {
   links: Link[]
   assets?: {[key: string]: Asset}
   item_assets?: {[key: string]: ItemAsset}
-
 }
+
+export type StacRecord = StacItem | StacCollection
 
 export interface Link {
   href: string
@@ -72,14 +73,30 @@ export interface Extent {
 }
 
 export interface SpatialExtent {
-  bbox: BBox
+  bbox: BBox[]
 }
 
 export interface TemporalExtent {
-  interval: Array<[string | null, string | null]>
+  interval: [[string | null, string | null], ...[string | null, string | null][]]
 }
 
 export interface ItemProperties {
   datetime: string | null // ISO 8601 format required e.g. "2026-03-18T00:00:00Z"
+  start_datetime?: string
+  end_datetime?: string
   [key: string]: unknown // permit additional fields by user
+}
+
+// only used when truncating via sns or sqs
+export interface DbAction {
+  type: 'action'
+  command: 'truncate'
+  collection: string
+}
+
+export type StacServerMessage = StacRecord | DbAction
+
+export interface DateRange {
+  startDate: Date | undefined
+  endDate: Date | undefined
 }

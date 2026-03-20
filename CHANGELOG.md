@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Fixed
+
+### Added
+
+### Changed
+
+- Adjusting configs to handle both typescript and javascript files for the typescript migraton ([1067](https://github.com/stac-utils/stac-server/pull/1067))
+
 ## [5.0.0]
 
 ### Fixed

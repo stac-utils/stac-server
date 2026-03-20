@@ -10,11 +10,14 @@ export ENABLE_TRANSACTIONS_EXTENSION=true
 export REQUEST_LOGGING_ENABLED=false
 # export ENABLE_RESPONSE_COMPRESSION=false
 
+# Force ALL Node processes (including AVA workers) to use tsx
+export NODE_OPTIONS="--import=tsx"
+
 echo "Running tests"
 set +e
 
 # add --match to restrict by test name
-npx ava "./tests/system/${TEST_PATTERN}" --serial --verbose
+npx ava "tests/system/${TEST_PATTERN}" --serial --verbose --no-worker-threads
 TEST_RESULT="$?"
 set -e
 

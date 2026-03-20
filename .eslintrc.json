@@ -14,6 +14,14 @@
     "mocha": true
   },
   "settings": {
+    "import/resolver": {
+      "node": {
+        "extensions": [
+          ".js",
+          ".ts"
+        ]
+      }
+    },
     "react": {
       "version": "999.999.999"
     }
@@ -83,7 +91,8 @@
       "error",
       {
         "ignore": [
-          "^ava$"
+          "^ava$",
+          "\\.js$"
         ]
       }
     ],

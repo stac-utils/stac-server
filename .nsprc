@@ -33,5 +33,10 @@
         "active": true,
         "notes": "Transitive dependency of aws-sdk, will be updated when that library is",
         "expiry": "2026-04-19"
+    },
+    "1114952": {
+        "active": true,
+        "notes": "Transitive dependency of aws-sdk, will be updated when that library is",
+        "expiry": "2026-04-19"
     }
 }

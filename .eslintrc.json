@@ -181,7 +181,13 @@
       ],
       "rules": {
         "no-use-before-define": "off",
-        "@typescript-eslint/no-use-before-define": "warn" // use the TS-aware version instead
+        "@typescript-eslint/no-use-before-define": "warn", // use the TS-aware version instead
+        "valid-jsdoc": "off",
+        "jsdoc/require-param": "off",
+        "jsdoc/require-param-type": "off",
+        "jsdoc/require-param-name": "off",
+        "jsdoc/require-returns-type": "off",
+        "jsdoc/check-param-names": "off"
       }
     }
   ]

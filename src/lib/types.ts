@@ -97,3 +97,45 @@ export interface DateRange {
   startDate: Date | undefined
   endDate: Date | undefined
 }
+
+export interface DbOperation {
+  placeholder: string // to be replaced when typing database.js and ingest.js
+}
+
+export interface SearchParameters {
+  index: string[]
+  body: SearchParametersBody
+  size: number
+  track_total_hits: boolean
+  from?: number
+  _sourceExcludes: unknown
+  _sourceIncludes: unknown
+}
+
+export interface SearchParametersBody {
+  size: number
+  aggs?: SearchParametersAggregations
+
+}
+
+export interface SearchParametersAggregations {
+  grid_geohash_frequency?: {geohash_grid: GeoGridSetting}
+  grid_geohex_frequency?: {geohex_grix: GeoGridSetting}
+  grid_geotile_frequency? : {geotile_grid: GeoGridSetting}
+  centroid_geohash_grid_frequency?: {geohash_grid: GeoGridSetting}
+  centroid_geohex_grid_frequency? : {geohex_grid: GeoGridSetting}
+  centroid_geotile_grid_frequency? : {geotile_grid: GeoGridSetting}
+  geometry_geohash_grid_frequency? : {geohash_grid: GeomGridSetting}
+  geometry_geotile_grid_frequency? : {geotile_grid: GeomGridSetting}
+
+}
+
+export interface GeoGridSetting {
+  field: 'properties.proj:centroid'
+  precision: number
+}
+
+export interface GeomGridSetting {
+  field: 'geometry'
+  precision: number
+}

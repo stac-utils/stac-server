@@ -4,8 +4,9 @@ import { ValidationError } from './errors.js'
 
 /**
  * Convert boundng box input to useable format and check bounds
- * @param {string | Bbox} bbox - bounding box from request.  Expected format is either an
- *  array as a single string or array formatted [x_min, y_min, x_max, y_max,
+ * @param {string | Bbox | undefined } bbox - bounding box
+ * from request.  Expected format is either an
+ * array as a single string or array formatted [x_min, y_min, x_max, y_max,
  * z_min, z_max]'. Z values are optional
  * @param {boolean} fromString - bool to indicate if we are parsing from a
  * string or not

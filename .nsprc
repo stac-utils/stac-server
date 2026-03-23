@@ -29,39 +29,14 @@
         "notes": "minimatch is a transitive dependency of @redocly/cli and redoc, used only for API documentation rendering. The vulnerable wildcard pattern matching is not exposed to user input in our usage context, making ReDoS exploitation not feasible.",
         "expiry": "2026-04-25"
     },
-    "1114592": {
-        "active": true,
-        "notes": "undici is a transitive dependency of @redocly/cli, used only as a build tool to generate static API documentation. The WebSocket 64-bit length overflow vulnerability is not exploitable as we do not use undici directly or expose it to untrusted WebSocket input.",
-        "expiry": "2026-05-17"
-    },
-    "1114594": {
-        "active": true,
-        "notes": "undici is a transitive dependency of @redocly/cli, used only as a build tool to generate static API documentation. HTTP request/response smuggling via undici is not exploitable in our usage context as @redocly/cli is never used to proxy or forward untrusted HTTP traffic.",
-        "expiry": "2026-05-17"
-    },
-    "1114638": {
-        "active": true,
-        "notes": "undici is a transitive dependency of @redocly/cli, used only as a build tool to generate static API documentation. The WebSocket permessage-deflate unbounded memory consumption vulnerability is not exploitable as we do not use undici directly or expose it to untrusted WebSocket input.",
-        "expiry": "2026-05-17"
-    },
-    "1114640": {
-        "active": true,
-        "notes": "undici is a transitive dependency of @redocly/cli, used only as a build tool to generate static API documentation. The WebSocket invalid server_max_window_bits unhandled exception is not exploitable as we do not use undici directly or expose it to untrusted WebSocket input.",
-        "expiry": "2026-05-17"
-    },
-    "1114642": {
-        "active": true,
-        "notes": "undici is a transitive dependency of @redocly/cli, used only as a build tool to generate static API documentation. CRLF injection via the upgrade option is not exploitable as @redocly/cli is never used to make HTTP requests with untrusted input.",
-        "expiry": "2026-05-17"
-    },
-    "1114772": {
-        "active": true,
-        "notes": "fast-xml-parser (CVE-2026-33036) is a transitive dependency of @redocly/cli via openapi-sampler, used only as a build tool to generate static API documentation. The numeric entity expansion DoS vulnerability requires an attacker to supply untrusted XML input directly to fast-xml-parser at runtime. Since @redocly/cli is never run against untrusted input in our CI or production environment, this is not exploitable. Patched in fast-xml-parser v5.5.6 — upgrade openapi-sampler when available.",
-        "expiry": "2026-06-19"
-    },
     "1114952": {
         "active": true,
         "notes": "fast-xml-parser (CVE-2026-33349) is a transitive dependency of @redocly/cli via openapi-sampler, used only as a build tool to generate static API documentation. The entity expansion limit bypass via JavaScript falsy evaluation of zero values requires an attacker to supply untrusted XML to an application explicitly configured with maxEntityCount:0 or maxEntitySize:0. We do not configure fast-xml-parser directly and @redocly/cli is never run against untrusted input, making this not exploitable. Patched in fast-xml-parser v5.5.7 — upgrade openapi-sampler when available.",
         "expiry": "2026-06-19"
+    },
+    "1115134": {
+        "active": true,
+        "notes": "fast-xml-parser is a transitive dependency of @redocly/cli via openapi-sampler, used only as a build tool to generate static API documentation. This incomplete fix for CVE-2026-26278 affects only applications that explicitly configure entity expansion limits to zero values. We do not configure fast-xml-parser directly and @redocly/cli is never run against untrusted input, making this not exploitable.",
+        "expiry": "2026-06-30"
     }
 }

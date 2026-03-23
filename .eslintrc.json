@@ -20,6 +20,9 @@
           ".js",
           ".ts"
         ]
+      },
+      "typescript": {
+        "alwaysUseFieldTypeScript": true
       }
     },
     "react": {
@@ -92,7 +95,8 @@
       {
         "ignore": [
           "^ava$",
-          "\\.js$"
+          "\\.js$",
+          "geojson"
         ]
       }
     ],
@@ -168,6 +172,15 @@
       ],
       "rules": {
         "@typescript-eslint/no-var-requires": 0
+      }
+    },
+    {
+      "files": [
+        "*.ts"
+      ],
+      "rules": {
+        "no-use-before-define": "off",
+        "@typescript-eslint/no-use-before-define": "warn" // use the TS-aware version instead
       }
     }
   ]

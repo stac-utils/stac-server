@@ -9,7 +9,7 @@ export interface StacItem {
   bbox?: BBox | string // only required if geometry is not null
   properties: ItemProperties
   links: Link[]
-  assets: {[key: string]: ItemAsset}
+  assets: Assets
   collection: string
 }
 
@@ -26,8 +26,8 @@ export interface StacCollection {
   extent: Extent
   summaries?: {[key: string]: string[] | number[]}
   links: Link[]
-  assets?: {[key: string]: Asset}
-  item_assets?: {[key: string]: ItemAsset}
+  assets?: Assets
+  item_assets?: {[key: string]: Asset}
 }
 
 export type StacRecord = StacItem | StacCollection
@@ -42,12 +42,8 @@ export interface Link {
   body?: { [key: string]: unknown}
 }
 
-export interface ItemAsset {
-  title: string
-  description: string
-  type: string
-  roles: string[]
-  [key: string]: unknown // permit additional fields by user
+export interface Assets {
+  [key: string]: Asset
 }
 
 export interface Asset {
@@ -56,6 +52,7 @@ export interface Asset {
   description?: string
   type?: string
   roles?: string[]
+  alternate?: {[key: string]: unknown}
   [key: string]: unknown // permit additional fields by user
 }
 

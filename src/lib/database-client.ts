@@ -9,7 +9,7 @@ import collectionsIndexConfiguration from '../../fixtures/collections.js'
 import itemsIndexConfiguration from '../../fixtures/items.js'
 import logger from './logger.js'
 
-let _dbClient: Client | undefined
+let _dbClient: Client
 
 function createClientWithUsernameAndPassword(
   host: string,
@@ -96,6 +96,6 @@ export async function createIndex(index: string): Promise<void> {
       throw error
     }
   } else {
-    logger.error(`index for collection ${index} already exists, skipping creation.`)
+    logger.info(`index for collection ${index} already exists, skipping creation.`)
   }
 }

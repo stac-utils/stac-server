@@ -1,6 +1,8 @@
 import type { Geometry, BBox } from 'geojson'
 
+//
 // ----- STAC -----------------------------------
+//
 
 export interface StacItem {
   type: 'Feature'
@@ -89,59 +91,31 @@ export interface ItemProperties {
 
 export type StacServerMessage = StacRecord | DbAction
 
-export interface DateRange {
-  startDate: Date | undefined
-  endDate: Date | undefined
-}
-
-export interface DbOperation {
-  placeholder: string // to be replaced when typing database.js and ingest.js
-}
-
-export interface SearchParametersBody {
-  size: number
-  aggs?: SearchParametersAggregations
-
-}
-
-export interface SearchParametersAggregations {
-  grid_geohash_frequency?: {geohash_grid: GeoGridSetting}
-  grid_geohex_frequency?: {geohex_grix: GeoGridSetting}
-  grid_geotile_frequency? : {geotile_grid: GeoGridSetting}
-  centroid_geohash_grid_frequency?: {geohash_grid: GeoGridSetting}
-  centroid_geohex_grid_frequency? : {geohex_grid: GeoGridSetting}
-  centroid_geotile_grid_frequency? : {geotile_grid: GeoGridSetting}
-  geometry_geohash_grid_frequency? : {geohash_grid: GeomGridSetting}
-  geometry_geotile_grid_frequency? : {geotile_grid: GeomGridSetting}
-
-}
-
-export interface GeoGridSetting {
-  field: 'properties.proj:centroid'
-  precision: number
-}
-
-export interface GeomGridSetting {
-  field: 'geometry'
-  precision: number
-}
-
+//
+// ---------------------------------------------------------------
+//
+//
 // ── CQL2 / Filter ──────────────────────────────────────────────
+//
 
-export interface Cql2FilterArg {
-  property?: string
-  timestamp?: string
-  bbox?: BBox
-}
-
-export type Cql2Value = string | number | boolean | Cql2FilterArg | Geometry | Cql2Filter
+export type Cql2Value =
+  string |
+  number |
+  boolean |
+  { property?: string, timestamp?: string, bbox?: BBox } |
+  Geometry | Cql2Filter
 
 export interface Cql2Filter {
   op: string
-  args: Cql2Value[] // ← array, not single value
+  args: Cql2Value[]
 }
 
+//
+// ---------------------------------------------------------------
+//
+//
 // ── OpenSearch query building blocks ──────────────────────────
+//
 
 export interface OpenSearchFilterQuery {
   term?: Record<string, unknown>
@@ -195,7 +169,12 @@ export interface SortRule {
 
 export type SortParameters = SortRule[]
 
+//
+// ---------------------------------------------------------------
+//
+//
 // ── Query parameters ───────────────────────────────────────────
+//
 
 export interface QueryOperators {
   eq?: string | number | boolean
@@ -232,7 +211,10 @@ export interface DbAction {
   command: 'truncate'
   collection: string
 }
-
+//
+// ---------------------------------------------------------------
+//
+//
 // ── Search ─────────────────────────────────────────────────────
 
 export interface FieldsFilter {
@@ -268,6 +250,10 @@ export interface SearchResponse {
   lastItemSort: string | null
 }
 
+//
+// ---------------------------------------------------------------
+//
+//
 // ── Transaction Request Bodies ─────────────────────────────────
 
 /**
@@ -282,7 +268,7 @@ export interface PartialItemUpdate {
   properties?: ItemProperties
   assets?: Assets
   links?: Link[]
-  [key: string]: unknown // allow additonal fields
+  [key: string]: unknown
 }
 
 /**

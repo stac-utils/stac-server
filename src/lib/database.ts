@@ -1005,7 +1005,7 @@ async function aggregate(
   geometryGeohashGridPrecision,
   // geometryGeohexGridPrecision,
   geometryGeotileGridPrecision,
-) {
+): Promise<ApiResponse> {
   const searchParams = await constructSearchParams(parameters)
   searchParams.body.size = 0
 

@@ -43,5 +43,25 @@
         "active": true,
         "notes": "yaml is a direct dependency used for configuration parsing. The stack overflow via deeply nested YAML collections is only exploitable with untrusted YAML input of extreme depth. Our usage parses only operator-controlled configuration files, making this not exploitable in practice.",
         "expiry": "2026-06-30"
+    },
+    "1115382": {
+        "active": true,
+        "notes": "picomatch is a transitive dependency of @redocly/cli and related packages, used only as a build tool to generate static API documentation. The ReDoS vulnerability via extglob quantifiers is not exploitable as picomatch is never used to match untrusted input in our usage context.",
+        "expiry": "2026-06-30"
+    },
+    "1115384": {
+        "active": true,
+        "notes": "picomatch is a transitive dependency of @redocly/cli and related packages, used only as a build tool to generate static API documentation. The ReDoS vulnerability via extglob quantifiers is not exploitable as picomatch is never used to match untrusted input in our usage context.",
+        "expiry": "2026-06-30"
+    },
+    "1115394": {
+        "active": true,
+        "notes": "picomatch is a transitive dependency of @redocly/cli and related packages, used only as a build tool to generate static API documentation. The method injection via POSIX character classes is not exploitable as picomatch is never used to match untrusted glob patterns in our usage context.",
+        "expiry": "2026-06-30"
+    },
+    "1115396": {
+        "active": true,
+        "notes": "picomatch is a transitive dependency of @redocly/cli and related packages, used only as a build tool to generate static API documentation. The method injection via POSIX character classes is not exploitable as picomatch is never used to match untrusted glob patterns in our usage context.",
+        "expiry": "2026-06-30"
     }
 }

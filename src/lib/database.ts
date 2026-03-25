@@ -1,9 +1,36 @@
-//@ts-nocheck
+/* eslint-disable @typescript-eslint/no-use-before-define */
+import { BBox, Geometry } from 'geojson'
 import { isEmpty } from 'lodash-es'
+import { ApiResponse } from '@opensearch-project/opensearch'
 import { dbClient as _client, createIndex } from './database-client.js'
 import logger from './logger.js'
 import { NotFoundError, ValidationError } from './errors.js'
 import { bboxToPolygon } from './geo-utils.js'
+import {
+  Cql2Filter,
+  Cql2Value,
+  DateQuery,
+  DateTimeRange,
+  DbQueryParameters,
+  FieldsFilter,
+  ItemProperties,
+  OpenSearchBody,
+  OpenSearchFilterQuery,
+  PartialItemUpdate,
+  QueryParameters,
+  RangeQuery,
+  SearchParameters,
+  SearchResponse,
+  SortParameters,
+  StacCollection,
+  StacItem
+} from './types.js'
+
+/*
+This module is used for connecting to a search database instance, writing records,
+searching records, and managing the indexes. It looks for the OPENSEARCH_HOST environment
+variable which is the URL to the search database host line
+*/
 
 const COLLECTIONS_INDEX = process.env['COLLECTIONS_INDEX'] || 'collections'
 const DEFAULT_INDICES = ['*', '-.*', '-collections']
@@ -50,31 +77,29 @@ export const DEFAULT_FIELDS = [
 ]
 const MAX_COLLECTIONS_IN_QUERY_PATH = 10
 
-let collectionToIndexMapping = null
-let unrestrictedIndices = null
+let collectionToIndexMapping: Record<string, string> | null = null
+let unrestrictedIndices: string[] | null = null
 
 export const isIndexNotFoundError = (e) => (
   e instanceof Error
     && e.name === 'ResponseError'
     && e.message.includes('index_not_found_exception'))
 
-/*
-This module is used for connecting to a search database instance, writing records,
-searching records, and managing the indexes. It looks for the OPENSEARCH_HOST environment
-variable which is the URL to the search database host line
-*/
-
-function buildRangeQuery(property, operators, operatorsObject) {
+function buildRangeQuery(
+  property: string,
+  operators: string[],
+  operatorsObject: Record<string, unknown>
+): RangeQuery | undefined {
   const gt = 'gt'
   const lt = 'lt'
   const gte = 'gte'
   const lte = 'lte'
   const comparisons = [gt, lt, gte, lte]
-  let rangeQuery
+  let rangeQuery: RangeQuery | undefined
   if (operators.includes(gt) || operators.includes(lt)
          || operators.includes(gte) || operators.includes(lte)) {
     const propertyKey = `properties.${property}`
-    rangeQuery = {
+    const localRangeQuery: RangeQuery = {
       range: {
         [propertyKey]: {
         }
@@ -83,23 +108,28 @@ function buildRangeQuery(property, operators, operatorsObject) {
     // All operators for a property go in a single range query.
     comparisons.forEach((comparison) => {
       if (operators.includes(comparison)) {
-        const existing = rangeQuery.range[propertyKey]
-        rangeQuery.range[propertyKey] = { ...existing, [comparison]: operatorsObject[comparison] }
+        const existing = localRangeQuery.range[propertyKey]
+        localRangeQuery.range[propertyKey] = {
+          ...existing,
+          [comparison]: operatorsObject[comparison]
+        }
       }
     })
+    rangeQuery = localRangeQuery
   }
   return rangeQuery
 }
-
-// assumes a valid RFC3339 datetime or interval
-// validation was previously done by api.extractDatetime
-export function buildDatetimeQuery(parameters) {
+/**
+ * assumes a valid RFC3339 datetime or interval
+ * validation was previously done by api.extractDatetime
+ */
+export function buildDatetimeQuery(parameters: QueryParameters): DateQuery {
   let dateQuery
   const { datetime } = parameters
   if (datetime) {
     if (datetime.includes('/')) {
       const [start, end] = datetime.split('/')
-      const datetimeRange = {}
+      const datetimeRange: DateTimeRange = {}
       if (start && start !== '..') datetimeRange.gte = start
       if (end && end !== '..') datetimeRange.lte = end
       dateQuery = {
@@ -118,7 +148,7 @@ export function buildDatetimeQuery(parameters) {
   return dateQuery
 }
 
-function IN(cql2Field, cql2Value) {
+function IN(cql2Field: string, cql2Value: Cql2Value): OpenSearchFilterQuery {
   if (!Array.isArray(cql2Value) || cql2Value.length === 0) {
     throw new ValidationError("Operand for 'in' must be a non-empty array")
   }
@@ -135,7 +165,7 @@ function IN(cql2Field, cql2Value) {
   }
 }
 
-function between(cql2Field, filterArgs) {
+function between(cql2Field: string, filterArgs: number[]): RangeQuery {
   if (filterArgs.length < 3) {
     throw new ValidationError("Two operands must be provided for the 'between' operator")
   }
@@ -163,18 +193,20 @@ function between(cql2Field, filterArgs) {
   }
 }
 
-function sIntersects(cql2Field, cql2Value) {
-  // cql2Value can be either:
-  // 1) { "bbox": [swLon, swLat, neLon, neLat] }
-  // 2) geojson geometry
-
-  let geom = null
+/**
+ * cql2Value can be either:
+ * 1) { "bbox": [swLon, swLat, neLon, neLat] }
+ * 2) geojson geometry
+ */
+function sIntersects(
+  cql2Field: string,
+  cql2Value: {'bbox': BBox} | Geometry
+): OpenSearchFilterQuery {
+  let geom: Geometry | undefined
 
   if (cql2Value.bbox) {
     geom = bboxToPolygon(cql2Value.bbox, true)
-  }
-
-  if (cql2Value.type && cql2Value.coordinates) {
+  } else if ('type' in cql2Value && 'coordinates' in cql2Value) {
     if (!GEOMETRY_TYPES.includes(cql2Value.type)) {
       throw new ValidationError(
         `Operand for 's_intersects' must be a GeoJSON geometry: type was '${cql2Value.type}'`
@@ -196,17 +228,21 @@ function sIntersects(cql2Field, cql2Value) {
   }
 }
 
-function buildQueryExtQuery(query) {
+function buildQueryExtQuery(query: QueryParameters): OpenSearchFilterQuery {
   const eq = 'eq'
   const inop = 'in'
   const startsWith = 'startsWith'
   const endsWith = 'endsWith'
   const contains = 'contains'
-  let filterQueries = []
+  let filterQueries: OpenSearchFilterQuery[] = []
+  let mustNotQueries: OpenSearchFilterQuery[] = []
 
   // Using reduce rather than map as we don't currently support all
   // stac query operators.
-  filterQueries = Object.keys(query).reduce((accumulator, property) => {
+  filterQueries = Object.keys(query).reduce((
+    accumulator: OpenSearchFilterQuery[],
+    property
+  ) => {
     const operatorsObject = query[property]
     const operators = Object.keys(operatorsObject)
 
@@ -271,9 +307,8 @@ function buildQueryExtQuery(query) {
   }, filterQueries)
 
   const neq = 'neq'
-  let mustNotQueries = []
 
-  mustNotQueries = Object.keys(query).reduce((accumulator, property) => {
+  mustNotQueries = Object.keys(query).reduce((accumulator: OpenSearchFilterQuery[], property) => {
     const operatorsObject = query[property]
     const operators = Object.keys(operatorsObject)
 
@@ -297,72 +332,56 @@ function buildQueryExtQuery(query) {
   }
 }
 
-function buildFilterExtQuery(filter) {
-  let cql2Field = filter.args[0].property
-  if (!UNPREFIXED_FIELDS.includes(cql2Field)) {
-    cql2Field = `properties.${cql2Field}`
-  }
-
-  let cql2Value = filter.args[1]
-  if (typeof cql2Value === 'object' && cql2Value.timestamp) {
-    cql2Value = cql2Value.timestamp
-  }
-
+// Handles AND/OR/NOT — args are always nested Cql2Filter[]
+function buildRecursiveFilter(filter: Cql2Filter): OpenSearchFilterQuery {
   switch (filter.op) {
-  // recursive cases
   case OP.AND:
     return {
       bool: {
-        filter: filter.args.map(buildFilterExtQuery)
+        filter: (filter.args as Cql2Filter[]).map(buildFilterExtQuery)
       }
     }
   case OP.OR:
     return {
       bool: {
-        should: filter.args.map(buildFilterExtQuery),
+        should: (filter.args as Cql2Filter[]).map(buildFilterExtQuery),
         minimum_should_match: 1
       }
     }
   case OP.NOT:
     return {
       bool: {
-        must_not: filter.args.map(buildFilterExtQuery)
+        must_not: (filter.args as Cql2Filter[]).map(buildFilterExtQuery)
       }
     }
+  default:
+    throw new Error(`Not a recursive operator: ${filter.op}`)
+  }
+}
 
-  // direct cases
+// Handles leaf operators (=, <>, IN, BETWEEN etc)
+// args[0] is always a property ref, args[1] is the value
+function buildLeafFilter(filter: Cql2Filter): OpenSearchFilterQuery {
+  let cql2Field = (filter.args[0] as { property: string }).property
+  if (!UNPREFIXED_FIELDS.includes(cql2Field)) {
+    cql2Field = `properties.${cql2Field}`
+  }
+
+  let cql2Value = filter.args[1]
+  if (typeof cql2Value === 'object'
+    && cql2Value !== null
+    && !Array.isArray(cql2Value)
+    && 'timestamp' in cql2Value) {
+    cql2Value = (cql2Value as { timestamp: string }).timestamp
+  }
+
+  switch (filter.op) {
   case OP.EQ:
-    return {
-      term: {
-        [cql2Field]: cql2Value
-      }
-    }
+    return { term: { [cql2Field]: cql2Value } }
   case OP.NEQ:
-    return {
-      bool: {
-        must_not: [
-          {
-            term: {
-              [cql2Field]: cql2Value
-            }
-          }
-        ]
-      }
-    }
+    return { bool: { must_not: [{ term: { [cql2Field]: cql2Value } }] } }
   case OP.IS_NULL:
-    return {
-      bool: {
-        must_not: [
-          {
-            exists: {
-              field: cql2Field
-            }
-          }
-        ]
-      }
-    }
-
-  // range cases
+    return { bool: { must_not: [{ exists: { field: cql2Field } }] } }
   case OP.LT:
   case OP.LTE:
   case OP.GT:
@@ -370,23 +389,34 @@ function buildFilterExtQuery(filter) {
     return {
       range: {
         [cql2Field]: {
-          [RANGE_TRANSLATION[filter.op]]: cql2Value
+          [RANGE_TRANSLATION[filter.op]]: cql2Value as string | number
         }
       }
     }
   case OP.IN:
+    if (cql2Value === undefined) throw new ValidationError("'in' operator requires a value")
     return IN(cql2Field, cql2Value)
   case OP.BETWEEN:
-    return between(cql2Field, filter.args)
+    return between(cql2Field, filter.args as number[])
   case OP.LIKE:
     throw new ValidationError("The 'like' operator is not currently supported")
   case OP.S_INTERSECTS:
-    return sIntersects(cql2Field, cql2Value)
-
-  // should not get here
+    if (cql2Value === undefined) {
+      throw new ValidationError("'s_intersects' operator requires a value")
+    }
+    return sIntersects(cql2Field, cql2Value as { bbox: BBox } | Geometry)
   default:
     throw new Error(`Unknown filter operation: ${filter.op}`)
   }
+}
+
+// Routes to recursive or leaf handler based on operator
+function buildFilterExtQuery(filter: Cql2Filter): OpenSearchFilterQuery {
+  const RECURSIVE_OPS = [OP.AND, OP.OR, OP.NOT]
+  if (RECURSIVE_OPS.includes(filter.op)) {
+    return buildRecursiveFilter(filter)
+  }
+  return buildLeafFilter(filter)
 }
 
 /**
@@ -396,7 +426,7 @@ function buildFilterExtQuery(filter) {
  * @param {string} collection
  * @returns {string} An 8-character hexadecimal hash string.
  */
-function collectionHash(collection) {
+function collectionHash(collection: string): string {
   let hash = 0
   if (collection.length === 0) {
     return '00000000'
@@ -421,13 +451,13 @@ function collectionHash(collection) {
  * @param {string} collection
  * @returns {string} unique OpenSearch compatible string
  */
-export function collectionUniqueIndexID(collection) {
+export function collectionUniqueIndexID(collection: string): string {
   return `${collection.toLowerCase()}-${collectionHash(collection)}`
 }
 
-function buildItemSearchQuery(parameters) {
+function buildItemSearchQuery(parameters: QueryParameters): OpenSearchFilterQuery {
   const { intersects, collections, ids } = parameters
-  const filterQueries = []
+  const filterQueries: OpenSearchFilterQuery[] = []
 
   if (ids) {
     filterQueries.push({
@@ -467,20 +497,20 @@ function buildItemSearchQuery(parameters) {
   }
 }
 
-function buildOpenSearchQuery(parameters) {
+function buildOpenSearchQuery(parameters: QueryParameters): OpenSearchBody {
   const { query, filter, intersects, collections, ids } = parameters
 
-  let cql2Query = {}
-  let stacqlQuery = {}
-  let itemSearchQuery = {}
-  const osQuery = { bool: {} }
+  let cql2Query: OpenSearchFilterQuery = {}
+  let stacqlQuery: OpenSearchFilterQuery = {}
+  let itemSearchQuery: OpenSearchFilterQuery = {}
+  const osBool: NonNullable<OpenSearchFilterQuery['bool']> = {}
 
   if (query) {
     stacqlQuery = buildQueryExtQuery(query)
   }
 
   if (filter) {
-    cql2Query = buildFilterExtQuery(filter)
+    cql2Query = buildFilterExtQuery(filter as Cql2Filter)
     // non-recursive results can be bare
     if (!cql2Query.bool) {
       cql2Query = { bool: { filter: [cql2Query] } }
@@ -491,38 +521,46 @@ function buildOpenSearchQuery(parameters) {
     itemSearchQuery = buildItemSearchQuery(parameters)
   }
 
-  const combinedFilter = [
-    ...(cql2Query.bool?.filter || []),
-    ...(stacqlQuery.bool?.filter || []),
-    ...(itemSearchQuery.bool?.filter || [])
+  // Normalise filter/must_not which can be single item or array
+  const toArray = (
+    v: OpenSearchFilterQuery | OpenSearchFilterQuery[] | undefined
+  ): OpenSearchFilterQuery[] => {
+    if (!v) return []
+    return Array.isArray(v) ? v : [v]
+  }
+
+  const combinedFilter: OpenSearchFilterQuery[] = [
+    ...toArray(cql2Query.bool?.filter),
+    ...toArray(stacqlQuery.bool?.filter),
+    ...toArray(itemSearchQuery.bool?.filter)
   ]
-  const combinedShould = [
+  const combinedShould: OpenSearchFilterQuery[] = [
     ...(cql2Query.bool?.should || []),
   ]
-  const combinedMustNot = [
-    ...(cql2Query.bool?.must_not || []),
-    ...(stacqlQuery.bool?.must_not || []),
+  const combinedMustNot: OpenSearchFilterQuery[] = [
+    ...toArray(cql2Query.bool?.must_not),
+    ...toArray(stacqlQuery.bool?.must_not),
   ]
 
   if (!isEmpty(combinedFilter)) {
-    osQuery.bool.filter = combinedFilter
+    osBool.filter = combinedFilter
   }
   if (!isEmpty(combinedShould)) {
-    osQuery.bool.should = combinedShould
-    osQuery.bool.minimum_should_match = 1
+    osBool.should = combinedShould
+    osBool.minimum_should_match = 1
   }
   if (!isEmpty(combinedMustNot)) {
-    osQuery.bool.must_not = combinedMustNot
+    osBool.must_not = combinedMustNot
   }
 
-  if (isEmpty(osQuery.bool)) {
+  if (isEmpty(osBool)) {
     return { query: { match_all: {} } }
   }
 
-  return { query: osQuery }
+  return { query: { bool: osBool } }
 }
 
-function buildIdQuery(id) {
+function buildIdQuery(id: string): OpenSearchBody {
   return {
     query: {
       bool: {
@@ -536,13 +574,13 @@ function buildIdQuery(id) {
   }
 }
 
-const DEFAULT_SORTING = [
+const DEFAULT_SORTING: SortParameters = [
   { 'properties.datetime': { order: 'desc' } },
   { id: { order: 'desc' } },
   { collection: { order: 'desc' } }
 ]
 
-function buildSort(parameters) {
+function buildSort(parameters: QueryParameters): SortParameters {
   const { sortby } = parameters
   if (sortby && sortby.length) {
     return sortby.map((sortRule) => {
@@ -557,7 +595,7 @@ function buildSort(parameters) {
   return DEFAULT_SORTING
 }
 
-function buildSearchAfter(parameters) {
+function buildSearchAfter(parameters: QueryParameters): string[] | undefined {
   const { next } = parameters
   if (next) {
     return next.split(',')
@@ -565,30 +603,32 @@ function buildSearchAfter(parameters) {
   return undefined
 }
 
-function fieldsParamIsEmpty(fieldsSpec, paramName) {
-  // Check if include or exclude is either:
-  //   a. null
-  //   b. an empty array
+/**
+ * Check if include or exclude is either:
+ * a. null
+ * b. an empty array
+ */
+function fieldsParamIsEmpty(fieldsSpec: object, paramName: string): boolean {
   return fieldsSpec.hasOwnProperty(paramName)
     && (fieldsSpec[paramName] === null
     || (Array.isArray(fieldsSpec[paramName]) && !fieldsSpec[paramName].length))
 }
 
-export function buildFieldsFilter(parameters) {
+export function buildFieldsFilter(parameters: QueryParameters): FieldsFilter {
   const { fields } = parameters
-  let _sourceIncludes = []
-  let _sourceExcludes = []
-  if (parameters.hasOwnProperty('fields')) {
+  let _sourceIncludes: string[] = []
+  let _sourceExcludes: string[] = []
+  if (parameters.hasOwnProperty('fields') && fields !== undefined) {
     if (fieldsParamIsEmpty(fields, 'include')
           && fieldsParamIsEmpty(fields, 'exclude')) {
       // if fields parameters are supplied but empty,
       // start with this initial set, otherwise return all
       _sourceIncludes = DEFAULT_FIELDS
     } else if (fieldsParamIsEmpty(fields, 'include')) {
-      _sourceExcludes = fields.exclude
+      _sourceExcludes = fields.exclude ?? []
       _sourceIncludes = DEFAULT_FIELDS.filter((item) => !_sourceExcludes.includes(item))
     } else if (fieldsParamIsEmpty(fields, 'exclude')) {
-      _sourceIncludes = fields.include
+      _sourceIncludes = fields.include ?? []
     } else {
       const { include, exclude } = fields
       // Add include fields to the source include list if they're not already in it
@@ -615,7 +655,7 @@ export function buildFieldsFilter(parameters) {
  * Create a new Collection
  *
  */
-async function indexCollection(collection) {
+async function indexCollection(collection: StacCollection): Promise<Array<ApiResponse | void>> {
   const client = await _client()
 
   const exists = await client.indices.exists({ index: COLLECTIONS_INDEX })
@@ -628,7 +668,7 @@ async function indexCollection(collection) {
     index: COLLECTIONS_INDEX,
     id: collection.id,
     body: collection,
-    opType: 'create'
+    op_type: 'create'
   })
 
   const indexCreateResponse = await createIndex(idHash)
@@ -640,7 +680,7 @@ async function indexCollection(collection) {
  * Create a new Item in an index corresponding to the Collection
  *
  */
-async function indexItem(item) {
+async function indexItem(item: StacItem): Promise<ApiResponse | Error> {
   const client = await _client()
   const hashedIndex = collectionUniqueIndexID(item.collection)
   const exists = await client.indices.exists({ index: hashedIndex })
@@ -657,7 +697,7 @@ async function indexItem(item) {
     index: hashedIndex,
     id: item.id,
     body: item,
-    opType: 'create'
+    op_type: 'create'
   })
 
   return response
@@ -669,11 +709,15 @@ async function indexItem(item) {
  * using a partial item description, compliant with RFC 7386.
  *
  */
-async function partialUpdateItem(collectionId, itemId, updateFields) {
+async function partialUpdateItem(
+  collectionId: string,
+  itemId: string,
+  updateFields: PartialItemUpdate
+): Promise<ApiResponse> {
   const client = await _client()
 
   // Handle inserting required default properties to `updateFields`
-  const requiredProperties = {
+  const requiredProperties: Partial<ItemProperties> = {
     updated: new Date().toISOString()
   }
 
@@ -681,12 +725,13 @@ async function partialUpdateItem(collectionId, itemId, updateFields) {
     // If there are properties incoming, merge and overwrite our required ones.
     Object.assign(updateFields.properties, requiredProperties)
   } else {
-    updateFields.properties = requiredProperties
+    // type because TS doesn't know item in DB must have datetime
+    updateFields.properties = requiredProperties as ItemProperties
   }
   const response = await client.update({
     index: collectionUniqueIndexID(collectionId),
     id: itemId,
-    _source: true,
+    _source: ['*'],
     body: {
       doc: updateFields
     }
@@ -695,17 +740,20 @@ async function partialUpdateItem(collectionId, itemId, updateFields) {
   return response
 }
 
-async function deleteItem(collectionId, itemId) {
+async function deleteItem(
+  collectionId: string,
+  itemId: string
+): Promise<ApiResponse> {
   const client = await _client()
   if (client === undefined) throw new Error('Client is undefined')
   return await client.delete_by_query({
     index: collectionUniqueIndexID(collectionId),
     body: buildIdQuery(itemId),
-    waitForCompletion: true
+    wait_for_completion: true
   })
 }
 
-async function dbQuery(parameters) {
+async function dbQuery(parameters: DbQueryParameters) {
   logger.debug('Search query: %j', parameters)
   const client = await _client()
   if (client === undefined) throw new Error('Client is undefined')
@@ -715,26 +763,33 @@ async function dbQuery(parameters) {
 }
 
 // get single collection
-async function getCollection(collectionId) {
+async function getCollection(
+  collectionId: string
+): Promise<StacCollection | NotFoundError> {
   const response = await dbQuery({
     index: COLLECTIONS_INDEX,
     body: buildIdQuery(collectionId)
   })
-  if (Array.isArray(response.body.hits.hits) && response.body.hits.hits.length) {
-    return response.body.hits.hits[0]._source
+  if (Array.isArray(response.body['hits'].hits) && response.body['hits'].hits.length) {
+    return response.body['hits'].hits[0]._source
   }
   return new NotFoundError()
 }
 
-// get all collections
-async function getCollections(page = 1, limit = 100) {
+/**
+ * get all collections
+ */
+async function getCollections(
+  page: number = 1,
+  limit: number = 100
+): Promise<StacCollection[] | Error> {
   try {
     const response = await dbQuery({
       index: COLLECTIONS_INDEX,
       size: limit,
       from: (page - 1) * limit
     })
-    return response.body.hits.hits.map((r) => (r._source))
+    return response.body['hits'].hits.map((r) => (r._source))
   } catch (e) {
     logger.error('Failure getting collections, maybe none exist?', e)
     return new Error('Collections not found. This is likely '
@@ -756,8 +811,8 @@ async function populateCollectionToIndexMapping() {
   }
 }
 
-async function indexForCollection(collectionId) {
-  return collectionToIndexMapping[collectionId] || collectionId
+async function indexForCollection(collectionId: string): Promise<string> {
+  return (collectionToIndexMapping ?? {})[collectionId] || collectionId
 }
 
 async function populateUnrestrictedIndices() {
@@ -771,7 +826,7 @@ async function populateUnrestrictedIndices() {
       // system indices that start with a ".", the collections index, and then
       // explicitly adds each of the remote indicies that have a mapping defined to them
       unrestrictedIndices = DEFAULT_INDICES.concat(
-        Object.values(collectionToIndexMapping)
+        Object.values(collectionToIndexMapping ?? {})
       )
     } else {
       unrestrictedIndices = DEFAULT_INDICES
@@ -779,13 +834,16 @@ async function populateUnrestrictedIndices() {
   }
 }
 
-export async function constructSearchParams(parameters, page, limit) {
+export async function constructSearchParams(
+  parameters,
+  page?: number, limit = 0
+): Promise<SearchParameters> {
   // console.log('DEBUG - parameters %j', parameters)
   const { id, collections, filter } = parameters
 
   let body
   if (id) {
-    const params = { ids: [id] }
+    const params: { ids: string[]; filter?: Cql2Filter } = { ids: [id] }
     if (filter) {
       params.filter = filter
     }
@@ -820,7 +878,7 @@ export async function constructSearchParams(parameters, page, limit) {
     return collectionUniqueIndexID(index)
   })
 
-  const searchParams = {
+  const searchParams: SearchParameters = {
     index: indices,
     body,
     size: limit,
@@ -845,7 +903,11 @@ export async function constructSearchParams(parameters, page, limit) {
   return searchParams
 }
 
-async function search(parameters, limit, page) {
+async function search(
+  parameters: DbQueryParameters,
+  limit: number,
+  page: number
+): Promise<SearchResponse> {
   const searchParams = await constructSearchParams(parameters, page, limit)
   const dbResponse = await dbQuery({
     ignore_unavailable: true,
@@ -853,7 +915,7 @@ async function search(parameters, limit, page) {
     ...searchParams
   })
 
-  const hits = dbResponse.body.hits.hits
+  const hits = dbResponse.body['hits'].hits
   const results = hits.map((r) => (r._source))
   const lastItem = hits.at(-1)
   let lastItemSort = null
@@ -863,7 +925,7 @@ async function search(parameters, limit, page) {
 
   const response = {
     results,
-    numberMatched: dbResponse.body.hits.total.value,
+    numberMatched: dbResponse.body['hits'].total.value,
     numberReturned: results.length,
     lastItemSort
   }
@@ -959,7 +1021,7 @@ async function aggregate(
   // deprecated centroid
 
   if (aggregations.includes('grid_geohash_frequency')) {
-    searchParams.body.aggs.grid_geohash_frequency = {
+    searchParams.body.aggs['grid_geohash_frequency'] = {
       geohash_grid: {
         field: 'properties.proj:centroid',
         precision: geohashPrecision
@@ -968,7 +1030,7 @@ async function aggregate(
   }
 
   if (aggregations.includes('grid_geohex_frequency')) {
-    searchParams.body.aggs.grid_geohex_frequency = {
+    searchParams.body.aggs['grid_geohex_frequency'] = {
       geohex_grid: {
         field: 'properties.proj:centroid',
         precision: geohexPrecision
@@ -977,7 +1039,7 @@ async function aggregate(
   }
 
   if (aggregations.includes('grid_geotile_frequency')) {
-    searchParams.body.aggs.grid_geotile_frequency = {
+    searchParams.body.aggs['grid_geotile_frequency'] = {
       geotile_grid: {
         field: 'properties.proj:centroid',
         precision: geotilePrecision
@@ -988,7 +1050,7 @@ async function aggregate(
   // centroid
 
   if (aggregations.includes('centroid_geohash_grid_frequency')) {
-    searchParams.body.aggs.centroid_geohash_grid_frequency = {
+    searchParams.body.aggs['centroid_geohash_grid_frequency'] = {
       geohash_grid: {
         field: 'properties.proj:centroid',
         precision: centroidGeohashGridPrecision
@@ -997,7 +1059,7 @@ async function aggregate(
   }
 
   if (aggregations.includes('centroid_geohex_grid_frequency')) {
-    searchParams.body.aggs.centroid_geohex_grid_frequency = {
+    searchParams.body.aggs['centroid_geohex_grid_frequency'] = {
       geohex_grid: {
         field: 'properties.proj:centroid',
         precision: centroidGeohexGridPrecision
@@ -1006,7 +1068,7 @@ async function aggregate(
   }
 
   if (aggregations.includes('centroid_geotile_grid_frequency')) {
-    searchParams.body.aggs.centroid_geotile_grid_frequency = {
+    searchParams.body.aggs['centroid_geotile_grid_frequency'] = {
       geotile_grid: {
         field: 'properties.proj:centroid',
         precision: centroidGeotileGridPrecision
@@ -1017,7 +1079,7 @@ async function aggregate(
   // geometry
 
   if (aggregations.includes('geometry_geohash_grid_frequency')) {
-    searchParams.body.aggs.geometry_geohash_grid_frequency = {
+    searchParams.body.aggs['geometry_geohash_grid_frequency'] = {
       geohash_grid: {
         field: 'geometry',
         precision: geometryGeohashGridPrecision,
@@ -1035,7 +1097,7 @@ async function aggregate(
   // }
 
   if (aggregations.includes('geometry_geotile_grid_frequency')) {
-    searchParams.body.aggs.geometry_geotile_grid_frequency = {
+    searchParams.body.aggs['geometry_geotile_grid_frequency'] = {
       geotile_grid: {
         field: 'geometry',
         precision: geometryGeotileGridPrecision
@@ -1052,27 +1114,29 @@ async function aggregate(
   return dbResponse
 }
 
-const getItem = async (collectionId, itemId) => {
+const getItem = async (collectionId: string, itemId: string) => {
   const searchResponse = await search({
     collections: [collectionId],
     id: itemId
-  }, 1)
+  }, 1, 1)
 
   return searchResponse.results[0]
 }
 
-export const getItemCreated = async (collectionId, itemId) => {
+export const getItemCreated = async (collectionId: string, itemId: string) => {
   const item = await getItem(collectionId, itemId)
   if (!item) return undefined
   if (!item.properties) return undefined
-  return item.properties.created
+  return item.properties['created']
 }
 
 /*
  *  Update an existing Item in an index corresponding to the Collection
  *
  */
-async function updateItem(item) {
+async function updateItem(item: StacItem):
+  Promise<ApiResponse<Record<string, unknown>, unknown> |
+  Error> {
   const client = await _client()
 
   const hashedIndex = collectionUniqueIndexID(item.collection)
@@ -1093,7 +1157,7 @@ async function updateItem(item) {
     index: hashedIndex,
     id: item.id,
     body: item,
-    opType: 'index'
+    op_type: 'index'
   })
 
   return response

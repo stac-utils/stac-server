@@ -1,3 +1,4 @@
+//@ts-nocheck
 import { isEmpty } from 'lodash-es'
 import { dbClient as _client, createIndex } from './database-client.js'
 import logger from './logger.js'

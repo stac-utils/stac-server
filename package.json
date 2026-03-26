@@ -80,6 +80,7 @@
     "zod": "^4.1.13"
   },
   "devDependencies": {
+    "@smithy/types": "^4.13.1",
     "@stoplight/spectral-cli": "^6.15.0",
     "@tsconfig/node22": "^22.0.5",
     "@types/aws-lambda": "^8.10.159",

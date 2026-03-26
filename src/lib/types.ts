@@ -1,7 +1,7 @@
 import type { Geometry, BBox } from 'geojson'
 
 //
-// ----- STAC -----------------------------------
+// ----- STAC -----------------------------------------------------
 //
 
 export interface StacItem {

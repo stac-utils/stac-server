@@ -5,6 +5,8 @@ import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 import { s3 } from './aws-clients.js'
 import logger from './logger.js'
 import { AssetBuckets, BucketOptionEnum } from './asset-buckets.js'
+import { Assets, StacRecord } from './types.js'
+import { isItem } from './stac-utils.js'
 
 const s3Client = s3()
 
@@ -16,15 +18,26 @@ export const ALTERNATE_ASSETS_EXTENSION = 'https://stac-extensions.github.io/alt
  * @param {string} url - S3 URL to parse
  * @returns {Object} {bucket, key} or {bucket: null, key: null} if not a valid S3 URL
  */
-export const parseS3Url = (url) => {
+export const parseS3Url = (url): {
+  bucket: string | null,
+  key: string | null
+} => {
   const match = S3_URL_REGEX.exec(url)
   if (!match) return { bucket: null, key: null }
 
-  const [, bucket, key] = match
+  // const [, bucket, key] = match
+  const bucket = match[1] ?? null
+  const key = match[2] ?? null
   return { bucket, key }
 }
 
 export class AssetProxy {
+  buckets: AssetBuckets
+
+  urlExpiry: number
+
+  isEnabled: boolean
+
   /**
    * @param {AssetBuckets} buckets - AssetBuckets instance
    * @param {number} urlExpiry - Pre-signed URL expiry time in seconds
@@ -39,12 +52,12 @@ export class AssetProxy {
   /**
    * @returns {Promise<AssetProxy>} Initialized AssetProxy instance
    */
-  static async create() {
+  static async create(): Promise<AssetProxy> {
     const bucketOption = process.env['ASSET_PROXY_BUCKET_OPTION'] || 'NONE'
     const urlExpiry = parseInt(process.env['ASSET_PROXY_URL_EXPIRY'] || '300', 10)
     const bucketList = process.env['ASSET_PROXY_BUCKET_LIST']
 
-    let bucketNames = null
+    let bucketNames: string[] | null = null
     if (bucketOption === BucketOptionEnum.LIST) {
       if (!bucketList) {
         throw new Error(
@@ -66,7 +79,12 @@ export class AssetProxy {
    * @param {string|null} itemId - Item ID (null for collection assets)
    * @returns {Object} Object with proxied assets and wasProxied flag
    */
-  getProxiedAssets(assets, endpoint, collectionId, itemId) {
+  getProxiedAssets(
+    assets: Assets,
+    endpoint: string,
+    collectionId: string | null,
+    itemId
+  ): {assets: Assets, wasProxied: boolean} {
     const proxiedAssets = {}
     let wasProxied = false
 
@@ -119,7 +137,7 @@ export class AssetProxy {
    * @param {string} endpoint - API endpoint base URL
    * @returns {Array} Mutated stacObjects array with proxied asset HREFs
    */
-  updateAssetHrefs(stacObjects, endpoint) {
+  updateAssetHrefs(stacObjects: StacRecord[], endpoint: string): StacRecord[] {
     if (!this.isEnabled) {
       return stacObjects
     }
@@ -129,9 +147,8 @@ export class AssetProxy {
         logger.info(`${result.id} has no assets to proxy`)
         return
       }
-
-      const itemId = result.collection ? result.id : null
-      const collectionId = result.collection ? result.collection : result.id
+      const itemId = isItem(result) ? result.id : null
+      const collectionId = isItem(result) ? result.collection : result.id
 
       const { assets, wasProxied } = this.getProxiedAssets(
         result.assets,
@@ -161,7 +178,7 @@ export class AssetProxy {
    * @param {string} assetKey - Asset key to generate presigned URL for
    * @returns {Promise<string|null>} Pre-signed URL or null
    */
-  async getAssetPresignedUrl(itemOrCollection, assetKey) {
+  async getAssetPresignedUrl(itemOrCollection: StacRecord, assetKey: string) {
     const asset = itemOrCollection.assets?.[assetKey] || null
     if (!asset || !asset.href) {
       return null

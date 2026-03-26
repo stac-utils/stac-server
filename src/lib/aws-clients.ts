@@ -1,6 +1,6 @@
-import { S3Client } from '@aws-sdk/client-s3'
-import { SNSClient } from '@aws-sdk/client-sns'
-import { SQSClient } from '@aws-sdk/client-sqs'
+import { S3Client, S3ClientConfig } from '@aws-sdk/client-s3'
+import { SNSClient, SNSClientConfig } from '@aws-sdk/client-sns'
+import { SQSClient, SQSClientConfig } from '@aws-sdk/client-sqs'
 
 const localStackEndpointEnvVar = 'LOCAL_STACK_ENDPOINT'
 
@@ -20,7 +20,7 @@ const localStackParams = () => ({
   region: 'us-east-1'
 })
 
-export const s3 = (options = {}) => {
+export const s3 = (options: S3ClientConfig = {}): S3Client => {
   const localStackOverrides = {
     ...localStackParams(),
     forcePathStyle: true
@@ -34,7 +34,7 @@ export const s3 = (options = {}) => {
   })
 }
 
-export const sns = (options = {}) => {
+export const sns = (options: SNSClientConfig = {}): SNSClient => {
   const overrides = useLocalStack() ? localStackParams() : {}
 
   return new SNSClient({
@@ -43,17 +43,11 @@ export const sns = (options = {}) => {
   })
 }
 
-export const sqs = (options = {}) => {
+export const sqs = (options: SQSClientConfig = {}): SQSClient => {
   const overrides = useLocalStack() ? localStackParams() : {}
 
   return new SQSClient({
     ...overrides,
     ...options
   })
-}
-
-export default {
-  s3,
-  sns,
-  sqs
 }

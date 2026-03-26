@@ -251,6 +251,7 @@ test('AssetProxy - updateAssetHrefs() mutates results and adds the alternate ass
 
     const proxy = await AssetProxy.create()
     const results = [{
+      type: 'Feature',
       id: 'item1',
       collection: 'collection1',
       assets: {

@@ -1,10 +1,15 @@
 import {
   ListBucketsCommand,
-  HeadBucketCommand
+  HeadBucketCommand,
+  S3ServiceException,
 } from '@aws-sdk/client-s3'
 import { s3 } from './aws-clients.js'
 import logger from './logger.js'
 
+export interface BucketInfo {
+  name: string | null
+  region: string | null
+}
 // Follow, rather than throw, HeadBucket redirects for buckets not in the client's region
 const s3Client = s3({ followRegionRedirects: true })
 
@@ -16,6 +21,12 @@ export const BucketOptionEnum = Object.freeze({
 })
 
 export class AssetBuckets {
+  bucketOption: string
+
+  bucketNames: string[] | null
+
+  bucketCache: Record<string, { name: string | null, region: string | null }>
+
   /**
    * @param {string} bucketOption - Bucket option (NONE, ALL, ALL_BUCKETS_IN_ACCOUNT, LIST)
    * @param {string[]|null} bucketNames - Array of bucket names (required for LIST option)
@@ -49,7 +60,7 @@ export class AssetBuckets {
         )
 
         const invalidBuckets = Object.keys(this.bucketCache)
-          .filter((bucketName) => this.bucketCache[bucketName].region === null)
+          .filter((bucketName) => this.bucketCache[bucketName]?.region === null)
         if (invalidBuckets.length > 0) {
           throw new Error(
             `Could not access or determine region for the following buckets: ${
@@ -99,11 +110,11 @@ export class AssetBuckets {
    * @param {string} bucketName - S3 bucket name
    * @returns {Promise<Object>} Bucket info {name, region}
    */
-  async getBucket(bucketName) {
+  async getBucket(bucketName: string): Promise<BucketInfo> {
     if (!(bucketName in this.bucketCache)) {
       const command = new HeadBucketCommand({ Bucket: bucketName })
-      let name = null
-      let region = null
+      let name: string | null = null
+      let region: string | null = null
 
       try {
         const response = await s3Client.send(command)
@@ -112,7 +123,7 @@ export class AssetBuckets {
           ? 'eu-west-1'
           : response.BucketRegion || 'us-east-1'
       } catch (err) {
-        const error = /** @type {any} */ (err)
+        const error = (err) as S3ServiceException
         const statusCode = error.$metadata?.httpStatusCode
 
         switch (statusCode) {
@@ -133,7 +144,7 @@ export class AssetBuckets {
 
       this.bucketCache[bucketName] = { name, region }
     }
-    return this.bucketCache[bucketName]
+    return this.bucketCache[bucketName]!
   }
 
   /**

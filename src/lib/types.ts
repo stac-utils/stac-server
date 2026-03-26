@@ -1,4 +1,4 @@
-import type { Geometry, BBox } from 'geojson'
+import type { Geometry, BBox, GeoJSON } from 'geojson'
 
 //
 // ----- STAC -----------------------------------------------------
@@ -286,3 +286,28 @@ export interface ItemFeatureCollection {
 }
 
 export type CreateItemBody = StacItem | ItemFeatureCollection
+
+//
+//
+// ---------- API -----------------------------------
+//
+
+export interface APIParameters {
+  limit: string
+  aggregations: string | string[]
+  page: string
+  datetime?: string
+  fields?: APIFields | string // string for GET request
+  bbox?: BBox | string
+  intersects?: string | GeoJSON
+  query?: string | QueryOperators // This might be wrong
+  filter?: Cql2Filter // external, user supplied
+  _filter?: Cql2Filter // only internally applied for auth filtering
+  'filter-lang'?: string
+  'filter-crs'?: string
+}
+
+export interface APIFields {
+  exclude?: string[]
+  include?: string[]
+}

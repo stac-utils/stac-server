@@ -1,11 +1,24 @@
 import { pickBy, assign, get as _getNested } from 'lodash-es'
-import { DateTime } from 'luxon'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3'
 import { NotFoundError, ValidationError } from './errors.js'
 import { isIndexNotFoundError } from './database.js'
 import logger from './logger.js'
-import { bboxToPolygon } from './geo-utils.js'
+import {
+  extractLimit,
+  extractPrecision,
+  extractAggregations,
+  extractPage,
+  extractDatetime,
+  createQueryFields,
+  extractFields,
+  extractBbox,
+  extractIntersects,
+  extractStacQuery,
+  extractCql2Filter,
+  extractRestrictionCql2Filter,
+  concatenateCql2Filters,
+} from './api-utils.js'
 
 // max number of collections to retrieve
 const COLLECTION_LIMIT = process.env['STAC_SERVER_COLLECTION_LIMIT'] || 100
@@ -51,287 +64,6 @@ const ALL_AGGREGATION_NAMES = DEFAULT_AGGREGATIONS.map((x) => x.name).concat(
   ]
 )
 
-export const extractIntersects = function (params) {
-  let intersectsGeometry
-  const { intersects } = params
-  if (intersects) {
-    let geojson
-    // if we receive a string, try to parse as GeoJSON, otherwise assume it is GeoJSON
-    if (typeof intersects === 'string') {
-      try {
-        geojson = JSON.parse(intersects)
-      } catch (_) {
-        throw new ValidationError('Invalid GeoJSON geometry')
-      }
-    } else {
-      geojson = { ...intersects }
-    }
-
-    if (geojson.type === 'FeatureCollection' || geojson.type === 'Feature') {
-      throw new Error(
-        'Expected GeoJSON geometry, not Feature or FeatureCollection'
-      )
-    }
-    intersectsGeometry = geojson
-  }
-  return intersectsGeometry
-}
-
-export const extractBbox = function (params, httpMethod = 'GET') {
-  const { bbox } = params
-  return bboxToPolygon(bbox, httpMethod === 'GET')
-}
-
-export const extractLimit = function (params) {
-  const { limit: limitStr } = params
-
-  if (limitStr !== undefined) {
-    let limit
-    try {
-      limit = parseInt(limitStr)
-    } catch (_) {
-      throw new ValidationError('Invalid limit value')
-    }
-
-    if (Number.isNaN(limit) || limit <= 0) {
-      throw new ValidationError(
-        'Invalid limit value, must be a positive number'
-      )
-    }
-
-    let itemsMaxLimit = Number(process.env['ITEMS_MAX_LIMIT'])
-    if (Number.isNaN(itemsMaxLimit) || itemsMaxLimit <= 0) {
-      itemsMaxLimit = Number.MAX_SAFE_INTEGER
-    }
-    limit = Math.min(
-      itemsMaxLimit,
-      limit || Number.MAX_SAFE_INTEGER,
-      10000
-    )
-
-    return limit
-  }
-  return undefined
-}
-
-export const extractPrecision = function (params, name, min, max) {
-  const precisionStr = params[name]
-
-  if (precisionStr !== undefined) {
-    let precision
-    try {
-      precision = parseInt(precisionStr)
-    } catch (_) {
-      throw new ValidationError(`Invalid precision value for ${name}`)
-    }
-
-    if (Number.isNaN(precision) || precision < min || precision > max) {
-      throw new ValidationError(
-        `Invalid precision value for ${name}, must be a number between ${min} and ${max} inclusive`
-      )
-    }
-    return precision
-  }
-
-  return min
-}
-
-export const extractAggregations = function (params) {
-  let aggs
-  const { aggregations } = params
-  if (aggregations) {
-    if (typeof aggregations === 'string') {
-      try {
-        aggs = JSON.parse(aggregations)
-      } catch (_) {
-        aggs = aggregations.split(',')
-      }
-    } else {
-      aggs = aggregations.slice()
-    }
-  }
-  return aggs || []
-}
-
-export const extractPage = function (params) {
-  const { page: pageStr } = params
-
-  if (pageStr !== undefined) {
-    let page
-    try {
-      page = parseInt(pageStr)
-    } catch (_) {
-      throw new ValidationError('Invalid page value')
-    }
-
-    if (Number.isNaN(page) || page <= 0) {
-      throw new ValidationError(
-        'Invalid page value, must be a number greater than 1'
-      )
-    }
-    return page
-  }
-  return undefined
-}
-
-// eslint-disable-next-line max-len
-const RFC3339_REGEX = /^(\d\d\d\d)\-(\d\d)\-(\d\d)T(\d\d):(\d\d):(\d\d)([.]\d+)?(Z|([-+])(\d\d):(\d\d))$/
-
-const rfc3339ToDateTime = function (s) {
-  if (!RFC3339_REGEX.test(s)) {
-    throw new ValidationError('datetime value is invalid, does not match RFC3339 format')
-  }
-  const dt = DateTime.fromISO(s)
-  if (dt.isValid) {
-    return dt
-  }
-  throw new ValidationError(
-    `datetime value is invalid, ${dt.invalidReason} ${dt.invalidExplanation}'`
-  )
-}
-
-const validateStartAndEndDatetimes = function (startDateTime, endDateTime) {
-  if (startDateTime && endDateTime && endDateTime < startDateTime) {
-    throw new ValidationError(
-      'datetime value is invalid, start datetime must be before end datetime with interval'
-    )
-  }
-}
-
-/**
- * ensure that fields necessary for creating links i.e. 'collection' and 'id'
- * are not excluded from query.  These fields will be removed later to ensure
- * results match user expectations
- * @param {Object} fields
- * @returns {Object}
- */
-export const createQueryFields = function (fields) {
-  const { exclude } = fields
-  if (exclude) {
-    const filteredExclude = exclude.filter(
-      (field) => field !== 'id' && field !== 'collection'
-    )
-    if (filteredExclude.length === 0) {
-      const { exclude: _removed, ...rest } = fields
-      return rest
-    }
-
-    return {
-      ...fields,
-      exclude: filteredExclude
-    }
-  }
-  return fields
-}
-
-export const extractDatetime = function (params) {
-  const { datetime } = params
-
-  if (datetime) {
-    const datetimeUpperCase = datetime.toUpperCase()
-    const [start, end, ...rest] = datetimeUpperCase.split('/')
-    if (rest.length) {
-      throw new ValidationError(
-        'datetime value is invalid, too many forward slashes for an interval'
-      )
-    } else if ((!start && !end)
-        || (start === '..' && end === '..')
-        || (!start && end === '..')
-        || (start === '..' && !end)
-    ) {
-      throw new ValidationError(
-        'datetime value is invalid, at least one end of the interval must be closed'
-      )
-    } else {
-      const startDateTime = (start && start !== '..') ? rfc3339ToDateTime(start) : undefined
-      const endDateTime = (end && end !== '..') ? rfc3339ToDateTime(end) : undefined
-      validateStartAndEndDatetimes(startDateTime, endDateTime)
-    }
-    return datetimeUpperCase
-  }
-  return undefined
-}
-
-const extractStacQuery = function (params) {
-  let stacQuery
-  const { query } = params
-  if (query) {
-    if (typeof query === 'string') {
-      const parsed = JSON.parse(query)
-      stacQuery = parsed
-    } else {
-      stacQuery = { ...query }
-    }
-  }
-  return stacQuery
-}
-
-const extractCql2Filter = function (params) {
-  let filterObj
-  const { 'filter-lang': filterLang, 'filter-crs': filterCrs, filter } = params
-
-  if (filterLang && filterLang !== 'cql2-json') {
-    throw new ValidationError(
-      `filter-lang must be "cql2-json". Supplied value: ${filterLang}`
-    )
-  }
-
-  if (filterCrs && filterCrs !== 'http://www.opengis.net/def/crs/OGC/1.3/CRS84') {
-    throw new ValidationError(
-      `filter-crs must be "http://www.opengis.net/def/crs/OGC/1.3/CRS84". Supplied value: ${filterCrs}`
-    )
-  }
-
-  if (filter) {
-    if (typeof filter === 'string') {
-      filterObj = JSON.parse(filter)
-    } else {
-      filterObj = { ...filter }
-    }
-  }
-  return filterObj
-}
-
-const extractRestrictionCql2Filter = function (params, headers) {
-  if (process.env['ENABLE_FILTER_AUTHX'] !== 'true') {
-    return undefined
-  }
-
-  const authxHeader = headers['stac-filter-authx']
-
-  const filter = authxHeader || params._filter
-
-  if (filter) {
-    if (typeof filter === 'string') {
-      return JSON.parse(filter)
-    }
-    return { ...filter }
-  }
-  return undefined
-}
-
-const concatenateCql2Filters = function (specifiedFilter, restrictionFilter) {
-  // an "and" op must have at least two args, so don't wrap if only one
-  // of the filters is defined
-
-  if (!specifiedFilter && !restrictionFilter) {
-    return undefined
-  }
-
-  if (specifiedFilter && !restrictionFilter) {
-    return specifiedFilter
-  }
-
-  if (!specifiedFilter && restrictionFilter) {
-    return restrictionFilter
-  }
-
-  return {
-    op: 'and',
-    args: [specifiedFilter, restrictionFilter]
-  }
-}
-
 const extractSortby = function (params) {
   let sortbyRules
   const { sortby } = params
@@ -355,52 +87,6 @@ const extractSortby = function (params) {
     }
   }
   return sortbyRules
-}
-
-export const extractFields = function (params) {
-  let fieldRules = {}
-  const { fields } = params
-  if (fields) {
-    if (typeof fields === 'string') {
-      // GET request - different syntax
-      const _fields = fields.split(',')
-      const include = []
-      _fields.forEach((rule) => {
-        if (rule[0] !== '-') {
-          if (rule[0] === '+') {
-            include.push(rule.slice(1))
-          } else {
-            include.push(rule)
-          }
-        }
-      })
-      if (include.length) {
-        fieldRules.include = include
-      }
-
-      const exclude = []
-      _fields.forEach((rule) => {
-        if (rule[0] === '-') {
-          exclude.push(rule.slice(1))
-        }
-      })
-      if (exclude.length) {
-        fieldRules.exclude = exclude
-      }
-    } else {
-      // POST request - JSON
-      fieldRules = fields
-    }
-  } else if (params.hasOwnProperty('fields')) {
-    // fields was provided as an empty object
-    if (params.fields === null) {
-      throw new ValidationError(
-        '`fields` parameter must be an object, optionally with one or '
-          + 'both of the keys "include" and "exclude"'
-      )
-    }
-  }
-  return fieldRules
 }
 
 /**
@@ -758,7 +444,6 @@ const searchItems = async function (
   let newEndpoint = `${endpoint}/search`
   let collectionEndpoint
   if (collectionId) {
-    // @ts-ignore
     searchParams.collections = [collectionId]
     newEndpoint = `${endpoint}/collections/${collectionId}/items`
     collectionEndpoint = `${endpoint}/collections/${collectionId}`
@@ -776,9 +461,9 @@ const searchItems = async function (
         numberMatched: 0,
         numberReturned: 0,
       }
-    // @ts-ignore
+
     } else if (error?.meta?.statusCode === 400) {
-      // @ts-ignore
+
       const e = error?.meta?.body?.error
 
       // only serialize part of the error message,
@@ -821,7 +506,7 @@ const searchItems = async function (
     lastItemSort
   )
 
-  // @ts-ignore
+
   const links = paginationLinks.concat([{
     rel: 'root',
     type: 'application/json',
@@ -829,13 +514,13 @@ const searchItems = async function (
   }])
 
   if (collectionId) { // add these links for a features request
-    // @ts-ignore
+
     links.push({
       rel: 'self',
       type: 'application/geo+json',
       href: newEndpoint
     })
-    // @ts-ignore
+
     links.push({
       rel: 'collection',
       type: 'application/json',
@@ -929,7 +614,7 @@ const aggregate = async function (
   let collection
 
   if (collectionId) {
-    // @ts-ignore
+
     searchParams.collections = [collectionId]
     linkEndpoint = `${endpoint}/collections/${collectionId}`
     collectionEndpoint = `${endpoint}/collections/${collectionId}`
@@ -1124,7 +809,7 @@ const aggregate = async function (
   return results
 }
 
-const getConformance = async function (txnEnabled) {
+const getConformance = async function (txnEnabled: boolean): Promise<string[]> {
   const foundationPrefix = 'https://api.stacspec.org/v1.0.0'
   const conformsTo = [
     `${foundationPrefix}/core`,
@@ -1583,3 +1268,19 @@ export default {
   getGlobalAggregations,
   getCollectionAggregations,
 }
+
+export {
+  extractLimit,
+  extractPrecision,
+  extractAggregations,
+  extractPage,
+  extractDatetime,
+  createQueryFields,
+  extractFields,
+  extractBbox,
+  extractIntersects,
+  extractStacQuery,
+  extractCql2Filter,
+  extractRestrictionCql2Filter,
+  concatenateCql2Filters,
+} from './api-utils.js'

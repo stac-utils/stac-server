@@ -148,6 +148,9 @@ export function buildDatetimeQuery(parameters: QueryParameters): DateQuery {
   return dateQuery
 }
 
+/**
+ * create "IN" CQL2 filter for searches
+ */
 function IN(cql2Field: string, cql2Value: Cql2Value): OpenSearchFilterQuery {
   if (!Array.isArray(cql2Value) || cql2Value.length === 0) {
     throw new ValidationError("Operand for 'in' must be a non-empty array")
@@ -165,6 +168,9 @@ function IN(cql2Field: string, cql2Value: Cql2Value): OpenSearchFilterQuery {
   }
 }
 
+/**
+ * create range filter for CQL2 searching
+ */
 function between(cql2Field: string, filterArgs: number[]): RangeQuery {
   if (filterArgs.length < 3) {
     throw new ValidationError("Two operands must be provided for the 'between' operator")
@@ -194,7 +200,7 @@ function between(cql2Field: string, filterArgs: number[]): RangeQuery {
 }
 
 /**
- * cql2Value can be either:
+ * Generate intersection portion of CQL2 filter.  cql2Value can be either:
  * 1) { "bbox": [swLon, swLat, neLon, neLat] }
  * 2) geojson geometry
  */
@@ -332,7 +338,10 @@ function buildQueryExtQuery(query: QueryParameters): OpenSearchFilterQuery {
   }
 }
 
-// Handles AND/OR/NOT — args are always nested Cql2Filter[]
+/**
+ * Build recursive portion of CQL2 Filter.  Handles AND/OR/NOT
+ * — args are always nested Cql2Filter[]
+ */
 function buildRecursiveFilter(filter: Cql2Filter): OpenSearchFilterQuery {
   switch (filter.op) {
   case OP.AND:
@@ -358,9 +367,10 @@ function buildRecursiveFilter(filter: Cql2Filter): OpenSearchFilterQuery {
     throw new Error(`Not a recursive operator: ${filter.op}`)
   }
 }
-
-// Handles leaf operators (=, <>, IN, BETWEEN etc)
-// args[0] is always a property ref, args[1] is the value
+/**
+ * Handles leaf operators (=, <>, IN, BETWEEN etc)
+ * args[0] is always a property ref, args[1] is the value
+ */
 function buildLeafFilter(filter: Cql2Filter): OpenSearchFilterQuery {
   let cql2Field = (filter.args[0] as { property: string }).property
   if (!UNPREFIXED_FIELDS.includes(cql2Field)) {
@@ -652,8 +662,7 @@ export function buildFieldsFilter(parameters: QueryParameters): FieldsFilter {
 }
 
 /*
- * Create a new Collection
- *
+ * Create a new Collection in the open search database.
  */
 async function indexCollection(collection: StacCollection): Promise<Array<ApiResponse | void>> {
   const client = await _client()
@@ -678,7 +687,6 @@ async function indexCollection(collection: StacCollection): Promise<Array<ApiRes
 
 /*
  * Create a new Item in an index corresponding to the Collection
- *
  */
 async function indexItem(item: StacItem): Promise<ApiResponse | Error> {
   const client = await _client()
@@ -706,8 +714,7 @@ async function indexItem(item: StacItem): Promise<ApiResponse | Error> {
 /*
  *
  * This conforms to a PATCH request and updates an existing item by ID
- * using a partial item description, compliant with RFC 7386.
- *
+ * using a partial item description
  */
 async function partialUpdateItem(
   collectionId: string,
@@ -753,6 +760,9 @@ async function deleteItem(
   })
 }
 
+/**
+ * execute a query against the OpenSearch DB backend
+ */
 async function dbQuery(parameters: DbQueryParameters) {
   logger.debug('Search query: %j', parameters)
   const client = await _client()
@@ -762,7 +772,9 @@ async function dbQuery(parameters: DbQueryParameters) {
   return response
 }
 
-// get single collection
+/**
+ * retrieve a single collection from OpenSearch backend
+ */
 async function getCollection(
   collectionId: string
 ): Promise<StacCollection | NotFoundError> {
@@ -835,10 +847,9 @@ async function populateUnrestrictedIndices() {
 }
 
 export async function constructSearchParams(
-  parameters,
+  parameters: QueryParameters,
   page?: number, limit = 0
 ): Promise<SearchParameters> {
-  // console.log('DEBUG - parameters %j', parameters)
   const { id, collections, filter } = parameters
 
   let body
@@ -903,6 +914,9 @@ export async function constructSearchParams(
   return searchParams
 }
 
+/**
+ * execute a serach against the OpenSearch database
+ */
 async function search(
   parameters: DbQueryParameters,
   limit: number,
@@ -984,27 +998,20 @@ const ALL_AGGREGATIONS = {
 }
 
 /**
- * @param {Array} aggregations
- * @param {Object} parameters
- * @param {number} geohashPrecision
- * @param {number} geohexPrecision
- * @param {number} geotilePrecision
- * @param {any} centroidGeohashGridPrecision
- * @param {any} centroidGeohexGridPrecision
- * @param {any} centroidGeotileGridPrecision
- * @param {any} geometryGeohashGridPrecision
- * @param {any} geometryGeotileGridPrecision
- * @returns {Promise<Object>}
+ * execute an aggregate query against open search backend
  */
 async function aggregate(
-  aggregations, parameters,
-  geohashPrecision, geohexPrecision, geotilePrecision,
-  centroidGeohashGridPrecision,
-  centroidGeohexGridPrecision,
-  centroidGeotileGridPrecision,
-  geometryGeohashGridPrecision,
+  aggregations: string[],
+  parameters: QueryParameters,
+  geohashPrecision: number,
+  geohexPrecision: number,
+  geotilePrecision: number,
+  centroidGeohashGridPrecision: number,
+  centroidGeohexGridPrecision: number,
+  centroidGeotileGridPrecision: number,
+  geometryGeohashGridPrecision: number,
   // geometryGeohexGridPrecision,
-  geometryGeotileGridPrecision,
+  geometryGeotileGridPrecision: number,
 ): Promise<ApiResponse> {
   const searchParams = await constructSearchParams(parameters)
   searchParams.body.size = 0

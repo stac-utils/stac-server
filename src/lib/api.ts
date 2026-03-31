@@ -32,7 +32,7 @@ import { Aggregation,
   AggregationBucket,
   APIFields,
   APIParameters,
-  APIResponse,
+  StacApiResult,
   Backend,
   Cql2Filter,
   Link,
@@ -41,7 +41,8 @@ import { Aggregation,
   StacCatalog,
   StacCollection,
   StacItem,
-  StacItemResponse
+  StacItemResponse,
+  Aggregations
 } from './types.js'
 
 // max number of collections to retrieve
@@ -277,7 +278,7 @@ const wrapResponseInFeatureCollection = function (
   numberMatched: number,
   numberReturned: number,
   limit: number
-): APIResponse {
+): StacApiResult {
   const fc = {
     type: 'FeatureCollection',
     numberMatched,
@@ -370,7 +371,7 @@ const searchItems = async function (
   endpoint: string,
   parameters: APIParameters,
   headers: IncomingHttpHeaders
-) {
+): Promise<StacApiResult> {
   logger.debug('Search parameters (unprocessed): %j', parameters)
 
   const {
@@ -511,7 +512,7 @@ const searchItems = async function (
 
 const agg = function (
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  esAggs: Record<string, any>, // unknown object from opensearch
+  esAggs: Record<string, any>, // unknown object shape from opensearch
   name: string,
   dataType: string
 ): Aggregation {
@@ -540,7 +541,7 @@ const aggregate = async function (
   endpoint: string,
   parameters: APIParameters,
   headers: IncomingHttpHeaders
-) {
+): Promise<Aggregations | Error> {
   logger.debug('Aggregate parameters (unprocessed): %j', parameters)
 
   const {
@@ -889,7 +890,7 @@ const getCollectionAggregations = async (
   endpoint: string,
   parameters: APIParameters,
   headers: IncomingHttpHeaders
-): Promise<{aggregations: Aggregation[], links: Link[]} | Error> => {
+): Promise<Aggregations | Error> => {
   if (!isCollectionIdAllowed(extractAllowedCollectionIds(parameters, headers), collectionId)) {
     return new NotFoundError()
   }
@@ -924,7 +925,7 @@ const getCollectionAggregations = async (
 
 const getGlobalAggregations = async (
   endpoint: string = ''
-): Promise<{aggregations: Aggregation[], links: Link[]} | Error> => {
+): Promise<Aggregations | Error> => {
   const aggregations = DEFAULT_AGGREGATIONS
   const links = [
     {
@@ -1047,7 +1048,7 @@ const getCollections = async function (
   endpoint: string,
   parameters: APIParameters,
   headers: IncomingHttpHeaders
-): Promise<APIResponse | Error> {
+): Promise<StacApiResult | Error> {
   // TODO: implement proper pagination, as this will only return up to
   // COLLECTION_LIMIT collections
   const collectionsOrError = await backend.getCollections(1, COLLECTION_LIMIT)
@@ -1222,7 +1223,7 @@ const getItemThumbnail = async function (
   itemId: string,
   parameters: APIParameters,
   headers: IncomingHttpHeaders
-) {
+): Promise<{location: string} | Error> {
   if (process.env['ENABLE_THUMBNAILS'] !== 'true') {
     return new NotFoundError()
   }

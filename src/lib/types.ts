@@ -144,6 +144,11 @@ export interface AggregationBucket {
   from?: number
 }
 
+export interface Aggregations {
+  aggregations: Aggregation[]
+  links: Link[]
+}
+
 //
 // ---------------------------------------------------------------
 //
@@ -370,7 +375,7 @@ export interface APIFields {
   include?: string[]
 }
 
-export interface APIResponse {
+export interface StacApiResult {
   type?: string
   collections?: StacCollection[]
   numberMatched?: number
@@ -403,7 +408,7 @@ export interface Backend {
     centroidGeotileGridPrecision: number,
     geometryGeohashGridPrecision: number,
     geometryGeotileGridPrecision: number,
-  ): Promise<APIResponse>
+  ): Promise<ApiResponse>
   getCollection(collectionId: string): Promise<StacCollection | Error>
   getCollections(page: number, limit: number): Promise<StacCollection[] | Error>
   indexItem(item: StacItem): Promise<ApiResponse | Error>

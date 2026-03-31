@@ -11,6 +11,9 @@ import logger from './logger.js'
 
 let _dbClient: Client
 
+/**
+ * Create opensearch Client for the specific openSearch instance
+ */
 function createClientWithUsernameAndPassword(
   host: string,
   username: string,
@@ -22,6 +25,9 @@ function createClientWithUsernameAndPassword(
   })
 }
 
+/**
+ * Create opensearch Client for the specific openSearch instance
+ */
 function createClientWithAwsAuth(host: string): Client {
   return new Client({
     ...AwsSigv4Signer({
@@ -33,7 +39,9 @@ function createClientWithAwsAuth(host: string): Client {
   })
 }
 
-// Connect to an opensearch database instance
+/**
+ * Connect to an opensearch database instance
+ */
 export async function connect(): Promise<Client> {
   let client
   const hostConfig = process.env['OPENSEARCH_HOST'] || process.env['ES_HOST']
@@ -66,7 +74,9 @@ export async function connect(): Promise<Client> {
   return client
 }
 
-// get existing search database client or create a new one
+/**
+ * get existing search database client or create a new one
+ */
 export async function dbClient(): Promise<Client> {
   if (_dbClient) {
     logger.debug('Using existing search database connection')
@@ -78,7 +88,8 @@ export async function dbClient(): Promise<Client> {
   return _dbClient
 }
 /**
- * create an opensearch index for a collection if it does not already exist
+ * create an opensearch index for a specific
+ * collection if it does not already exist
  */
 export async function createIndex(index: string): Promise<void> {
   const client = await dbClient()

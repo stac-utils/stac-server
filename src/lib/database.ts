@@ -85,6 +85,9 @@ export const isIndexNotFoundError = (e) => (
     && e.name === 'ResponseError'
     && e.message.includes('index_not_found_exception'))
 
+/**
+ * creae range query for CQL2 filters
+ */
 function buildRangeQuery(
   property: string,
   operators: string[],
@@ -99,7 +102,7 @@ function buildRangeQuery(
   if (operators.includes(gt) || operators.includes(lt)
          || operators.includes(gte) || operators.includes(lte)) {
     const propertyKey = `properties.${property}`
-    const localRangeQuery: RangeQuery = {
+    const rangeQueryLocal: RangeQuery = {
       range: {
         [propertyKey]: {
         }
@@ -108,18 +111,21 @@ function buildRangeQuery(
     // All operators for a property go in a single range query.
     comparisons.forEach((comparison) => {
       if (operators.includes(comparison)) {
-        const existing = localRangeQuery.range[propertyKey]
-        localRangeQuery.range[propertyKey] = {
+        const existing = rangeQueryLocal.range[propertyKey]
+        rangeQueryLocal.range[propertyKey] = {
           ...existing,
           [comparison]: operatorsObject[comparison]
         }
       }
     })
-    rangeQuery = localRangeQuery
+    // using a local to ensure type safety in the forEach
+    rangeQuery = rangeQueryLocal
   }
   return rangeQuery
 }
+
 /**
+ * Build datetime query for CQL2 Filter
  * assumes a valid RFC3339 datetime or interval
  * validation was previously done by api.extractDatetime
  */
@@ -169,7 +175,7 @@ function IN(cql2Field: string, cql2Value: Cql2Value): OpenSearchFilterQuery {
 }
 
 /**
- * create range filter for CQL2 searching
+ * create generate between filter for CQL2 searching
  */
 function between(cql2Field: string, filterArgs: number[]): RangeQuery {
   if (filterArgs.length < 3) {
@@ -212,7 +218,8 @@ function sIntersects(
 
   if (cql2Value.bbox) {
     geom = bboxToPolygon(cql2Value.bbox, true)
-  } else if ('type' in cql2Value && 'coordinates' in cql2Value) {
+  }
+  if ('type' in cql2Value && 'coordinates' in cql2Value) {
     if (!GEOMETRY_TYPES.includes(cql2Value.type)) {
       throw new ValidationError(
         `Operand for 's_intersects' must be a GeoJSON geometry: type was '${cql2Value.type}'`
@@ -234,6 +241,9 @@ function sIntersects(
   }
 }
 
+/**
+ * build the opensearch property queries
+ */
 function buildQueryExtQuery(query: QueryParameters): OpenSearchFilterQuery {
   const eq = 'eq'
   const inop = 'in'
@@ -247,7 +257,7 @@ function buildQueryExtQuery(query: QueryParameters): OpenSearchFilterQuery {
   // stac query operators.
   filterQueries = Object.keys(query).reduce((
     accumulator: OpenSearchFilterQuery[],
-    property
+    property: string
   ) => {
     const operatorsObject = query[property]
     const operators = Object.keys(operatorsObject)
@@ -314,7 +324,10 @@ function buildQueryExtQuery(query: QueryParameters): OpenSearchFilterQuery {
 
   const neq = 'neq'
 
-  mustNotQueries = Object.keys(query).reduce((accumulator: OpenSearchFilterQuery[], property) => {
+  mustNotQueries = Object.keys(query).reduce((
+    accumulator: OpenSearchFilterQuery[],
+    property: string
+  ) => {
     const operatorsObject = query[property]
     const operators = Object.keys(operatorsObject)
 
@@ -432,9 +445,8 @@ function buildFilterExtQuery(filter: Cql2Filter): OpenSearchFilterQuery {
 /**
  * Hash function that converts a string into a hexadecimal string.
  * A variant of the well-known "djb2" algorithm.
- *
- * @param {string} collection
- * @returns {string} An 8-character hexadecimal hash string.
+ * Facilitates broader range of collection names and ensure STAC API
+ * compliane with collection name rules
  */
 function collectionHash(collection: string): string {
   let hash = 0
@@ -458,11 +470,10 @@ function collectionHash(collection: string): string {
  * Necessary because OpenSearch does not allow upper case letters in indicies.
  * Using a short hash facilitates generating unique lower case IDs
  *  regardless of case
- * @param {string} collection
- * @returns {string} unique OpenSearch compatible string
+ * @returns unique OpenSearch compatible string
  */
-export function collectionUniqueIndexID(collection: string): string {
-  return `${collection.toLowerCase()}-${collectionHash(collection)}`
+export function collectionUniqueIndexID(collectionId: string): string {
+  return `${collectionId.toLowerCase()}-${collectionHash(collectionId)}`
 }
 
 function buildItemSearchQuery(parameters: QueryParameters): OpenSearchFilterQuery {
@@ -662,7 +673,7 @@ export function buildFieldsFilter(parameters: QueryParameters): FieldsFilter {
 }
 
 /*
- * Create a new Collection in the open search database.
+ * Create a new index for a STAC Collection in the open search database.
  */
 async function indexCollection(collection: StacCollection): Promise<Array<ApiResponse | void>> {
   const client = await _client()
@@ -686,7 +697,7 @@ async function indexCollection(collection: StacCollection): Promise<Array<ApiRes
 }
 
 /*
- * Create a new Item in an index corresponding to the Collection
+ * Create a new STAC Item in an index corresponding to the Collection
  */
 async function indexItem(item: StacItem): Promise<ApiResponse | Error> {
   const client = await _client()
@@ -810,6 +821,10 @@ async function getCollections(
   }
 }
 
+/**
+ * map a user provided map of collection name to index names
+ * or store an empty mapping
+ */
 async function populateCollectionToIndexMapping() {
   if (process.env['COLLECTION_TO_INDEX_MAPPINGS']) {
     try {
@@ -846,6 +861,9 @@ async function populateUnrestrictedIndices() {
   }
 }
 
+/**
+ * Generate the search parameters for an open search query
+ */
 export async function constructSearchParams(
   parameters: QueryParameters,
   page?: number, limit = 0

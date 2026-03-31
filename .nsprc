@@ -39,29 +39,79 @@
         "notes": "fast-xml-parser is a transitive dependency of @redocly/cli via openapi-sampler, used only as a build tool to generate static API documentation. The entity expansion limit bypass via JavaScript falsy evaluation of zero values only affects applications that explicitly configure maxEntityCount:0 or maxEntitySize:0. We do not configure fast-xml-parser directly and @redocly/cli is never run against untrusted input, making this not exploitable.",
         "expiry": "2026-06-30"
     },
-    "1115368": {
+    "1115541": {
+        "active": true,
+        "notes": "brace-expansion is a transitive dependency of redoc, used only for API documentation rendering. The zero-step sequence causing process hang is not exploitable as brace-expansion is never used to process untrusted input in our usage context.",
+        "expiry": "2026-09-30"
+    },
+    "1115538": {
+        "active": true,
+        "notes": "handlebars is a transitive dependency used only in dev/doc tooling, not in production runtime code. JavaScript injection via AST type confusion requires attacker-controlled template input which is not possible in our usage context.",
+        "expiry": "2026-09-30"
+    },
+    "1115539": {
+        "active": true,
+        "notes": "handlebars is a transitive dependency used only in dev/doc tooling, not in production runtime code. JavaScript injection via AST type confusion requires attacker-controlled template input which is not possible in our usage context.",
+        "expiry": "2026-09-30"
+    },
+    "1115544": {
+        "active": true,
+        "notes": "handlebars is a transitive dependency used only in dev/doc tooling, not in production runtime code. Prototype pollution via partial template injection requires attacker-controlled template input which is not possible in our usage context.",
+        "expiry": "2026-09-30"
+    },
+    "1115588": {
+        "active": true,
+        "notes": "handlebars is a transitive dependency used only in dev/doc tooling, not in production runtime code. Prototype method access control gap requires attacker-controlled template input which is not possible in our usage context.",
+        "expiry": "2026-09-30"
+    },
+    "1115589": {
+        "active": true,
+        "notes": "handlebars is a transitive dependency used only in dev/doc tooling, not in production runtime code. Property access validation bypass requires attacker-controlled template input which is not possible in our usage context.",
+        "expiry": "2026-09-30"
+    },
+    "1115692": {
+        "active": true,
+        "notes": "handlebars is a transitive dependency used only in dev/doc tooling, not in production runtime code. CLI precompiler JavaScript injection requires attacker-controlled template names which is not possible in our usage context.",
+        "expiry": "2026-09-30"
+    },
+    "1115693": {
+        "active": true,
+        "notes": "handlebars is a transitive dependency used only in dev/doc tooling, not in production runtime code. JavaScript injection via dynamic partial requires attacker-controlled template input which is not possible in our usage context.",
+        "expiry": "2026-09-30"
+    },
+    "1115694": {
+        "active": true,
+        "notes": "handlebars is a transitive dependency used only in dev/doc tooling, not in production runtime code. DoS via malformed decorator syntax requires attacker-controlled template input which is not possible in our usage context.",
+        "expiry": "2026-09-30"
+    },
+    "1115549": {
+        "active": true,
+        "notes": "picomatch is a transitive dependency of @redocly/cli and related packages, used only as a build tool to generate static API documentation. The method injection via POSIX character classes is not exploitable as picomatch is never used to match untrusted glob patterns in our usage context.",
+        "expiry": "2026-09-30"
+    },
+    "1115551": {
+        "active": true,
+        "notes": "picomatch is a transitive dependency of @redocly/cli and related packages, used only as a build tool to generate static API documentation. The method injection via POSIX character classes is not exploitable as picomatch is never used to match untrusted glob patterns in our usage context.",
+        "expiry": "2026-09-30"
+    },
+    "1115552": {
+        "active": true,
+        "notes": "picomatch is a transitive dependency of @redocly/cli and related packages, used only as a build tool to generate static API documentation. The ReDoS vulnerability via extglob quantifiers is not exploitable as picomatch is never used to match untrusted input in our usage context.",
+        "expiry": "2026-09-30"
+    },
+    "1115554": {
+        "active": true,
+        "notes": "picomatch is a transitive dependency of @redocly/cli and related packages, used only as a build tool to generate static API documentation. The ReDoS vulnerability via extglob quantifiers is not exploitable as picomatch is never used to match untrusted input in our usage context.",
+        "expiry": "2026-09-30"
+    },
+    "1115555": {
         "active": true,
         "notes": "yaml is a direct dependency used for configuration parsing. The stack overflow via deeply nested YAML collections is only exploitable with untrusted YAML input of extreme depth. Our usage parses only operator-controlled configuration files, making this not exploitable in practice.",
-        "expiry": "2026-06-30"
+        "expiry": "2026-09-30"
     },
-    "1115382": {
+    "1115527": {
         "active": true,
-        "notes": "picomatch is a transitive dependency of @redocly/cli and related packages, used only as a build tool to generate static API documentation. The ReDoS vulnerability via extglob quantifiers is not exploitable as picomatch is never used to match untrusted input in our usage context.",
-        "expiry": "2026-06-30"
-    },
-    "1115384": {
-        "active": true,
-        "notes": "picomatch is a transitive dependency of @redocly/cli and related packages, used only as a build tool to generate static API documentation. The ReDoS vulnerability via extglob quantifiers is not exploitable as picomatch is never used to match untrusted input in our usage context.",
-        "expiry": "2026-06-30"
-    },
-    "1115394": {
-        "active": true,
-        "notes": "picomatch is a transitive dependency of @redocly/cli and related packages, used only as a build tool to generate static API documentation. The method injection via POSIX character classes is not exploitable as picomatch is never used to match untrusted glob patterns in our usage context.",
-        "expiry": "2026-06-30"
-    },
-    "1115396": {
-        "active": true,
-        "notes": "picomatch is a transitive dependency of @redocly/cli and related packages, used only as a build tool to generate static API documentation. The method injection via POSIX character classes is not exploitable as picomatch is never used to match untrusted glob patterns in our usage context.",
-        "expiry": "2026-06-30"
+        "notes": "path-to-regexp is a transitive dependency of express. A DoS via multiple route parameters is a low practical risk for stac-server: deployments are primarily hosted on AWS which provides built-in DDoS detection and mitigation, and the underlying data is generally not mission critical. A fix is expected upstream in the near future and will be incorporated before the next release.",
+        "expiry": "2026-04-30"
     }
 }

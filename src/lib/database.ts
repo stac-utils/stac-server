@@ -919,8 +919,8 @@ export async function constructSearchParams(
  */
 async function search(
   parameters: DbQueryParameters,
-  limit: number,
-  page: number
+  limit: number | undefined,
+  page: number | undefined
 ): Promise<SearchResponse> {
   const searchParams = await constructSearchParams(parameters, page, limit)
   const dbResponse = await dbQuery({
@@ -1170,7 +1170,7 @@ async function updateItem(item: StacItem):
   return response
 }
 
-async function healthCheck() {
+async function healthCheck(): Promise<ApiResponse> {
   const client = await _client()
   if (client === undefined) throw new Error('Client is undefined')
   return client.cat.health()

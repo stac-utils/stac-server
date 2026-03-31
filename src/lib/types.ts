@@ -1,3 +1,4 @@
+import { ApiResponse } from '@opensearch-project/opensearch'
 import type { Geometry, BBox, GeoJSON } from 'geojson'
 
 //
@@ -17,6 +18,11 @@ export interface StacItem {
   collection: string
 }
 
+export type StacItemResponse = Omit<StacItem, 'id' | 'collection'> & {
+  id?: string
+  collection?: string
+}
+
 export interface StacCollection {
   type: 'Collection'
   stac_version: string
@@ -28,10 +34,22 @@ export interface StacCollection {
   license: string
   providers?: Provider[]
   extent: Extent
+  queryables?: Queryables
+  aggregations?: Aggregation[]
   summaries?: {[key: string]: string[] | number[]}
   links: Link[]
   assets?: Assets
   item_assets?: {[key: string]: Asset}
+}
+
+export interface StacCatalog {
+  stac_version: string
+  type: string
+  id: string
+  title: string
+  description: string
+  conformsTo: string[]
+  links: Link[]
 }
 
 export type StacRecord = StacItem | StacCollection
@@ -42,6 +60,7 @@ export interface Link {
   type?: string
   title?: string
   method?: string
+  merge?: boolean
   headers?: {[key: string]: string | string[]}
   body?: { [key: string]: unknown}
 }
@@ -90,6 +109,40 @@ export interface ItemProperties {
 }
 
 export type StacServerMessage = StacRecord | DbAction
+
+export interface Queryables {
+  $schema: string
+  $id: string
+  type: string
+  title: string
+  description?: string
+  additionalProperties: boolean
+  properties: {
+    [x: string]: QueryableProperty
+  }
+}
+
+export interface QueryableProperty {
+  description: string
+  $ref: string
+}
+
+export interface Aggregation {
+  name: string
+  data_type: string
+  value?: string | number | null
+  overflow?: number
+  buckets?: AggregationBucket[]
+  frequency_distribution_data_type?: string
+}
+
+export interface AggregationBucket {
+  key: string | number | undefined
+  data_type: string
+  frequency: number | undefined
+  to?: number
+  from?: number
+}
 
 //
 // ---------------------------------------------------------------
@@ -293,16 +346,21 @@ export type CreateItemBody = StacItem | ItemFeatureCollection
 //
 
 export interface APIParameters {
-  limit: string
-  aggregations: string | string[]
-  page: string
+  limit?: string
+  aggregations?: string | string[]
+  page?: string
+  ids?: string | string[]
+  collections?: string | string[] // user supplied
+  _collections?: string | string[] // internally applied authorized collections filter
   datetime?: string
   fields?: APIFields | string // string for GET request
-  bbox?: BBox | string
+  bbox?: BBox | string | undefined
+  sortby?: string | string[] // 'asc' or 'desc'
   intersects?: string | GeoJSON
   query?: string | QueryOperators // This might be wrong
   filter?: Cql2Filter // external, user supplied
   _filter?: Cql2Filter // only internally applied for auth filtering
+  next?: string
   'filter-lang'?: string
   'filter-crs'?: string
 }
@@ -310,4 +368,52 @@ export interface APIParameters {
 export interface APIFields {
   exclude?: string[]
   include?: string[]
+}
+
+export interface APIResponse {
+  type?: string
+  collections?: StacCollection[]
+  numberMatched?: number
+  numberReturned?: number
+  features?: StacItem[]
+  links: Link[]
+}
+
+//
+//
+// ---------------- Backend ---------------------------
+//
+//
+
+export interface Backend {
+  healthCheck(): Promise<ApiResponse>
+  search(
+    parameters: DbQueryParameters,
+    limit: number | undefined,
+    page: number | undefined
+  ): Promise<SearchResponse>
+  aggregate(
+    aggregations: string[],
+    parameters: QueryParameters,
+    geohashPrecision: number,
+    geohexPrecision: number,
+    geotilePrecision: number,
+    centroidGeohashGridPrecision: number,
+    centroidGeohexGridPrecision: number,
+    centroidGeotileGridPrecision: number,
+    geometryGeohashGridPrecision: number,
+    geometryGeotileGridPrecision: number,
+  ): Promise<APIResponse>
+  getCollection(collectionId: string): Promise<StacCollection | Error>
+  getCollections(page: number, limit: number): Promise<StacCollection[] | Error>
+  indexItem(item: StacItem): Promise<ApiResponse | Error>
+  updateItem(item: StacItem): Promise<ApiResponse<Record<string, unknown>, unknown> |
+    Error>
+  partialUpdateItem(
+    collectionId: string,
+    itemId: string,
+    updateFields: PartialItemUpdate
+  ): Promise<ApiResponse | undefined>
+  deleteItem(collectionId: string, itemId: string): Promise<ApiResponse>
+  indexCollection(collection: StacCollection): Promise<Array<ApiResponse | void>>
 }

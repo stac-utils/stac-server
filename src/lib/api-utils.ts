@@ -1,11 +1,9 @@
 import { DateTime } from 'luxon'
-import { ValidationError } from './errors.js'
-import { bboxToPolygon } from './geo-utils.js'
-import { APIFields, APIParameters, Cql2Filter, QueryOperators, QueryParameters } from './types.js'
-import { ApiResponse } from '@opensearch-project/opensearch'
 import { Geometry } from 'geojson'
 import { IncomingHttpHeaders } from 'http'
-
+import { ValidationError } from './errors.js'
+import { bboxToPolygon } from './geo-utils.js'
+import { APIFields, APIParameters, Cql2Filter, QueryOperators } from './types.js'
 
 export const extractLimit = function (params: APIParameters): number | undefined {
   const { limit: limitStr } = params
@@ -39,7 +37,12 @@ export const extractLimit = function (params: APIParameters): number | undefined
   return undefined
 }
 
-export const extractPrecision = function (params: APIParameters, name: string, min: number, max: number): number {
+export const extractPrecision = function (
+  params: APIParameters,
+  name: string,
+  min: number,
+  max: number
+): number {
   const precisionStr = params[name]
 
   if (precisionStr !== undefined) {
@@ -259,7 +262,9 @@ export const extractIntersects = function (params: APIParameters): Geometry | un
   return intersectsGeometry
 }
 
-export const extractStacQuery = function (params: APIParameters): Record<string, QueryOperators> | undefined {
+export const extractStacQuery = function (
+  params: APIParameters
+): Record<string, QueryOperators> | undefined {
   let stacQuery
   const { query } = params
   if (query) {
@@ -273,6 +278,9 @@ export const extractStacQuery = function (params: APIParameters): Record<string,
   return stacQuery
 }
 
+/**
+ * extract the user supplied CQL2 filter
+ */
 export const extractCql2Filter = function (params: APIParameters): Cql2Filter {
   let filterObj
   const { 'filter-lang': filterLang, 'filter-crs': filterCrs, filter } = params
@@ -299,7 +307,13 @@ export const extractCql2Filter = function (params: APIParameters): Cql2Filter {
   return filterObj
 }
 
-export const extractRestrictionCql2Filter = function (params: APIParameters, headers: IncomingHttpHeaders): Cql2Filter | undefined {
+/**
+ * extract the internal-only CQL2 '_filter' that can be used for access control at the server side
+ */
+export const extractRestrictionCql2Filter = function (
+  params: APIParameters,
+  headers: IncomingHttpHeaders
+): Cql2Filter | undefined {
   if (process.env['ENABLE_FILTER_AUTHX'] !== 'true') {
     return undefined
   }
@@ -318,7 +332,13 @@ export const extractRestrictionCql2Filter = function (params: APIParameters, hea
   return undefined
 }
 
-export const concatenateCql2Filters = function (specifiedFilter: Cql2Filter, restrictionFilter: Cql2Filter): Cql2Filter | undefined {
+/**
+ * combine the user provided CQL2 filter and the auth CQL2 filter
+ */
+export const concatenateCql2Filters = function (
+  specifiedFilter: Cql2Filter | undefined,
+  restrictionFilter: Cql2Filter | undefined
+): Cql2Filter | undefined {
   // an "and" op must have at least two args, so don't wrap if only one
   // of the filters is defined
 
@@ -336,6 +356,104 @@ export const concatenateCql2Filters = function (specifiedFilter: Cql2Filter, res
 
   return {
     op: 'and',
-    args: [specifiedFilter, restrictionFilter]
+    args: [
+      specifiedFilter as Cql2Filter,
+      restrictionFilter as Cql2Filter
+    ]
   }
+}
+
+/**
+ * Parse a string or array of IDs into an array of strings or undefined.
+ */
+export const parseIds = function (
+  ids: string | string[] | undefined
+): string[] | undefined {
+  let idsRules
+  if (ids) {
+    if (typeof ids === 'string') {
+      try {
+        idsRules = JSON.parse(ids)
+      } catch (_) {
+        idsRules = ids.split(',')
+      }
+    } else {
+      idsRules = ids.slice()
+    }
+  }
+  return idsRules
+}
+
+export const extractIds = function (params: APIParameters): string[] | undefined {
+  return parseIds(params.ids)
+}
+
+export const extractAllowedCollectionIds = function (
+  params: APIParameters,
+  headers: IncomingHttpHeaders
+): string[] | undefined {
+  if (process.env['ENABLE_COLLECTIONS_AUTHX'] !== 'true') {
+    return undefined
+  }
+
+  const authxHeader = headers['stac-collections-authx']
+
+  if (authxHeader) {
+    return parseIds(authxHeader)
+  }
+
+  if (params._collections) {
+    return parseIds(params._collections)
+  }
+
+  return []
+}
+
+export const extractCollectionIds = function (params: APIParameters): string[] | undefined {
+  return parseIds(params.collections)
+}
+
+export const filterAllowedCollectionIds = function (
+  allowedCollectionIds: string[] | undefined,
+  specifiedCollectionIds: string[] | undefined
+): string[] | undefined {
+  return (
+    Array.isArray(allowedCollectionIds) && !allowedCollectionIds.includes('*')
+  ) ? allowedCollectionIds.filter(
+      (x) => !specifiedCollectionIds || specifiedCollectionIds.includes(x)
+    ) : specifiedCollectionIds
+}
+
+export const isCollectionIdAllowed = function (
+  allowedCollectionIds: string[] | undefined,
+  collectionId: string
+): boolean {
+  return !Array.isArray(allowedCollectionIds)
+          || allowedCollectionIds.includes(collectionId)
+          || allowedCollectionIds.includes('*')
+}
+
+export const extractSortby = function (params: APIParameters): string[] {
+  let sortbyRules
+  const { sortby } = params
+  if (sortby) {
+    if (typeof sortby === 'string') {
+      // GET request - different syntax
+      const sortbys = sortby.split(',')
+
+      sortbyRules = sortbys.map((sortbyRule) => {
+        if (sortbyRule[0] === '-') {
+          return { field: sortbyRule.slice(1), direction: 'desc' }
+        }
+        if (sortbyRule[0] === '+') {
+          return { field: sortbyRule.slice(1), direction: 'asc' }
+        }
+        return { field: sortbyRule, direction: 'asc' }
+      })
+    } else {
+      // POST request
+      sortbyRules = sortby.slice()
+    }
+  }
+  return sortbyRules
 }

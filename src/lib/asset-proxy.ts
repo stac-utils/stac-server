@@ -15,14 +15,14 @@ const S3_URL_REGEX = /^s3:\/\/([^/]+)\/(.+)$/
 export const ALTERNATE_ASSETS_EXTENSION = 'https://stac-extensions.github.io/alternate-assets/v1.2.0/schema.json'
 
 /**
- * @param {string} url - S3 URL to parse
+ * @param {string} s3Url - S3 URL to parse
  * @returns {Object} {bucket, key} or {bucket: null, key: null} if not a valid S3 URL
  */
-export const parseS3Url = (url): {
+export const parseS3Url = (s3Url: string): {
   bucket: string | null,
   key: string | null
 } => {
-  const match = S3_URL_REGEX.exec(url)
+  const match = S3_URL_REGEX.exec(s3Url)
   if (!match) return { bucket: null, key: null }
 
   // const [, bucket, key] = match
@@ -73,17 +73,13 @@ export class AssetProxy {
   }
 
   /**
-   * @param {Object} assets - Assets object
-   * @param {string} endpoint - API endpoint base URL
-   * @param {string} collectionId - Collection ID
-   * @param {string|null} itemId - Item ID (null for collection assets)
-   * @returns {Object} Object with proxied assets and wasProxied flag
+   * get bucket locations of proxied assets
    */
   getProxiedAssets(
     assets: Assets,
     endpoint: string,
     collectionId: string | null,
-    itemId
+    itemId: string | null
   ): {assets: Assets, wasProxied: boolean} {
     const proxiedAssets = {}
     let wasProxied = false
@@ -133,9 +129,7 @@ export class AssetProxy {
   }
 
   /**
-   * @param {Array} stacObjects - Array of STAC items or collections
-   * @param {string} endpoint - API endpoint base URL
-   * @returns {Array} Mutated stacObjects array with proxied asset HREFs
+   * @returns Mutated stacRecord[] array with proxied asset HREFs
    */
   updateAssetHrefs(stacObjects: StacRecord[], endpoint: string): StacRecord[] {
     if (!this.isEnabled) {
@@ -174,12 +168,11 @@ export class AssetProxy {
   }
 
   /**
-   * @param {Object} itemOrCollection - STAC Item or Collection
-   * @param {string} assetKey - Asset key to generate presigned URL for
-   * @returns {Promise<string|null>} Pre-signed URL or null
+   * generate a presinged URL for a specific asset
+   * @returns Pre-signed URL or null
    */
-  async getAssetPresignedUrl(itemOrCollection: StacRecord, assetKey: string) {
-    const asset = itemOrCollection.assets?.[assetKey] || null
+  async getAssetPresignedUrl(stacRecord: StacRecord, assetKey: string) {
+    const asset = stacRecord.assets?.[assetKey] || null
     if (!asset || !asset.href) {
       return null
     }

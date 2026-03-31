@@ -39,10 +39,10 @@
         "notes": "fast-xml-parser is a transitive dependency of @redocly/cli via openapi-sampler, used only as a build tool to generate static API documentation. The entity expansion limit bypass via JavaScript falsy evaluation of zero values only affects applications that explicitly configure maxEntityCount:0 or maxEntitySize:0. We do not configure fast-xml-parser directly and @redocly/cli is never run against untrusted input, making this not exploitable.",
         "expiry": "2026-06-30"
     },
-    "1115368": {
+    "1115541": {
         "active": true,
-        "notes": "yaml is a direct dependency used for configuration parsing. The stack overflow via deeply nested YAML collections is only exploitable with untrusted YAML input of extreme depth. Our usage parses only operator-controlled configuration files, making this not exploitable in practice.",
-        "expiry": "2026-06-30"
+        "notes": "brace-expansion is a transitive dependency of redoc, used only for API documentation rendering. The zero-step sequence causing process hang is not exploitable as brace-expansion is never used to process untrusted input in our usage context.",
+        "expiry": "2026-09-30"
     },
     "1115541": {
         "active": true,
@@ -50,11 +50,6 @@
         "expiry": "2026-09-30"
     },
     "1115538": {
-        "active": true,
-        "notes": "handlebars is a transitive dependency used only in dev/doc tooling, not in production runtime code. JavaScript injection via AST type confusion requires attacker-controlled template input which is not possible in our usage context.",
-        "expiry": "2026-09-30"
-    },
-    "1115539": {
         "active": true,
         "notes": "handlebars is a transitive dependency used only in dev/doc tooling, not in production runtime code. JavaScript injection via AST type confusion requires attacker-controlled template input which is not possible in our usage context.",
         "expiry": "2026-09-30"

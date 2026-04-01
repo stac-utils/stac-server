@@ -28,5 +28,115 @@
         "active": true,
         "notes": "minimatch is a transitive dependency of @redocly/cli and redoc, used only for API documentation rendering. The vulnerable wildcard pattern matching is not exposed to user input in our usage context, making ReDoS exploitation not feasible.",
         "expiry": "2026-04-25"
+    },
+    "1115339": {
+        "active": true,
+        "notes": "fast-xml-parser is a transitive dependency of @redocly/cli via openapi-sampler, used only as a build tool to generate static API documentation. This second incomplete fix for CVE-2026-26278 affects numeric entity expansion limits. We do not configure fast-xml-parser directly and @redocly/cli is never run against untrusted input, making this not exploitable.",
+        "expiry": "2026-06-30"
+    },
+    "1115359": {
+        "active": true,
+        "notes": "fast-xml-parser is a transitive dependency of @redocly/cli via openapi-sampler, used only as a build tool to generate static API documentation. The entity expansion limit bypass via JavaScript falsy evaluation of zero values only affects applications that explicitly configure maxEntityCount:0 or maxEntitySize:0. We do not configure fast-xml-parser directly and @redocly/cli is never run against untrusted input, making this not exploitable.",
+        "expiry": "2026-06-30"
+    },
+    "1115541": {
+        "active": true,
+        "notes": "Waiting for dependebot to calculate upgrade",
+        "expiry": "2026-05-01"
+    },
+    "1115538": {
+        "active": true,
+        "notes": "Waiting for dependebot to calculate upgrade",
+        "expiry": "2026-05-01"
+    },
+    "1115539": {
+        "active": true,
+        "notes": "Waiting for dependebot to calculate upgrade",
+        "expiry": "2026-05-01"
+    },
+    "1115544": {
+        "active": true,
+        "notes": "Waiting for dependebot to calculate upgrade",
+        "expiry": "2026-05-01"
+    },
+    "1115588": {
+        "active": true,
+        "notes": "Waiting for dependebot to calculate upgrade",
+        "expiry": "2026-05-01"
+    },
+    "1115589": {
+        "active": true,
+        "notes": "Waiting for dependebot to calculate upgrade",
+        "expiry": "2026-05-01"
+    },
+    "1115692": {
+        "active": true,
+        "notes": "Waiting for dependebot to calculate upgrade",
+        "expiry": "2026-05-01"
+    },
+    "1115693": {
+        "active": true,
+        "notes": "Waiting for dependebot to calculate upgrade",
+        "expiry": "2026-05-01"
+    },
+    "1115694": {
+        "active": true,
+        "notes": "Waiting for dependebot to calculate upgrade",
+        "expiry": "2026-05-01"
+    },
+    "1115527": {
+        "active": true,
+        "notes": "Waiting for dependebot to calculate upgrade",
+        "expiry": "2026-05-01"
+    },
+    "1115549": {
+        "active": true,
+        "notes": "Waiting for dependebot to calculate upgrade",
+        "expiry": "2026-05-01"
+    },
+    "1115551": {
+        "active": true,
+        "notes": "Waiting for dependebot to calculate upgrade",
+        "expiry": "2026-05-01"
+    },
+    "1115552": {
+        "active": true,
+        "notes": "Waiting for dependebot to calculate upgrade",
+        "expiry": "2026-05-01"
+    },
+    "1115554": {
+        "active": true,
+        "notes": "Waiting for dependebot to calculate upgrade",
+        "expiry": "2026-05-01"
+    },
+    "1114592": {
+        "active": true,
+        "notes": "Waiting for dependebot to calculate upgrade",
+        "expiry": "2026-05-01"
+    },
+    "1114594": {
+        "active": true,
+        "notes": "Waiting for dependebot to calculate upgrade",
+        "expiry": "2026-05-01"
+    },
+    "1114638": {
+        "active": true,
+        "notes": "Waiting for dependebot to calculate upgrade",
+        "expiry": "2026-05-01"
+    },
+    "1114640": {
+        "active": true,
+        "notes": "Waiting for dependebot to calculate upgrade",
+        "expiry": "2026-05-01"
+    },
+    "1114642": {
+        "active": true,
+        "notes": "Waiting for dependebot to calculate upgrade",
+        "expiry": "2026-05-01"
+    },
+    "1115555": {
+        "active": true,
+        "notes": "Waiting for dependebot to calculate upgrade",
+        "expiry": "2026-05-01"
     }
 }

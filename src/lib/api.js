@@ -758,6 +758,7 @@ const searchItems = async function (
   let newEndpoint = `${endpoint}/search`
   let collectionEndpoint
   if (collectionId) {
+    // @ts-ignore
     searchParams.collections = [collectionId]
     newEndpoint = `${endpoint}/collections/${collectionId}/items`
     collectionEndpoint = `${endpoint}/collections/${collectionId}`
@@ -928,6 +929,7 @@ const aggregate = async function (
   let collection
 
   if (collectionId) {
+    // @ts-ignore
     searchParams.collections = [collectionId]
     linkEndpoint = `${endpoint}/collections/${collectionId}`
     collectionEndpoint = `${endpoint}/collections/${collectionId}`

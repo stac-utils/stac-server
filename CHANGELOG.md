@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Fixed
+
+### Added
+- Generating base STAC typescript types for typescript migration ([1068](https://github.com/stac-utils/stac-server/pull/1068))
+
+### Changed
+
+- Converting additional files to typescript as part of typescript migration and generating related types ([1071](https://github.com/stac-utils/stac-server/pull/1071))
+- Adjusting configs to handle both typescript and javascript files for the typescript migraton ([1067](https://github.com/stac-utils/stac-server/pull/1067))
+- Typing simple utility files as part of an 'outside-in' approach to typescript migration ([1068](https://github.com/stac-utils/stac-server/pull/1068))
+
 ## [5.0.0]
 
 ### Fixed

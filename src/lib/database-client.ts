@@ -9,16 +9,20 @@ import collectionsIndexConfiguration from '../../fixtures/collections.js'
 import itemsIndexConfiguration from '../../fixtures/items.js'
 import logger from './logger.js'
 
-let _dbClient
+let _dbClient: Client
 
-function createClientWithUsernameAndPassword(host, username, password) {
+function createClientWithUsernameAndPassword(
+  host: string,
+  username: string,
+  password: string
+): Client {
   const protocolAndHost = host.split('://')
   return new Client({
     node: `${protocolAndHost[0]}://${username}:${password}@${protocolAndHost[1]}`
   })
 }
 
-function createClientWithAwsAuth(host) {
+function createClientWithAwsAuth(host: string): Client {
   return new Client({
     ...AwsSigv4Signer({
       region: process.env['AWS_REGION'] || 'us-west-2',
@@ -29,8 +33,8 @@ function createClientWithAwsAuth(host) {
   })
 }
 
-// Connect to a search database instance
-export async function connect() {
+// Connect to an opensearch database instance
+export async function connect(): Promise<Client> {
   let client
   const hostConfig = process.env['OPENSEARCH_HOST'] || process.env['ES_HOST']
   const envUsername = process.env['OPENSEARCH_USERNAME']
@@ -63,7 +67,7 @@ export async function connect() {
 }
 
 // get existing search database client or create a new one
-export async function dbClient() {
+export async function dbClient(): Promise<Client> {
   if (_dbClient) {
     logger.debug('Using existing search database connection')
   } else {
@@ -73,8 +77,10 @@ export async function dbClient() {
 
   return _dbClient
 }
-
-export async function createIndex(index) {
+/**
+ * create an opensearch index for a collection if it does not already exist
+ */
+export async function createIndex(index: string): Promise<void> {
   const client = await dbClient()
   const exists = await client.indices.exists({ index })
   if (!exists.body) {
@@ -90,6 +96,6 @@ export async function createIndex(index) {
       throw error
     }
   } else {
-    logger.error(`${index} already exists.`)
+    logger.info(`index for collection ${index} already exists, skipping creation.`)
   }
 }

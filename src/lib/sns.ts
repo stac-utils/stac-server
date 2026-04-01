@@ -1,9 +1,25 @@
-import { PublishCommand } from '@aws-sdk/client-sns'
+import { PublishCommand, MessageAttributeValue } from '@aws-sdk/client-sns'
 import { sns } from './aws-clients.js'
 import logger from './logger.js'
 import { getBBox, getStartAndEndDates, isCollection, isItem } from './stac-utils.js'
+import { StacRecord } from './types.js'
 
-const attrsFromPayload = function (payload) {
+interface SNSPayload {
+  record: StacRecord
+  error: string
+}
+/**
+ * Extract STAC Item attriutes from SNS payload for adding attributes
+ * to SNS message publish.   Extract core set of attributes to enable filtering
+ * on SNS publishing down stream, and add other attributes if they are
+ * on the item
+ * @param {SNSPayload }payload - SNS payload with STAC Item
+ * @returns {Record<string, MessageAttributeValue>} Attribute
+ * objects with a number of key attributes to filter SNS messages on
+ */
+const attrsFromPayload = function (
+  payload: SNSPayload
+): Record<string, MessageAttributeValue> {
   let type = 'unknown'
   let collection = ''
   if (isCollection(payload.record)) {
@@ -14,7 +30,7 @@ const attrsFromPayload = function (payload) {
     collection = payload.record.collection || ''
   }
 
-  const attributes = {
+  const attributes: Record<string, MessageAttributeValue> = {
     recordType: {
       DataType: 'String',
       StringValue: type
@@ -49,8 +65,8 @@ const attrsFromPayload = function (payload) {
     }
   }
 
-  if (payload.record?.properties?.datetime) {
-    attributes.datetime = {
+  if (isItem(payload.record) && payload.record.properties?.datetime) {
+    attributes['datetime'] = {
       DataType: 'String',
       StringValue: payload.record.properties.datetime
     }
@@ -59,22 +75,22 @@ const attrsFromPayload = function (payload) {
   const { startDate, endDate } = getStartAndEndDates(payload.record)
 
   if (startDate) {
-    attributes.start_datetime = {
+    attributes['start_datetime'] = {
       DataType: 'String',
       StringValue: startDate.toISOString()
     }
-    attributes.start_unix_epoch_ms_offset = {
+    attributes['start_unix_epoch_ms_offset'] = {
       DataType: 'Number',
       StringValue: startDate.getTime().toString()
     }
   }
 
   if (endDate) {
-    attributes.end_datetime = {
+    attributes['end_datetime'] = {
       DataType: 'String',
       StringValue: endDate.toISOString()
     }
-    attributes.end_unix_epoch_ms_offset = {
+    attributes['end_unix_epoch_ms_offset'] = {
       DataType: 'Number',
       StringValue: endDate.getTime().toString()
     }
@@ -83,9 +99,19 @@ const attrsFromPayload = function (payload) {
   return attributes
 }
 
-/* eslint-disable-next-line import/prefer-default-export */
-export async function publishRecordToSns(topicArn, record, error) {
-  const payload = { record, error }
+/**
+ * Publish message to post-ingest sns topic after ingestion to catalog
+ * @param {string }topicArn - post-ingest SNS topic to publish to
+ * @param {StacRecord} record - The record that was ingested (successfully or not)
+ * @param {string} error - any errors from the ingestion process
+ * @returns {void}
+ */
+export async function publishRecordToSns(
+  topicArn: string,
+  record: StacRecord,
+  error: string
+): Promise<void> {
+  const payload: SNSPayload = { record, error }
   try {
     const command = new PublishCommand({
       Message: JSON.stringify(payload),

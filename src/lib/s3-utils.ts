@@ -1,6 +1,7 @@
 import { GetObjectCommand } from '@aws-sdk/client-s3'
 import { StreamingBlobPayloadOutputTypes } from '@smithy/types'
 import { s3 } from './aws-clients.js'
+import { StacItem } from './types.js'
 
 const getObjectBody = async (
   s3Location: {bucket: string, key: string}
@@ -29,7 +30,7 @@ const getObjectBody = async (
 const getObjectText = (s3Location: {bucket: string, key: string}): Promise<string> =>
   getObjectBody(s3Location).then((b) => b.transformToString())
 
-const getObjectJson = (s3Location: {bucket: string, key: string}): Promise<unknown> =>
+const getObjectJson = (s3Location: {bucket: string, key: string}): Promise<StacItem> =>
   getObjectText(s3Location).then(JSON.parse)
 
 export default getObjectJson

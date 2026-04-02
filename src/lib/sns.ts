@@ -6,7 +6,7 @@ import { StacRecord } from './types.js'
 
 interface SNSPayload {
   record: StacRecord
-  error: string
+  error: string | undefined
 }
 /**
  * Extract STAC Item attriutes from SNS payload for adding attributes
@@ -104,7 +104,7 @@ const attrsFromPayload = function (
 export async function publishRecordToSns(
   topicArn: string,
   record: StacRecord,
-  error: string
+  error: string | undefined
 ): Promise<void> {
   const payload: SNSPayload = { record, error }
   try {

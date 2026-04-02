@@ -138,5 +138,15 @@
         "active": true,
         "notes": "Waiting for dependebot to calculate upgrade",
         "expiry": "2026-05-01"
+    },
+    "1115805": {
+        "active": true,
+        "notes": "Waiting for dependebot to calculate upgrade",
+        "expiry": "2026-05-01"
+    },
+    "1115809": {
+        "active": true,
+        "notes": "Waiting for dependebot to calculate upgrade",
+        "expiry": "2026-05-01"
     }
 }

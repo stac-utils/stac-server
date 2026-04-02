@@ -44,12 +44,12 @@
         "notes": "brace-expansion is a transitive dependency of redoc, used only for API documentation rendering. The zero-step sequence causing process hang is not exploitable as brace-expansion is never used to process untrusted input in our usage context.",
         "expiry": "2026-09-30"
     },
-    "1115538": {
+    "1115541": {
         "active": true,
-        "notes": "handlebars is a transitive dependency used only in dev/doc tooling, not in production runtime code. JavaScript injection via AST type confusion requires attacker-controlled template input which is not possible in our usage context.",
+        "notes": "brace-expansion is a transitive dependency of redoc, used only for API documentation rendering. The zero-step sequence causing process hang is not exploitable as brace-expansion is never used to process untrusted input in our usage context.",
         "expiry": "2026-09-30"
     },
-    "1115539": {
+    "1115538": {
         "active": true,
         "notes": "handlebars is a transitive dependency used only in dev/doc tooling, not in production runtime code. JavaScript injection via AST type confusion requires attacker-controlled template input which is not possible in our usage context.",
         "expiry": "2026-09-30"

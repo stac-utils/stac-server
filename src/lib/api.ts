@@ -1,14 +1,52 @@
 import { pickBy, assign, get as _getNested } from 'lodash-es'
-import { DateTime } from 'luxon'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3'
+import { IncomingHttpHeaders } from 'http'
+import { BBox, GeoJSON } from 'geojson'
+import { ApiResponse, errors } from '@opensearch-project/opensearch'
 import { NotFoundError, ValidationError } from './errors.js'
 import { isIndexNotFoundError } from './database.js'
 import logger from './logger.js'
-import { bboxToPolygon } from './geo-utils.js'
+import {
+  extractLimit,
+  extractPrecision,
+  extractAggregations,
+  extractPage,
+  extractDatetime,
+  createQueryFields,
+  extractFields,
+  extractBbox,
+  extractIntersects,
+  extractStacQuery,
+  extractCql2Filter,
+  extractRestrictionCql2Filter,
+  concatenateCql2Filters,
+  extractAllowedCollectionIds,
+  extractIds,
+  extractCollectionIds,
+  filterAllowedCollectionIds,
+  isCollectionIdAllowed,
+  extractSortby,
+} from './api-utils.js'
+import { Aggregation,
+  AggregationBucket,
+  APIFields,
+  APIParameters,
+  StacApiResult,
+  Backend,
+  Cql2Filter,
+  Link,
+  PartialItemUpdate,
+  Queryables,
+  StacCatalog,
+  StacCollection,
+  StacItem,
+  StacItemResponse,
+  Aggregations
+} from './types.js'
 
 // max number of collections to retrieve
-const COLLECTION_LIMIT = process.env['STAC_SERVER_COLLECTION_LIMIT'] || 100
+const COLLECTION_LIMIT = Number(process.env['STAC_SERVER_COLLECTION_LIMIT']) || 100
 
 const DEFAULT_AGGREGATIONS = [
   {
@@ -51,421 +89,20 @@ const ALL_AGGREGATION_NAMES = DEFAULT_AGGREGATIONS.map((x) => x.name).concat(
   ]
 )
 
-export const extractIntersects = function (params) {
-  let intersectsGeometry
-  const { intersects } = params
-  if (intersects) {
-    let geojson
-    // if we receive a string, try to parse as GeoJSON, otherwise assume it is GeoJSON
-    if (typeof intersects === 'string') {
-      try {
-        geojson = JSON.parse(intersects)
-      } catch (_) {
-        throw new ValidationError('Invalid GeoJSON geometry')
-      }
-    } else {
-      geojson = { ...intersects }
-    }
-
-    if (geojson.type === 'FeatureCollection' || geojson.type === 'Feature') {
-      throw new Error(
-        'Expected GeoJSON geometry, not Feature or FeatureCollection'
-      )
-    }
-    intersectsGeometry = geojson
-  }
-  return intersectsGeometry
+type SearchFilters = {
+  root: boolean | string | undefined
+  api: boolean | string | undefined
+  conformance: boolean | string | undefined
+  collections: boolean | string | undefined
+  search: boolean | string | undefined
+  collectionId: boolean | string | undefined
+  items: boolean | string | undefined
+  itemId: boolean | string | undefined
+  edit: boolean | string | undefined
 }
 
-export const extractBbox = function (params, httpMethod = 'GET') {
-  const { bbox } = params
-  return bboxToPolygon(bbox, httpMethod === 'GET')
-}
-
-export const extractLimit = function (params) {
-  const { limit: limitStr } = params
-
-  if (limitStr !== undefined) {
-    let limit
-    try {
-      limit = parseInt(limitStr)
-    } catch (_) {
-      throw new ValidationError('Invalid limit value')
-    }
-
-    if (Number.isNaN(limit) || limit <= 0) {
-      throw new ValidationError(
-        'Invalid limit value, must be a positive number'
-      )
-    }
-
-    let itemsMaxLimit = Number(process.env['ITEMS_MAX_LIMIT'])
-    if (Number.isNaN(itemsMaxLimit) || itemsMaxLimit <= 0) {
-      itemsMaxLimit = Number.MAX_SAFE_INTEGER
-    }
-    limit = Math.min(
-      itemsMaxLimit,
-      limit || Number.MAX_SAFE_INTEGER,
-      10000
-    )
-
-    return limit
-  }
-  return undefined
-}
-
-export const extractPrecision = function (params, name, min, max) {
-  const precisionStr = params[name]
-
-  if (precisionStr !== undefined) {
-    let precision
-    try {
-      precision = parseInt(precisionStr)
-    } catch (_) {
-      throw new ValidationError(`Invalid precision value for ${name}`)
-    }
-
-    if (Number.isNaN(precision) || precision < min || precision > max) {
-      throw new ValidationError(
-        `Invalid precision value for ${name}, must be a number between ${min} and ${max} inclusive`
-      )
-    }
-    return precision
-  }
-
-  return min
-}
-
-export const extractAggregations = function (params) {
-  let aggs
-  const { aggregations } = params
-  if (aggregations) {
-    if (typeof aggregations === 'string') {
-      try {
-        aggs = JSON.parse(aggregations)
-      } catch (_) {
-        aggs = aggregations.split(',')
-      }
-    } else {
-      aggs = aggregations.slice()
-    }
-  }
-  return aggs || []
-}
-
-export const extractPage = function (params) {
-  const { page: pageStr } = params
-
-  if (pageStr !== undefined) {
-    let page
-    try {
-      page = parseInt(pageStr)
-    } catch (_) {
-      throw new ValidationError('Invalid page value')
-    }
-
-    if (Number.isNaN(page) || page <= 0) {
-      throw new ValidationError(
-        'Invalid page value, must be a number greater than 1'
-      )
-    }
-    return page
-  }
-  return undefined
-}
-
-// eslint-disable-next-line max-len
-const RFC3339_REGEX = /^(\d\d\d\d)\-(\d\d)\-(\d\d)T(\d\d):(\d\d):(\d\d)([.]\d+)?(Z|([-+])(\d\d):(\d\d))$/
-
-const rfc3339ToDateTime = function (s) {
-  if (!RFC3339_REGEX.test(s)) {
-    throw new ValidationError('datetime value is invalid, does not match RFC3339 format')
-  }
-  const dt = DateTime.fromISO(s)
-  if (dt.isValid) {
-    return dt
-  }
-  throw new ValidationError(
-    `datetime value is invalid, ${dt.invalidReason} ${dt.invalidExplanation}'`
-  )
-}
-
-const validateStartAndEndDatetimes = function (startDateTime, endDateTime) {
-  if (startDateTime && endDateTime && endDateTime < startDateTime) {
-    throw new ValidationError(
-      'datetime value is invalid, start datetime must be before end datetime with interval'
-    )
-  }
-}
-
-/**
- * ensure that fields necessary for creating links i.e. 'collection' and 'id'
- * are not excluded from query.  These fields will be removed later to ensure
- * results match user expectations
- * @param {Object} fields
- * @returns {Object}
- */
-export const createQueryFields = function (fields) {
-  const { exclude } = fields
-  if (exclude) {
-    const filteredExclude = exclude.filter(
-      (field) => field !== 'id' && field !== 'collection'
-    )
-    if (filteredExclude.length === 0) {
-      const { exclude: _removed, ...rest } = fields
-      return rest
-    }
-
-    return {
-      ...fields,
-      exclude: filteredExclude
-    }
-  }
-  return fields
-}
-
-export const extractDatetime = function (params) {
-  const { datetime } = params
-
-  if (datetime) {
-    const datetimeUpperCase = datetime.toUpperCase()
-    const [start, end, ...rest] = datetimeUpperCase.split('/')
-    if (rest.length) {
-      throw new ValidationError(
-        'datetime value is invalid, too many forward slashes for an interval'
-      )
-    } else if ((!start && !end)
-        || (start === '..' && end === '..')
-        || (!start && end === '..')
-        || (start === '..' && !end)
-    ) {
-      throw new ValidationError(
-        'datetime value is invalid, at least one end of the interval must be closed'
-      )
-    } else {
-      const startDateTime = (start && start !== '..') ? rfc3339ToDateTime(start) : undefined
-      const endDateTime = (end && end !== '..') ? rfc3339ToDateTime(end) : undefined
-      validateStartAndEndDatetimes(startDateTime, endDateTime)
-    }
-    return datetimeUpperCase
-  }
-  return undefined
-}
-
-const extractStacQuery = function (params) {
-  let stacQuery
-  const { query } = params
-  if (query) {
-    if (typeof query === 'string') {
-      const parsed = JSON.parse(query)
-      stacQuery = parsed
-    } else {
-      stacQuery = { ...query }
-    }
-  }
-  return stacQuery
-}
-
-const extractCql2Filter = function (params) {
-  let filterObj
-  const { 'filter-lang': filterLang, 'filter-crs': filterCrs, filter } = params
-
-  if (filterLang && filterLang !== 'cql2-json') {
-    throw new ValidationError(
-      `filter-lang must be "cql2-json". Supplied value: ${filterLang}`
-    )
-  }
-
-  if (filterCrs && filterCrs !== 'http://www.opengis.net/def/crs/OGC/1.3/CRS84') {
-    throw new ValidationError(
-      `filter-crs must be "http://www.opengis.net/def/crs/OGC/1.3/CRS84". Supplied value: ${filterCrs}`
-    )
-  }
-
-  if (filter) {
-    if (typeof filter === 'string') {
-      filterObj = JSON.parse(filter)
-    } else {
-      filterObj = { ...filter }
-    }
-  }
-  return filterObj
-}
-
-const extractRestrictionCql2Filter = function (params, headers) {
-  if (process.env['ENABLE_FILTER_AUTHX'] !== 'true') {
-    return undefined
-  }
-
-  const authxHeader = headers['stac-filter-authx']
-
-  const filter = authxHeader || params._filter
-
-  if (filter) {
-    if (typeof filter === 'string') {
-      return JSON.parse(filter)
-    }
-    return { ...filter }
-  }
-  return undefined
-}
-
-const concatenateCql2Filters = function (specifiedFilter, restrictionFilter) {
-  // an "and" op must have at least two args, so don't wrap if only one
-  // of the filters is defined
-
-  if (!specifiedFilter && !restrictionFilter) {
-    return undefined
-  }
-
-  if (specifiedFilter && !restrictionFilter) {
-    return specifiedFilter
-  }
-
-  if (!specifiedFilter && restrictionFilter) {
-    return restrictionFilter
-  }
-
-  return {
-    op: 'and',
-    args: [specifiedFilter, restrictionFilter]
-  }
-}
-
-const extractSortby = function (params) {
-  let sortbyRules
-  const { sortby } = params
-  if (sortby) {
-    if (typeof sortby === 'string') {
-      // GET request - different syntax
-      const sortbys = sortby.split(',')
-
-      sortbyRules = sortbys.map((sortbyRule) => {
-        if (sortbyRule[0] === '-') {
-          return { field: sortbyRule.slice(1), direction: 'desc' }
-        }
-        if (sortbyRule[0] === '+') {
-          return { field: sortbyRule.slice(1), direction: 'asc' }
-        }
-        return { field: sortbyRule, direction: 'asc' }
-      })
-    } else {
-      // POST request
-      sortbyRules = sortby.slice()
-    }
-  }
-  return sortbyRules
-}
-
-export const extractFields = function (params) {
-  let fieldRules = {}
-  const { fields } = params
-  if (fields) {
-    if (typeof fields === 'string') {
-      // GET request - different syntax
-      const _fields = fields.split(',')
-      const include = []
-      _fields.forEach((rule) => {
-        if (rule[0] !== '-') {
-          if (rule[0] === '+') {
-            include.push(rule.slice(1))
-          } else {
-            include.push(rule)
-          }
-        }
-      })
-      if (include.length) {
-        fieldRules.include = include
-      }
-
-      const exclude = []
-      _fields.forEach((rule) => {
-        if (rule[0] === '-') {
-          exclude.push(rule.slice(1))
-        }
-      })
-      if (exclude.length) {
-        fieldRules.exclude = exclude
-      }
-    } else {
-      // POST request - JSON
-      fieldRules = fields
-    }
-  } else if (params.hasOwnProperty('fields')) {
-    // fields was provided as an empty object
-    if (params.fields === null) {
-      throw new ValidationError(
-        '`fields` parameter must be an object, optionally with one or '
-          + 'both of the keys "include" and "exclude"'
-      )
-    }
-  }
-  return fieldRules
-}
-
-/**
- * Parse a string or array of IDs into an array of strings or undefined.
- * @param {string | string[] | undefined} ids - The IDs parameter to parse
- * @returns {string[] | undefined} Parsed array of ID strings or undefined
- */
-const parseIds = function (ids) {
-  let idsRules
-  if (ids) {
-    if (typeof ids === 'string') {
-      try {
-        idsRules = JSON.parse(ids)
-      } catch (_) {
-        idsRules = ids.split(',')
-      }
-    } else {
-      idsRules = ids.slice()
-    }
-  }
-  return idsRules
-}
-
-const extractIds = function (params) {
-  return parseIds(params.ids)
-}
-
-const extractAllowedCollectionIds = function (params, headers) {
-  if (process.env['ENABLE_COLLECTIONS_AUTHX'] !== 'true') {
-    return undefined
-  }
-
-  const authxHeader = headers['stac-collections-authx']
-
-  if (authxHeader) {
-    return parseIds(authxHeader)
-  }
-
-  if (params._collections) {
-    return parseIds(params._collections)
-  }
-
-  return []
-}
-
-const extractCollectionIds = function (params) {
-  return parseIds(params.collections)
-}
-
-const filterAllowedCollectionIds = function (allowedCollectionIds, specifiedCollectionIds) {
-  return (
-    Array.isArray(allowedCollectionIds) && !allowedCollectionIds.includes('*')
-  ) ? allowedCollectionIds.filter(
-      (x) => !specifiedCollectionIds || specifiedCollectionIds.includes(x)
-    ) : specifiedCollectionIds
-}
-
-const isCollectionIdAllowed = function (allowedCollectionIds, collectionId) {
-  return !Array.isArray(allowedCollectionIds)
-          || allowedCollectionIds.includes(collectionId)
-          || allowedCollectionIds.includes('*')
-}
-
-export const parsePath = function (inpath) {
-  const searchFilters = {
+export const parsePath = function (inpath: string): SearchFilters {
+  const searchFilters: SearchFilters = {
     root: false,
     api: false,
     conformance: false,
@@ -500,7 +137,10 @@ export const parsePath = function (inpath) {
 }
 
 // Impure - mutates results
-export const addCollectionLinks = function (results, endpoint) {
+export const addCollectionLinks = function (
+  results: StacCollection[],
+  endpoint: string
+): StacCollection[] {
   results.forEach((result) => {
     const { id } = result
     let { links } = result
@@ -562,7 +202,10 @@ export const addCollectionLinks = function (results, endpoint) {
 }
 
 // Impure - mutates results
-export const addItemLinks = function (results, endpoint) {
+export const addItemLinks = function (
+  results: StacItem[],
+  endpoint: string
+): StacItem[] {
   results.forEach((result) => {
     let { links } = result
     const { id, collection } = result
@@ -607,11 +250,11 @@ export const addItemLinks = function (results, endpoint) {
  * be removed.  They were necessary for STAC Item link generation and
  * can now be removed after link generation if a user wanted to exclude them
  * Impure, we are potentially mutating 'results'
- * @param {Object} results
- * @param {Object} fields - {'exclude': [string], 'include': [string]}
- * @returns {Object}
  */
-export const removeSpecialExcludeFields = function (results, fields) {
+export const removeSpecialExcludeFields = function (
+  results: StacItem[],
+  fields: APIFields
+): StacItemResponse[] {
   const { exclude } = fields
   if (!exclude) return results
 
@@ -622,14 +265,20 @@ export const removeSpecialExcludeFields = function (results, fields) {
   if (!removeId && !removeCollection) return results
 
   results.forEach((item) => {
-    if (removeId) delete item.id
-    if (removeCollection) delete item.collection
+    const response = item as StacItemResponse
+    if (removeId) delete response.id
+    if (removeCollection) delete response.collection
   })
   return results
 }
 
-const wrapResponseInFeatureCollection = function (features, links,
-  numberMatched, numberReturned, limit) {
+const wrapResponseInFeatureCollection = function (
+  features: StacItem[],
+  links: Link[],
+  numberMatched: number,
+  numberReturned: number,
+  limit: number
+): StacApiResult {
   const fc = {
     type: 'FeatureCollection',
     numberMatched,
@@ -650,17 +299,26 @@ const wrapResponseInFeatureCollection = function (features, links,
 }
 
 const buildPaginationLinks = function (
-  limit, parameters, bbox, intersects, collections, filter,
-  endpoint, httpMethod, _sortby, items, lastItemSort
-) {
+  limit: number,
+  parameters: APIParameters,
+  bbox: BBox | string | undefined,
+  intersects: GeoJSON | string | undefined,
+  collections: string[] | undefined,
+  filter: Cql2Filter,
+  endpoint: string,
+  httpMethod: string,
+  _sortby: string[],
+  items: StacItem[],
+  lastItemSort: string | null
+): Link[] {
   if (items.length) {
-    const dictToURI = (dict) => (
+    const dictToURI = (dict: Partial<APIParameters>) => (
       Object.keys(dict).map(
         (p) => {
           let value = dict[p]
           if (typeof value === 'object' && value !== null) {
             if (p === 'sortby') {
-              const sortFields = []
+              const sortFields: string[] = []
               for (let i = 0; i < value.length; i += 1) {
                 if (value[i]['direction'] === 'asc') {
                   sortFields.push(value[i]['field'])
@@ -669,7 +327,7 @@ const buildPaginationLinks = function (
                 }
               }
               value = sortFields.join(',')
-            } else if (p === 'collections') { // TODO
+            } else if (p === 'collections') {
               value = value.toString()
             } else {
               value = JSON.stringify(value)
@@ -682,7 +340,8 @@ const buildPaginationLinks = function (
     )
 
     if (lastItemSort) {
-      const link = {
+      const link: Link = {
+        href: '',
         rel: 'next',
         title: 'Next page of Items',
         method: httpMethod,
@@ -706,8 +365,13 @@ const buildPaginationLinks = function (
 }
 
 const searchItems = async function (
-  backend, httpMethod, collectionId, endpoint, parameters, headers
-) {
+  backend: Backend,
+  httpMethod: string,
+  collectionId: string,
+  endpoint: string,
+  parameters: APIParameters,
+  headers: IncomingHttpHeaders
+): Promise<StacApiResult> {
   logger.debug('Search parameters (unprocessed): %j', parameters)
 
   const {
@@ -758,8 +422,7 @@ const searchItems = async function (
   let newEndpoint = `${endpoint}/search`
   let collectionEndpoint
   if (collectionId) {
-    // @ts-ignore
-    searchParams.collections = [collectionId]
+    searchParams['collections'] = [collectionId]
     newEndpoint = `${endpoint}/collections/${collectionId}/items`
     collectionEndpoint = `${endpoint}/collections/${collectionId}`
   }
@@ -776,9 +439,7 @@ const searchItems = async function (
         numberMatched: 0,
         numberReturned: 0,
       }
-    // @ts-ignore
-    } else if (error?.meta?.statusCode === 400) {
-      // @ts-ignore
+    } else if (error instanceof errors.ResponseError && error.meta.statusCode === 400) {
       const e = error?.meta?.body?.error
 
       // only serialize part of the error message,
@@ -821,7 +482,6 @@ const searchItems = async function (
     lastItemSort
   )
 
-  // @ts-ignore
   const links = paginationLinks.concat([{
     rel: 'root',
     type: 'application/json',
@@ -829,13 +489,12 @@ const searchItems = async function (
   }])
 
   if (collectionId) { // add these links for a features request
-    // @ts-ignore
     links.push({
       rel: 'self',
       type: 'application/geo+json',
       href: newEndpoint
     })
-    // @ts-ignore
+
     links.push({
       rel: 'collection',
       type: 'application/json',
@@ -846,11 +505,18 @@ const searchItems = async function (
   addItemLinks(responseItems, endpoint)
   removeSpecialExcludeFields(responseItems, fields)
 
-  return wrapResponseInFeatureCollection(responseItems, links, numberMatched, numberReturned, limit)
+  return wrapResponseInFeatureCollection(
+    responseItems, links, numberMatched, numberReturned, limit
+  )
 }
 
-const agg = function (esAggs, name, dataType) {
-  const buckets = []
+const agg = function (
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  esAggs: Record<string, any>, // unknown object shape from opensearch
+  name: string,
+  dataType: string
+): Aggregation {
+  const buckets: AggregationBucket[] = []
   for (const bucket of (esAggs[name]?.buckets || [])) {
     buckets.push({
       key: bucket?.key_as_string || bucket?.key,
@@ -869,8 +535,13 @@ const agg = function (esAggs, name, dataType) {
 }
 
 const aggregate = async function (
-  backend, httpMethod, collectionId, endpoint, parameters, headers
-) {
+  backend: Backend,
+  httpMethod: string,
+  collectionId: string,
+  endpoint: string,
+  parameters: APIParameters,
+  headers: IncomingHttpHeaders
+): Promise<Aggregations | Error> {
   logger.debug('Aggregate parameters (unprocessed): %j', parameters)
 
   const {
@@ -929,8 +600,7 @@ const aggregate = async function (
   let collection
 
   if (collectionId) {
-    // @ts-ignore
-    searchParams.collections = [collectionId]
+    searchParams['collections'] = [collectionId]
     linkEndpoint = `${endpoint}/collections/${collectionId}`
     collectionEndpoint = `${endpoint}/collections/${collectionId}`
     collection = await backend.getCollection(collectionId)
@@ -1044,7 +714,7 @@ const aggregate = async function (
     }
   }
 
-  const aggregations = []
+  const aggregations: Aggregation[] = []
 
   if (dbResponse) {
     const { body: { aggregations: resultAggs } } = dbResponse
@@ -1124,7 +794,9 @@ const aggregate = async function (
   return results
 }
 
-const getConformance = async function (txnEnabled) {
+const getConformance = async function (
+  txnEnabled: boolean
+): Promise<{conformsTo: string[]}> {
   const foundationPrefix = 'https://api.stacspec.org/v1.0.0'
   const conformsTo = [
     `${foundationPrefix}/core`,
@@ -1159,14 +831,16 @@ const getConformance = async function (txnEnabled) {
   return { conformsTo }
 }
 
-const DEFAULT_QUERYABLES = {
+const DEFAULT_QUERYABLES: Queryables = {
   $schema: 'https://json-schema.org/draft/2020-12/schema',
+  $id: '',
   type: 'object',
+  title: '',
   properties: {},
   additionalProperties: true
 }
 
-const getGlobalQueryables = async (endpoint = '') => ({
+const getGlobalQueryables = async (endpoint: string = ''): Promise<Queryables> => ({
   $schema: 'https://json-schema.org/draft/2020-12/schema',
   $id: `${endpoint}/queryables`,
   type: 'object',
@@ -1175,7 +849,7 @@ const getGlobalQueryables = async (endpoint = '') => ({
   additionalProperties: true
 })
 
-const validateAdditionalProperties = (queryables) => {
+const validateAdditionalProperties = (queryables: Queryables) => {
   if ('additionalProperties' in queryables) {
     const additionalProperties = queryables.additionalProperties
     if (additionalProperties !== true) {
@@ -1186,7 +860,13 @@ const validateAdditionalProperties = (queryables) => {
   }
 }
 
-const getCollectionQueryables = async (backend, collectionId, endpoint, parameters, headers) => {
+const getCollectionQueryables = async (
+  backend: Backend,
+  collectionId: string,
+  endpoint: string,
+  parameters: APIParameters,
+  headers: IncomingHttpHeaders
+): Promise<Queryables | Error> => {
   const allowedCollectionIds = extractAllowedCollectionIds(parameters, headers)
   if (!isCollectionIdAllowed(allowedCollectionIds, collectionId)) {
     return new NotFoundError()
@@ -1204,7 +884,13 @@ const getCollectionQueryables = async (backend, collectionId, endpoint, paramete
   return queryables
 }
 
-const getCollectionAggregations = async (backend, collectionId, endpoint, parameters, headers) => {
+const getCollectionAggregations = async (
+  backend: Backend,
+  collectionId: string,
+  endpoint: string,
+  parameters: APIParameters,
+  headers: IncomingHttpHeaders
+): Promise<Aggregations | Error> => {
   if (!isCollectionIdAllowed(extractAllowedCollectionIds(parameters, headers), collectionId)) {
     return new NotFoundError()
   }
@@ -1237,7 +923,9 @@ const getCollectionAggregations = async (backend, collectionId, endpoint, parame
   return { aggregations, links }
 }
 
-const getGlobalAggregations = async (endpoint = '') => {
+const getGlobalAggregations = async (
+  endpoint: string = ''
+): Promise<Aggregations | Error> => {
   const aggregations = DEFAULT_AGGREGATIONS
   const links = [
     {
@@ -1254,7 +942,9 @@ const getGlobalAggregations = async (endpoint = '') => {
   return { aggregations, links }
 }
 
-const getCatalog = async function (txnEnabled, endpoint = '') {
+const getCatalog = async function (
+  txnEnabled: boolean, endpoint: string = ''
+): Promise<StacCatalog> {
   const links = [
     {
       rel: 'self',
@@ -1347,13 +1037,18 @@ const getCatalog = async function (txnEnabled, endpoint = '') {
   }
 }
 
-const deleteUnusedFields = (collection) => {
+const deleteUnusedFields = (collection: StacCollection) => {
   // delete fields in the collection object that are not part of the STAC Collection
   delete collection.queryables
   delete collection.aggregations
 }
 
-const getCollections = async function (backend, endpoint, parameters, headers) {
+const getCollections = async function (
+  backend: Backend,
+  endpoint: string,
+  parameters: APIParameters,
+  headers: IncomingHttpHeaders
+): Promise<StacApiResult | Error> {
   // TODO: implement proper pagination, as this will only return up to
   // COLLECTION_LIMIT collections
   const collectionsOrError = await backend.getCollections(1, COLLECTION_LIMIT)
@@ -1404,7 +1099,13 @@ const getCollections = async function (backend, endpoint, parameters, headers) {
   return resp
 }
 
-const getCollection = async function (backend, collectionId, endpoint, parameters, headers) {
+const getCollection = async function (
+  backend: Backend,
+  collectionId: string,
+  endpoint: string,
+  parameters: APIParameters,
+  headers: IncomingHttpHeaders
+): Promise<StacCollection | Error> {
   if (!isCollectionIdAllowed(extractAllowedCollectionIds(parameters, headers), collectionId)) {
     return new NotFoundError()
   }
@@ -1420,7 +1121,10 @@ const getCollection = async function (backend, collectionId, endpoint, parameter
   return result
 }
 
-const createCollection = async function (backend, collection) {
+const createCollection = async function (
+  backend: Backend,
+  collection: StacCollection
+): Promise<Array<ApiResponse | void> | Error> {
   const response = await backend.indexCollection(collection)
   logger.debug('Create Collection: %j', response)
 
@@ -1430,7 +1134,14 @@ const createCollection = async function (backend, collection) {
   return new Error(`Error creating collection ${collection}`)
 }
 
-const getItem = async function (backend, collectionId, itemId, endpoint, params, headers) {
+const getItem = async function (
+  backend: Backend,
+  collectionId: string,
+  itemId: string,
+  endpoint: string,
+  params: APIParameters,
+  headers: IncomingHttpHeaders
+): Promise<StacItem | Error> {
   if (!isCollectionIdAllowed(extractAllowedCollectionIds(params, headers), collectionId)) {
     return new NotFoundError()
   }
@@ -1441,7 +1152,7 @@ const getItem = async function (backend, collectionId, itemId, endpoint, params,
     filter: extractRestrictionCql2Filter(params, headers)
   }
 
-  const { results } = await backend.search(itemQuery, 1)
+  const { results } = await backend.search(itemQuery, 1, undefined)
 
   addItemLinks(results, endpoint)
 
@@ -1452,18 +1163,26 @@ const getItem = async function (backend, collectionId, itemId, endpoint, params,
   return new NotFoundError()
 }
 
-const partialUpdateItem = async function (backend,
-  collectionId, itemId, endpoint, parameters) {
+const partialUpdateItem = async function (
+  backend: Backend,
+  collectionId: string,
+  itemId: string,
+  endpoint: string,
+  parameters: PartialItemUpdate
+): Promise<StacItem | Error> {
   const response = await backend.partialUpdateItem(collectionId, itemId, parameters)
   logger.debug('Partial Update Item: %j', response)
   if (response) {
-    const items = addItemLinks([response.body.get._source], endpoint)
-    return items[0]
+    const items = addItemLinks([response.body['get']._source], endpoint)
+    return items[0]!
   }
   return new Error(`Error partially updating item ${itemId}`)
 }
 
-const createItem = async function (backend, item) {
+const createItem = async function (
+  backend: Backend,
+  item: StacItem
+): Promise<ApiResponse | Error> {
   const response = await backend.indexItem(item)
   logger.debug('Create Item: %j', response)
 
@@ -1473,7 +1192,9 @@ const createItem = async function (backend, item) {
   return new Error(`Error creating item in collection ${item.collection}`)
 }
 
-const updateItem = async function (backend, item) {
+const updateItem = async function (
+  backend: Backend, item: StacItem
+): Promise<ApiResponse | Error> {
   const response = await backend.updateItem(item)
   logger.debug('Update Item: %j', response)
 
@@ -1483,7 +1204,11 @@ const updateItem = async function (backend, item) {
   return new Error(`Error updating item ${item.id}`)
 }
 
-const deleteItem = async function (backend, collectionId, itemId) {
+const deleteItem = async function (
+  backend: Backend,
+  collectionId: string,
+  itemId: string
+): Promise<ApiResponse | Error> {
   const response = await backend.deleteItem(collectionId, itemId)
   logger.debug('Delete Item: %j', response)
   if (response) {
@@ -1492,7 +1217,13 @@ const deleteItem = async function (backend, collectionId, itemId) {
   return new Error(`Error deleting item ${collectionId}/${itemId}`)
 }
 
-const getItemThumbnail = async function (backend, collectionId, itemId, parameters, headers) {
+const getItemThumbnail = async function (
+  backend: Backend,
+  collectionId: string,
+  itemId: string,
+  parameters: APIParameters,
+  headers: IncomingHttpHeaders
+): Promise<{location: string} | Error> {
   if (process.env['ENABLE_THUMBNAILS'] !== 'true') {
     return new NotFoundError()
   }
@@ -1506,7 +1237,7 @@ const getItemThumbnail = async function (backend, collectionId, itemId, paramete
     id: itemId,
     filter: extractRestrictionCql2Filter(parameters, headers)
   }
-  const { results } = await backend.search(itemQuery, 1)
+  const { results } = await backend.search(itemQuery, 1, undefined)
   const [item] = results
   if (!item) {
     return new NotFoundError()
@@ -1524,10 +1255,10 @@ const getItemThumbnail = async function (backend, collectionId, itemId, paramete
   if (thumbnailAsset.href && thumbnailAsset.href.startsWith('http')) {
     location = thumbnailAsset.href
   } else if (thumbnailAsset.href && thumbnailAsset.href.startsWith('s3')) {
-    const region = thumbnailAsset['storage:region']
+    const region = (thumbnailAsset['storage:region']
                   || item.properties['storage:region']
                   || process.env['AWS_REGION']
-                  || 'us-west-2'
+                  || 'us-west-2') as string
     const withoutProtocol = thumbnailAsset.href.substring(5) // chop off s3://
     const [bucket, ...keyArray] = withoutProtocol.split('/')
     const key = keyArray.join('/')
@@ -1548,7 +1279,7 @@ const getItemThumbnail = async function (backend, collectionId, itemId, paramete
   return { location }
 }
 
-const healthCheck = async function (backend) {
+const healthCheck = async function (backend: Backend): Promise<{status: 'ok'} | Error> {
   const response = await backend.healthCheck()
   if (response && response.statusCode === 200) {
     return { status: 'ok' }
@@ -1583,3 +1314,19 @@ export default {
   getGlobalAggregations,
   getCollectionAggregations,
 }
+
+export {
+  extractLimit,
+  extractPrecision,
+  extractAggregations,
+  extractPage,
+  extractDatetime,
+  createQueryFields,
+  extractFields,
+  extractBbox,
+  extractIntersects,
+  extractStacQuery,
+  extractCql2Filter,
+  extractRestrictionCql2Filter,
+  concatenateCql2Filters,
+} from './api-utils.js'

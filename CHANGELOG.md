@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Changed
 
+- Typing the api layer in `api.ts`, pushing some minor functions to a new utility files `api-utils.ts` ([1081](https://github.com/stac-utils/stac-server/pull/1081))
 - Converting the database layer to typescript as part of migration ([1077](https://github.com/stac-utils/stac-server/pull/1077))
 - Converting additional files to typescript as part of typescript migration and generating related types ([1071](https://github.com/stac-utils/stac-server/pull/1071))
 - Adjusting configs to handle both typescript and javascript files for the typescript migraton ([1067](https://github.com/stac-utils/stac-server/pull/1067))

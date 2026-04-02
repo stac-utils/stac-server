@@ -6,7 +6,6 @@ import {
   StacItem,
   StacServerMessage,
   DbAction,
-  DateRange
 } from './types.js'
 
 export function isCollection(record: StacServerMessage): record is StacCollection {
@@ -38,7 +37,9 @@ export function isAction(record: StacServerMessage): record is DbAction {
   return record && record.type === 'action'
 }
 
-export function getStartAndEndDates(record: StacServerMessage): DateRange {
+export function getStartAndEndDates(
+  record: StacServerMessage
+): {startDate: Date | undefined, endDate: Date | undefined} {
   let startDate
   let endDate
 

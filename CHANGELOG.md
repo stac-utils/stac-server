@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Changed
 
+- Converting the database layer to typescript as part of migration ([1077](https://github.com/stac-utils/stac-server/pull/1077))
 - Converting additional files to typescript as part of typescript migration and generating related types ([1071](https://github.com/stac-utils/stac-server/pull/1071))
 - Adjusting configs to handle both typescript and javascript files for the typescript migraton ([1067](https://github.com/stac-utils/stac-server/pull/1067))
 - Typing simple utility files as part of an 'outside-in' approach to typescript migration ([1068](https://github.com/stac-utils/stac-server/pull/1068))

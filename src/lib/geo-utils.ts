@@ -1,5 +1,5 @@
 import extent from '@mapbox/extent'
-import { BBox } from 'geojson'
+import { BBox, Geometry } from 'geojson'
 import { ValidationError } from './errors.js'
 
 /**
@@ -10,10 +10,13 @@ import { ValidationError } from './errors.js'
  * z_min, z_max]'. Z values are optional
  * @param {boolean} fromString - bool to indicate if we are parsing from a
  * string or not
- * @returns {Array | undefined}
+ * @returns {Geometry | undefined}
  */
 // eslint-disable-next-line import/prefer-default-export
-export const bboxToPolygon = function (bbox: BBox | string | undefined, fromString: boolean) {
+export const bboxToPolygon = function (
+  bbox: BBox | string | undefined,
+  fromString: boolean
+): Geometry | undefined {
   if (bbox) {
     let bboxArray
     if (fromString && typeof bbox === 'string') {

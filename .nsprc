@@ -41,112 +41,87 @@
     },
     "1115541": {
         "active": true,
-        "notes": "Waiting for dependebot to calculate upgrade",
-        "expiry": "2026-05-01"
+        "notes": "brace-expansion is a transitive dependency of redoc, used only for API documentation rendering. The zero-step sequence causing process hang is not exploitable as brace-expansion is never used to process untrusted input in our usage context.",
+        "expiry": "2026-09-30"
     },
     "1115538": {
         "active": true,
-        "notes": "Waiting for dependebot to calculate upgrade",
-        "expiry": "2026-05-01"
+        "notes": "handlebars is a transitive dependency used only in dev/doc tooling, not in production runtime code. JavaScript injection via AST type confusion requires attacker-controlled template input which is not possible in our usage context.",
+        "expiry": "2026-09-30"
     },
     "1115539": {
         "active": true,
-        "notes": "Waiting for dependebot to calculate upgrade",
-        "expiry": "2026-05-01"
+        "notes": "handlebars is a transitive dependency used only in dev/doc tooling, not in production runtime code. JavaScript injection via AST type confusion requires attacker-controlled template input which is not possible in our usage context.",
+        "expiry": "2026-09-30"
     },
     "1115544": {
         "active": true,
-        "notes": "Waiting for dependebot to calculate upgrade",
-        "expiry": "2026-05-01"
+        "notes": "handlebars is a transitive dependency used only in dev/doc tooling, not in production runtime code. Prototype pollution via partial template injection requires attacker-controlled template input which is not possible in our usage context.",
+        "expiry": "2026-09-30"
     },
     "1115588": {
         "active": true,
-        "notes": "Waiting for dependebot to calculate upgrade",
-        "expiry": "2026-05-01"
+        "notes": "handlebars is a transitive dependency used only in dev/doc tooling, not in production runtime code. Prototype method access control gap requires attacker-controlled template input which is not possible in our usage context.",
+        "expiry": "2026-09-30"
     },
     "1115589": {
         "active": true,
-        "notes": "Waiting for dependebot to calculate upgrade",
-        "expiry": "2026-05-01"
+        "notes": "handlebars is a transitive dependency used only in dev/doc tooling, not in production runtime code. Property access validation bypass requires attacker-controlled template input which is not possible in our usage context.",
+        "expiry": "2026-09-30"
     },
     "1115692": {
         "active": true,
-        "notes": "Waiting for dependebot to calculate upgrade",
-        "expiry": "2026-05-01"
+        "notes": "handlebars is a transitive dependency used only in dev/doc tooling, not in production runtime code. CLI precompiler JavaScript injection requires attacker-controlled template names which is not possible in our usage context.",
+        "expiry": "2026-09-30"
     },
     "1115693": {
         "active": true,
-        "notes": "Waiting for dependebot to calculate upgrade",
-        "expiry": "2026-05-01"
+        "notes": "handlebars is a transitive dependency used only in dev/doc tooling, not in production runtime code. JavaScript injection via dynamic partial requires attacker-controlled template input which is not possible in our usage context.",
+        "expiry": "2026-09-30"
     },
     "1115694": {
         "active": true,
-        "notes": "Waiting for dependebot to calculate upgrade",
-        "expiry": "2026-05-01"
-    },
-    "1115527": {
-        "active": true,
-        "notes": "Waiting for dependebot to calculate upgrade",
-        "expiry": "2026-05-01"
+        "notes": "handlebars is a transitive dependency used only in dev/doc tooling, not in production runtime code. DoS via malformed decorator syntax requires attacker-controlled template input which is not possible in our usage context.",
+        "expiry": "2026-09-30"
     },
     "1115549": {
         "active": true,
-        "notes": "Waiting for dependebot to calculate upgrade",
-        "expiry": "2026-05-01"
+        "notes": "picomatch is a transitive dependency of @redocly/cli and related packages, used only as a build tool to generate static API documentation. The method injection via POSIX character classes is not exploitable as picomatch is never used to match untrusted glob patterns in our usage context.",
+        "expiry": "2026-09-30"
     },
     "1115551": {
         "active": true,
-        "notes": "Waiting for dependebot to calculate upgrade",
-        "expiry": "2026-05-01"
+        "notes": "picomatch is a transitive dependency of @redocly/cli and related packages, used only as a build tool to generate static API documentation. The method injection via POSIX character classes is not exploitable as picomatch is never used to match untrusted glob patterns in our usage context.",
+        "expiry": "2026-09-30"
     },
     "1115552": {
         "active": true,
-        "notes": "Waiting for dependebot to calculate upgrade",
-        "expiry": "2026-05-01"
+        "notes": "picomatch is a transitive dependency of @redocly/cli and related packages, used only as a build tool to generate static API documentation. The ReDoS vulnerability via extglob quantifiers is not exploitable as picomatch is never used to match untrusted input in our usage context.",
+        "expiry": "2026-09-30"
     },
     "1115554": {
         "active": true,
-        "notes": "Waiting for dependebot to calculate upgrade",
-        "expiry": "2026-05-01"
-    },
-    "1114592": {
-        "active": true,
-        "notes": "Waiting for dependebot to calculate upgrade",
-        "expiry": "2026-05-01"
-    },
-    "1114594": {
-        "active": true,
-        "notes": "Waiting for dependebot to calculate upgrade",
-        "expiry": "2026-05-01"
-    },
-    "1114638": {
-        "active": true,
-        "notes": "Waiting for dependebot to calculate upgrade",
-        "expiry": "2026-05-01"
-    },
-    "1114640": {
-        "active": true,
-        "notes": "Waiting for dependebot to calculate upgrade",
-        "expiry": "2026-05-01"
-    },
-    "1114642": {
-        "active": true,
-        "notes": "Waiting for dependebot to calculate upgrade",
-        "expiry": "2026-05-01"
+        "notes": "picomatch is a transitive dependency of @redocly/cli and related packages, used only as a build tool to generate static API documentation. The ReDoS vulnerability via extglob quantifiers is not exploitable as picomatch is never used to match untrusted input in our usage context.",
+        "expiry": "2026-09-30"
     },
     "1115555": {
         "active": true,
-        "notes": "Waiting for dependebot to calculate upgrade",
-        "expiry": "2026-05-01"
+        "notes": "yaml is a direct dependency used for configuration parsing. The stack overflow via deeply nested YAML collections is only exploitable with untrusted YAML input of extreme depth. Our usage parses only operator-controlled configuration files, making this not exploitable in practice.",
+        "expiry": "2026-09-30"
+    },
+    "1115527": {
+        "active": true,
+        "notes": "path-to-regexp is a transitive dependency of express. A DoS via multiple route parameters is a low practical risk for stac-server: deployments are primarily hosted on AWS which provides built-in DDoS detection and mitigation, and the underlying data is generally not mission critical. A fix is expected upstream in the near future and will be incorporated before the next release.",
+        "expiry": "2026-04-30"
     },
     "1115805": {
         "active": true,
-        "notes": "Waiting for dependebot to calculate upgrade",
-        "expiry": "2026-05-01"
+        "notes": "lodash-es is a direct dependency. The _.template code injection vulnerability only affects use of the _.template function, which is not used anywhere in stac-server. The imported functions (pickBy, assign, get, isEmpty) are not affected.",
+        "expiry": "2026-09-30"
     },
     "1115809": {
         "active": true,
-        "notes": "Waiting for dependebot to calculate upgrade",
-        "expiry": "2026-05-01"
+        "notes": "lodash-es is a direct dependency. The prototype pollution vulnerability via array path bypass in _.unset and _.omit only affects those specific functions, which are not used anywhere in stac-server. The imported functions (pickBy, assign, get, isEmpty) are not affected.",
+        "expiry": "2026-09-30"
     }
 }

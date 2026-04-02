@@ -39,29 +39,114 @@
         "notes": "fast-xml-parser is a transitive dependency of @redocly/cli via openapi-sampler, used only as a build tool to generate static API documentation. The entity expansion limit bypass via JavaScript falsy evaluation of zero values only affects applications that explicitly configure maxEntityCount:0 or maxEntitySize:0. We do not configure fast-xml-parser directly and @redocly/cli is never run against untrusted input, making this not exploitable.",
         "expiry": "2026-06-30"
     },
-    "1115382": {
+    "1115541": {
         "active": true,
-        "notes": "picomatch is a transitive dependency of @redocly/cli and related packages, used only as a build tool to generate static API documentation. The ReDoS vulnerability via extglob quantifiers is not exploitable as picomatch is never used to match untrusted input in our usage context.",
-        "expiry": "2026-06-30"
+        "notes": "Waiting for dependebot to calculate upgrade",
+        "expiry": "2026-05-01"
     },
-    "1115384": {
+    "1115538": {
         "active": true,
-        "notes": "picomatch is a transitive dependency of @redocly/cli and related packages, used only as a build tool to generate static API documentation. The ReDoS vulnerability via extglob quantifiers is not exploitable as picomatch is never used to match untrusted input in our usage context.",
-        "expiry": "2026-06-30"
+        "notes": "Waiting for dependebot to calculate upgrade",
+        "expiry": "2026-05-01"
     },
-    "1115394": {
+    "1115539": {
         "active": true,
-        "notes": "picomatch is a transitive dependency of @redocly/cli and related packages, used only as a build tool to generate static API documentation. The method injection via POSIX character classes is not exploitable as picomatch is never used to match untrusted glob patterns in our usage context.",
-        "expiry": "2026-06-30"
+        "notes": "Waiting for dependebot to calculate upgrade",
+        "expiry": "2026-05-01"
     },
-    "1115396": {
+    "1115544": {
         "active": true,
-        "notes": "picomatch is a transitive dependency of @redocly/cli and related packages, used only as a build tool to generate static API documentation. The method injection via POSIX character classes is not exploitable as picomatch is never used to match untrusted glob patterns in our usage context.",
-        "expiry": "2026-06-30"
+        "notes": "Waiting for dependebot to calculate upgrade",
+        "expiry": "2026-05-01"
     },
-    "1115368": {
+    "1115588": {
         "active": true,
-        "notes": "yaml is a direct dependency used for configuration parsing. The stack overflow via deeply nested YAML collections is only exploitable with untrusted YAML input of extreme depth. Our usage parses only operator-controlled configuration files, making this not exploitable in practice.",
-        "expiry": "2026-06-30"
+        "notes": "Waiting for dependebot to calculate upgrade",
+        "expiry": "2026-05-01"
+    },
+    "1115589": {
+        "active": true,
+        "notes": "Waiting for dependebot to calculate upgrade",
+        "expiry": "2026-05-01"
+    },
+    "1115692": {
+        "active": true,
+        "notes": "Waiting for dependebot to calculate upgrade",
+        "expiry": "2026-05-01"
+    },
+    "1115693": {
+        "active": true,
+        "notes": "Waiting for dependebot to calculate upgrade",
+        "expiry": "2026-05-01"
+    },
+    "1115694": {
+        "active": true,
+        "notes": "Waiting for dependebot to calculate upgrade",
+        "expiry": "2026-05-01"
+    },
+    "1115527": {
+        "active": true,
+        "notes": "Waiting for dependebot to calculate upgrade",
+        "expiry": "2026-05-01"
+    },
+    "1115549": {
+        "active": true,
+        "notes": "Waiting for dependebot to calculate upgrade",
+        "expiry": "2026-05-01"
+    },
+    "1115551": {
+        "active": true,
+        "notes": "Waiting for dependebot to calculate upgrade",
+        "expiry": "2026-05-01"
+    },
+    "1115552": {
+        "active": true,
+        "notes": "Waiting for dependebot to calculate upgrade",
+        "expiry": "2026-05-01"
+    },
+    "1115554": {
+        "active": true,
+        "notes": "Waiting for dependebot to calculate upgrade",
+        "expiry": "2026-05-01"
+    },
+    "1114592": {
+        "active": true,
+        "notes": "Waiting for dependebot to calculate upgrade",
+        "expiry": "2026-05-01"
+    },
+    "1114594": {
+        "active": true,
+        "notes": "Waiting for dependebot to calculate upgrade",
+        "expiry": "2026-05-01"
+    },
+    "1114638": {
+        "active": true,
+        "notes": "Waiting for dependebot to calculate upgrade",
+        "expiry": "2026-05-01"
+    },
+    "1114640": {
+        "active": true,
+        "notes": "Waiting for dependebot to calculate upgrade",
+        "expiry": "2026-05-01"
+    },
+    "1114642": {
+        "active": true,
+        "notes": "Waiting for dependebot to calculate upgrade",
+        "expiry": "2026-05-01"
+    },
+    "1115555": {
+        "active": true,
+        "notes": "Waiting for dependebot to calculate upgrade",
+        "expiry": "2026-05-01"
+    },
+    "1115805": {
+        "active": true,
+        "notes": "Waiting for dependebot to calculate upgrade",
+        "expiry": "2026-05-01"
+    },
+    "1115809": {
+        "active": true,
+        "notes": "Waiting for dependebot to calculate upgrade",
+        "expiry": "2026-05-01"
     }
 }

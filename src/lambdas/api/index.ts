@@ -1,5 +1,3 @@
-/* eslint-disable import/prefer-default-export */
-
 /**
  * To Do
  *
@@ -8,45 +6,29 @@
 
 import { z } from 'zod'
 import serverless from 'serverless-http'
-import { Lambda } from '@aws-sdk/client-lambda'
+import { InvocationResponse, Lambda } from '@aws-sdk/client-lambda'
+import { APIGatewayProxyEvent, APIGatewayProxyResult, Context } from 'aws-lambda'
 import { createApp } from './app.js'
-import _default from './types.js'
+import _default, { LambdaError } from './types.js'
 import logger from '../../lib/logger.js'
 
-/* eslint-disable no-unused-vars */
-/* eslint-disable @typescript-eslint/no-unused-vars */
 const {
   APIGatewayProxyResultSchema, PreHookResultSchema, PostHookResultSchema,
-  LambdaErrorSchema,
   APIGatewayProxyEventSchema
 } = _default
-/* eslint-enable no-unused-vars */
-/* eslint-enable @typescript-eslint/no-unused-vars */
 
-/**
- * @typedef {import('aws-lambda').APIGatewayProxyEvent} APIGatewayProxyEvent
- * @typedef {import('aws-lambda').APIGatewayProxyResult} APIGatewayProxyResult
- * @typedef {import('aws-lambda').Context} Context
- * @typedef {z.infer<typeof LambdaErrorSchema>} LambdaError
- */
-
-const appInstance = await createApp()
-
-/** @type {APIGatewayProxyResult} */
 const internalServerError = Object.freeze({
   statusCode: 500,
   headers: {
     'content-type': 'text/plain'
   },
   body: 'Internal Server Error'
-})
+}) as APIGatewayProxyResult
 
-/**
- * @param {unknown} data
- * @param {unknown} error
- * @returns {void}
- */
-const logZodParseError = (data, error) => {
+const logZodParseError = (
+  data: unknown,
+  error: unknown
+) => {
   let errorObj
   if (error instanceof z.ZodError) {
     errorObj = { data, issues: error.issues }
@@ -65,15 +47,12 @@ const logZodParseError = (data, error) => {
   logger.error('zod parsing error: %j', errorObj)
 }
 
-/**
- * @param {Lambda} lambda
- * @param {string} preHook
- * @param {APIGatewayProxyEvent} payload
- * @returns {Promise<APIGatewayProxyEvent|APIGatewayProxyResult>}
- */
-const invokePreHook = async (lambda, preHook, payload) => {
-  /** @type {import("@aws-sdk/client-lambda").InvocationResponse} */
-  let invocationResponse
+const invokePreHook = async (
+  lambda: Lambda,
+  preHook: string,
+  payload: APIGatewayProxyEvent
+): Promise<APIGatewayProxyEvent|APIGatewayProxyResult> => {
+  let invocationResponse: InvocationResponse
   try {
     invocationResponse = await lambda.invoke({
       FunctionName: preHook,
@@ -93,8 +72,7 @@ const invokePreHook = async (lambda, preHook, payload) => {
 
   const rawHookResult = JSON.parse(invocationResponse.Payload.toString())
 
-  /** @type {APIGatewayProxyEvent|APIGatewayProxyResult|LambdaError} */
-  let hookResult
+  let hookResult: APIGatewayProxyEvent|APIGatewayProxyResult | LambdaError
   try {
     // @ts-expect-error https://github.com/colinhacks/zod/issues/980
     hookResult = PreHookResultSchema.parse(rawHookResult)
@@ -112,15 +90,12 @@ const invokePreHook = async (lambda, preHook, payload) => {
   return hookResult
 }
 
-/**
- * @param {Lambda} lambda
- * @param {string} postHook
- * @param {APIGatewayProxyResult} payload
- * @returns {Promise<APIGatewayProxyResult>}
- */
-const invokePostHook = async (lambda, postHook, payload) => {
-  /** @type {import("@aws-sdk/client-lambda").InvocationResponse} */
-  let invocationResponse
+const invokePostHook = async (
+  lambda: Lambda,
+  postHook: string,
+  payload: APIGatewayProxyResult
+): Promise<APIGatewayProxyResult> => {
+  let invocationResponse: InvocationResponse
   try {
     invocationResponse = await lambda.invoke({
       FunctionName: postHook,
@@ -131,8 +106,7 @@ const invokePostHook = async (lambda, postHook, payload) => {
     return internalServerError
   }
 
-  // I've never seen this happen but, according to the TypeScript type definitions
-  // provided by AWS, `InvocationResponse.Payload` could be `undefined`.
+  // handled per official type, though extremely uncommon
   if (invocationResponse.Payload === undefined) {
     logger.error('Undefined Payload returned from post-hook lambda')
     return internalServerError
@@ -140,8 +114,7 @@ const invokePostHook = async (lambda, postHook, payload) => {
 
   const rawHookResult = JSON.parse(invocationResponse.Payload.toString())
 
-  /** @type {APIGatewayProxyResult|LambdaError} */
-  let hookResult
+  let hookResult: APIGatewayProxyResult | LambdaError
   try {
     hookResult = PostHookResultSchema.parse(rawHookResult)
   } catch (error) {
@@ -158,12 +131,12 @@ const invokePostHook = async (lambda, postHook, payload) => {
   return hookResult
 }
 
-/**
- * @param {APIGatewayProxyEvent} event
- * @param {Context} context
- * @returns {Promise<APIGatewayProxyResult>}
- */
-const callServerlessApp = async (event, context) => {
+const callServerlessApp = async (
+  event: APIGatewayProxyEvent,
+  context: Context
+): Promise<APIGatewayProxyResult> => {
+  const appInstance = await createApp()
+
   const result = await serverless(appInstance)(event, context)
 
   try {
@@ -175,16 +148,12 @@ const callServerlessApp = async (event, context) => {
   }
 }
 
-/**
- *
- * @param {unknown} rawEvent
- * @returns {APIGatewayProxyEvent}
- */
-const parseEvent = (rawEvent) => {
+const parseEvent = (
+  rawEvent: APIGatewayProxyEvent
+): APIGatewayProxyEvent => {
   const event = APIGatewayProxyEventSchema.parse(rawEvent)
 
-  /** @type {string} */
-  let validPath
+  let validPath: string
   if (event.pathParameters === null) {
     validPath = '/'
   } else if ('proxy' in event.pathParameters) {
@@ -193,17 +162,14 @@ const parseEvent = (rawEvent) => {
     throw new Error('Unable to determine path from event')
   }
 
-  // @ts-expect-error https://github.com/colinhacks/zod/issues/980
-  return { ...event, path: validPath }
+  // cast due to TS issue, validated by zod https://github.com/colinhacks/zod/issues/980
+  return { ...event, path: validPath } as APIGatewayProxyEvent
 }
 
-/**
- * @param {APIGatewayProxyEvent} event
- * @param {Context} context
- * @returns {Promise<APIGatewayProxyResult>}
- */
-
-export const handler = async (event, context) => {
+export const handler = async (
+  event: APIGatewayProxyEvent,
+  context: Context
+): Promise<APIGatewayProxyResult> => {
   if (!process.env['AWS_REGION']) {
     logger.error('AWS_REGION not set')
     return internalServerError
@@ -211,8 +177,7 @@ export const handler = async (event, context) => {
 
   const lambda = new Lambda({ region: process.env['AWS_REGION'] })
 
-  /** @type {APIGatewayProxyEvent} */
-  let parsedEvent
+  let parsedEvent: APIGatewayProxyEvent
   try {
     parsedEvent = parseEvent(event)
   } catch (error) {
@@ -220,8 +185,7 @@ export const handler = async (event, context) => {
     return internalServerError
   }
 
-  /** @type {APIGatewayProxyEvent|APIGatewayProxyResult} */
-  const serverlessAppEvent = process.env['PRE_HOOK']
+  const serverlessAppEvent: APIGatewayProxyEvent | APIGatewayProxyResult = process.env['PRE_HOOK']
     ? await invokePreHook(lambda, process.env['PRE_HOOK'], parsedEvent)
     : parsedEvent
 

@@ -83,7 +83,7 @@
     "@smithy/types": "^4.13.1",
     "@stoplight/spectral-cli": "^6.15.0",
     "@tsconfig/node22": "^22.0.5",
-    "@types/aws-lambda": "^8.10.159",
+    "@types/aws-lambda": "^8.10.161",
     "@types/color-convert": "^2.0.4",
     "@types/color-name": "^2.0.0",
     "@types/color-string": "^1.5.5",

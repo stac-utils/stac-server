@@ -1,7 +1,6 @@
-// @ts-nocheck
 import cors from 'cors'
-import createError from 'http-errors'
-import express from 'express'
+import createError, { HttpError } from 'http-errors'
+import express, { Request, Response, NextFunction } from 'express'
 import compression from 'compression'
 import morgan from 'morgan'
 import path from 'path'
@@ -13,13 +12,8 @@ import { readFile } from '../../lib/fs.js'
 import addEndpoint from './middleware/add-endpoint.js'
 import logger from '../../lib/logger.js'
 import { AssetProxy } from '../../lib/asset-proxy.js'
-
-/**
- * @typedef {import('express').Request} Request
- * @typedef {import('express').Response} Response
- * @typedef {import('express').NextFunction} NextFunction
- * @typedef {import('express').ErrorRequestHandler} ErrorRequestHandler
- */
+import { StacItem } from '../../lib/types.js'
+import { isFeatureCollection } from '../../lib/stac-utils.js'
 
 export const createApp = async () => {
   const txnEnabled = process.env['ENABLE_TRANSACTIONS_EXTENSION'] === 'true'
@@ -115,7 +109,7 @@ export const createApp = async () => {
     }
   })
 
-  app.get('/search', async (req, res, next) => {
+  app.get('/search', async (req: Request, res: Response, next) => {
     try {
       const result = await api.searchItems(
         database, 'GET', null, req.endpoint, req.query, req.headers
@@ -333,8 +327,8 @@ export const createApp = async () => {
               next(error)
             }
           }
-        } else if (req.body.type === 'FeatureCollection') {
-          const duplicateItemErrors = []
+        } else if (isFeatureCollection(req.body)) {
+          const duplicateItemErrors: StacItem[] = []
           let itemsCreated = 0
           for (const item of req.body.features) {
             try {
@@ -569,14 +563,13 @@ export const createApp = async () => {
   })
 
   // catch 404 and forward to error handler
-  app.use((_req, _res, next) => {
+  app.use((_req: Request, _res: Response, next: NextFunction) => {
     next(createError(404))
   })
 
   // error handler
   app.use(
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    /** @type {ErrorRequestHandler} */ ((err, _req, res, _next) => {
+    ((err: HttpError, _req: Request, res: Response, _next: NextFunction) => {
       res.status(err.status || 500)
 
       res.type('application/json')
@@ -601,5 +594,3 @@ export const createApp = async () => {
 
   return app
 }
-
-export default { createApp }

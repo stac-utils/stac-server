@@ -42,6 +42,12 @@ export interface StacCollection {
   item_assets?: {[key: string]: Asset}
 }
 
+export interface FeatureCollection {
+  type: 'FeatureCollection',
+  features: StacItem[],
+  links: Link[]
+}
+
 export interface StacCatalog {
   stac_version: string
   type: string
@@ -110,7 +116,7 @@ export interface ItemProperties {
   [key: string]: unknown // permit additional fields by user
 }
 
-export type StacServerMessage = StacRecord | DbAction
+export type StacServerMessage = StacRecord | DbAction | FeatureCollection
 
 export interface Queryables {
   $schema: string

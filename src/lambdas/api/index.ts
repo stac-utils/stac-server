@@ -9,13 +9,14 @@ import serverless from 'serverless-http'
 import { InvocationResponse, Lambda } from '@aws-sdk/client-lambda'
 import { APIGatewayProxyEvent, APIGatewayProxyResult, Context } from 'aws-lambda'
 import { createApp } from './app.js'
-import _default, { LambdaError } from './types.js'
 import logger from '../../lib/logger.js'
-
-const {
-  APIGatewayProxyResultSchema, PreHookResultSchema, PostHookResultSchema,
-  APIGatewayProxyEventSchema
-} = _default
+import {
+  APIGatewayProxyResultSchema,
+  PreHookResultSchema,
+  PostHookResultSchema,
+  APIGatewayProxyEventSchema,
+  LambdaError
+} from './types.js'
 
 const internalServerError = Object.freeze({
   statusCode: 500,

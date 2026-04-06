@@ -109,7 +109,7 @@ const PostHookResultSchema = z.union([
 
 export type LambdaError = z.infer<typeof LambdaErrorSchema>
 
-export default {
+export {
   APIGatewayProxyEventSchema,
   APIGatewayProxyResultSchema,
   LambdaErrorSchema,

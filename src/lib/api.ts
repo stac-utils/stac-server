@@ -367,7 +367,7 @@ const buildPaginationLinks = function (
 const searchItems = async function (
   backend: Backend,
   httpMethod: string,
-  collectionId: string,
+  collectionId: string | null,
   endpoint: string,
   parameters: APIParameters,
   headers: IncomingHttpHeaders
@@ -537,7 +537,7 @@ const agg = function (
 const aggregate = async function (
   backend: Backend,
   httpMethod: string,
-  collectionId: string,
+  collectionId: string | null,
   endpoint: string,
   parameters: APIParameters,
   headers: IncomingHttpHeaders

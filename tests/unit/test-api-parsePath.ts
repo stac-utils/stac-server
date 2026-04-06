@@ -1,5 +1,3 @@
-// @ts-nocheck
-
 import test from 'ava'
 import { parsePath } from '../../src/lib/api.js'
 

@@ -1,15 +1,16 @@
 import test from 'ava'
 import { extractFields } from '../../src/lib/api.js'
 import { buildFieldsFilter, DEFAULT_FIELDS } from '../../src/lib/database.js'
+import type { QueryParameters } from '../../src/lib/types.js'
 
 test('buildFieldsFilter - include and exclude missing', (t) => {
-  const params = { fields: {} }
+  const params: QueryParameters = { fields: {} }
   const fieldsFilter = buildFieldsFilter(params)
   t.deepEqual(fieldsFilter, { _sourceIncludes: [], _sourceExcludes: [] })
 })
 
 test('buildFieldsFilter - exclude is missing', (t) => {
-  const params = { fields: { include: ['geometry'] } }
+  const params: QueryParameters = { fields: { include: ['geometry'] } }
   const fieldsFilter = buildFieldsFilter(params)
   t.deepEqual(fieldsFilter, {
     _sourceIncludes: ['geometry'],
@@ -18,7 +19,7 @@ test('buildFieldsFilter - exclude is missing', (t) => {
 })
 
 test('buildFieldsFilter - include is missing', (t) => {
-  const params = { fields: { exclude: ['geometry'] } }
+  const params: QueryParameters = { fields: { exclude: ['geometry'] } }
   const fieldsFilter = buildFieldsFilter(params)
   t.deepEqual(fieldsFilter, {
     _sourceExcludes: ['geometry'],
@@ -27,7 +28,8 @@ test('buildFieldsFilter - include is missing', (t) => {
 })
 
 test('buildFieldsFilter - include and exclude null', (t) => {
-  const params = { fields: { include: null, exclude: null } }
+  // @ts-expect-error testing null input handling
+  const params: QueryParameters = { fields: { include: null, exclude: null } }
   const fieldsFilter = buildFieldsFilter(params)
   t.deepEqual(fieldsFilter, {
     _sourceIncludes: DEFAULT_FIELDS,
@@ -36,7 +38,7 @@ test('buildFieldsFilter - include and exclude null', (t) => {
 })
 
 test('buildFieldsFilter - nested include field', (t) => {
-  const params = { fields: {
+  const params: QueryParameters = { fields: {
     exclude: ['properties'],
     include: ['properties.title']
   } }
@@ -48,7 +50,7 @@ test('buildFieldsFilter - nested include field', (t) => {
 })
 
 test('buildFieldsFilter - nested exclude field', (t) => {
-  const params = { fields: {
+  const params: QueryParameters = { fields: {
     exclude: ['properties.title'],
     include: ['properties']
   } }
@@ -60,7 +62,7 @@ test('buildFieldsFilter - nested exclude field', (t) => {
 })
 
 test('buildFieldsFilter - same field in both include & exclude', (t) => {
-  const params = { fields: {
+  const params: QueryParameters = { fields: {
     include: ['collection'],
     exclude: ['collection']
   } }

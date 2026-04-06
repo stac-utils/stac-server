@@ -6,9 +6,10 @@ import {
   SecretsManagerClient,
   GetSecretValueCommand,
 } from '@aws-sdk/client-secrets-manager'
+import type { APIGatewayProxyEvent, Context } from 'aws-lambda'
 import { handler, getApiKeys } from '../../src/lambdas/pre-hook/index.js'
 
-const DEFAULT_EVENT = {
+const DEFAULT_EVENT: APIGatewayProxyEvent = {
   body: 'eyJ0ZXN0IjoiYm9keSJ9',
   resource: '/{proxy+}',
   path: '/path/to/resource',
@@ -56,7 +57,8 @@ const DEFAULT_EVENT = {
     protocol: 'HTTP/1.1',
   },
 }
-const DEFAULT_CONTEXT = {
+
+const DEFAULT_CONTEXT: Context = {
   callbackWaitsForEmptyEventLoop: false,
   functionName: '',
   functionVersion: '',
@@ -71,7 +73,6 @@ const DEFAULT_CONTEXT = {
   succeed: () => {},
 }
 
-// @ts-ignore
 const secretsManagerMock = mockClient(SecretsManagerClient)
 
 const response401 = {
@@ -88,12 +89,10 @@ test.beforeEach(() => {
 
 test.serial('authenticate cases', async (t) => {
   secretsManagerMock
-    // @ts-ignore
     .on(GetSecretValueCommand)
-    // @ts-ignore
     .resolves({ SecretString: JSON.stringify({ ABC: ['write'], DEF: ['other'] }) })
 
-  const event = { ...DEFAULT_EVENT }
+  const event = { ...DEFAULT_EVENT, headers: { ...DEFAULT_EVENT.headers } }
   const context = { ...DEFAULT_CONTEXT }
 
   // no credentials
@@ -115,17 +114,22 @@ test.serial('authenticate cases', async (t) => {
 
   delete event.headers['Authorization']
 
-  // invalid credentials
-  event.queryStringParameters['auth_token'] = 'invalid'
-  t.deepEqual(await handler(event, context), response401)
+  // invalid credentials via query string
+  const eventWithQuery = {
+    ...event,
+    queryStringParameters: { ...event.queryStringParameters, auth_token: 'invalid' }
+  }
+  t.deepEqual(await handler(eventWithQuery, context), response401)
 
-  // valid credentials
-  event.queryStringParameters['auth_token'] = 'ABC'
-  t.deepEqual(await handler(event, context), event)
+  // valid credentials via query string
+  const eventWithValidQuery = {
+    ...event,
+    queryStringParameters: { ...event.queryStringParameters, auth_token: 'ABC' }
+  }
+  t.deepEqual(await handler(eventWithValidQuery, context), eventWithValidQuery)
 })
 
 test.serial('authenticate failure with retrieving keys', async (t) => {
-  // @ts-ignore
   secretsManagerMock.on(GetSecretValueCommand).rejectsOnce('mocked rejection')
 
   const event = { ...DEFAULT_EVENT }

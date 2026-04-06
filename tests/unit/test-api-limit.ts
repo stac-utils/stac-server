@@ -1,5 +1,3 @@
-// @ts-nocheck
-
 import test from 'ava'
 import { extractLimit } from '../../src/lib/api.js'
 import { ValidationError } from '../../src/lib/errors.js'
@@ -36,7 +34,7 @@ test('extractLimit when ITEMS_MAX_LIMIT is invalid', (t) => {
 })
 
 test('extractLimit invalid values', (t) => {
-  const invalidLimits = ['', '-1', '0', 'a', -1, 0]
+  const invalidLimits: Array<string | number> = ['', '-1', '0', 'a', -1, 0]
 
   for (const limit of invalidLimits) {
     t.throws(() => {

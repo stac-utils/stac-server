@@ -1,5 +1,3 @@
-// @ts-nocheck
-
 import test from 'ava'
 import { extractBbox } from '../../src/lib/api.js'
 import { ValidationError } from '../../src/lib/errors.js'
@@ -14,22 +12,22 @@ test('extractBboxNull', (t) => {
 test('extractBbox JSON array', (t) => {
   const params = { bbox: [0, 0, 1, 1] }
   const intersectsGeometry = extractBbox(params, 'POST')
-  t.is(intersectsGeometry.coordinates[0].length, 5)
-  t.is(intersectsGeometry.coordinates[0][0][0], 0)
+  t.is(intersectsGeometry?.coordinates[0].length, 5)
+  t.is(intersectsGeometry?.coordinates[0][0][0], 0)
 })
 
 test('extractBbox comma-separated value', (t) => {
   const params = { bbox: '0,0,1,1' }
   const intersectsGeometry = extractBbox(params)
-  t.is(intersectsGeometry.coordinates[0].length, 5)
-  t.is(intersectsGeometry.coordinates[0][0][0], 0)
+  t.is(intersectsGeometry?.coordinates[0].length, 5)
+  t.is(intersectsGeometry?.coordinates[0][0][0], 0)
 })
 
 test('extractBbox comma-separated value with whitespace', (t) => {
   const params = { bbox: '0  ,  0.3  , 1.0,\t1' }
   const intersectsGeometry = extractBbox(params)
-  t.is(intersectsGeometry.coordinates[0].length, 5)
-  t.is(intersectsGeometry.coordinates[0][0][0], 0)
+  t.is(intersectsGeometry?.coordinates[0].length, 5)
+  t.is(intersectsGeometry?.coordinates[0][0][0], 0)
 })
 
 test('extractBbox invalid bbox values', (t) => {

@@ -1,5 +1,3 @@
-// @ts-nocheck
-
 import test from 'ava'
 import { constructSearchParams, buildDatetimeQuery } from '../../src/lib/database.js'
 
@@ -7,26 +5,27 @@ test('search id parameter doesnt override other parameters', async (t) => {
   const ids = 'a,b,c'
   const range = '2007-03-01T13:00:00Z/2008-05-11T15:30:00Z'
   const queryParams = {
-    ids: ids,
+    // @ts-expect-error intentionally passing string to test raw value passthrough
+    ids,
     datetime: range
   }
   const searchBody = await constructSearchParams(queryParams, 1)
 
   // TODO: the ordering here is fragile. helper methods needed to ensure the queries are correct
   t.is(
-    searchBody.body.query.bool.filter[0].terms.id,
+    searchBody.body.query.bool?.filter?.[0].terms?.['id'],
     ids,
     'query contains id filter'
   )
   t.assert(
-    searchBody.body.query.bool.filter[1].range['properties.datetime'],
+    searchBody.body.query.bool?.filter?.[1].range?.['properties.datetime'],
     'query contains datetime filter'
   )
 })
 
 /* eslint max-len: 0 */
 test('search datetime parameter intervals are correctly parsed', async (t) => {
-  const datetimes = [
+  const datetimes: [string, string | undefined, string | undefined][] = [
     ['1985-04-12T23:20:50.52-01:00/1986-04-12T23:20:50.52-01:00', '1985-04-12T23:20:50.52-01:00', '1986-04-12T23:20:50.52-01:00'],
     ['../1985-04-12T23:20:50.52Z', undefined, '1985-04-12T23:20:50.52Z'],
     ['1985-04-12T23:20:50.52Z/..', '1985-04-12T23:20:50.52Z', undefined],
@@ -38,11 +37,11 @@ test('search datetime parameter intervals are correctly parsed', async (t) => {
     ['1985-04-12T23:20:50.52-01:00/1986-04-12T23:20:50.52-01:00', '1985-04-12T23:20:50.52-01:00', '1986-04-12T23:20:50.52-01:00']
   ]
 
-  await datetimes.map(async ([datetime, start, end]) => {
-    const dtQuery = await buildDatetimeQuery({ datetime: datetime })
-    t.is(dtQuery.range['properties.datetime'].gte, start, 'datetime interval start')
-    t.is(dtQuery.range['properties.datetime'].lte, end, 'datetime interval end')
-  })
+  await Promise.all(datetimes.map(async ([datetime, start, end]) => {
+    const dtQuery = await buildDatetimeQuery({ datetime })
+    t.is(dtQuery.range?.['properties.datetime'].gte, start, 'datetime interval start')
+    t.is(dtQuery.range?.['properties.datetime'].lte, end, 'datetime interval end')
+  }))
 })
 
 test('search datetime parameter instants are correctly parsed', async (t) => {
@@ -73,10 +72,10 @@ test('search datetime parameter instants are correctly parsed', async (t) => {
     '1985-04-12' // date only is not required by STAC, but accepted here
   ]
 
-  await validDatetimes.map(async (datetime) => {
-    const dtQuery = await buildDatetimeQuery({ datetime: datetime })
-    t.is(dtQuery.term['properties.datetime'], datetime, 'datetime instant parses correctly')
-  })
+  await Promise.all(validDatetimes.map(async (datetime) => {
+    const dtQuery = await buildDatetimeQuery({ datetime })
+    t.is(dtQuery.term?.['properties.datetime'], datetime, 'datetime instant parses correctly')
+  }))
 })
 
 test('if more than 10 collections are specified then all indices are searched', async (t) => {

@@ -1,8 +1,7 @@
-// @ts-nocheck
-
 import test from 'ava'
 import { getStartAndEndDates, InvalidSTACItemException, isItem } from '../../src/lib/stac-utils.js'
 import { loadFixture } from '../helpers/utils.js'
+import type { StacItem, StacCollection } from '../../src/lib/types.js'
 
 test('getStartandEndDates uses item datetime', (t) => {
   const stringDate = '1955-11-05T13:00:00Z'
@@ -13,7 +12,7 @@ test('getStartandEndDates uses item datetime', (t) => {
     properties: {
       datetime: stringDate
     }
-  })
+  } as StacItem)
   const date = new Date(stringDate)
   t.deepEqual(date, startDate, 'startDate did not match datetime')
   t.deepEqual(date, endDate, 'endDate did not match datetime')
@@ -32,7 +31,7 @@ test('getStartandEndDates uses item start_datetime and end_datetime', (t) => {
       start_datetime: startDatetime,
       end_datetime: endDatetime,
     }
-  })
+  } as StacItem)
   t.deepEqual(new Date(startDatetime), startDate, 'startDate did not match start_datetime')
   t.deepEqual(new Date(endDatetime), endDate, 'endDate did not match end_datetime')
 })
@@ -49,7 +48,7 @@ test('getStartandEndDates uses item start_datetime and end_datetime with null da
       start_datetime: startDatetime,
       end_datetime: endDatetime,
     }
-  })
+  } as StacItem)
   t.deepEqual(new Date(startDatetime), startDate, 'startDate did not match start_datetime')
   t.deepEqual(new Date(endDatetime), endDate, 'endDate did not match end_datetime')
 })
@@ -62,7 +61,7 @@ test('getStartandEndDates returns undefineds if item datetime is null', (t) => {
     properties: {
       datetime: null
     }
-  })
+  } as StacItem)
   t.deepEqual(undefined, startDate, 'startDate is not undefined')
   t.deepEqual(undefined, endDate, 'endDate is not undefined')
 })
@@ -76,7 +75,7 @@ test('getStartandEndDates returns undefineds if collection interval is missing',
         interval: []
       }
     }
-  })
+  } as unknown as StacCollection)
   t.deepEqual(undefined, startDate, 'startDate is not undefined')
   t.deepEqual(undefined, endDate, 'endDate is not undefined')
 })
@@ -91,7 +90,7 @@ test('getStartandEndDates returns startDate if collection interval has start', (
         interval: [[startDatetime, null]]
       }
     }
-  })
+  } as unknown as StacCollection)
   t.deepEqual(new Date(startDatetime), startDate, 'startDate was not returned')
   t.deepEqual(undefined, endDate, 'endDate is not undefined')
 })
@@ -106,7 +105,7 @@ test('getStartandEndDates returns endDate if collection interval has end', (t) =
         interval: [[null, endDatetime]]
       }
     }
-  })
+  } as unknown as StacCollection)
   t.deepEqual(undefined, startDate, 'startDate is not undefined')
   t.deepEqual(new Date(endDatetime), endDate, 'endDate was not returned')
 })
@@ -122,7 +121,7 @@ test('getStartandEndDates returns collection interval', (t) => {
         interval: [[startDatetime, endDatetime]]
       }
     }
-  })
+  } as unknown as StacCollection)
   t.deepEqual(new Date(startDatetime), startDate, 'startDate was not returned')
   t.deepEqual(new Date(endDatetime), endDate, 'endDate was not returned')
 })
@@ -136,14 +135,14 @@ test('getStartandEndDates only looks at first collection interval', (t) => {
         interval: [[null, null], ['1955-11-05T13:00:00Z', '1985-11-05T13:00:00Z']]
       }
     }
-  })
+  } as unknown as StacCollection)
   t.deepEqual(undefined, startDate, 'startDate is not undefined')
   t.deepEqual(undefined, endDate, 'endDate is not undefined')
 })
 
 test('isItem requires collection field', async (t) => {
   const record = await loadFixture('stac/LC80100102015050LGN00.json')
-  delete record.collection
+  delete record['collection']
 
   t.throws(() => {
     isItem(record)

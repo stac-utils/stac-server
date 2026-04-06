@@ -1,9 +1,8 @@
-// @ts-nocheck
-
 import test from 'ava'
 import { mockClient } from 'aws-sdk-client-mock'
 import { S3Client } from '@aws-sdk/client-s3'
 import { AssetProxy, ALTERNATE_ASSETS_EXTENSION } from '../../src/lib/asset-proxy.js'
+import type { Assets } from '../../src/lib/types.js'
 
 const s3Mock = mockClient(S3Client)
 
@@ -54,7 +53,7 @@ test('AssetProxy - getProxiedAssets() transforms item assets in ALL mode', async
     process.env['ASSET_PROXY_BUCKET_OPTION'] = 'ALL'
 
     const proxy = await AssetProxy.create()
-    const assets = {
+    const assets: Assets = {
       thumbnail: {
         href: 's3://my-bucket/thumb.jpg',
         type: 'image/jpeg'
@@ -74,9 +73,9 @@ test('AssetProxy - getProxiedAssets() transforms item assets in ALL mode', async
 
     t.true(wasProxied)
     t.is(proxied.thumbnail.href, 'https://api.example.com/collections/collection1/items/item1/assets/thumbnail')
-    t.is(proxied.thumbnail.alternate.s3.href, 's3://my-bucket/thumb.jpg')
+    t.is(proxied.thumbnail.alternate?.['s3'].href, 's3://my-bucket/thumb.jpg')
     t.is(proxied.data.href, 'https://api.example.com/collections/collection1/items/item1/assets/data')
-    t.is(proxied.data.alternate.s3.href, 's3://my-bucket/data.tif')
+    t.is(proxied.data.alternate?.['s3'].href, 's3://my-bucket/data.tif')
   } finally {
     process.env = before
   }
@@ -88,7 +87,7 @@ test('AssetProxy - getProxiedAssets() transforms collection assets', async (t) =
     process.env['ASSET_PROXY_BUCKET_OPTION'] = 'ALL'
 
     const proxy = await AssetProxy.create()
-    const assets = {
+    const assets: Assets = {
       thumbnail: {
         href: 's3://my-bucket/collection-thumb.jpg',
         type: 'image/jpeg'
@@ -104,7 +103,7 @@ test('AssetProxy - getProxiedAssets() transforms collection assets', async (t) =
 
     t.true(wasProxied)
     t.is(proxied.thumbnail.href, 'https://api.example.com/collections/collection1/assets/thumbnail')
-    t.is(proxied.thumbnail.alternate.s3.href, 's3://my-bucket/collection-thumb.jpg')
+    t.is(proxied.thumbnail.alternate?.['s3'].href, 's3://my-bucket/collection-thumb.jpg')
   } finally {
     process.env = before
   }
@@ -116,7 +115,7 @@ test('AssetProxy - getProxiedAssets() does not transform assets in NONE mode', a
     process.env['ASSET_PROXY_BUCKET_OPTION'] = 'NONE'
 
     const proxy = await AssetProxy.create()
-    const assets = {
+    const assets: Assets = {
       thumbnail: {
         href: 's3://my-bucket/thumb.jpg',
         type: 'image/jpeg'
@@ -144,7 +143,7 @@ test('AssetProxy - getProxiedAssets() preserves existing alternate links', async
     process.env['ASSET_PROXY_BUCKET_OPTION'] = 'ALL'
 
     const proxy = await AssetProxy.create()
-    const assets = {
+    const assets: Assets = {
       data: {
         href: 's3://my-bucket/data.tif',
         type: 'image/tiff',
@@ -161,8 +160,9 @@ test('AssetProxy - getProxiedAssets() preserves existing alternate links', async
       'item1'
     )
 
-    t.is(proxied.data.alternate.http.href, 'https://example.com/data.tif')
-    t.is(proxied.data.alternate.s3.href, 's3://my-bucket/data.tif')
+    const alternate = proxied.data.alternate as Record<string, { href: string }>
+    t.is(alternate['http'].href, 'https://example.com/data.tif')
+    t.is(alternate['s3'].href, 's3://my-bucket/data.tif')
   } finally {
     process.env = before
   }
@@ -174,7 +174,7 @@ test('AssetProxy - getProxiedAssets() does not transform non-S3 assets', async (
     process.env['ASSET_PROXY_BUCKET_OPTION'] = 'ALL'
 
     const proxy = await AssetProxy.create()
-    const assets = {
+    const assets: Assets = {
       metadata: {
         href: 'https://example.com/metadata.xml',
         type: 'application/xml'
@@ -202,8 +202,9 @@ test('AssetProxy - getProxiedAssets() handles assets without href', async (t) =>
     process.env['ASSET_PROXY_BUCKET_OPTION'] = 'ALL'
 
     const proxy = await AssetProxy.create()
-    const assets = {
+    const assets: Assets = {
       metadata: {
+        href: '',
         type: 'application/xml'
       }
     }
@@ -216,7 +217,7 @@ test('AssetProxy - getProxiedAssets() handles assets without href', async (t) =>
     )
 
     t.false(wasProxied)
-    t.deepEqual(proxied.metadata, { type: 'application/xml' })
+    t.deepEqual(proxied.metadata, { href: '', type: 'application/xml' })
   } finally {
     process.env = before
   }
@@ -228,7 +229,7 @@ test('AssetProxy - getProxiedAssets() handles empty assets object', async (t) =>
     process.env['ASSET_PROXY_BUCKET_OPTION'] = 'ALL'
 
     const proxy = await AssetProxy.create()
-    const assets = {}
+    const assets: Assets = {}
 
     const { assets: proxied, wasProxied } = proxy.getProxiedAssets(
       assets,
@@ -244,6 +245,7 @@ test('AssetProxy - getProxiedAssets() handles empty assets object', async (t) =>
   }
 })
 
+// eslint-disable-next-line max-len
 test('AssetProxy - updateAssetHrefs() mutates results and adds the alternate assets extension', async (t) => {
   const before = { ...process.env }
   try {
@@ -251,9 +253,13 @@ test('AssetProxy - updateAssetHrefs() mutates results and adds the alternate ass
 
     const proxy = await AssetProxy.create()
     const results = [{
-      type: 'Feature',
+      type: 'Feature' as const,
+      stac_version: '1.0.0',
       id: 'item1',
       collection: 'collection1',
+      geometry: null,
+      properties: { datetime: null },
+      links: [],
       assets: {
         data: {
           href: 's3://my-bucket/data.tif'
@@ -264,11 +270,12 @@ test('AssetProxy - updateAssetHrefs() mutates results and adds the alternate ass
     proxy.updateAssetHrefs(results, 'https://api.example.com')
 
     t.truthy(results[0].assets)
-    t.is(results[0].assets.data.href, 'https://api.example.com/collections/collection1/items/item1/assets/data')
-    t.truthy(results[0].assets.data.alternate)
-    t.is(results[0].assets.data.alternate.s3.href, 's3://my-bucket/data.tif')
+    t.is(results[0].assets['data'].href, 'https://api.example.com/collections/collection1/items/item1/assets/data')
+    t.truthy(results[0].assets['data'].alternate)
+    const dataAlternate = results[0].assets['data'].alternate as Record<string, { href: string }>
+    t.is(dataAlternate['s3'].href, 's3://my-bucket/data.tif')
     t.truthy(results[0].stac_extensions)
-    t.true(results[0].stac_extensions.includes(ALTERNATE_ASSETS_EXTENSION))
+    t.true(results[0].stac_extensions?.includes(ALTERNATE_ASSETS_EXTENSION))
   } finally {
     process.env = before
   }
@@ -281,8 +288,13 @@ test('AssetProxy - updateAssetHrefs() returns unchanged results when disabled', 
 
     const proxy = await AssetProxy.create()
     const results = [{
+      type: 'Feature' as const,
+      stac_version: '1.0.0',
       id: 'item1',
       collection: 'collection1',
+      geometry: null,
+      properties: { datetime: null },
+      links: [],
       assets: {
         data: {
           href: 's3://my-bucket/data.tif'
@@ -290,11 +302,11 @@ test('AssetProxy - updateAssetHrefs() returns unchanged results when disabled', 
       }
     }]
 
-    const originalHref = results[0].assets.data.href
+    const originalHref = results[0].assets['data'].href
     proxy.updateAssetHrefs(results, 'https://api.example.com')
 
-    t.is(results[0].assets.data.href, originalHref)
-    t.is(results[0].assets.data.alternate, undefined)
+    t.is(results[0].assets['data'].href, originalHref)
+    t.is(results[0].assets['data'].alternate, undefined)
   } finally {
     process.env = before
   }

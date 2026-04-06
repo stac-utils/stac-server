@@ -1,5 +1,3 @@
-// @ts-nocheck
-
 import test from 'ava'
 import { mockClient } from 'aws-sdk-client-mock'
 import { S3Client, ListBucketsCommand, HeadBucketCommand } from '@aws-sdk/client-s3'
@@ -44,6 +42,7 @@ test('AssetBuckets - LIST mode throws if bucket list is empty', async (t) => {
 
 test('AssetBuckets - LIST mode throws if bucket list is null', async (t) => {
   await t.throwsAsync(
+    // @ts-expect-error testing null input handling
     async () => AssetBuckets.create(BucketOptionEnum.LIST, null),
     { message: /ASSET_PROXY_BUCKET_LIST must not be empty/ }
   )
@@ -109,6 +108,7 @@ test('AssetBuckets - shouldProxyBucket with LIST mode only proxies buckets in li
   t.false(buckets.shouldProxyBucket('not-in-list'))
 })
 
+// eslint-disable-next-line max-len
 test('AssetBuckets - shouldProxyBucket with ALL_BUCKETS_IN_ACCOUNT mode only proxies fetched buckets', async (t) => {
   s3Mock.on(ListBucketsCommand).resolves({
     Buckets: [

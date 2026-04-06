@@ -1,5 +1,3 @@
-// @ts-nocheck
-
 import test from 'ava'
 import { extractDatetime } from '../../src/lib/api.js'
 import { ValidationError } from '../../src/lib/errors.js'

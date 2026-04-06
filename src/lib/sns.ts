@@ -10,12 +10,11 @@ interface SNSPayload {
 }
 /**
  * Extract STAC Item attriutes from SNS payload for adding attributes
- * to SNS message publish.   Extract core set of attributes to enable filtering
+ * to SNS message publish.  Extract core set of attributes to enable filtering
  * on SNS publishing down stream, and add other attributes if they are
  * on the item
- * @param {SNSPayload }payload - SNS payload with STAC Item
- * @returns {Record<string, MessageAttributeValue>} Attribute
- * objects with a number of key attributes to filter SNS messages on
+ * @returns Attribute objects with a number of key attributes to
+ * filter SNS messages on
  */
 const attrsFromPayload = function (
   payload: SNSPayload
@@ -101,10 +100,6 @@ const attrsFromPayload = function (
 
 /**
  * Publish message to post-ingest sns topic after ingestion to catalog
- * @param {string }topicArn - post-ingest SNS topic to publish to
- * @param {StacRecord} record - The record that was ingested (successfully or not)
- * @param {string} error - any errors from the ingestion process
- * @returns {void}
  */
 export async function publishRecordToSns(
   topicArn: string,

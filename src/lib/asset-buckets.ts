@@ -49,6 +49,7 @@ export class AssetBuckets {
   }
 
   /**
+   * initialize and get basic bucket info
    * @returns {Promise<void>}
    */
   async _initBuckets() {
@@ -106,10 +107,6 @@ export class AssetBuckets {
     }
   }
 
-  /**
-   * @param {string} bucketName - S3 bucket name
-   * @returns {Promise<Object>} Bucket info {name, region}
-   */
   async getBucket(bucketName: string): Promise<BucketInfo> {
     if (!(bucketName in this.bucketCache)) {
       const command = new HeadBucketCommand({ Bucket: bucketName })
@@ -151,7 +148,7 @@ export class AssetBuckets {
    * @param {string} bucketName - S3 bucket name
    * @returns {boolean} True if bucket should be proxied, False otherwise
    */
-  shouldProxyBucket(bucketName) {
+  shouldProxyBucket(bucketName: string): boolean {
     if (this.bucketOption === BucketOptionEnum.ALL
       || bucketName in this.bucketCache) {
       return true

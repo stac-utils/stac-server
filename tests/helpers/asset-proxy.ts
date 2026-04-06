@@ -1,6 +1,6 @@
 import { AssetProxy } from '../../src/lib/asset-proxy.js'
 
-const setupAssetProxy = async (assetProxyBucketOption) => {
+const setupAssetProxy = async (assetProxyBucketOption: string): Promise<AssetProxy> => {
   const before = { ...process.env }
   try {
     process.env['ASSET_PROXY_BUCKET_OPTION'] = assetProxyBucketOption

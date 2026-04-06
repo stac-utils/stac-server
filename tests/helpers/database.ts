@@ -1,24 +1,15 @@
 import { connect, createIndex } from '../../src/lib/database-client.js'
 
-/**
- * @returns {Promise<void>}
- */
-export const createCollectionsIndex = async () => {
+export const createCollectionsIndex = async (): Promise<void> => {
   await createIndex('collections')
 }
 
-/**
- * @returns {Promise<void>}
- */
-export const refreshIndices = async () => {
+export const refreshIndices = async (): Promise<void> => {
   const client = await connect()
   await client.indices.refresh({ index: '_all' })
 }
 
-/**
- * @returns {Promise<void>}
- */
-export const deleteAllIndices = async () => {
+export const deleteAllIndices = async (): Promise<void> => {
   const client = await connect()
   await client.indices.delete({ index: '_all' })
   await refreshIndices()

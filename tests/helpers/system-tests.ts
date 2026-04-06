@@ -3,15 +3,22 @@ import { promisify } from 'util'
 import { readFile as _readFile } from 'fs'
 import path, { join } from 'path'
 import { fileURLToPath } from 'url'
-import { startApi } from './api.js'
+import { startApi, ApiInstance } from './api.js'
 import { createCollectionsIndex, refreshIndices } from './database.js'
 import { createTopic, addSnsToSqsSubscription } from './sns.js'
 import { createQueue, getQueueArn } from './sqs.js'
 
 const __filename = fileURLToPath(import.meta.url)
-const __dirname = path.dirname(__filename) // eslint-disable-line no-unused-vars
+const __dirname = path.dirname(__filename)
 
-export const setupResources = async () => {
+interface SetupResourcesResult {
+  ingestQueueUrl: string
+  ingestTopicArn: string
+  postIngestQueueUrl: string
+  postIngestTopicArn: string
+}
+
+export const setupResources = async (): Promise<SetupResourcesResult> => {
   // Create Ingest SNS topics
   const ingestTopicArn = await createTopic()
   const postIngestTopicArn = await createTopic()
@@ -23,16 +30,10 @@ export const setupResources = async () => {
   const postIngestQueueArn = await getQueueArn(postIngestQueueUrl)
 
   // Subscribe SQS queue to ingest SNS topic
-  await addSnsToSqsSubscription(
-    ingestTopicArn,
-    ingestQueueArn
-  )
+  await addSnsToSqsSubscription(ingestTopicArn, ingestQueueArn)
 
   // Subscribe SQS queue to post-ingest SNS topic
-  await addSnsToSqsSubscription(
-    postIngestTopicArn,
-    postIngestQueueArn
-  )
+  await addSnsToSqsSubscription(postIngestTopicArn, postIngestQueueArn)
 
   // Create ES collections index
   await createCollectionsIndex()
@@ -47,23 +48,11 @@ export const setupResources = async () => {
   }
 }
 
-/**
- * @typedef {import('./api.js').ApiInstance} ApiInstance
- */
+export interface StandUpResult extends SetupResourcesResult {
+  api: ApiInstance
+}
 
-/**
- * @typedef {Object} StandUpResult
- * @property {ApiInstance} api
- * @property {string} ingestQueueUrl
- * @property {string} ingestTopicArn
- * @property {string} postIngestQueueUrl
- * @property {string} postIngestTopicArn
- */
-
-/**
- * @returns {Promise<StandUpResult>}
- */
-export const setup = async () => {
+export const setup = async (): Promise<StandUpResult> => {
   nock.disableNetConnect()
   nock.enableNetConnect(/127\.0\.0\.1|localhost/)
 
@@ -87,11 +76,7 @@ export const setup = async () => {
 
 const readFile = promisify(_readFile)
 
-/**
- * @param {string} filename
- * @returns {Promise<unknown>}
- */
-export const loadJson = async (filename) => {
+export const loadJson = async (filename: string): Promise<unknown> => {
   const filePath = join(__dirname, '..', 'fixtures', 'stac', filename)
 
   const data = await readFile(filePath, 'utf8')

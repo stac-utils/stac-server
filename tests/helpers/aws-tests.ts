@@ -1,11 +1,12 @@
 import nock from 'nock'
+import type { APIGatewayProxyEvent } from 'aws-lambda'
 
-export const disableNetConnect = () => {
+export const disableNetConnect = (): void => {
   nock.disableNetConnect()
   nock.enableNetConnect(/127\.0\.0\.1|localhost|lambda\.us-east-1\.amazonaws\.com/)
 }
 
-export const event = Object.freeze({
+export const event: APIGatewayProxyEvent = Object.freeze({
   body: null,
   resource: '/{proxy+}',
   path: '/',
@@ -43,7 +44,11 @@ export const event = Object.freeze({
       cognitoAuthenticationProvider: null,
       userArn: null,
       userAgent: 'Custom User Agent String',
-      user: null
+      user: null,
+      apiKey: null,
+      apiKeyId: null,
+      clientCert: null,
+      principalOrgId: null,
     },
     path: '/prod/',
     resourcePath: '/{proxy+}',
@@ -51,4 +56,4 @@ export const event = Object.freeze({
     apiId: '1234567890',
     protocol: 'HTTP/1.1'
   }
-})
+}) as APIGatewayProxyEvent

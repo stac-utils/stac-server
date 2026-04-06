@@ -11,19 +11,22 @@ const readFile = promisify(_readFile)
 
 const fixturesPath = join(__dirname, '..', 'fixtures')
 
-export const randomId = (prefix) => {
+export const randomId = (prefix?: string): string => {
   const randomString = cryptoRandomString({ length: 6 })
 
   return prefix ? `${prefix}-${randomString}` : randomString
 }
 
-const readFixture = (filename) => {
+const readFixture = (filename: string): Promise<string> => {
   const fixturePath = join(fixturesPath, filename)
   return readFile(fixturePath, 'utf8')
 }
 
-export const loadFixture = async (filename, overrides = {}) => {
+export const loadFixture = async (
+  filename: string,
+  overrides: Record<string, unknown> = {}
+): Promise<Record<string, unknown>> => {
   const content = await readFixture(filename)
-  const fixture = JSON.parse(content)
+  const fixture = JSON.parse(content) as Record<string, unknown>
   return { ...fixture, ...overrides }
 }

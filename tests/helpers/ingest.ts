@@ -1,23 +1,33 @@
 import { PublishCommand } from '@aws-sdk/client-sns'
 import { ReceiveMessageCommand } from '@aws-sdk/client-sqs'
+import type { ExecutionContext } from 'ava'
 import { sns, sqs } from '../../src/lib/aws-clients.js'
 import { handler } from '../../src/lambdas/ingest/index.js'
 import { sqsTriggerLambda } from './sqs.js'
 import { refreshIndices } from './database.js'
 import { loadFixture } from './utils.js'
 
-/**
- * @typedef {Object} IngestItemParams
- * @property {string} ingestTopicArn
- * @property {string} ingestQueueUrl
- * @property {unknown} item
- */
+interface IngestItemParams {
+  ingestTopicArn: string
+  ingestQueueUrl: string
+  item: unknown
+}
 
-/**
- * @param {IngestItemParams} params
- * @returns {Promise<void>}
- */
-export const ingestItem = async (params) => {
+interface IngestFixtureParams {
+  ingestTopicArn: string
+  ingestQueueUrl: string
+  filename: string
+  overrides?: Record<string, unknown>
+}
+
+interface TestContext {
+  postIngestTopicArn: string
+  ingestTopicArn: string
+  ingestQueueUrl: string
+  postIngestQueueUrl: string
+}
+
+export const ingestItem = async (params: IngestItemParams): Promise<void> => {
   const command = new PublishCommand({
     TopicArn: params.ingestTopicArn,
     Message: JSON.stringify(params.item)
@@ -29,29 +39,16 @@ export const ingestItem = async (params) => {
   await refreshIndices()
 }
 
-// eslint-disable-next-line valid-jsdoc
-/**
- * @param {string} ingestTopicArn
- * @param {string} ingestQueueUrl
- * @returns {(item: unknown) => Promise<void>}
- */
-export const ingestItemC = (ingestTopicArn, ingestQueueUrl) =>
-  (item) => ingestItem({ ingestQueueUrl, ingestTopicArn, item })
+export const ingestItemC = (ingestTopicArn: string, ingestQueueUrl: string) =>
+  (item: unknown): Promise<void> =>
+    ingestItem({ ingestQueueUrl, ingestTopicArn, item })
 
-/**
- * @param {Object} params
- * @param {string} params.ingestTopicArn
- * @param {string} params.ingestQueueUrl
- * @param {string} params.filename
- * @param {Object} params.overrides
- * @returns {Promise<unknown>}
- */
 export const ingestFixture = async ({
   ingestTopicArn,
   ingestQueueUrl,
   filename,
   overrides = {}
-}) => {
+}: IngestFixtureParams): Promise<Record<string, unknown>> => {
   const msg = await loadFixture(filename, overrides)
 
   await ingestItem({
@@ -63,22 +60,20 @@ export const ingestFixture = async ({
   return msg
 }
 
-// eslint-disable-next-line valid-jsdoc
-/**
- * @param {string} ingestTopicArn
- * @param {string} ingestQueueUrl
- * @returns {(filename: string, overrides?: Object) => Promise<unknown>}
- */
-export const ingestFixtureC = (ingestTopicArn, ingestQueueUrl) =>
-  (filename, overrides = {}) => ingestFixture({
-    ingestQueueUrl,
-    ingestTopicArn,
-    filename,
-    overrides
-  })
+export const ingestFixtureC = (ingestTopicArn: string, ingestQueueUrl: string) =>
+  (filename: string, overrides: Record<string, unknown> = {}): Promise<Record<string, unknown>> =>
+    ingestFixture({
+      ingestQueueUrl,
+      ingestTopicArn,
+      filename,
+      overrides
+    })
 
-export async function testPostIngestSNS(t, record, shouldError = false) {
-  // @ts-ignore
+export async function testPostIngestSNS(
+  t: ExecutionContext<TestContext>,
+  record: unknown,
+  shouldError = false
+) {
   process.env['POST_INGEST_TOPIC_ARN'] = t.context.postIngestTopicArn
 
   const publishCommand = new PublishCommand({
@@ -105,10 +100,10 @@ export async function testPostIngestSNS(t, record, shouldError = false) {
   t.false(Messages && Messages.length > 1, 'More than one message in post-ingest queue')
 
   const message = Messages && Messages.length > 0 ? Messages[0] : undefined
-  const messageBody = message && message.Body ? JSON.parse(message.Body) : undefined
+  const messageBody = message && message.Body ? JSON.parse(message.Body) as Record<string, unknown> : undefined
 
   return {
-    message: messageBody && messageBody.Message ? JSON.parse(messageBody.Message) : undefined,
-    attrs: messageBody ? messageBody.MessageAttributes : undefined
+    message: messageBody && messageBody['Message'] ? JSON.parse(messageBody['Message'] as string) : undefined,
+    attrs: messageBody ? messageBody['MessageAttributes'] : undefined
   }
 }

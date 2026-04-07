@@ -1,5 +1,3 @@
-// @ts-nocheck
-
 import test from 'ava'
 import { randomId } from '../helpers/utils.js'
 import { setup } from '../helpers/system-tests.js'

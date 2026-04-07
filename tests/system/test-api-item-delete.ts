@@ -1,16 +1,21 @@
-// @ts-nocheck
-
 import test from 'ava'
+import type { ExecutionContext } from 'ava'
 import { deleteAllIndices } from '../helpers/database.js'
 import { ingestItem } from '../helpers/ingest.js'
 import { randomId, loadFixture } from '../helpers/utils.js'
 import { setup } from '../helpers/system-tests.js'
+import type { StandUpResult } from '../helpers/system-tests.js'
 
-test.before(async (t) => {
+type TestContext = StandUpResult & {
+  collectionId: string
+  itemId: string
+}
+
+test.before(async (t: ExecutionContext<TestContext>) => {
   await deleteAllIndices()
   const standUpResult = await setup()
 
-  t.context = standUpResult
+  t.context = standUpResult as TestContext
 
   t.context.collectionId = randomId('collection')
 
@@ -42,11 +47,11 @@ test.before(async (t) => {
   })
 })
 
-test.after.always(async (t) => {
+test.after.always(async (t: ExecutionContext<TestContext>) => {
   if (t.context.api) await t.context.api.close()
 })
 
-test('DELETE /collections/:collectionId/items/:itemId', async (t) => {
+test('DELETE /collections/:collectionId/items/:itemId', async (t: ExecutionContext<TestContext>) => {
   const { collectionId, itemId } = t.context
 
   const response = await t.context.api.client.delete(
@@ -59,15 +64,18 @@ test('DELETE /collections/:collectionId/items/:itemId', async (t) => {
   t.is(response.body, '')
 })
 
-test('DELETE /collections/:collectionId/items/:itemId for a non-existent id returns No Content"', async (t) => {
-  const { collectionId } = t.context
+test(
+  'DELETE /collections/:collectionId/items/:itemId for a non-existent id returns No Content"',
+  async (t: ExecutionContext<TestContext>) => {
+    const { collectionId } = t.context
 
-  const response = await t.context.api.client.delete(
-    `collections/${collectionId}/items/DOES_NOT_EXIST`,
-    { resolveBodyOnly: false, throwHttpErrors: false }
-  )
+    const response = await t.context.api.client.delete(
+      `collections/${collectionId}/items/DOES_NOT_EXIST`,
+      { resolveBodyOnly: false, throwHttpErrors: false }
+    )
 
-  t.is(response.statusCode, 204)
-  t.is(response.headers['content-type'], undefined)
-  t.is(response.body, '')
-})
+    t.is(response.statusCode, 204)
+    t.is(response.headers['content-type'], undefined)
+    t.is(response.body, '')
+  }
+)

@@ -1,13 +1,15 @@
-// @ts-nocheck
-
 import test from 'ava'
+import type { ExecutionContext } from 'ava'
 import got from 'got' // eslint-disable-line import/no-unresolved
 import { deleteAllIndices, refreshIndices } from '../helpers/database.js'
 import { randomId } from '../helpers/utils.js'
 import { processMessages } from '../../src/lib/ingest.js'
 import { setup, loadJson } from '../helpers/system-tests.js'
+import type { StandUpResult } from '../helpers/system-tests.js'
 
-test.before(async (t) => {
+type TestContext = StandUpResult
+
+test.before(async (t: ExecutionContext<TestContext>) => {
   await deleteAllIndices()
   const standUpResult = await setup()
 
@@ -19,29 +21,35 @@ test.beforeEach(async (_) => {
   delete process.env['ENABLE_FILTER_AUTHX']
 })
 
-test.after.always(async (t) => {
+test.after.always(async (t: ExecutionContext<TestContext>) => {
   if (t.context.api) await t.context.api.close()
 })
 
-test('GET /search returns an empty list of results for a collection that does not exist', async (t) => {
-  const collectionId = randomId('collection')
-  const searchParams = new URLSearchParams({ collections: [collectionId] })
+test(
+  'GET /search returns an empty list of results for a collection that does not exist',
+  async (t: ExecutionContext<TestContext>) => {
+    const collectionId = randomId('collection')
+    const searchParams = new URLSearchParams({ collections: [collectionId] })
 
-  const response = await t.context.api.client.get('search', { searchParams })
+    const response = await t.context.api.client.get('search', { searchParams })
 
-  t.true(Array.isArray(response.features))
-  t.is(response.features.length, 0)
-})
+    t.true(Array.isArray(response.features))
+    t.is(response.features.length, 0)
+  }
+)
 
-test('GET /search has a content type of "application/geo+json; charset=utf-8', async (t) => {
-  const response = await t.context.api.client.get('search', {
-    resolveBodyOnly: false
-  })
+test(
+  'GET /search has a content type of "application/geo+json; charset=utf-8',
+  async (t: ExecutionContext<TestContext>) => {
+    const response = await t.context.api.client.get('search', {
+      resolveBodyOnly: false
+    })
 
-  t.is(response.headers['content-type'], 'application/geo+json; charset=utf-8')
-})
+    t.is(response.headers['content-type'], 'application/geo+json; charset=utf-8')
+  }
+)
 
-test('/search preserve bbox in next links', async (t) => {
+test('/search preserve bbox in next links', async (t: ExecutionContext<TestContext>) => {
   const fixtureFiles = [
     'catalog.json',
     'collection.json',
@@ -78,7 +86,7 @@ test('/search preserve bbox in next links', async (t) => {
   t.falsy(nextResponse.links.find((x) => x.rel === 'next'))
 })
 
-test('/search preserve bbox and datetime in next links', async (t) => {
+test('/search preserve bbox and datetime in next links', async (t: ExecutionContext<TestContext>) => {
   const fixtureFiles = [
     'catalog.json',
     'collection.json',
@@ -114,7 +122,7 @@ test('/search preserve bbox and datetime in next links', async (t) => {
   t.deepEqual(nextUrl.searchParams.get('datetime'), datetime)
 })
 
-test('/search filter, query, and item search in single request', async (t) => {
+test('/search filter, query, and item search in single request', async (t: ExecutionContext<TestContext>) => {
   const fixtureFiles = [
     'collection.json',
     'collection2.json',
@@ -130,25 +138,18 @@ test('/search filter, query, and item search in single request', async (t) => {
     searchParams: new URLSearchParams({
       collections: ['landsat-8-l1'],
       query: JSON.stringify({
-        'view:sun_elevation': {
-          gt: 20
-        }
+        'view:sun_elevation': { gt: 20 }
       }),
       filter: JSON.stringify({
         op: '>',
-        args: [
-          {
-            property: 'eo:cloud_cover'
-          },
-          0.54
-        ]
+        args: [{ property: 'eo:cloud_cover' }, 0.54]
       })
     })
   })
   t.is(response.features.length, 1)
 })
 
-test('GET /search with restriction returns filtered collections', async (t) => {
+test('GET /search with restriction returns filtered collections', async (t: ExecutionContext<TestContext>) => {
   process.env['ENABLE_COLLECTIONS_AUTHX'] = 'true'
 
   const fixtureFiles = [
@@ -165,8 +166,7 @@ test('GET /search with restriction returns filtered collections', async (t) => {
   const path = 'search'
 
   {
-    const r = await t.context.api.client.get(path,
-      { resolveBodyOnly: false })
+    const r = await t.context.api.client.get(path, { resolveBodyOnly: false })
 
     t.is(r.statusCode, 200)
     t.is(r.body.features.length, 0)
@@ -180,9 +180,7 @@ test('GET /search with restriction returns filtered collections', async (t) => {
   }
   {
     const r = await t.context.api.client.get(path,
-      { resolveBodyOnly: false,
-        searchParams: { _collections: '*' }
-      })
+      { resolveBodyOnly: false, searchParams: { _collections: '*' } })
 
     t.is(r.statusCode, 200)
     t.is(r.body.features.length, 3)
@@ -190,25 +188,21 @@ test('GET /search with restriction returns filtered collections', async (t) => {
 
   {
     const r = await t.context.api.client.get(path,
-      { resolveBodyOnly: false,
-        searchParams: { _collections: `${collectionId},foo,bar` }
-      })
+      { resolveBodyOnly: false, searchParams: { _collections: `${collectionId},foo,bar` } })
 
     t.is(r.statusCode, 200)
     t.is(r.body.features.length, 2)
   }
   {
     const r = await t.context.api.client.get(path,
-      { resolveBodyOnly: false,
-        searchParams: { _collections: 'not-a-collection' }
-      })
+      { resolveBodyOnly: false, searchParams: { _collections: 'not-a-collection' } })
 
     t.is(r.statusCode, 200)
     t.is(r.body.features.length, 0)
   }
 })
 
-test('GET /search with filter restriction returns filtered results', async (t) => {
+test('GET /search with filter restriction returns filtered results', async (t: ExecutionContext<TestContext>) => {
   process.env['ENABLE_FILTER_AUTHX'] = 'true'
 
   const fixtureFiles = [
@@ -224,9 +218,7 @@ test('GET /search with filter restriction returns filtered results', async (t) =
 
   {
     const r = await t.context.api.client.get(urlpath,
-      { resolveBodyOnly: false,
-        searchParams: { }
-      })
+      { resolveBodyOnly: false, searchParams: {} })
 
     t.is(r.statusCode, 200)
     t.is(r.body.features.length, 3)
@@ -234,9 +226,7 @@ test('GET /search with filter restriction returns filtered results', async (t) =
 
   {
     const r = await t.context.api.client.get(urlpath,
-      { resolveBodyOnly: false,
-        searchParams: { _filter: null }
-      })
+      { resolveBodyOnly: false, searchParams: { _filter: null } })
 
     t.is(r.statusCode, 200)
     t.is(r.body.features.length, 3)
@@ -244,13 +234,9 @@ test('GET /search with filter restriction returns filtered results', async (t) =
 
   {
     const r = await t.context.api.client.get(urlpath,
-      { resolveBodyOnly: false,
-        searchParams: { _filter: JSON.stringify({
-          op: '=',
-          args: [
-            { property: 'id' }, 'foobar'
-          ]
-        }) }
+      {
+        resolveBodyOnly: false,
+        searchParams: { _filter: JSON.stringify({ op: '=', args: [{ property: 'id' }, 'foobar'] }) }
       })
 
     t.is(r.statusCode, 200)
@@ -259,30 +245,30 @@ test('GET /search with filter restriction returns filtered results', async (t) =
 
   {
     const r = await t.context.api.client.get(urlpath,
-      { resolveBodyOnly: false,
+      {
+        resolveBodyOnly: false,
         searchParams: {
           _filter: JSON.stringify({
             op: '<>',
-            args: [
-              { property: 'id' }, 'LC80100102015050LGN00'
-            ]
+            args: [{ property: 'id' }, 'LC80100102015050LGN00']
           })
-        } })
+        }
+      })
     t.is(r.statusCode, 200)
     t.is(r.body.features.length, 2)
   }
 
   {
     const r = await t.context.api.client.get(urlpath,
-      { resolveBodyOnly: false,
+      {
+        resolveBodyOnly: false,
         searchParams: {
           _filter: JSON.stringify({
             op: '=',
-            args: [
-              { property: 'landsat:scene_id' }, 'LC80100102015050LGN00'
-            ]
+            args: [{ property: 'landsat:scene_id' }, 'LC80100102015050LGN00']
           })
-        } })
+        }
+      })
 
     t.is(r.statusCode, 200)
     t.is(r.body.features.length, 1)
@@ -290,35 +276,12 @@ test('GET /search with filter restriction returns filtered results', async (t) =
 
   {
     const r = await t.context.api.client.get(urlpath,
-      { resolveBodyOnly: false,
+      {
+        resolveBodyOnly: false,
         searchParams: {
           _filter: JSON.stringify({
             op: '=',
-            args: [
-              { property: 'landsat:scene_id' }, 'foo'
-            ]
-          })
-        } })
-
-    t.is(r.statusCode, 200)
-    t.is(r.body.features.length, 0)
-  }
-
-  {
-    const r = await t.context.api.client.get(urlpath,
-      { resolveBodyOnly: false,
-        searchParams: {
-          _filter: JSON.stringify({
-            op: '=',
-            args: [
-              { property: 'id' }, 'LC80100102015050LGN00'
-            ]
-          }),
-          filter: JSON.stringify({
-            op: '=',
-            args: [
-              { property: 'id' }, 'LC80100102015082LGN00'
-            ]
+            args: [{ property: 'landsat:scene_id' }, 'foo']
           })
         }
       })
@@ -329,19 +292,36 @@ test('GET /search with filter restriction returns filtered results', async (t) =
 
   {
     const r = await t.context.api.client.get(urlpath,
-      { resolveBodyOnly: false,
+      {
+        resolveBodyOnly: false,
         searchParams: {
           _filter: JSON.stringify({
             op: '=',
-            args: [
-              { property: 'id' }, 'LC80100102015050LGN00'
-            ]
+            args: [{ property: 'id' }, 'LC80100102015050LGN00']
+          }),
+          filter: JSON.stringify({
+            op: '=',
+            args: [{ property: 'id' }, 'LC80100102015082LGN00']
+          })
+        }
+      })
+
+    t.is(r.statusCode, 200)
+    t.is(r.body.features.length, 0)
+  }
+
+  {
+    const r = await t.context.api.client.get(urlpath,
+      {
+        resolveBodyOnly: false,
+        searchParams: {
+          _filter: JSON.stringify({
+            op: '=',
+            args: [{ property: 'id' }, 'LC80100102015050LGN00']
           }),
           filter: JSON.stringify({
             op: '<>',
-            args: [
-              { property: 'id' }, 'LC80100102015082LGN00'
-            ]
+            args: [{ property: 'id' }, 'LC80100102015082LGN00']
           })
         }
       })
@@ -353,15 +333,15 @@ test('GET /search with filter restriction returns filtered results', async (t) =
   // header
   {
     const r = await t.context.api.client.get(urlpath,
-      { resolveBodyOnly: false,
+      {
+        resolveBodyOnly: false,
         searchParams: {
           _filter: JSON.stringify({
             op: '=',
-            args: [
-              { property: 'landsat:scene_id' }, 'LC80100102015050LGN00'
-            ]
+            args: [{ property: 'landsat:scene_id' }, 'LC80100102015050LGN00']
           })
-        } })
+        }
+      })
 
     t.is(r.statusCode, 200)
     t.is(r.body.features.length, 1)
@@ -371,38 +351,40 @@ test('GET /search with filter restriction returns filtered results', async (t) =
 
   {
     const r = await t.context.api.client.get(urlpath,
-      { resolveBodyOnly: false,
+      {
+        resolveBodyOnly: false,
         searchParams: {
           _filter: JSON.stringify({
             op: '=',
-            args: [
-              { property: 'landsat:scene_id' }, 'LC80100102015050LGN00'
-            ]
+            args: [{ property: 'landsat:scene_id' }, 'LC80100102015050LGN00']
           })
-        } })
+        }
+      })
 
     t.is(r.statusCode, 200)
     t.is(r.body.features.length, 3)
   }
 })
 
-test('/search sort unqualified field names fails', async (t) => {
-  const error = await t.throwsAsync(async () => t.context.api.client.get('search', {
-    searchParams: { sortby: '-datetime' }
-  }))
+test('/search sort unqualified field names fails', async (t: ExecutionContext<TestContext>) => {
+  const error = await t.throwsAsync(
+    async () => t.context.api.client.get('search', {
+      searchParams: { sortby: '-datetime' }
+    })
+  )
 
   t.is(error.response.statusCode, 400)
   t.truthy(error.response.body.description.includes('Hint: `sortby` requires fully qualified identifiers'))
 })
 
-test('/search invalid bbox throws error', async (t) => {
+test('/search invalid bbox throws error', async (t: ExecutionContext<TestContext>) => {
   // test invalid longitude
   {
-    const error = await t.throwsAsync(async () => t.context.api.client.post('search', {
-      json: {
-        bbox: [-190, -90, 180, 90]
-      }
-    }))
+    const error = await t.throwsAsync(
+      async () => t.context.api.client.post('search', {
+        json: { bbox: [-190, -90, 180, 90] }
+      })
+    )
     t.is(error.response.statusCode, 400)
     t.is(error.response.body.code, 'BadRequest')
     t.regex(
@@ -414,11 +396,11 @@ test('/search invalid bbox throws error', async (t) => {
 
   // test invalid latitude
   {
-    const error = await t.throwsAsync(async () => t.context.api.client.post('search', {
-      json: {
-        bbox: [-110, -100, 180, 90]
-      }
-    }))
+    const error = await t.throwsAsync(
+      async () => t.context.api.client.post('search', {
+        json: { bbox: [-110, -100, 180, 90] }
+      })
+    )
     t.is(error.response.statusCode, 400)
     t.is(error.response.body.code, 'BadRequest')
     t.regex(
@@ -430,11 +412,11 @@ test('/search invalid bbox throws error', async (t) => {
 
   // test 6 coords with invalid values
   {
-    const error = await t.throwsAsync(async () => t.context.api.client.post('search', {
-      json: {
-        bbox: [-190, -90, 180, 100, 10, 10]
-      }
-    }))
+    const error = await t.throwsAsync(
+      async () => t.context.api.client.post('search', {
+        json: { bbox: [-190, -90, 180, 100, 10, 10] }
+      })
+    )
     t.is(error.response.statusCode, 400)
     t.is(error.response.body.code, 'BadRequest')
     t.regex(
@@ -445,7 +427,7 @@ test('/search invalid bbox throws error', async (t) => {
   }
 })
 
-test('GET /search using "exclude" returns properly formatted links', async (t) => {
+test('GET /search using "exclude" returns properly formatted links', async (t: ExecutionContext<TestContext>) => {
   const fixtureFiles = [
     'LC80100102015050LGN00.json',
     'LC80100102015082LGN00.json'
@@ -454,8 +436,8 @@ test('GET /search using "exclude" returns properly formatted links', async (t) =
   await processMessages(items)
   await refreshIndices()
 
-  // specificall testing that using 'collection' and/or 'id' does not return
-  // any 'undefined' links, fields required to generate links
+  // testing that excluding 'collection' and/or 'id' does not return
+  // any 'undefined' links as these fields required to generate links
   {
     const response = await t.context.api.client.get('search', {
       resolveBodyOnly: false,
@@ -468,7 +450,6 @@ test('GET /search using "exclude" returns properly formatted links', async (t) =
     t.is(response.statusCode, 200)
     t.is(response.body.features.length, 1)
 
-    // check 'self' link
     const selfLink = response.body.features[0].links.find((l) => l.rel === 'self')
     const selfPath = new URL(selfLink.href).pathname
     t.is(selfPath, '/collections/landsat-8-l1/items/LC80100102015082LGN00')
@@ -494,7 +475,6 @@ test('GET /search using "exclude" returns properly formatted links', async (t) =
     t.is(response.statusCode, 200)
     t.is(response.body.features.length, 1)
 
-    // check 'self' link
     const selfLink = response.body.features[0].links.find((l) => l.rel === 'self')
     const selfPath = new URL(selfLink.href).pathname
     t.is(selfPath, '/collections/landsat-8-l1/items/LC80100102015082LGN00')

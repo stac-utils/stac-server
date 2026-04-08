@@ -1,16 +1,20 @@
-// @ts-nocheck
-
 import test from 'ava'
+import type { ExecutionContext } from 'ava'
 import { deleteAllIndices } from '../helpers/database.js'
 import { ingestItem } from '../helpers/ingest.js'
 import { randomId, loadFixture } from '../helpers/utils.js'
 import { setup } from '../helpers/system-tests.js'
+import type { StandUpResult } from '../helpers/system-tests.js'
 
-test.before(async (t) => {
+type TestContext = StandUpResult & {
+  collectionId: string
+}
+
+test.before(async (t: ExecutionContext<TestContext>) => {
   await deleteAllIndices()
   const standUpResult = await setup()
 
-  t.context = standUpResult
+  t.context = standUpResult as TestContext
 
   t.context.collectionId = randomId('collection')
 })
@@ -19,20 +23,27 @@ test.beforeEach(async (_) => {
   delete process.env['ENABLE_COLLECTIONS_AUTHX']
 })
 
-test.after.always(async (t) => {
+test.after.always(async (t: ExecutionContext<TestContext>) => {
   if (t.context.api) await t.context.api.close()
 })
 
-test('GET /collection/:collectionId/aggregations for non-existent collection returns Not Found', async (t) => {
-  const response = await t.context.api.client.get(
-    'collections/DOES_NOT_EXIST/aggregations',
-    { resolveBodyOnly: false, throwHttpErrors: false }
-  )
+test(
+  'GET /collection/:collectionId/aggregations for non-existent collection returns Not Found',
+  async (t: ExecutionContext<TestContext>) => {
+    const response = await t.context.api.client.get(
+      'collections/DOES_NOT_EXIST/aggregations',
+      { resolveBodyOnly: false, throwHttpErrors: false }
+    )
 
-  t.is(response.statusCode, 404)
-})
+    t.is(response.statusCode, 404)
+  }
+)
 
-const links = (proto, host, collectionId) => [
+const links = (
+  proto: string,
+  host: string,
+  collectionId: string
+) => [
   {
     rel: 'root',
     type: 'application/json',
@@ -50,8 +61,9 @@ const links = (proto, host, collectionId) => [
   }
 ]
 
-test('GET /collections/:collectionId/aggregations returns aggregations for collection with aggregations',
-  async (t) => {
+test(
+  'GET /collections/:collectionId/aggregations returns aggregations for collection with aggregations',
+  async (t: ExecutionContext<TestContext>) => {
     const collection = await loadFixture(
       'stac/collection-with-aggregations.json',
       { id: t.context.collectionId }
@@ -79,12 +91,14 @@ test('GET /collections/:collectionId/aggregations returns aggregations for colle
 
     t.is(response.statusCode, 200)
     t.is(response.headers['content-type'], 'application/json; charset=utf-8')
-    t.deepEqual(response.body.aggregations, collection.aggregations)
+    t.deepEqual(response.body.aggregations, collection['aggregations'])
     t.deepEqual(response.body.links, links(proto, host, collectionId))
-  })
+  }
+)
 
-test('GET /collections/:collectionId/aggregations returns default aggregations for collection without aggregations',
-  async (t) => {
+test(
+  'GET /collections/:collectionId/aggregations returns default aggregations for collection without aggregations',
+  async (t: ExecutionContext<TestContext>) => {
     const collection = await loadFixture(
       'stac/collection-without-aggregations.json',
       { id: t.context.collectionId }
@@ -132,40 +146,45 @@ test('GET /collections/:collectionId/aggregations returns default aggregations f
       },
     ])
     t.deepEqual(response.body.links, links(proto, host, collectionId))
-  })
+  }
+)
 
-test('GET /collections/:collectionId/aggregations with restriction returns filtered collections', async (t) => {
-  process.env['ENABLE_COLLECTIONS_AUTHX'] = 'true'
+test(
+  'GET /collections/:collectionId/aggregations with restriction returns filtered collections',
+  async (t: ExecutionContext<TestContext>) => {
+    process.env['ENABLE_COLLECTIONS_AUTHX'] = 'true'
 
-  const { collectionId } = t.context
+    const { collectionId } = t.context
 
-  const path = `collections/${collectionId}/aggregations`
+    const path = `collections/${collectionId}/aggregations`
 
-  t.is((await t.context.api.client.get(path,
-    { resolveBodyOnly: false, throwHttpErrors: false })).statusCode, 404)
+    t.is((await t.context.api.client.get(path,
+      { resolveBodyOnly: false, throwHttpErrors: false })).statusCode, 404)
 
-  t.is((await t.context.api.client.get(path,
-    {
-      resolveBodyOnly: false,
-      throwHttpErrors: false,
-      searchParams: { _collections: '' }
-    })).statusCode, 404)
+    t.is((await t.context.api.client.get(path,
+      {
+        resolveBodyOnly: false,
+        throwHttpErrors: false,
+        searchParams: { _collections: '' }
+      })).statusCode, 404)
 
-  t.is((await t.context.api.client.get(path,
-    {
-      resolveBodyOnly: false,
-      searchParams: { _collections: '*' }
-    })).statusCode, 200)
+    t.is((await t.context.api.client.get(path,
+      {
+        resolveBodyOnly: false,
+        searchParams: { _collections: '*' }
+      })).statusCode, 200)
 
-  t.is((await t.context.api.client.get(path,
-    {
-      resolveBodyOnly: false,
-      searchParams: { _collections: `${collectionId},foo,bar` }
-    })).statusCode, 200)
+    t.is((await t.context.api.client.get(path,
+      {
+        resolveBodyOnly: false,
+        searchParams: { _collections: `${collectionId},foo,bar` }
+      })).statusCode, 200)
 
-  t.is((await t.context.api.client.get(path,
-    { resolveBodyOnly: false,
-      throwHttpErrors: false,
-      searchParams: { _collections: 'not-a-collection' }
-    })).statusCode, 404)
-})
+    t.is((await t.context.api.client.get(path,
+      {
+        resolveBodyOnly: false,
+        throwHttpErrors: false,
+        searchParams: { _collections: 'not-a-collection' }
+      })).statusCode, 404)
+  }
+)

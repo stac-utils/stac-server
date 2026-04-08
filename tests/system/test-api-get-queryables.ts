@@ -1,12 +1,14 @@
-// @ts-nocheck
-
 import test from 'ava'
+import type { ExecutionContext } from 'ava'
 import { ingestItem } from '../helpers/ingest.js'
 import { randomId, loadFixture } from '../helpers/utils.js'
 import { refreshIndices, deleteAllIndices } from '../helpers/database.js'
 import { setup } from '../helpers/system-tests.js'
+import type { StandUpResult } from '../helpers/system-tests.js'
 
-test.before(async (t) => {
+type TestContext = StandUpResult
+
+test.before(async (t: ExecutionContext<TestContext>) => {
   await deleteAllIndices()
   const standUpResult = await setup()
 
@@ -26,7 +28,7 @@ test.before(async (t) => {
   })
 })
 
-test('GET /queryables', async (t) => {
+test('GET /queryables', async (t: ExecutionContext<TestContext>) => {
   await refreshIndices()
 
   const proto = randomId()
@@ -42,7 +44,6 @@ test('GET /queryables', async (t) => {
 
   t.is(response.statusCode, 200)
   t.is(response.headers['content-type'], 'application/schema+json; charset=utf-8')
-  // @ts-expect-error We need to validate these responses
   t.is(response.body.$id, `${proto}://${host}/queryables`)
   t.is(response.body.title, 'Queryables for STAC API')
   t.is(response.body.$schema, 'https://json-schema.org/draft/2020-12/schema')

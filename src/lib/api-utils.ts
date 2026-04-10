@@ -5,7 +5,9 @@ import { ValidationError } from './errors.js'
 import { bboxToPolygon } from './geo-utils.js'
 import { APIFields, APIParameters, Cql2Filter, QueryOperators } from './types.js'
 
-export const extractLimit = function (params: APIParameters): number | undefined {
+export const DEFAULT_LIMIT = 10
+
+export const extractLimit = function (params: APIParameters): number {
   const { limit: limitStr } = params
 
   if (limitStr !== undefined) {
@@ -34,7 +36,7 @@ export const extractLimit = function (params: APIParameters): number | undefined
 
     return limit
   }
-  return undefined
+  return DEFAULT_LIMIT
 }
 
 export const extractPrecision = function (

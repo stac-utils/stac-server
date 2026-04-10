@@ -34,7 +34,7 @@
         "notes": "fast-xml-parser is a transitive dependency of @redocly/cli via openapi-sampler, used only as a build tool to generate static API documentation. This second incomplete fix for CVE-2026-26278 affects numeric entity expansion limits. We do not configure fast-xml-parser directly and @redocly/cli is never run against untrusted input, making this not exploitable.",
         "expiry": "2026-06-30"
     },
-    "1115359": {
+    "1116307": {
         "active": true,
         "notes": "fast-xml-parser is a transitive dependency of @redocly/cli via openapi-sampler, used only as a build tool to generate static API documentation. The entity expansion limit bypass via JavaScript falsy evaluation of zero values only affects applications that explicitly configure maxEntityCount:0 or maxEntitySize:0. We do not configure fast-xml-parser directly and @redocly/cli is never run against untrusted input, making this not exploitable.",
         "expiry": "2026-06-30"

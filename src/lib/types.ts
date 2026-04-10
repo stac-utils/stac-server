@@ -5,10 +5,6 @@ import type { Geometry, BBox, GeoJSON } from 'geojson'
 // ----- STAC -----------------------------------------------------
 //
 
-//
-// ----- STAC -----------------------------------------------------
-//
-
 export interface StacItem {
   type: 'Feature'
   stac_version: string

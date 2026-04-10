@@ -404,7 +404,7 @@ const searchItems = async function (
   )
   const specifiedCollectionIds = extractCollectionIds(parameters)
   const collections = filterAllowedCollectionIds(allowedCollectionIds, specifiedCollectionIds)
-  const limit = extractLimit(parameters) || 10
+  const limit = extractLimit(parameters)
   const page = extractPage(parameters)
 
   const searchParams = pickBy({

@@ -10,7 +10,7 @@ test.beforeEach(() => {
 })
 
 test('extractLimit return default when not specified', (t) => {
-  t.is(extractLimit({}), 10)
+  t.is(extractLimit({}), DEFAULT_LIMIT)
 })
 
 test('extractLimit when set', (t) => {

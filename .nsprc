@@ -114,6 +114,16 @@
         "notes": "path-to-regexp is a transitive dependency of express. A DoS via multiple route parameters is a low practical risk for stac-server: deployments are primarily hosted on AWS which provides built-in DDoS detection and mitigation, and the underlying data is generally not mission critical. A fix is expected upstream in the near future and will be incorporated before the next release.",
         "expiry": "2026-04-30"
     },
+    "1116663": {
+        "active": true,
+        "notes": "dompurify is a transitive dependency of @redocly/cli via redoc, used only for API documentation rendering. The ADD_TAGS function form bypassing FORBID_TAGS due to short-circuit evaluation requires both ADD_TAGS as a function and FORBID_TAGS to be configured simultaneously. We do not configure DOMPurify directly and redoc is only used to render static API documentation, making this not exploitable in our usage context.",
+        "expiry": "2026-09-30"
+    },
+    "1116832": {
+        "active": true,
+        "notes": "protobufjs is a transitive dependency of @redocly/cli via @opentelemetry/otlp-transformer, used only as a build tool to generate static API documentation. The arbitrary code execution via malicious protobuf definitions requires attacker-controlled protobuf definition files, which is not possible in our usage context as @redocly/cli is never run against untrusted input.",
+        "expiry": "2026-06-30"
+    },
     "1115805": {
         "active": true,
         "notes": "lodash-es is a direct dependency. The _.template code injection vulnerability only affects use of the _.template function, which is not used anywhere in stac-server. The imported functions (pickBy, assign, get, isEmpty) are not affected.",

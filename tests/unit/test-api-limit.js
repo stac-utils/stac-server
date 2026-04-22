@@ -3,13 +3,14 @@
 import test from 'ava'
 import { extractLimit } from '../../src/lib/api.js'
 import { ValidationError } from '../../src/lib/errors.js'
+import { DEFAULT_LIMIT } from '../../src/lib/api-utils.js'
 
 test.beforeEach(() => {
   delete process.env['ITEMS_MAX_LIMIT']
 })
 
-test('extractLimit undefined', (t) => {
-  t.falsy(extractLimit({}), 'Returns undefined when no limit parameter')
+test('extractLimit return default when not specified', (t) => {
+  t.is(extractLimit({}), DEFAULT_LIMIT)
 })
 
 test('extractLimit when set', (t) => {

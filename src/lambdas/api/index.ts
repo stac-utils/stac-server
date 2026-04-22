@@ -8,6 +8,7 @@ import { z } from 'zod'
 import serverless from 'serverless-http'
 import { InvocationResponse, Lambda } from '@aws-sdk/client-lambda'
 import { APIGatewayProxyEvent, APIGatewayProxyResult, Context } from 'aws-lambda'
+import express from 'express'
 import { createApp } from './app.js'
 import logger from '../../lib/logger.js'
 import {
@@ -25,6 +26,17 @@ const internalServerError = Object.freeze({
   },
   body: 'Internal Server Error'
 }) as APIGatewayProxyResult
+
+// const appInstance = await createApp()
+
+let appInstance: express.Express | undefined
+
+const getAppInstance = async (): Promise<express.Express> => {
+  if (!appInstance) {
+    appInstance = await createApp()
+  }
+  return appInstance
+}
 
 const logZodParseError = (
   data: unknown,
@@ -136,9 +148,7 @@ const callServerlessApp = async (
   event: APIGatewayProxyEvent,
   context: Context
 ): Promise<APIGatewayProxyResult> => {
-  const appInstance = await createApp()
-
-  const result = await serverless(appInstance)(event, context)
+  const result = await serverless(await getAppInstance())(event, context)
 
   try {
     return APIGatewayProxyResultSchema.parse(result)
@@ -150,7 +160,7 @@ const callServerlessApp = async (
 }
 
 const parseEvent = (
-  rawEvent: APIGatewayProxyEvent
+  rawEvent: unknown
 ): APIGatewayProxyEvent => {
   const event = APIGatewayProxyEventSchema.parse(rawEvent)
 
@@ -168,7 +178,7 @@ const parseEvent = (
 }
 
 export const handler = async (
-  event: APIGatewayProxyEvent,
+  event: unknown,
   context: Context
 ): Promise<APIGatewayProxyResult> => {
   if (!process.env['AWS_REGION']) {

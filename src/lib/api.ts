@@ -367,7 +367,7 @@ const buildPaginationLinks = function (
 const searchItems = async function (
   backend: Backend,
   httpMethod: string,
-  collectionId: string | null,
+  collectionId: string,
   endpoint: string,
   parameters: APIParameters,
   headers: IncomingHttpHeaders
@@ -404,7 +404,7 @@ const searchItems = async function (
   )
   const specifiedCollectionIds = extractCollectionIds(parameters)
   const collections = filterAllowedCollectionIds(allowedCollectionIds, specifiedCollectionIds)
-  const limit = extractLimit(parameters) || 10
+  const limit = extractLimit(parameters)
   const page = extractPage(parameters)
 
   const searchParams = pickBy({
@@ -537,7 +537,7 @@ const agg = function (
 const aggregate = async function (
   backend: Backend,
   httpMethod: string,
-  collectionId: string | null,
+  collectionId: string,
   endpoint: string,
   parameters: APIParameters,
   headers: IncomingHttpHeaders

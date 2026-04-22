@@ -6,6 +6,7 @@ import {
   StacItem,
   StacServerMessage,
   DbAction,
+  FeatureCollection,
 } from './types.js'
 
 export function isCollection(record: StacServerMessage): record is StacCollection {
@@ -27,6 +28,10 @@ export function isItem(record: StacServerMessage): record is StacItem {
     throw new InvalidSTACItemException('STAC Items must include a "collection" field')
   }
   return false
+}
+
+export function isFeatureCollection(record: StacServerMessage): record is FeatureCollection {
+  return record && record.type === 'FeatureCollection'
 }
 
 export function isStacEntity(record: StacServerMessage): record is StacRecord {

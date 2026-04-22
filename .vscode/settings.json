@@ -17,4 +17,7 @@
   },
   "editor.tabSize": 2,
   "files.insertFinalNewline": true,
+  "typescript.tsserver.maxTsServerMemory": 4096,
+  "typescript.tsserver.experimental.enableProjectDiagnostics": false,
+  "typescript.disableAutomaticTypeAcquisition": true
 }

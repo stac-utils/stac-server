@@ -1,7 +1,10 @@
-/* eslint-disable import/prefer-default-export */
+import { APIGatewayProxyResult, Context } from 'aws-lambda'
 import logger from '../../lib/logger.js'
 
-export const handler = async (event, _context) => {
+export const handler = async (
+  event: APIGatewayProxyResult,
+  _context: Context
+): Promise<APIGatewayProxyResult> => {
   logger.debug('Event: %j', event)
 
   const result = { ...event }
@@ -10,12 +13,8 @@ export const handler = async (event, _context) => {
     const body = JSON.parse(event.body)
     if (body['type'] === 'FeatureCollection') {
       logger.debug('Response is a FeatureCollection')
-      // the set result.body to a string of a modified body
-      // result.body = JSON.stringify(body)
     } else if (body['type'] === 'Feature') {
       logger.debug('Response is a Feature')
-      // the set result.body to a string of a modified body
-      // result.body = JSON.stringify(body)
     }
   }
 

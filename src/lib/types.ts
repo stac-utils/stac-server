@@ -42,6 +42,12 @@ export interface StacCollection {
   item_assets?: {[key: string]: Asset}
 }
 
+export interface FeatureCollection {
+  type: 'FeatureCollection',
+  features: StacItem[],
+  links: Link[]
+}
+
 export interface StacCatalog {
   stac_version: string
   type: string
@@ -53,6 +59,8 @@ export interface StacCatalog {
 }
 
 export type StacRecord = StacItem | StacCollection
+
+export type ApiRecord = StacRecord | DbAction
 
 export interface Link {
   href: string
@@ -108,7 +116,7 @@ export interface ItemProperties {
   [key: string]: unknown // permit additional fields by user
 }
 
-export type StacServerMessage = StacRecord | DbAction
+export type StacServerMessage = StacRecord | DbAction | FeatureCollection
 
 export interface Queryables {
   $schema: string
@@ -263,12 +271,6 @@ export interface QueryParameters {
   filter?: Cql2Filter
 }
 
-// only used when truncating via sns or sqs
-export interface DbAction {
-  type: 'action'
-  command: 'truncate'
-  collection: string
-}
 //
 // ---------------------------------------------------------------
 //
@@ -383,6 +385,54 @@ export interface StacApiResult {
   features?: StacItem[]
   links: Link[]
 }
+
+// for index operations with items or collections
+export interface IndexDbOperation {
+  index: string
+  id: string
+  action: 'index'
+  _retry_on_conflict: number
+  body: StacItem | StacCollection
+}
+
+// utilizing transaction extensin
+export interface TruncateDbOperation {
+  index: string
+  id: undefined
+  action: 'truncate'
+  _retry_on_conflict: number
+  body: DbAction
+}
+
+export type DbOperation = IndexDbOperation | TruncateDbOperation
+
+export interface DbOperationSuccess {
+  record: ApiRecord
+  dbRecord: DbOperation
+  result: ApiResponse
+  error: undefined
+}
+
+export interface DbOperationFailure {
+  record: ApiRecord
+  dbRecord: DbOperation | undefined
+  result: undefined
+  error: Error
+}
+
+export type DbOperationResult = DbOperationSuccess | DbOperationFailure
+
+// only used when truncating via sns or sqs
+export interface DbAction {
+  type: 'action'
+  command: 'truncate'
+  collection: string
+}
+//
+// ---------------------------------------------------------------
+//
+//
+// ── Search ─────────────────────────────────────────────────────
 
 //
 //

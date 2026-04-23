@@ -34,7 +34,11 @@ const isStacRecordRef = (message: unknown): message is StacRecordRef =>
 
 const isSqsEvent = (event: SQSEvent | ApiRecord): event is SQSEvent => 'Records' in event
 
-const isSnsMessage = (record): record is SNSMessage => record.Type === 'Notification'
+const isSnsMessage = (record: unknown): record is SNSMessage =>
+  typeof record === 'object'
+  && record != null
+  && 'Type' in record
+  && record.Type === 'Notification'
 
 const stacRecordFromSnsMessage = async (
   message: StacRecord | StacRecordRef
@@ -46,7 +50,7 @@ const stacRecordFromSnsMessage = async (
       return await getObjectJson({
         bucket: hostname,
         key: pathname.replace(/^\//, '')
-      })
+      }) as StacRecord
     }
 
     if (protocol.startsWith('http')) {

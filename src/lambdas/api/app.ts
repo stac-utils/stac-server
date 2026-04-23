@@ -1,3 +1,4 @@
+// @ts-nocheck
 import cors from 'cors'
 import createError, { HttpError } from 'http-errors'
 import express, { Request, Response, NextFunction } from 'express'

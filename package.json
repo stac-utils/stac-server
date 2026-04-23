@@ -33,7 +33,10 @@
   },
   "ava": {
     "verbose": true,
-    "timeout": "1m"
+    "timeout": "1m",
+    "extensions": [
+      "ts"
+    ]
   },
   "publishConfig": {
     "access": "public"

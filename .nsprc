@@ -39,6 +39,11 @@
         "notes": "fast-xml-parser is a transitive dependency of @redocly/cli via openapi-sampler, used only as a build tool to generate static API documentation. The entity expansion limit bypass via JavaScript falsy evaluation of zero values only affects applications that explicitly configure maxEntityCount:0 or maxEntitySize:0. We do not configure fast-xml-parser directly and @redocly/cli is never run against untrusted input, making this not exploitable.",
         "expiry": "2026-06-30"
     },
+    "1116957": {
+        "active": true,
+        "notes": "fast-xml-parser is a transitive dependency of @redocly/cli via openapi-sampler, used only as a build tool to generate static API documentation. The XMLBuilder XML comment and CDATA injection via unescaped delimiters requires use of the XMLBuilder API with attacker-controlled input. We do not use fast-xml-parser directly and @redocly/cli is never run against untrusted input, making this not exploitable.",
+        "expiry": "2026-06-30"
+    },
     "1115541": {
         "active": true,
         "notes": "brace-expansion is a transitive dependency of redoc, used only for API documentation rendering. The zero-step sequence causing process hang is not exploitable as brace-expansion is never used to process untrusted input in our usage context.",

@@ -44,8 +44,7 @@ export interface StacCollection {
 
 export interface FeatureCollection {
   type: 'FeatureCollection',
-  features: StacItem[],
-  links: Link[]
+  features: StacItem[]
 }
 
 export interface StacCatalog {

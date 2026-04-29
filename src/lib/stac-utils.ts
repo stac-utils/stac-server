@@ -30,9 +30,11 @@ export function isItem(record: StacServerMessage): record is StacItem {
   return false
 }
 
-export function isFeatureCollection(record: StacServerMessage): record is FeatureCollection {
-  return record && record.type === 'FeatureCollection'
-}
+export const isFeatureCollection = (record: StacServerMessage): record is FeatureCollection =>
+  typeof record === 'object'
+  && record != null
+  && ('type' in record && 'features' in record)
+  && record.type === 'FeatureCollection'
 
 export function isStacEntity(record: StacServerMessage): record is StacRecord {
   return isItem(record) || isCollection(record)

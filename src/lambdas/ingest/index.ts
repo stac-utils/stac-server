@@ -32,13 +32,21 @@ const isStacRecordRef = (message: unknown): message is StacRecordRef =>
   && 'href' in message
   && typeof (message as StacRecordRef).href === 'string'
 
-const isSqsEvent = (event: SQSEvent | ApiRecord): event is SQSEvent => 'Records' in event
+const isSqsEvent = (
+  event: SQSEvent | ApiRecord
+): event is SQSEvent => 'Records' in event
 
 const isSnsMessage = (record: unknown): record is SNSMessage =>
   typeof record === 'object'
   && record != null
   && 'Type' in record
   && record.Type === 'Notification'
+
+const isInitIndicesEvent = (event: unknown): event is InitIndicesEvent =>
+  typeof event === 'object'
+  && event !== null
+  && 'create_indices' in event
+  && (event as InitIndicesEvent).create_indices === true
 
 const stacRecordFromSnsMessage = async (
   message: StacRecord | StacRecordRef
@@ -81,11 +89,16 @@ const stacRecordsFromSqsEvent = async (event: SQSEvent): Promise<StacRecord[]> =
   )
 }
 
-export const handler = async (event: SQSEvent | ApiRecord, _context: Context): Promise<void> => {
+export interface InitIndicesEvent {create_indices: true}
+
+export const handler = async (
+  event: SQSEvent | ApiRecord | InitIndicesEvent,
+  _context: Context
+): Promise<void> => {
   logger.debug('Event: %j', event)
 
   // one off direct invocation to initialize indices - not a real SQS/SNS event
-  if ((event as { create_indices?: boolean }).create_indices) {
+  if (isInitIndicesEvent(event)) {
     await createIndex('collections')
     return
   }

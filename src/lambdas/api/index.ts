@@ -19,15 +19,13 @@ import {
   LambdaError
 } from './types.js'
 
-const internalServerError = Object.freeze({
+const internalServerError: Readonly<APIGatewayProxyResult> = Object.freeze({
   statusCode: 500,
   headers: {
     'content-type': 'text/plain'
   },
   body: 'Internal Server Error'
 }) as APIGatewayProxyResult
-
-// const appInstance = await createApp()
 
 let appInstance: express.Express | undefined
 
@@ -64,7 +62,7 @@ const invokePreHook = async (
   lambda: Lambda,
   preHook: string,
   payload: APIGatewayProxyEvent
-): Promise<APIGatewayProxyEvent|APIGatewayProxyResult> => {
+): Promise<APIGatewayProxyEvent | APIGatewayProxyResult> => {
   let invocationResponse: InvocationResponse
   try {
     invocationResponse = await lambda.invoke({
@@ -85,7 +83,7 @@ const invokePreHook = async (
 
   const rawHookResult = JSON.parse(invocationResponse.Payload.toString())
 
-  let hookResult: APIGatewayProxyEvent|APIGatewayProxyResult | LambdaError
+  let hookResult: APIGatewayProxyEvent | APIGatewayProxyResult | LambdaError
   try {
     // @ts-expect-error https://github.com/colinhacks/zod/issues/980
     hookResult = PreHookResultSchema.parse(rawHookResult)

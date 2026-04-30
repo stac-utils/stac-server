@@ -76,10 +76,6 @@ export async function executeDbOperation(
 ): Promise<ApiResponse> {
   const { index, id, body, action } = dbOp
 
-  if (!index) {
-    throw new InvalidIngestError('Index must defined, likely in "collection".')
-  }
-
   const client = await dbClient()
 
   // is this needed or will update just fail anyway and move on?
@@ -153,19 +149,19 @@ function logIngestItemsResults(results: DbOperationResult[]) {
 
 /* eslint-disable no-await-in-loop */
 
-export async function processMessages(msgs: ApiRecord[]): Promise<DbOperationResult[]> {
+export async function processMessages(
+  msgs: ApiRecord[]
+): Promise<DbOperationResult[]> {
   const results: DbOperationResult[] = []
   // apply messages one-at-a-time in sequence
   for (const msg of msgs) {
     let dbOp: DbOperation | undefined
-    let result: ApiResponse | undefined
-    let error: Error | undefined
     try {
       dbOp = await convertIngestMsgToDbOperation(msg)
-      result = await executeDbOperation(dbOp)
+      const result = await executeDbOperation(dbOp)
       results.push({ record: msg, dbRecord: dbOp, result, error: undefined })
     } catch (e) {
-      error = e instanceof Error ? e : new Error(String(e))
+      const error = e instanceof Error ? e : new Error(String(e))
       results.push({ record: msg, dbRecord: dbOp, result: undefined, error })
     }
   }

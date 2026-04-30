@@ -2,32 +2,32 @@
     "1113461": {
         "active": true,
         "notes": "minimatch is a transitive dependency of @redocly/cli and redoc, used only for API documentation rendering. The vulnerable wildcard pattern matching is not exposed to user input in our usage context, making ReDoS exploitation not feasible.",
-        "expiry": "2026-04-25"
+        "expiry": "2026-09-30"
     },
     "1113466": {
         "active": true,
         "notes": "minimatch is a transitive dependency of @redocly/cli and redoc, used only for API documentation rendering. The vulnerable wildcard pattern matching is not exposed to user input in our usage context, making ReDoS exploitation not feasible.",
-        "expiry": "2026-04-25"
+        "expiry": "2026-09-30"
     },
     "1113540": {
         "active": true,
         "notes": "minimatch is a transitive dependency of @redocly/cli and redoc, used only for API documentation rendering. The vulnerable wildcard pattern matching is not exposed to user input in our usage context, making ReDoS exploitation not feasible.",
-        "expiry": "2026-04-25"
+        "expiry": "2026-09-30"
     },
     "1113545": {
         "active": true,
         "notes": "minimatch is a transitive dependency of @redocly/cli and redoc, used only for API documentation rendering. The vulnerable wildcard pattern matching is not exposed to user input in our usage context, making ReDoS exploitation not feasible.",
-        "expiry": "2026-04-25"
+        "expiry": "2026-09-30"
     },
     "1113548": {
         "active": true,
         "notes": "minimatch is a transitive dependency of @redocly/cli and redoc, used only for API documentation rendering. The vulnerable wildcard pattern matching is not exposed to user input in our usage context, making ReDoS exploitation not feasible.",
-        "expiry": "2026-04-25"
+        "expiry": "2026-09-30"
     },
     "1113553": {
         "active": true,
         "notes": "minimatch is a transitive dependency of @redocly/cli and redoc, used only for API documentation rendering. The vulnerable wildcard pattern matching is not exposed to user input in our usage context, making ReDoS exploitation not feasible.",
-        "expiry": "2026-04-25"
+        "expiry": "2026-09-30"
     },
     "1115339": {
         "active": true,
@@ -117,29 +117,34 @@
     "1115527": {
         "active": true,
         "notes": "path-to-regexp is a transitive dependency of express. A DoS via multiple route parameters is a low practical risk for stac-server: deployments are primarily hosted on AWS which provides built-in DDoS detection and mitigation, and the underlying data is generally not mission critical. A fix is expected upstream in the near future and will be incorporated before the next release.",
-        "expiry": "2026-04-30"
+        "expiry": "2026-09-30"
     },
     "1116663": {
         "active": true,
         "notes": "dompurify is a transitive dependency of @redocly/cli via redoc, used only for API documentation rendering. The ADD_TAGS function form bypassing FORBID_TAGS due to short-circuit evaluation requires both ADD_TAGS as a function and FORBID_TAGS to be configured simultaneously. We do not configure DOMPurify directly and redoc is only used to render static API documentation, making this not exploitable in our usage context.",
         "expiry": "2026-09-30"
     },
-    "1116950": {
+    "1117138": {
         "active": true,
         "notes": "dompurify is a transitive dependency of @redocly/cli via redoc, used only for API documentation rendering. The FORBID_TAGS bypass via function-based ADD_TAGS predicate requires direct DOMPurify configuration with both options simultaneously. We do not configure DOMPurify directly and redoc is only used to render static API documentation, making this not exploitable in our usage context.",
         "expiry": "2026-09-30"
     },
-    "1116951": {
+    "1117139": {
         "active": true,
         "notes": "dompurify is a transitive dependency of @redocly/cli via redoc, used only for API documentation rendering. The SAFE_FOR_TEMPLATES bypass in RETURN_DOM mode requires direct DOMPurify configuration with RETURN_DOM mode enabled. We do not configure DOMPurify directly and redoc is only used to render static API documentation, making this not exploitable in our usage context.",
         "expiry": "2026-09-30"
     },
-    "1116952": {
+    "1117140": {
         "active": true,
         "notes": "dompurify is a transitive dependency of @redocly/cli via redoc, used only for API documentation rendering. The prototype pollution to XSS bypass via CUSTOM_ELEMENT_HANDLING fallback requires attacker-controlled input to DOMPurify. We do not configure DOMPurify directly and redoc is only used to render static API documentation, making this not exploitable in our usage context.",
         "expiry": "2026-09-30"
     },
-    "1116832": {
+    "1117015": {
+        "active": true,
+        "notes": "postcss is a transitive dependency of @redocly/cli via styled-components, used only as a build tool to generate static API documentation. The XSS via unescaped </style> in CSS stringify output requires attacker-controlled CSS input processed by PostCSS. We do not use PostCSS directly and @redocly/cli is never run against untrusted input, making this not exploitable.",
+        "expiry": "2026-09-30"
+    },
+    "1117042": {
         "active": true,
         "notes": "protobufjs is a transitive dependency of @redocly/cli via @opentelemetry/otlp-transformer, used only as a build tool to generate static API documentation. The arbitrary code execution via malicious protobuf definitions requires attacker-controlled protobuf definition files, which is not possible in our usage context as @redocly/cli is never run against untrusted input.",
         "expiry": "2026-06-30"

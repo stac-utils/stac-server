@@ -6,6 +6,7 @@ import {
   StacItem,
   StacServerMessage,
   DbAction,
+  FeatureCollection,
 } from './types.js'
 
 export function isCollection(record: StacServerMessage): record is StacCollection {
@@ -28,6 +29,12 @@ export function isItem(record: StacServerMessage): record is StacItem {
   }
   return false
 }
+
+export const isFeatureCollection = (record: StacServerMessage): record is FeatureCollection =>
+  typeof record === 'object'
+  && record != null
+  && ('type' in record && 'features' in record)
+  && record.type === 'FeatureCollection'
 
 export function isStacEntity(record: StacServerMessage): record is StacRecord {
   return isItem(record) || isCollection(record)

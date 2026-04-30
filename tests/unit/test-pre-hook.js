@@ -6,7 +6,7 @@ import {
   SecretsManagerClient,
   GetSecretValueCommand,
 } from '@aws-sdk/client-secrets-manager'
-import { handler, apiKeys } from '../../src/lambdas/pre-hook/index.js'
+import { handler, getApiKeys } from '../../src/lambdas/pre-hook/index.js'
 
 const DEFAULT_EVENT = {
   body: 'eyJ0ZXN0IjoiYm9keSJ9',
@@ -82,7 +82,8 @@ const response401 = {
 
 test.beforeEach(() => {
   secretsManagerMock.reset()
-  apiKeys.clear()
+  const apikeys = getApiKeys()
+  apikeys.clear()
 })
 
 test.serial('authenticate cases', async (t) => {

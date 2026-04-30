@@ -1,17 +1,19 @@
-// @ts-nocheck
 // convert to ts further along in migration
 
+import { ApiResponse } from '@opensearch-project/opensearch'
 import { getItemCreated, collectionUniqueIndexID } from './database.js'
 import { addItemLinks, addCollectionLinks } from './api.js'
 import { dbClient, createIndex } from './database-client.js'
 import logger from './logger.js'
 import { publishRecordToSns } from './sns.js'
 import { isCollection, isItem, isAction, isStacEntity } from './stac-utils.js'
+import { ApiRecord, DbOperation, DbOperationResult, StacRecord } from './types.js'
+import { AssetProxy } from './asset-proxy.js'
 
 const COLLECTIONS_INDEX = process.env['COLLECTIONS_INDEX'] || 'collections'
 
 export class InvalidIngestError extends Error {
-  constructor(message) {
+  constructor(message: string) {
     super(message)
     this.name = 'InvalidIngestError'
   }
@@ -19,60 +21,60 @@ export class InvalidIngestError extends Error {
 
 const hierarchyLinks = ['self', 'root', 'parent', 'child', 'collection', 'item', 'items']
 
-export async function convertIngestMsgToDbOperation(data) {
-  let index
-  let action
+export async function convertIngestMsgToDbOperation(data: ApiRecord): Promise<DbOperation> {
   logger.debug('data', data)
-  if (isCollection(data)) {
-    index = COLLECTIONS_INDEX
-    action = 'index'
-  } else if (isItem(data)) {
-    index = collectionUniqueIndexID(data.collection)
-    action = 'index'
-  } else if (isAction(data)) {
-    index = collectionUniqueIndexID(data.collection)
-    action = data.command
-  } else {
-    throw new InvalidIngestError(
-      `Expected 'type' to be 'Collection', 'Feature', or 'action', not '${data.type}'`
-    )
-  }
 
   const links = isStacEntity(data)
     ? (data.links || []).filter(
       (link) => !hierarchyLinks.includes(link.rel)
     )
     : []
-  const dbDataObject = { ...data, links }
-
-  if (data.hasOwnProperty('properties')) {
+  if (isCollection(data)) {
+    return {
+      index: COLLECTIONS_INDEX,
+      action: 'index',
+      id: data.id,
+      _retry_on_conflict: 3,
+      body: { ...data, links }
+    }
+  } if (isItem(data)) {
     const now = (new Date()).toISOString()
-
     const created = (await getItemCreated(data.collection, data.id)) || now
-
-    // @ts-ignore
-    dbDataObject.properties.created = created
-    // @ts-ignore
-    dbDataObject.properties.updated = now
+    const body = {
+      ...data,
+      links,
+      properties: {
+        ...data.properties,
+        created,
+        updated: now
+      }
+    }
+    return {
+      index: collectionUniqueIndexID(data.collection),
+      id: data.id,
+      action: 'index',
+      _retry_on_conflict: 3,
+      body
+    }
+  } if (isAction(data)) {
+    return {
+      index: collectionUniqueIndexID(data.collection),
+      id: undefined,
+      action: data.command,
+      _retry_on_conflict: 3,
+      body: data
+    }
   }
-
-  return {
-    index,
-    id: dbDataObject.id,
-    action,
-    _retry_on_conflict: 3,
-    body: dbDataObject
-  }
+  throw new InvalidIngestError(
+    `Expected 'type' to be 'Collection', 'Feature', or 'action'.
+    Input was '${JSON.stringify(data)}'`
+  )
 }
 
 export async function executeDbOperation(
-  /** @type {{ index: string; id: string; body: {}; action: string}} */ record
-) {
-  const { index, id, body, action } = record
-
-  if (!index) {
-    throw new InvalidIngestError('Index must defined, likely in "collection".')
-  }
+  dbOp: DbOperation
+): Promise<ApiResponse> {
+  const { index, id, body, action } = dbOp
 
   const client = await dbClient()
 
@@ -89,7 +91,6 @@ export async function executeDbOperation(
   if (action === 'index') {
     result = await client.index({
       index,
-      type: '_doc',
       id,
       body
     })
@@ -130,7 +131,7 @@ export async function executeDbOperation(
   return result
 }
 
-function logIngestItemsResults(results) {
+function logIngestItemsResults(results: DbOperationResult[]) {
   results.forEach((result) => {
     if (result.error) {
       if (result.error instanceof InvalidIngestError) {
@@ -148,20 +149,21 @@ function logIngestItemsResults(results) {
 
 /* eslint-disable no-await-in-loop */
 
-export async function processMessages(msgs) {
-  const results = []
+export async function processMessages(
+  msgs: ApiRecord[]
+): Promise<DbOperationResult[]> {
+  const results: DbOperationResult[] = []
   // apply messages one-at-a-time in sequence
   for (const msg of msgs) {
-    let dbOp
-    let result
-    let error
+    let dbOp: DbOperation | undefined
     try {
       dbOp = await convertIngestMsgToDbOperation(msg)
-      result = await executeDbOperation(dbOp)
+      const result = await executeDbOperation(dbOp)
+      results.push({ record: msg, dbRecord: dbOp, result, error: undefined })
     } catch (e) {
-      error = e
+      const error = e instanceof Error ? e : new Error(String(e))
+      results.push({ record: msg, dbRecord: dbOp, result: undefined, error })
     }
-    results.push({ record: msg, dbRecord: dbOp, result, error })
   }
   logIngestItemsResults(results)
   return results
@@ -170,7 +172,7 @@ export async function processMessages(msgs) {
 /* eslint-enable no-await-in-loop */
 
 // Impure - mutates record
-function updateLinksAndHrefsWithinRecord(record, assetProxy) {
+function updateLinksAndHrefsWithinRecord(record: StacRecord, assetProxy: AssetProxy): StacRecord {
   const endpoint = process.env['STAC_API_URL']
   if (!endpoint) {
     logger.info('STAC_API_URL not set, not updating links within ingested record')
@@ -178,7 +180,7 @@ function updateLinksAndHrefsWithinRecord(record, assetProxy) {
   }
 
   record.links = record.links.filter(
-    (/** @type {{ rel: string; }} */ link) => !hierarchyLinks.includes(link.rel)
+    (link) => !hierarchyLinks.includes(link.rel)
   )
   if (isItem(record)) {
     addItemLinks([record], endpoint)
@@ -189,13 +191,17 @@ function updateLinksAndHrefsWithinRecord(record, assetProxy) {
   return record
 }
 
-export async function publishResultsToSns(results, topicArn, assetProxy) {
+export async function publishResultsToSns(
+  results: DbOperationResult[],
+  topicArn: string,
+  assetProxy: AssetProxy
+): Promise<void> {
   await Promise.allSettled(results.map(async (result) => {
     if (isStacEntity(result.record)) {
       if (result.record && !result.error) {
         updateLinksAndHrefsWithinRecord(result.record, assetProxy)
       }
-      await publishRecordToSns(topicArn, result.record, result.error)
+      await publishRecordToSns(topicArn, result.record, result.error?.message)
     }
   }))
 }

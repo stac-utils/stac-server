@@ -17,7 +17,7 @@ if (process.env['PRODUCTION']) {
 
 export default {
   mode,
-  entry: './index.js',
+  entry: './index.ts',
   output: {
     libraryTarget: 'commonjs2',
     filename: 'index.js',

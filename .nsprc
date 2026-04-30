@@ -117,7 +117,7 @@
     "1115527": {
         "active": true,
         "notes": "path-to-regexp is a transitive dependency of express. A DoS via multiple route parameters is a low practical risk for stac-server: deployments are primarily hosted on AWS which provides built-in DDoS detection and mitigation, and the underlying data is generally not mission critical. A fix is expected upstream in the near future and will be incorporated before the next release.",
-        "expiry": "2026-04-30"
+        "expiry": "2026-09-30"
     },
     "1116663": {
         "active": true,

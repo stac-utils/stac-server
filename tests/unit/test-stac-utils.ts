@@ -1,7 +1,9 @@
 import test from 'ava'
 import { getStartAndEndDates, InvalidSTACItemException, isItem } from '../../src/lib/stac-utils.js'
 import { loadFixture } from '../helpers/utils.js'
-import type { StacItem, StacCollection } from '../../src/lib/types.js'
+import type {
+  StacItem, StacCollection, StacServerMessage
+} from '../../src/lib/types.js'
 
 test('getStartandEndDates uses item datetime', (t) => {
   const stringDate = '1955-11-05T13:00:00Z'
@@ -145,7 +147,7 @@ test('isItem requires collection field', async (t) => {
   delete record['collection']
 
   t.throws(() => {
-    isItem(record)
+    isItem(record as unknown as StacServerMessage)
   }, {
     instanceOf: InvalidSTACItemException,
   }, 'STAC Item must specify a collection')

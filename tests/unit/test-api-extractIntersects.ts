@@ -1,5 +1,6 @@
 import test from 'ava'
 import { extractIntersects } from '../../src/lib/api.js'
+import type { APIParameters } from '../../src/lib/types.js'
 
 test('extractIntersectsNull', (t) => {
   const params = {}
@@ -12,7 +13,7 @@ test('extractIntersects FeatureCollection', (t) => {
   t.throws(() => {
     extractIntersects({
       intersects: { type: 'FeatureCollection' }
-    })
+    } as APIParameters)
   },
   { instanceOf: Error, message: 'Expected GeoJSON geometry, not Feature or FeatureCollection' },
   'Throws exception when GeoJSON type is FeatureCollection')

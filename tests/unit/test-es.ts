@@ -1,14 +1,14 @@
 import test from 'ava'
 import { constructSearchParams, buildDatetimeQuery } from '../../src/lib/database.js'
+import type { QueryParameters } from '../../src/lib/types.js'
 
 test('search id parameter doesnt override other parameters', async (t) => {
   const ids = 'a,b,c'
   const range = '2007-03-01T13:00:00Z/2008-05-11T15:30:00Z'
   const queryParams = {
-    // @ts-expect-error intentionally passing string to test raw value passthrough
     ids,
     datetime: range
-  }
+  } as QueryParameters
   const searchBody = await constructSearchParams(queryParams, 1)
 
   // TODO: the ordering here is fragile. helper methods needed to ensure the queries are correct

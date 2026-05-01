@@ -2,7 +2,7 @@ import test from 'ava'
 import { handler } from '../../src/lambdas/api/index.js'
 import { setupResources } from '../helpers/system-tests.js'
 import { randomId } from '../helpers/utils.js'
-import { disableNetConnect, event } from '../helpers/aws-tests.js'
+import { context, disableNetConnect, event } from '../helpers/aws-tests.js'
 
 test.before(async () => {
   disableNetConnect()
@@ -14,11 +14,11 @@ test.beforeEach(() => {
 })
 
 test('Without a pre-hook, the expected response is returned', async (t) => {
-  const response = await handler(event)
+  const response = await handler(event, context)
 
   t.is(response.statusCode, 200)
 
-  t.regex(response.headers['content-type'], /^application\/json/)
+  t.regex(response.headers!['content-type'] as string, /^application\/json/)
 
   const body = JSON.parse(response.body ?? '')
 
@@ -28,7 +28,7 @@ test('Without a pre-hook, the expected response is returned', async (t) => {
 test('When the pre-hook returns a proxy output response, that response is returned', async (t) => {
   process.env['PRE_HOOK'] = 'stac-server-aws-test-lambda-5'
 
-  const response = await handler(event, {})
+  const response = await handler(event, context)
 
   t.is(response.statusCode, 418)
 })
@@ -36,7 +36,7 @@ test('When the pre-hook returns a proxy output response, that response is return
 test('An internal server error is returned if invoking the pre-hook fails', async (t) => {
   process.env['PRE_HOOK'] = randomId('lambda')
 
-  const response = await handler(event)
+  const response = await handler(event, context)
 
   t.is(response.statusCode, 500)
 })
@@ -44,7 +44,7 @@ test('An internal server error is returned if invoking the pre-hook fails', asyn
 test('An internal server error is returned if the pre-hook lambda throws', async (t) => {
   process.env['PRE_HOOK'] = 'stac-server-aws-test-lambda-2'
 
-  const response = await handler(event)
+  const response = await handler(event, context)
 
   t.is(response.statusCode, 500)
 })
@@ -53,7 +53,7 @@ test('An internal server error is returned if the pre-hook response payload is m
   async (t) => {
     process.env['PRE_HOOK'] = 'stac-server-aws-test-lambda-3'
 
-    const response = await handler(event)
+    const response = await handler(event, context)
 
     t.is(response.statusCode, 500)
   })
@@ -62,7 +62,7 @@ test('An internal server error is returned if the pre-hook response payload is n
   async (t) => {
     process.env['PRE_HOOK'] = 'stac-server-aws-test-lambda-4'
 
-    const response = await handler(event)
+    const response = await handler(event, context)
 
     t.is(response.statusCode, 500)
   })
@@ -70,9 +70,9 @@ test('An internal server error is returned if the pre-hook response payload is n
 test('A pre-hook can modify a request', async (t) => {
   process.env['PRE_HOOK'] = 'stac-server-aws-test-lambda-6'
 
-  const response = await handler(event)
+  const response = await handler(event, context)
 
   t.is(response.statusCode, 200)
 
-  t.regex(response.headers['content-type'], /^text\/html/)
+  t.regex(response.headers!['content-type'] as string, /^text\/html/)
 })

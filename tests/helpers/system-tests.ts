@@ -7,6 +7,7 @@ import { startApi, ApiInstance } from './api.js'
 import { createCollectionsIndex, refreshIndices } from './database.js'
 import { createTopic, addSnsToSqsSubscription } from './sns.js'
 import { createQueue, getQueueArn } from './sqs.js'
+import type { ApiRecord } from '../../src/lib/types.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -76,7 +77,7 @@ export const setup = async (): Promise<StandUpResult> => {
 
 const readFile = promisify(_readFile)
 
-export const loadJson = async (filename: string): Promise<unknown> => {
+export const loadJson = async (filename: string): Promise<ApiRecord> => {
   const filePath = join(__dirname, '..', 'fixtures', 'stac', filename)
 
   const data = await readFile(filePath, 'utf8')

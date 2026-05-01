@@ -2,7 +2,7 @@ import test from 'ava'
 import { parsePath } from '../../src/lib/api.js'
 
 test('parsePath', (t) => {
-  let expected = {
+  let expected: ReturnType<typeof parsePath> = {
     root: true,
     api: false,
     conformance: false,

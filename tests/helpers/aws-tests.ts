@@ -1,5 +1,5 @@
 import nock from 'nock'
-import type { APIGatewayProxyEvent } from 'aws-lambda'
+import type { APIGatewayProxyEvent, Context } from 'aws-lambda'
 
 export const disableNetConnect = (): void => {
   nock.disableNetConnect()
@@ -56,4 +56,6 @@ export const event: APIGatewayProxyEvent = Object.freeze({
     apiId: '1234567890',
     protocol: 'HTTP/1.1'
   }
-}) as APIGatewayProxyEvent
+}) as unknown as APIGatewayProxyEvent
+
+export const context = {} as Context

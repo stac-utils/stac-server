@@ -2,6 +2,7 @@ import test from 'ava'
 import { extractLimit } from '../../src/lib/api.js'
 import { ValidationError } from '../../src/lib/errors.js'
 import { DEFAULT_LIMIT } from '../../src/lib/api-utils.js'
+import type { APIParameters } from '../../src/lib/types.js'
 
 test.beforeEach(() => {
   delete process.env['ITEMS_MAX_LIMIT']
@@ -39,7 +40,7 @@ test('extractLimit invalid values', (t) => {
 
   for (const limit of invalidLimits) {
     t.throws(() => {
-      extractLimit({ limit })
+      extractLimit({ limit } as APIParameters)
     }, { instanceOf: ValidationError }, `limit parsing of ${limit}`)
   }
 })

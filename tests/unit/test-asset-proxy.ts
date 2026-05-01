@@ -2,7 +2,7 @@ import test from 'ava'
 import { mockClient } from 'aws-sdk-client-mock'
 import { S3Client } from '@aws-sdk/client-s3'
 import { AssetProxy, ALTERNATE_ASSETS_EXTENSION } from '../../src/lib/asset-proxy.js'
-import type { Assets } from '../../src/lib/types.js'
+import type { Assets, StacItem } from '../../src/lib/types.js'
 
 const s3Mock = mockClient(S3Client)
 
@@ -72,10 +72,10 @@ test('AssetProxy - getProxiedAssets() transforms item assets in ALL mode', async
     )
 
     t.true(wasProxied)
-    t.is(proxied.thumbnail.href, 'https://api.example.com/collections/collection1/items/item1/assets/thumbnail')
-    t.is(proxied.thumbnail.alternate?.['s3'].href, 's3://my-bucket/thumb.jpg')
-    t.is(proxied.data.href, 'https://api.example.com/collections/collection1/items/item1/assets/data')
-    t.is(proxied.data.alternate?.['s3'].href, 's3://my-bucket/data.tif')
+    t.is(proxied['thumbnail']!.href, 'https://api.example.com/collections/collection1/items/item1/assets/thumbnail')
+    t.is((proxied['thumbnail']!.alternate?.['s3'] as { href: string }).href, 's3://my-bucket/thumb.jpg')
+    t.is(proxied['data']!.href, 'https://api.example.com/collections/collection1/items/item1/assets/data')
+    t.is((proxied['data']!.alternate?.['s3'] as { href: string }).href, 's3://my-bucket/data.tif')
   } finally {
     process.env = before
   }
@@ -102,8 +102,8 @@ test('AssetProxy - getProxiedAssets() transforms collection assets', async (t) =
     )
 
     t.true(wasProxied)
-    t.is(proxied.thumbnail.href, 'https://api.example.com/collections/collection1/assets/thumbnail')
-    t.is(proxied.thumbnail.alternate?.['s3'].href, 's3://my-bucket/collection-thumb.jpg')
+    t.is(proxied['thumbnail']!.href, 'https://api.example.com/collections/collection1/assets/thumbnail')
+    t.is((proxied['thumbnail']!.alternate?.['s3'] as { href: string }).href, 's3://my-bucket/collection-thumb.jpg')
   } finally {
     process.env = before
   }
@@ -130,8 +130,8 @@ test('AssetProxy - getProxiedAssets() does not transform assets in NONE mode', a
     )
 
     t.false(wasProxied)
-    t.is(proxied.thumbnail.href, 's3://my-bucket/thumb.jpg')
-    t.is(proxied.thumbnail.alternate, undefined)
+    t.is(proxied['thumbnail']!.href, 's3://my-bucket/thumb.jpg')
+    t.is(proxied['thumbnail']!.alternate, undefined)
   } finally {
     process.env = before
   }
@@ -160,9 +160,9 @@ test('AssetProxy - getProxiedAssets() preserves existing alternate links', async
       'item1'
     )
 
-    const alternate = proxied.data.alternate as Record<string, { href: string }>
-    t.is(alternate['http'].href, 'https://example.com/data.tif')
-    t.is(alternate['s3'].href, 's3://my-bucket/data.tif')
+    const alternate = proxied['data']!.alternate as Record<string, { href: string }>
+    t.is(alternate['http']!.href, 'https://example.com/data.tif')
+    t.is(alternate['s3']!.href, 's3://my-bucket/data.tif')
   } finally {
     process.env = before
   }
@@ -189,8 +189,8 @@ test('AssetProxy - getProxiedAssets() does not transform non-S3 assets', async (
     )
 
     t.false(wasProxied)
-    t.is(proxied.metadata.href, 'https://example.com/metadata.xml')
-    t.is(proxied.metadata.alternate, undefined)
+    t.is(proxied['metadata']!.href, 'https://example.com/metadata.xml')
+    t.is(proxied['metadata']!.alternate, undefined)
   } finally {
     process.env = before
   }
@@ -217,7 +217,7 @@ test('AssetProxy - getProxiedAssets() handles assets without href', async (t) =>
     )
 
     t.false(wasProxied)
-    t.deepEqual(proxied.metadata, { href: '', type: 'application/xml' })
+    t.deepEqual(proxied['metadata'], { href: '', type: 'application/xml' })
   } finally {
     process.env = before
   }
@@ -252,7 +252,7 @@ test('AssetProxy - updateAssetHrefs() mutates results and adds the alternate ass
     process.env['ASSET_PROXY_BUCKET_OPTION'] = 'ALL'
 
     const proxy = await AssetProxy.create()
-    const results = [{
+    const results: StacItem[] = [{
       type: 'Feature' as const,
       stac_version: '1.0.0',
       id: 'item1',
@@ -269,13 +269,13 @@ test('AssetProxy - updateAssetHrefs() mutates results and adds the alternate ass
 
     proxy.updateAssetHrefs(results, 'https://api.example.com')
 
-    t.truthy(results[0].assets)
-    t.is(results[0].assets['data'].href, 'https://api.example.com/collections/collection1/items/item1/assets/data')
-    t.truthy(results[0].assets['data'].alternate)
-    const dataAlternate = results[0].assets['data'].alternate as Record<string, { href: string }>
-    t.is(dataAlternate['s3'].href, 's3://my-bucket/data.tif')
-    t.truthy(results[0].stac_extensions)
-    t.true(results[0].stac_extensions?.includes(ALTERNATE_ASSETS_EXTENSION))
+    t.truthy(results[0]!.assets)
+    t.is(results[0]!.assets['data']!.href, 'https://api.example.com/collections/collection1/items/item1/assets/data')
+    t.truthy(results[0]!.assets['data']!.alternate)
+    const dataAlternate = results[0]!.assets['data']!.alternate as Record<string, { href: string }>
+    t.is(dataAlternate['s3']!.href, 's3://my-bucket/data.tif')
+    t.truthy(results[0]!.stac_extensions)
+    t.true(results[0]!.stac_extensions?.includes(ALTERNATE_ASSETS_EXTENSION))
   } finally {
     process.env = before
   }
@@ -287,7 +287,7 @@ test('AssetProxy - updateAssetHrefs() returns unchanged results when disabled', 
     process.env['ASSET_PROXY_BUCKET_OPTION'] = 'NONE'
 
     const proxy = await AssetProxy.create()
-    const results = [{
+    const results: StacItem[] = [{
       type: 'Feature' as const,
       stac_version: '1.0.0',
       id: 'item1',
@@ -302,11 +302,11 @@ test('AssetProxy - updateAssetHrefs() returns unchanged results when disabled', 
       }
     }]
 
-    const originalHref = results[0].assets['data'].href
+    const originalHref = results[0]!.assets['data']!.href
     proxy.updateAssetHrefs(results, 'https://api.example.com')
 
-    t.is(results[0].assets['data'].href, originalHref)
-    t.is(results[0].assets['data'].alternate, undefined)
+    t.is(results[0]!.assets['data']!.href, originalHref)
+    t.is(results[0]!.assets['data']!.alternate, undefined)
   } finally {
     process.env = before
   }

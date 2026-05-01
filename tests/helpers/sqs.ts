@@ -6,15 +6,20 @@ import {
   GetQueueAttributesCommand,
   Message
 } from '@aws-sdk/client-sqs'
-import type { SQSEvent } from 'aws-lambda'
+import type { SQSEvent, SQSRecord, Context } from 'aws-lambda'
 import { sqs as _sqs } from '../../src/lib/aws-clients.js'
 import { randomId } from './utils.js'
 
-const sqsMessageToRecord = (message: Message) => ({
+const sqsMessageToRecord = (message: Message): SQSRecord => ({
   messageId: message.MessageId ?? '',
   receiptHandle: message.ReceiptHandle ?? '',
   body: message.Body ?? '',
-  attributes: {},
+  attributes: {
+    ApproximateReceiveCount: '',
+    SentTimestamp: '',
+    SenderId: '',
+    ApproximateFirstReceiveTimestamp: ''
+  },
   messageAttributes: {},
   md5OfBody: message.MD5OfBody ?? '',
   eventSource: 'aws:sqs',
@@ -36,8 +41,8 @@ const eventFromQueue = async (ingestQueueUrl: string): Promise<SQSEvent> => {
 
 export const sqsTriggerLambda = async (
   sqsUrl: string,
-  handler: (event: SQSEvent, context: object) => Promise<void>,
-  _context = {}
+  handler: (event: SQSEvent, context: Context) => Promise<void>,
+  _context = {} as Context
 ): Promise<void> => {
   const event = await eventFromQueue(sqsUrl)
   return handler(event, _context)

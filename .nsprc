@@ -74,11 +74,6 @@
         "notes": "handlebars is a transitive dependency used only in dev/doc tooling, not in production runtime code. Property access validation bypass requires attacker-controlled template input which is not possible in our usage context.",
         "expiry": "2026-09-30"
     },
-    "1115692": {
-        "active": true,
-        "notes": "handlebars is a transitive dependency used only in dev/doc tooling, not in production runtime code. CLI precompiler JavaScript injection requires attacker-controlled template names which is not possible in our usage context.",
-        "expiry": "2026-09-30"
-    },
     "1115693": {
         "active": true,
         "notes": "handlebars is a transitive dependency used only in dev/doc tooling, not in production runtime code. JavaScript injection via dynamic partial requires attacker-controlled template input which is not possible in our usage context.",
@@ -148,6 +143,11 @@
         "active": true,
         "notes": "protobufjs is a transitive dependency of @redocly/cli via @opentelemetry/otlp-transformer, used only as a build tool to generate static API documentation. The arbitrary code execution via malicious protobuf definitions requires attacker-controlled protobuf definition files, which is not possible in our usage context as @redocly/cli is never run against untrusted input.",
         "expiry": "2026-06-30"
+    },
+    "1117465": {
+        "active": true,
+        "notes": "handlebars is a transitive dependency used only in dev/doc tooling, not in production runtime code. JavaScript injection via CLI precompiler unescaped names and options requires attacker-controlled template names which is not possible in our usage context.",
+        "expiry": "2026-09-30"
     },
     "1115805": {
         "active": true,

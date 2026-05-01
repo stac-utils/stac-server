@@ -39,8 +39,8 @@ test('search datetime parameter intervals are correctly parsed', async (t) => {
 
   await Promise.all(datetimes.map(async ([datetime, start, end]) => {
     const dtQuery = await buildDatetimeQuery({ datetime })
-    t.is(dtQuery.range?.['properties.datetime'].gte, start, 'datetime interval start')
-    t.is(dtQuery.range?.['properties.datetime'].lte, end, 'datetime interval end')
+    t.is(dtQuery!.range?.['properties.datetime']?.['gte'], start, 'datetime interval start')
+    t.is(dtQuery!.range?.['properties.datetime']?.['lte'], end, 'datetime interval end')
   }))
 })
 
@@ -74,7 +74,7 @@ test('search datetime parameter instants are correctly parsed', async (t) => {
 
   await Promise.all(validDatetimes.map(async (datetime) => {
     const dtQuery = await buildDatetimeQuery({ datetime })
-    t.is(dtQuery.term?.['properties.datetime'], datetime, 'datetime instant parses correctly')
+    t.is(dtQuery!.term?.['properties.datetime'], datetime, 'datetime instant parses correctly')
   }))
 })
 

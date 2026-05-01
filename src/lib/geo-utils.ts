@@ -1,3 +1,4 @@
+// @ts-expect-error - @mapbox/extent has no TypeScript type definitions
 import extent from '@mapbox/extent'
 import { BBox, Geometry } from 'geojson'
 import { ValidationError } from './errors.js'
@@ -18,7 +19,7 @@ export const bboxToPolygon = function (
   fromString: boolean
 ): Geometry | undefined {
   if (bbox) {
-    let bboxArray
+    let bboxArray : BBox | number[] | string
     if (fromString && typeof bbox === 'string') {
       try {
         bboxArray = bbox.split(',').map(parseFloat).filter((x) => !Number.isNaN(x))

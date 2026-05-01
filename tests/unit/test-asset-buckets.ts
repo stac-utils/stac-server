@@ -42,7 +42,6 @@ test('AssetBuckets - LIST mode throws if bucket list is empty', async (t) => {
 
 test('AssetBuckets - LIST mode throws if bucket list is null', async (t) => {
   await t.throwsAsync(
-    // @ts-expect-error testing null input handling
     async () => AssetBuckets.create(BucketOptionEnum.LIST, null),
     { message: /ASSET_PROXY_BUCKET_LIST must not be empty/ }
   )

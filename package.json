@@ -21,7 +21,7 @@
     "test:system:coverage": "c8 npm run test:system",
     "test:unit": "NODE_OPTIONS='--import=tsx' ava tests/unit/*.[tj]s --no-worker-threads",
     "test:unit:coverage": "c8 npm run test:unit",
-    "typecheck": "tsc",
+    "typecheck": "tsc && tsc -p tsconfig.test.json",
     "audit-prod": "npx better-npm-audit audit --production",
     "audit": "npx better-npm-audit audit",
     "deploy": "sls deploy",

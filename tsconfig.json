@@ -7,7 +7,7 @@
     "checkJs": false,
     "noEmit": true,
     "alwaysStrict": true,
-    "noImplicitAny": false,
+    "noImplicitAny": true,
     "noImplicitOverride": true,
     "noImplicitReturns": true,
     "allowUnusedLabels": false,
@@ -26,8 +26,7 @@
     ]
   },
   "include": [
-    "src",
-    "tests"
+    "src"
   ],
   "exclude": [
     "tests/**/*.js"

@@ -27,6 +27,7 @@ const internalServerError: Readonly<APIGatewayProxyResult> = Object.freeze({
   body: 'Internal Server Error'
 }) as APIGatewayProxyResult
 
+
 let appInstance: express.Express | undefined
 
 const getAppInstance = async (): Promise<express.Express> => {

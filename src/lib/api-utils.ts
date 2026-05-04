@@ -39,9 +39,19 @@ export const extractLimit = function (params: APIParameters): number {
   return DEFAULT_LIMIT
 }
 
+type PrecisionField =
+  | 'grid_geohash_frequency_precision'
+  | 'grid_geohex_frequency_precision'
+  | 'grid_geotile_frequency_precision'
+  | 'centroid_geohash_grid_frequency_precision'
+  | 'centroid_geohex_grid_frequency_precision'
+  | 'centroid_geotile_grid_frequency_precision'
+  | 'geometry_geohash_grid_frequency_precision'
+  | 'geometry_geotile_grid_frequency_precision'
+
 export const extractPrecision = function (
   params: APIParameters,
-  name: string,
+  name: PrecisionField,
   min: number,
   max: number
 ): number {
@@ -435,7 +445,8 @@ export const isCollectionIdAllowed = function (
           || allowedCollectionIds.includes('*')
 }
 
-export const extractSortby = function (params: APIParameters): string[] {
+export const extractSortby = function (params: APIParameters):
+string[] | { field: string; direction: string; }[] | undefined {
   let sortbyRules
   const { sortby } = params
   if (sortby) {

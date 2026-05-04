@@ -1,10 +1,10 @@
-import test from 'ava'
-import type { ExecutionContext } from 'ava'
+import anyTest, { type TestFn } from 'ava'
 import { deleteAllIndices, refreshIndices } from '../helpers/database.js'
 import { ingestItem } from '../helpers/ingest.js'
 import { randomId, loadFixture } from '../helpers/utils.js'
 import { setup, loadJson } from '../helpers/system-tests.js'
 import type { StandUpResult } from '../helpers/system-tests.js'
+import type { ApiHttpError } from '../helpers/types.js'
 import { processMessages } from '../../src/lib/ingest.js'
 
 type TestContext = StandUpResult & {
@@ -13,7 +13,9 @@ type TestContext = StandUpResult & {
   itemId2: string
 }
 
-test.before(async (t: ExecutionContext<TestContext>) => {
+const test = anyTest as TestFn<TestContext>
+
+test.before(async (t) => {
   await deleteAllIndices()
   const standUpResult = await setup()
 
@@ -70,11 +72,11 @@ test.beforeEach(async (_) => {
   delete process.env['ENABLE_FILTER_AUTHX']
 })
 
-test.after.always(async (t: ExecutionContext<TestContext>) => {
+test.after.always(async (t) => {
   if (t.context.api) await t.context.api.close()
 })
 
-test('GET /collections/:collectionId/items', async (t: ExecutionContext<TestContext>) => {
+test('GET /collections/:collectionId/items', async (t) => {
   const { collectionId, itemId1, itemId2 } = t.context
 
   const response = await t.context.api.client.get(
@@ -85,21 +87,17 @@ test('GET /collections/:collectionId/items', async (t: ExecutionContext<TestCont
   t.is(response.statusCode, 200)
   t.is(response.headers['content-type'], 'application/geo+json; charset=utf-8')
 
-  // @ts-expect-error We need to validate these responses
   t.is(response.body.type, 'FeatureCollection')
 
-  // @ts-expect-error We need to validate these responses
   t.is(response.body.features.length, 2)
 
-  // @ts-expect-error We need to validate these responses
   t.is(response.body.features[0].id, itemId1)
-  // @ts-expect-error We need to validate these responses
   t.is(response.body.features[1].id, itemId2)
 })
 
 test(
   'GET /collections/:collectionId/items for non-existent collection returns 404',
-  async (t: ExecutionContext<TestContext>) => {
+  async (t) => {
     const { collectionId } = t.context
 
     const response = await t.context.api.client.get(
@@ -113,7 +111,7 @@ test(
 
 test(
   'GET /collections/:collectionId/items with restriction returns filtered collections',
-  async (t: ExecutionContext<TestContext>) => {
+  async (t) => {
     const { collectionId } = t.context
     process.env['ENABLE_COLLECTIONS_AUTHX'] = 'true'
 
@@ -154,7 +152,7 @@ test(
 
 test(
   'GET /collections/:collectionId/items with filter restriction',
-  async (t: ExecutionContext<TestContext>) => {
+  async (t) => {
     process.env['ENABLE_FILTER_AUTHX'] = 'true'
 
     const fixtureFiles = [
@@ -174,7 +172,6 @@ test(
         { resolveBodyOnly: false, searchParams: {} })
 
       t.is(r.statusCode, 200)
-      // @ts-expect-error We need to validate these responses
       t.is(r.body.features.length, 2)
     }
 
@@ -183,7 +180,6 @@ test(
         { resolveBodyOnly: false, searchParams: { _filter: null } })
 
       t.is(r.statusCode, 200)
-      // @ts-expect-error We need to validate these responses
       t.is(r.body.features.length, 2)
     }
 
@@ -200,7 +196,6 @@ test(
         })
 
       t.is(r.statusCode, 200)
-      // @ts-expect-error We need to validate these responses
       t.is(r.body.features.length, 0)
     }
 
@@ -216,7 +211,6 @@ test(
           }
         })
       t.is(r.statusCode, 200)
-      // @ts-expect-error We need to validate these responses
       t.is(r.body.features.length, 1)
     }
 
@@ -233,7 +227,6 @@ test(
         })
 
       t.is(r.statusCode, 200)
-      // @ts-expect-error We need to validate these responses
       t.is(r.body.features.length, 1)
     }
 
@@ -250,7 +243,6 @@ test(
         })
 
       t.is(r.statusCode, 200)
-      // @ts-expect-error We need to validate these responses
       t.is(r.body.features.length, 0)
     }
 
@@ -271,7 +263,6 @@ test(
         })
 
       t.is(r.statusCode, 200)
-      // @ts-expect-error We need to validate these responses
       t.is(r.body.features.length, 0)
     }
 
@@ -292,7 +283,6 @@ test(
         })
 
       t.is(r.statusCode, 200)
-      // @ts-expect-error We need to validate these responses
       t.is(r.body.features.length, 1)
     }
 
@@ -315,7 +305,6 @@ test(
         })
 
       t.is(r.statusCode, 200)
-      // @ts-expect-error We need to validate these responses
       t.is(r.body.features.length, 1)
     }
   }
@@ -323,7 +312,7 @@ test(
 
 test(
   '/GET /collections/:collectionId/items invalid bbox throws error',
-  async (t: ExecutionContext<TestContext>) => {
+  async (t) => {
     // test invalid longitude
     {
       const { collectionId } = t.context
@@ -331,7 +320,7 @@ test(
         async () => t.context.api.client.get(`collections/${collectionId}/items`, {
           searchParams: { bbox: '-190,-90,180,90' }
         })
-      )
+      ) as ApiHttpError
 
       t.is(error.response.statusCode, 400)
       t.is(error.response.body.code, 'BadRequest')
@@ -349,7 +338,7 @@ test(
         async () => t.context.api.client.get(`collections/${collectionId}/items`, {
           searchParams: { bbox: '-110,-100,180,90' }
         })
-      )
+      ) as ApiHttpError
 
       t.is(error.response.statusCode, 400)
       t.is(error.response.body.code, 'BadRequest')
@@ -367,7 +356,7 @@ test(
         async () => t.context.api.client.get(`collections/${collectionId}/items`, {
           searchParams: { bbox: '-190,-90,180,90, 10, 10' }
         })
-      )
+      ) as ApiHttpError
 
       t.is(error.response.statusCode, 400)
       t.is(error.response.body.code, 'BadRequest')

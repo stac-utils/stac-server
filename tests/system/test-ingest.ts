@@ -1,6 +1,5 @@
 import url from 'url'
-import test from 'ava'
-import type { ExecutionContext } from 'ava'
+import anyTest, { type TestFn, type ExecutionContext } from 'ava'
 import nock from 'nock'
 import { DateTime } from 'luxon'
 import { PublishCommand } from '@aws-sdk/client-sns'
@@ -13,6 +12,7 @@ import { refreshIndices, deleteAllIndices } from '../helpers/database.js'
 import { sqsTriggerLambda, purgeQueue } from '../helpers/sqs.js'
 import { sns, sqs, s3 as _s3 } from '../../src/lib/aws-clients.js'
 import { ALTERNATE_ASSETS_EXTENSION } from '../../src/lib/asset-proxy.js'
+import type { StacCollection, StacItem } from '../../src/lib/types.js'
 import { setup } from '../helpers/system-tests.js'
 import type { StandUpResult } from '../helpers/system-tests.js'
 import { ingestItemC, ingestFixtureC, testPostIngestSNS } from '../helpers/ingest.js'
@@ -24,8 +24,9 @@ type TestContext = StandUpResult & {
     overrides?: Record<string, unknown>
   ) => Promise<Record<string, unknown>>
 }
+const test = anyTest as TestFn<TestContext>
 
-test.before(async (t: ExecutionContext<TestContext>) => {
+test.before(async (t) => {
   await deleteAllIndices()
   const standUpResult = await setup()
 
@@ -41,7 +42,7 @@ test.before(async (t: ExecutionContext<TestContext>) => {
   )
 })
 
-test.beforeEach(async (t: ExecutionContext<TestContext>) => {
+test.beforeEach(async (t) => {
   const { ingestQueueUrl } = t.context
 
   if (ingestQueueUrl === undefined) throw new Error('No ingest queue url')
@@ -55,7 +56,7 @@ test.afterEach.always(() => {
   nock.cleanAll()
 })
 
-test('The ingest lambda supports ingesting a collection published to SNS', async (t: ExecutionContext<TestContext>) => {
+test('The ingest lambda supports ingesting a collection published to SNS', async (t) => {
   const { ingestQueueUrl, ingestTopicArn } = t.context
 
   if (ingestTopicArn === undefined) throw new Error('No ingest topic ARN')
@@ -80,7 +81,7 @@ test('The ingest lambda supports ingesting a collection published to SNS', async
   t.true(collectionIds.includes(collection['id'] as string))
 })
 
-test('The ingest lambda supports ingesting a collection sourced from S3', async (t: ExecutionContext<TestContext>) => {
+test('The ingest lambda supports ingesting a collection sourced from S3', async (t) => {
   const { ingestQueueUrl, ingestTopicArn } = t.context
 
   if (ingestTopicArn === undefined) throw new Error('No ingest topic ARN')
@@ -127,7 +128,7 @@ test('The ingest lambda supports ingesting a collection sourced from S3', async 
   t.true(collectionIds.includes(collection['id'] as string))
 })
 
-test('The ingest lambda supports ingesting a collection sourced from http', async (t: ExecutionContext<TestContext>) => {
+test('The ingest lambda supports ingesting a collection sourced from http', async (t) => {
   const { ingestQueueUrl, ingestTopicArn } = t.context
 
   if (ingestTopicArn === undefined) throw new Error('No ingest topic ARN')
@@ -155,7 +156,7 @@ test('The ingest lambda supports ingesting a collection sourced from http', asyn
   t.true(collectionIds.includes(collection['id'] as string))
 })
 
-test('Reingesting an item maintains the `created` value and updates `updated`', async (t: ExecutionContext<TestContext>) => {
+test('Reingesting an item maintains the `created` value and updates `updated`', async (t) => {
   const { ingestFixture, ingestItem } = t.context
 
   const collection = await ingestFixture(
@@ -172,24 +173,20 @@ test('Reingesting an item maintains the `created` value and updates `updated`', 
   )
 
   const originalItem = await getItem(t.context.api.client, collection['id'] as string, item['id'] as string)
-  // @ts-expect-error We need to validate these responses
-  const originalCreated = DateTime.fromISO(originalItem.properties.created)
-  // @ts-expect-error We need to validate these responses
-  const originalUpdated = DateTime.fromISO(originalItem.properties.updated)
+  const originalCreated = DateTime.fromISO(originalItem.properties['created'] as string)
+  const originalUpdated = DateTime.fromISO(originalItem.properties['updated'] as string)
 
   await ingestItem(item)
 
   const updatedItem = await getItem(t.context.api.client, collection['id'] as string, item['id'] as string)
-  // @ts-expect-error We need to validate these responses
-  const updatedCreated = DateTime.fromISO(updatedItem.properties.created)
-  // @ts-expect-error We need to validate these responses
-  const updatedUpdated = DateTime.fromISO(updatedItem.properties.updated)
+  const updatedCreated = DateTime.fromISO(updatedItem.properties['created'] as string)
+  const updatedUpdated = DateTime.fromISO(updatedItem.properties['updated'] as string)
 
   t.is(updatedCreated.toISO(), originalCreated.toISO())
-  t.true(updatedUpdated.toISO() > originalUpdated.toISO())
+  t.true(updatedUpdated.toISO()! > originalUpdated.toISO()!)
 })
 
-test('Reingesting an item removes extra fields', async (t: ExecutionContext<TestContext>) => {
+test('Reingesting an item removes extra fields', async (t) => {
   const { ingestFixture, ingestItem } = t.context
 
   const collection = await ingestFixture(
@@ -197,7 +194,7 @@ test('Reingesting an item removes extra fields', async (t: ExecutionContext<Test
     { id: randomId('collection') }
   )
 
-  const { properties, ...item } = await loadFixture(
+  const { properties, ...item } = await loadFixture<StacItem>(
     'stac/LC80100102015082LGN00.json',
     {
       id: randomId('item'),
@@ -208,7 +205,7 @@ test('Reingesting an item removes extra fields', async (t: ExecutionContext<Test
   const originalItem = {
     ...item,
     properties: {
-      ...(properties as Record<string, unknown>),
+      ...properties,
       extra: 'hello'
     }
   }
@@ -219,8 +216,7 @@ test('Reingesting an item removes extra fields', async (t: ExecutionContext<Test
     t.context.api.client, collection['id'] as string, item['id'] as string
   )
 
-  // @ts-expect-error We need to validate these responses
-  t.is(originalFetchedItem.properties.extra, 'hello')
+  t.is(originalFetchedItem.properties['extra'], 'hello')
 
   // The new item is the same as the old, except that it does not have properties.extra
   const updatedItem = {
@@ -234,20 +230,17 @@ test('Reingesting an item removes extra fields', async (t: ExecutionContext<Test
     t.context.api.client, collection['id'] as string, item['id'] as string
   )
 
-  // @ts-expect-error We need to validate these responses
   t.false('extra' in updatedFetchedItem.properties)
 })
 
 const assertHasResultCountC = (t: ExecutionContext<TestContext>) =>
   async (count: number, searchBody: unknown, message: string) => {
     const response = await t.context.api.client.post('search', { json: searchBody })
-    // @ts-expect-error We need to validate these responses
     t.true(Array.isArray(response.features), message)
-    // @ts-expect-error We need to validate these responses
     t.is(response.features.length, count, message)
   }
 
-test('Mappings are correctly configured for non-default detected fields', async (t: ExecutionContext<TestContext>) => {
+test('Mappings are correctly configured for non-default detected fields', async (t) => {
   const { ingestFixture } = t.context
 
   const collection = await ingestFixture(
@@ -364,43 +357,41 @@ test('Mappings are correctly configured for non-default detected fields', async 
   }, 'numeric string value is not mapped to numeric type')
 
   // projjson was failing when indexed was not set to false
-  // @ts-expect-error We need to validate these responses
-  t.deepEqual(item2.properties['proj:projjson'], ingestedItem2['properties']['proj:projjson'])
+  t.deepEqual(item2.properties['proj:projjson'],
+    (ingestedItem2['properties'] as Record<string, unknown>)['proj:projjson'])
 
-  // @ts-expect-error We need to validate these responses
-  t.deepEqual(item2.properties['proj:centroid'], ingestedItem2['properties']['proj:centroid'])
+  t.deepEqual(item2.properties['proj:centroid'],
+    (ingestedItem2['properties'] as Record<string, unknown>)['proj:centroid'])
 })
 
-test('Ingested collection is published to post-ingest SNS topic', async (t: ExecutionContext<TestContext>) => {
-  const collection = await loadFixture(
+test('Ingested collection is published to post-ingest SNS topic', async (t) => {
+  const collection = await loadFixture<StacCollection>(
     'landsat-8-l1-collection.json',
     { id: randomId('collection') }
   )
 
-  // @ts-expect-error testPostIngestSNS uses a compatible subset of TestContext
   const { message, attrs } = await testPostIngestSNS(t, collection)
 
-  t.is(message.record.id, collection['id'])
-  t.is(attrs.collection.Value, collection['id'])
+  t.is(message.record.id, collection.id)
+  t.is(attrs.collection.Value, collection.id)
   t.is(attrs.ingestStatus.Value, 'successful')
   t.is(attrs.recordType.Value, 'Collection')
 
-  const bbox = (collection['extent'] as Record<string, unknown>)
-  const spatialBbox = (bbox['spatial'] as Record<string, unknown>)['bbox'] as number[][]
-  t.is(spatialBbox[0][0].toString(), attrs['bbox.sw_lon'].Value)
-  t.is(spatialBbox[0][1].toString(), attrs['bbox.sw_lat'].Value)
-  t.is(spatialBbox[0][2].toString(), attrs['bbox.ne_lon'].Value)
-  t.is(spatialBbox[0][3].toString(), attrs['bbox.ne_lat'].Value)
+  const spatialBbox = collection.extent.spatial.bbox
+  t.is(spatialBbox[0]![0]!.toString(), attrs['bbox.sw_lon']!.Value)
+  t.is(spatialBbox[0]![1]!.toString(), attrs['bbox.sw_lat']!.Value)
+  t.is(spatialBbox[0]![2]!.toString(), attrs['bbox.ne_lon']!.Value)
+  t.is(spatialBbox[0]![3]!.toString(), attrs['bbox.ne_lat']!.Value)
 
-  const temporal = (bbox['temporal'] as Record<string, unknown>)['interval'] as string[][]
-  const expectedStartOffsetValue = (new Date(temporal[0][0])).getTime().toString()
-  t.is(expectedStartOffsetValue, attrs.start_unix_epoch_ms_offset.Value)
-  t.is((new Date(temporal[0][0])).toISOString(), attrs.start_datetime.Value)
-  t.is(undefined, attrs.end_unix_epoch_ms_offset)
-  t.is(undefined, attrs.end_datetime)
+  const temporal = collection.extent.temporal.interval
+  const expectedStartOffsetValue = (new Date(temporal[0]![0]!)).getTime().toString()
+  t.is(expectedStartOffsetValue, attrs.start_unix_epoch_ms_offset!.Value)
+  t.is((new Date(temporal[0]![0]!)).toISOString(), attrs.start_datetime!.Value)
+  t.is(attrs.end_unix_epoch_ms_offset, undefined)
+  t.is(attrs.end_datetime, undefined)
 })
 
-test('Ingested collection is published to post-ingest SNS topic with updated links', async (t: ExecutionContext<TestContext>) => {
+test('Ingested collection is published to post-ingest SNS topic with updated links', async (t) => {
   const envBeforeTest = { ...process.env }
   try {
     const hostname = 'some-stac-server.com'
@@ -412,7 +403,6 @@ test('Ingested collection is published to post-ingest SNS topic with updated lin
       { id: randomId('collection') }
     )
 
-    // @ts-expect-error testPostIngestSNS uses a compatible subset of TestContext
     const { message } = await testPostIngestSNS(t, collection)
 
     t.truthy(message.record.links)
@@ -423,9 +413,8 @@ test('Ingested collection is published to post-ingest SNS topic with updated lin
   }
 })
 
-test('Ingest collection failure is published to post-ingest SNS topic', async (t: ExecutionContext<TestContext>) => {
+test('Ingest collection failure is published to post-ingest SNS topic', async (t) => {
   const badId = '_badCollection'
-  // @ts-expect-error testPostIngestSNS uses a compatible subset of TestContext
   const { message, attrs } = await testPostIngestSNS(t, {
     type: 'Collection',
     id: badId
@@ -435,10 +424,10 @@ test('Ingest collection failure is published to post-ingest SNS topic', async (t
   t.is(attrs.collection.Value, badId)
   t.is(attrs.ingestStatus.Value, 'failed')
   t.is(attrs.recordType.Value, 'Collection')
-  t.is(undefined, attrs.start_unix_epoch_ms_offset)
-  t.is(undefined, attrs.start_datetime)
-  t.is(undefined, attrs.end_unix_epoch_ms_offset)
-  t.is(undefined, attrs.end_datetime)
+  t.is(attrs.start_unix_epoch_ms_offset, undefined)
+  t.is(attrs.start_datetime, undefined)
+  t.is(attrs.end_unix_epoch_ms_offset, undefined)
+  t.is(attrs.end_datetime, undefined)
 })
 
 async function emptyPostIngestQueue(t: ExecutionContext<TestContext>) {
@@ -457,7 +446,7 @@ async function emptyPostIngestQueue(t: ExecutionContext<TestContext>) {
     })
     // eslint-disable-next-line no-await-in-loop
     result = await sqs().send(receiveCommand)
-  } while (result.Message && result.Message.length > 0)
+  } while (result.Messages && result.Messages.length > 0)
 }
 
 async function ingestCollectionAndPurgePostIngestQueue(t: ExecutionContext<TestContext>) {
@@ -475,10 +464,10 @@ async function ingestCollectionAndPurgePostIngestQueue(t: ExecutionContext<TestC
   return collection
 }
 
-test('Ingested item is published to post-ingest SNS topic', async (t: ExecutionContext<TestContext>) => {
+test('Ingested item is published to post-ingest SNS topic', async (t) => {
   const collection = await ingestCollectionAndPurgePostIngestQueue(t)
 
-  const item = await loadFixture(
+  const item = await loadFixture<StacItem>(
     'stac/ingest-item.json',
     {
       id: randomId('item'),
@@ -486,44 +475,41 @@ test('Ingested item is published to post-ingest SNS topic', async (t: ExecutionC
     }
   )
 
-  item['properties'] = {
-    ...(item['properties'] as Record<string, unknown>),
+  item.properties = {
+    ...item.properties,
     start_datetime: '1955-11-05T13:00:00.000Z',
     end_datetime: '1985-11-05T13:00:00.000Z'
   }
 
-  // @ts-expect-error testPostIngestSNS uses a compatible subset of TestContext
   const { message, attrs } = await testPostIngestSNS(t, item)
 
-  t.is(message.record.id, item['id'])
-  t.deepEqual(message.record.links, item['links'])
-  t.is(attrs.collection.Value, item['collection'])
+  t.is(message.record.id, item.id)
+  t.deepEqual(message.record.links, item.links)
+  t.is(attrs.collection.Value, item.collection)
   t.is(attrs.ingestStatus.Value, 'successful')
   t.is(attrs.recordType.Value, 'Item')
 
-  const bbox = item['bbox'] as number[]
-  t.is(bbox[0].toString(), attrs['bbox.sw_lon'].Value)
-  t.is(bbox[1].toString(), attrs['bbox.sw_lat'].Value)
-  t.is(bbox[2].toString(), attrs['bbox.ne_lon'].Value)
-  t.is(bbox[3].toString(), attrs['bbox.ne_lat'].Value)
+  const bbox = item.bbox as number[]
+  t.is(bbox[0]!.toString(), attrs['bbox.sw_lon']!.Value)
+  t.is(bbox[1]!.toString(), attrs['bbox.sw_lat']!.Value)
+  t.is(bbox[2]!.toString(), attrs['bbox.ne_lon']!.Value)
+  t.is(bbox[3]!.toString(), attrs['bbox.ne_lat']!.Value)
 
-  const props = item['properties'] as Record<string, unknown>
-  t.is(message.record.properties.datetime, attrs.datetime.Value)
+  t.is(message.record.properties.datetime, attrs.datetime!.Value)
 
-  const expectedStartOffsetValue = (new Date(props['start_datetime'] as string)).getTime().toString()
-  t.is(expectedStartOffsetValue, attrs.start_unix_epoch_ms_offset.Value)
-  t.is(props['start_datetime'], attrs.start_datetime.Value)
+  const expectedStartOffsetValue = (new Date(item.properties.start_datetime!)).getTime().toString()
+  t.is(expectedStartOffsetValue, attrs.start_unix_epoch_ms_offset!.Value)
+  t.is(item.properties.start_datetime, attrs.start_datetime!.Value)
 
-  const expectedEndOffsetValue = (new Date(props['end_datetime'] as string)).getTime().toString()
-  t.is(expectedEndOffsetValue, attrs.end_unix_epoch_ms_offset.Value)
-  t.is(props['end_datetime'], attrs.end_datetime.Value)
+  const expectedEndOffsetValue = (new Date(item.properties.end_datetime!)).getTime().toString()
+  t.is(expectedEndOffsetValue, attrs.end_unix_epoch_ms_offset!.Value)
+  t.is(item.properties.end_datetime, attrs.end_datetime!.Value)
 })
 
-test('Ingest item failure is published to post-ingest SNS topic', async (t: ExecutionContext<TestContext>) => {
+test('Ingest item failure is published to post-ingest SNS topic', async (t) => {
   await ingestCollectionAndPurgePostIngestQueue(t)
 
   // this fails because the collection does not exist
-  // @ts-expect-error testPostIngestSNS uses a compatible subset of TestContext
   const { message, attrs } = await testPostIngestSNS(t, {
     type: 'Feature',
     id: 'badItem',
@@ -536,7 +522,7 @@ test('Ingest item failure is published to post-ingest SNS topic', async (t: Exec
   t.is(attrs.recordType.Value, 'Item')
 })
 
-test('Ingested item is published to post-ingest SNS topic with updated links', async (t: ExecutionContext<TestContext>) => {
+test('Ingested item is published to post-ingest SNS topic with updated links', async (t) => {
   const envBeforeTest = { ...process.env }
   try {
     const hostname = 'some-stac-server.com'
@@ -550,7 +536,6 @@ test('Ingested item is published to post-ingest SNS topic with updated links', a
       { id: randomId('item'), collection: collection['id'] }
     )
 
-    // @ts-expect-error testPostIngestSNS uses a compatible subset of TestContext
     const { message } = await testPostIngestSNS(t, item)
 
     t.truthy(message.record.links)
@@ -561,7 +546,7 @@ test('Ingested item is published to post-ingest SNS topic with updated links', a
   }
 })
 
-test('Ingested item is published to post-ingest SNS topic with proxied assets', async (t: ExecutionContext<TestContext>) => {
+test('Ingested item is published to post-ingest SNS topic with proxied assets', async (t) => {
   const envBeforeTest = { ...process.env }
   try {
     const endpoint = 'https://some-stac-server.com'
@@ -570,28 +555,26 @@ test('Ingested item is published to post-ingest SNS topic with proxied assets', 
     resetAssetProxy()
 
     const collection = await ingestCollectionAndPurgePostIngestQueue(t)
-    const item = await loadFixture(
+    const item = await loadFixture<StacItem>(
       'stac/ingest-item.json',
       { id: randomId('item'), collection: collection['id'] }
     )
 
-    const firstAssetKey = Object.keys(item['assets'] as Record<string, unknown>)[0]
-    const assets = item['assets'] as Record<string, Record<string, unknown>>
-    const originalHref = assets[firstAssetKey]['href']
+    const firstAssetKey = Object.keys(item.assets)[0]!
+    const originalHref = item.assets[firstAssetKey]!.href
 
-    // @ts-expect-error testPostIngestSNS uses a compatible subset of TestContext
     const { message } = await testPostIngestSNS(t, item)
-    const firstAsset = message.record.assets[firstAssetKey]
+    const firstAsset = message.record.assets[firstAssetKey]!
 
     t.true(firstAsset.href.includes(endpoint))
-    t.is(firstAsset.alternate.s3.href, originalHref)
+    t.is(firstAsset.alternate!['s3']!.href, originalHref as string)
     t.true(message.record.stac_extensions.includes(ALTERNATE_ASSETS_EXTENSION))
   } finally {
     process.env = envBeforeTest
   }
 })
 
-test('Ingested item failure is published to post-ingest SNS topic without updated links', async (t: ExecutionContext<TestContext>) => {
+test('Ingested item failure is published to post-ingest SNS topic without updated links', async (t) => {
   const envBeforeTest = { ...process.env }
   try {
     const hostname = 'some-stac-server.com'
@@ -603,7 +586,6 @@ test('Ingested item failure is published to post-ingest SNS topic without update
       { id: randomId('item'), collection: 'INVALID COLLECTION' }
     )
 
-    // @ts-expect-error testPostIngestSNS uses a compatible subset of TestContext
     const { message } = await testPostIngestSNS(t, item, true)
 
     t.truthy(message.record.links)
@@ -614,7 +596,7 @@ test('Ingested item failure is published to post-ingest SNS topic without update
   }
 })
 
-test('Truncate command fails when ENABLE_INGEST_ACTION_TRUNCATE is unset or not true', async (t: ExecutionContext<TestContext>) => {
+test('Truncate command fails when ENABLE_INGEST_ACTION_TRUNCATE is unset or not true', async (t) => {
   const { ingestFixture } = t.context
 
   const collection = await ingestFixture(
@@ -647,7 +629,7 @@ test('Truncate command fails when ENABLE_INGEST_ACTION_TRUNCATE is unset or not 
   )
 })
 
-test('Truncate command deletes items from collection', async (t: ExecutionContext<TestContext>) => {
+test('Truncate command deletes items from collection', async (t) => {
   process.env['ENABLE_INGEST_ACTION_TRUNCATE'] = 'true'
 
   const { ingestFixture } = t.context
@@ -689,9 +671,7 @@ test('Truncate command deletes items from collection', async (t: ExecutionContex
   // check that the collection still exists
   {
     const response = await t.context.api.client.get('collections')
-    // @ts-expect-error We need to validate these responses
     t.true(Array.isArray(response.collections))
-    // @ts-expect-error We need to validate these responses
     t.true(response.collections.map((x: { id: string }) => x.id).includes(collection['id']))
 
     await assertHasResultCount(0, {
@@ -721,7 +701,7 @@ test('Truncate command deletes items from collection', async (t: ExecutionContex
   }
 })
 
-test('Truncate command fails for disallowed collection values', async (t: ExecutionContext<TestContext>) => {
+test('Truncate command fails for disallowed collection values', async (t) => {
   process.env['ENABLE_INGEST_ACTION_TRUNCATE'] = 'true'
 
   const { ingestFixture } = t.context
@@ -736,7 +716,7 @@ test('Truncate command fails for disallowed collection values', async (t: Execut
     )))
 })
 
-test('Unknown command fails ingest', async (t: ExecutionContext<TestContext>) => {
+test('Unknown command fails ingest', async (t) => {
   process.env['ENABLE_INGEST_ACTION_TRUNCATE'] = 'true'
 
   const { ingestItem, ingestFixture } = t.context

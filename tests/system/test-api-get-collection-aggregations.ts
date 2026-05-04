@@ -1,5 +1,4 @@
-import test from 'ava'
-import type { ExecutionContext } from 'ava'
+import anyTest, { type TestFn } from 'ava'
 import { deleteAllIndices } from '../helpers/database.js'
 import { ingestItem } from '../helpers/ingest.js'
 import { randomId, loadFixture } from '../helpers/utils.js'
@@ -10,7 +9,9 @@ type TestContext = StandUpResult & {
   collectionId: string
 }
 
-test.before(async (t: ExecutionContext<TestContext>) => {
+const test = anyTest as TestFn<TestContext>
+
+test.before(async (t) => {
   await deleteAllIndices()
   const standUpResult = await setup()
 
@@ -23,13 +24,13 @@ test.beforeEach(async (_) => {
   delete process.env['ENABLE_COLLECTIONS_AUTHX']
 })
 
-test.after.always(async (t: ExecutionContext<TestContext>) => {
+test.after.always(async (t) => {
   if (t.context.api) await t.context.api.close()
 })
 
 test(
   'GET /collection/:collectionId/aggregations for non-existent collection returns Not Found',
-  async (t: ExecutionContext<TestContext>) => {
+  async (t) => {
     const response = await t.context.api.client.get(
       'collections/DOES_NOT_EXIST/aggregations',
       { resolveBodyOnly: false, throwHttpErrors: false }
@@ -63,7 +64,7 @@ const links = (
 
 test(
   'GET /collections/:collectionId/aggregations returns aggregations for collection with aggregations',
-  async (t: ExecutionContext<TestContext>) => {
+  async (t) => {
     const collection = await loadFixture(
       'stac/collection-with-aggregations.json',
       { id: t.context.collectionId }
@@ -98,7 +99,7 @@ test(
 
 test(
   'GET /collections/:collectionId/aggregations returns default aggregations for collection without aggregations',
-  async (t: ExecutionContext<TestContext>) => {
+  async (t) => {
     const collection = await loadFixture(
       'stac/collection-without-aggregations.json',
       { id: t.context.collectionId }
@@ -151,7 +152,7 @@ test(
 
 test(
   'GET /collections/:collectionId/aggregations with restriction returns filtered collections',
-  async (t: ExecutionContext<TestContext>) => {
+  async (t) => {
     process.env['ENABLE_COLLECTIONS_AUTHX'] = 'true'
 
     const { collectionId } = t.context

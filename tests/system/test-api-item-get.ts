@@ -1,5 +1,4 @@
-import test from 'ava'
-import type { ExecutionContext } from 'ava'
+import anyTest, { type TestFn } from 'ava'
 import { deleteAllIndices } from '../helpers/database.js'
 import { ingestItem } from '../helpers/ingest.js'
 import { randomId, loadFixture } from '../helpers/utils.js'
@@ -11,7 +10,9 @@ type TestContext = StandUpResult & {
   itemId: string
 }
 
-test.before(async (t: ExecutionContext<TestContext>) => {
+const test = anyTest as TestFn<TestContext>
+
+test.before(async (t) => {
   await deleteAllIndices()
   const standUpResult = await setup()
 
@@ -53,11 +54,11 @@ test.beforeEach(async (_) => {
   delete process.env['ENABLE_THUMBNAILS']
 })
 
-test.after.always(async (t: ExecutionContext<TestContext>) => {
+test.after.always(async (t) => {
   if (t.context.api) await t.context.api.close()
 })
 
-test('GET /collections/:collectionId/items/:itemId', async (t: ExecutionContext<TestContext>) => {
+test('GET /collections/:collectionId/items/:itemId', async (t) => {
   const { collectionId, itemId } = t.context
 
   const response = await t.context.api.client.get(
@@ -74,7 +75,7 @@ test('GET /collections/:collectionId/items/:itemId', async (t: ExecutionContext<
 
 test(
   'GET /collections/:collectionId/items/:itemId for a non-existent id returns not found',
-  async (t: ExecutionContext<TestContext>) => {
+  async (t) => {
     const { collectionId } = t.context
 
     const response = await t.context.api.client.get(
@@ -88,7 +89,7 @@ test(
 
 test(
   'GET /collections/:collectionId/items/:itemId for a non-existent collection returns not found',
-  async (t: ExecutionContext<TestContext>) => {
+  async (t) => {
     const response = await t.context.api.client.get(
       'collections/DOES_NOT_EXIST/items/DOES_NOT_EXIST',
       { resolveBodyOnly: false, throwHttpErrors: false }
@@ -100,7 +101,7 @@ test(
 
 test(
   'GET /collections/:collectionId/items/:itemId with restriction returns filtered collections',
-  async (t: ExecutionContext<TestContext>) => {
+  async (t) => {
     process.env['ENABLE_COLLECTIONS_AUTHX'] = 'true'
 
     const { collectionId, itemId } = t.context
@@ -147,7 +148,7 @@ test(
 
 test(
   'GET /collections/:collectionId/items/:itemId/thumbnail with restriction returns filtered collections',
-  async (t: ExecutionContext<TestContext>) => {
+  async (t) => {
     process.env['ENABLE_COLLECTIONS_AUTHX'] = 'true'
     process.env['ENABLE_THUMBNAILS'] = 'true'
 
@@ -199,7 +200,7 @@ test(
 
 test(
   'GET /collections/:collectionId/items/:itemId/thumbnail disabled',
-  async (t: ExecutionContext<TestContext>) => {
+  async (t) => {
     process.env['ENABLE_THUMBNAILS'] = 'false'
 
     const { collectionId, itemId } = t.context
@@ -213,7 +214,7 @@ test(
 
 test(
   'GET /collections/:collectionId/items/:itemId with filter authx returns filtered collections',
-  async (t: ExecutionContext<TestContext>) => {
+  async (t) => {
     process.env['ENABLE_FILTER_AUTHX'] = 'true'
 
     const { collectionId, itemId } = t.context
@@ -263,7 +264,7 @@ test(
 
 test(
   'GET /collections/:collectionId/items/:itemId/thumbnail with filter authx returns filtered results',
-  async (t: ExecutionContext<TestContext>) => {
+  async (t) => {
     process.env['ENABLE_FILTER_AUTHX'] = 'true'
     process.env['ENABLE_THUMBNAILS'] = 'true'
 

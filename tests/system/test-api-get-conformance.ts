@@ -1,5 +1,8 @@
-import test from 'ava'
-import { startApi } from '../helpers/api.js'
+import anyTest, { type TestFn } from 'ava'
+import { startApi, type ApiInstance } from '../helpers/api.js'
+
+type TestContext = { api: ApiInstance }
+const test = anyTest as TestFn<TestContext>
 
 test.before(async (t) => {
   t.context.api = await startApi()

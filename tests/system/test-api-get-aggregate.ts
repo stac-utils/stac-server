@@ -1,5 +1,4 @@
-import test from 'ava'
-import type { ExecutionContext } from 'ava'
+import anyTest, { type TestFn } from 'ava'
 import { randomId } from '../helpers/utils.js'
 import { setup, loadJson } from '../helpers/system-tests.js'
 import type { StandUpResult } from '../helpers/system-tests.js'
@@ -7,16 +6,17 @@ import { deleteAllIndices, refreshIndices } from '../helpers/database.js'
 import { processMessages } from '../../src/lib/ingest.js'
 
 type TestContext = StandUpResult
+const test = anyTest as TestFn<TestContext>
 
 const proto = randomId()
 const host = randomId()
 
-test.before(async (t: ExecutionContext<TestContext>) => {
+test.before(async (t) => {
   await deleteAllIndices()
   t.context = await setup()
 })
 
-test('GET /aggregate with no aggregations param', async (t: ExecutionContext<TestContext>) => {
+test('GET /aggregate with no aggregations param', async (t) => {
   const response = await t.context.api.client.get(
     'aggregate',
     {
@@ -49,7 +49,7 @@ test.beforeEach(async (_) => {
   delete process.env['ENABLE_COLLECTIONS_AUTHX']
 })
 
-test('GET /aggregate with aggregations param', async (t: ExecutionContext<TestContext>) => {
+test('GET /aggregate with aggregations param', async (t) => {
   const fixtureFiles = [
     'collection.json',
     'LC80100102015050LGN00.json',
@@ -62,9 +62,11 @@ test('GET /aggregate with aggregations param', async (t: ExecutionContext<TestCo
   const response = await t.context.api.client.get(
     'aggregate',
     {
-      searchParams: new URLSearchParams(
-        { aggregations: ['total_count', 'datetime_frequency', 'grid_geohex_frequency'] }
-      ),
+      searchParams: new URLSearchParams([
+        ['aggregations', 'total_count'],
+        ['aggregations', 'datetime_frequency'],
+        ['aggregations', 'grid_geohex_frequency'],
+      ]),
       resolveBodyOnly: false,
       headers: {
         'X-Forwarded-Proto': proto,
@@ -115,12 +117,12 @@ test('GET /aggregate with aggregations param', async (t: ExecutionContext<TestCo
   ])
 })
 
-test('GET /aggregate with non-existant aggregation', async (t: ExecutionContext<TestContext>) => {
+test('GET /aggregate with non-existant aggregation', async (t) => {
   const response = await t.context.api.client.get(
     'aggregate',
     {
       throwHttpErrors: false,
-      searchParams: new URLSearchParams({ aggregations: ['foo'] }),
+      searchParams: new URLSearchParams({ aggregations: 'foo' }),
       resolveBodyOnly: false,
       headers: {
         'X-Forwarded-Proto': proto,
@@ -136,7 +138,7 @@ test('GET /aggregate with non-existant aggregation', async (t: ExecutionContext<
   })
 })
 
-test('GET /aggregate with geoaggregations', async (t: ExecutionContext<TestContext>) => {
+test('GET /aggregate with geoaggregations', async (t) => {
   const fixtureFiles = [
     'collection-s1.json',
     'item-s1-1.json', // has proj:centroid
@@ -152,22 +154,17 @@ test('GET /aggregate with geoaggregations', async (t: ExecutionContext<TestConte
   const response = await t.context.api.client.get(
     'aggregate',
     {
-      searchParams: new URLSearchParams(
-        {
-          aggregations: [
-            'total_count',
-            'grid_geohex_frequency',
-            'grid_geotile_frequency',
-            'grid_geohash_frequency',
-            'centroid_geohash_grid_frequency',
-            'centroid_geohex_grid_frequency',
-            'centroid_geotile_grid_frequency',
-            'geometry_geohash_grid_frequency',
-            // 'geometry_geohex_grid_frequency'
-            'geometry_geotile_grid_frequency',
-          ]
-        }
-      ),
+      searchParams: new URLSearchParams([
+        ['aggregations', 'total_count'],
+        ['aggregations', 'grid_geohex_frequency'],
+        ['aggregations', 'grid_geotile_frequency'],
+        ['aggregations', 'grid_geohash_frequency'],
+        ['aggregations', 'centroid_geohash_grid_frequency'],
+        ['aggregations', 'centroid_geohex_grid_frequency'],
+        ['aggregations', 'centroid_geotile_grid_frequency'],
+        ['aggregations', 'geometry_geohash_grid_frequency'],
+        ['aggregations', 'geometry_geotile_grid_frequency'],
+      ]),
       resolveBodyOnly: false,
       headers: {
         'X-Forwarded-Proto': proto,
@@ -252,7 +249,7 @@ test('GET /aggregate with geoaggregations', async (t: ExecutionContext<TestConte
 
 test(
   'GET /aggregate with geoaggregations with precision',
-  async (t: ExecutionContext<TestContext>) => {
+  async (t) => {
     const fixtureFiles = [
       'collection-s1.json',
       'item-s1-1.json', // has proj:centroid
@@ -268,18 +265,15 @@ test(
     const response = await t.context.api.client.get(
       'aggregate',
       {
-        searchParams: new URLSearchParams(
-          {
-            aggregations: [
-              'total_count',
-              'grid_geohex_frequency',
-              'grid_geotile_frequency',
-              'grid_geohash_frequency'],
-            grid_geohex_frequency_precision: 10,
-            grid_geotile_frequency_precision: 20,
-            grid_geohash_frequency_precision: 8
-          }
-        ),
+        searchParams: new URLSearchParams([
+          ['aggregations', 'total_count'],
+          ['aggregations', 'grid_geohex_frequency'],
+          ['aggregations', 'grid_geotile_frequency'],
+          ['aggregations', 'grid_geohash_frequency'],
+          ['grid_geohex_frequency_precision', '10'],
+          ['grid_geotile_frequency_precision', '20'],
+          ['grid_geohash_frequency_precision', '8'],
+        ]),
         resolveBodyOnly: false,
         headers: {
           'X-Forwarded-Proto': proto,
@@ -341,16 +335,14 @@ test(
 
 test(
   'GET /aggregate with geoaggregations with invalid precision',
-  async (t: ExecutionContext<TestContext>) => {
+  async (t) => {
     const response = await t.context.api.client.get(
       'aggregate',
       {
-        searchParams: new URLSearchParams(
-          {
-            aggregations: ['grid_geohex_frequency'],
-            grid_geohex_frequency_precision: 20,
-          }
-        ),
+        searchParams: new URLSearchParams([
+          ['aggregations', 'grid_geohex_frequency'],
+          ['grid_geohex_frequency_precision', '20'],
+        ]),
         throwHttpErrors: false,
         resolveBodyOnly: false,
       }
@@ -366,7 +358,7 @@ test(
 
 test(
   'GET /aggregate with aggregations and query params',
-  async (t: ExecutionContext<TestContext>) => {
+  async (t) => {
     const fixtureFiles = [
       'collection.json',
       'LC80100102015050LGN00.json',
@@ -381,7 +373,7 @@ test(
       {
         searchParams: new URLSearchParams(
           {
-            aggregations: ['total_count'],
+            aggregations: 'total_count',
             query: JSON.stringify({
               'eo:cloud_cover': { gt: 0.54 }
             })
@@ -406,7 +398,7 @@ test(
 
 test(
   'GET /aggregate with aggregations and filter params',
-  async (t: ExecutionContext<TestContext>) => {
+  async (t) => {
     const fixtureFiles = [
       'collection.json',
       'LC80100102015050LGN00.json',
@@ -421,7 +413,7 @@ test(
       {
         searchParams: new URLSearchParams(
           {
-            aggregations: ['total_count'],
+            aggregations: 'total_count',
             filter: JSON.stringify({
               op: '>',
               args: [{ property: 'eo:cloud_cover' }, 0.54]
@@ -447,7 +439,7 @@ test(
 
 test(
   'GET /aggregate with restriction returns filtered collections',
-  async (t: ExecutionContext<TestContext>) => {
+  async (t) => {
     process.env['ENABLE_COLLECTIONS_AUTHX'] = 'true'
 
     const fixtureFiles = [
@@ -465,7 +457,7 @@ test(
       const r = await t.context.api.client.get(
         'aggregate',
         {
-          searchParams: new URLSearchParams({ aggregations: ['total_count'] }),
+          searchParams: new URLSearchParams({ aggregations: 'total_count' }),
           resolveBodyOnly: false,
         }
       )
@@ -478,10 +470,10 @@ test(
       const r = await t.context.api.client.get(
         'aggregate',
         {
-          searchParams: new URLSearchParams({
-            aggregations: ['total_count'],
-            collections: []
-          }),
+          searchParams: new URLSearchParams([
+            ['aggregations', 'total_count'],
+            ['collections', '']
+          ]),
           resolveBodyOnly: false,
         }
       )
@@ -493,10 +485,10 @@ test(
       const r = await t.context.api.client.get(
         'aggregate',
         {
-          searchParams: new URLSearchParams({
-            aggregations: ['total_count'],
-            _collections: ['*']
-          }),
+          searchParams: new URLSearchParams([
+            ['aggregations', 'total_count'],
+            ['_collections', '*']
+          ]),
           resolveBodyOnly: false,
         }
       )
@@ -512,10 +504,10 @@ test(
       const r = await t.context.api.client.get(
         'aggregate',
         {
-          searchParams: new URLSearchParams({
-            aggregations: ['total_count'],
-            _collections: [collectionId, 'foo', 'bar']
-          }),
+          searchParams: new URLSearchParams([
+            ['aggregations', 'total_count'],
+            ['_collections', `${collectionId}, 'foo', 'bar'`]
+          ]),
           resolveBodyOnly: false,
         }
       )
@@ -532,11 +524,11 @@ test(
       const r = await t.context.api.client.get(
         'aggregate',
         {
-          searchParams: new URLSearchParams({
-            aggregations: ['total_count'],
-            collections: [collectionId],
-            _collections: ['not-a-collection']
-          }),
+          searchParams: new URLSearchParams([
+            ['aggregations', 'total_count'],
+            ['collections', `${collectionId}`],
+            ['_collections', 'not-a-collection']
+          ]),
           resolveBodyOnly: false,
         }
       )
@@ -549,7 +541,7 @@ test(
 
 test(
   'GET /aggregate with filter restriction',
-  async (t: ExecutionContext<TestContext>) => {
+  async (t) => {
     process.env['ENABLE_FILTER_AUTHX'] = 'true'
 
     const fixtureFiles = [
@@ -566,7 +558,7 @@ test(
         'aggregate',
         {
           searchParams: new URLSearchParams({
-            aggregations: ['total_count'],
+            aggregations: 'total_count',
             _filter: JSON.stringify({
               op: '<>',
               args: [{ property: 'id' }, 'LC80100102015050LGN00']
@@ -587,7 +579,7 @@ test(
       const r = await t.context.api.client.get(
         'aggregate',
         {
-          searchParams: new URLSearchParams({ aggregations: ['total_count'] }),
+          searchParams: new URLSearchParams({ aggregations: 'total_count' }),
           headers: {
             'stac-filter-authx': JSON.stringify({
               op: '<>',

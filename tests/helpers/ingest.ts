@@ -7,6 +7,8 @@ import { sqsTriggerLambda } from './sqs.js'
 import { refreshIndices } from './database.js'
 import { loadFixture } from './utils.js'
 
+import type { StacRecord, Link } from '../../src/lib/types.js'
+
 interface IngestItemParams {
   ingestTopicArn: string
   ingestQueueUrl: string
@@ -25,6 +27,35 @@ interface TestContext {
   ingestTopicArn: string
   ingestQueueUrl: string
   postIngestQueueUrl: string
+}
+
+interface SnsMessageAttribute {
+  Value: string
+}
+
+export interface PostIngestMessage {
+  record: StacRecord & {
+    links: Link[]
+    properties: Record<string, unknown>
+    assets: Record<string, { href: string; alternate?: Record<string, { href: string }> }>
+    stac_extensions: string[]
+  }
+}
+
+export interface PostIngestAttributes {
+  collection: SnsMessageAttribute
+  ingestStatus: SnsMessageAttribute
+  recordType: SnsMessageAttribute
+  datetime?: SnsMessageAttribute
+  start_datetime?: SnsMessageAttribute
+  end_datetime?: SnsMessageAttribute
+  start_unix_epoch_ms_offset?: SnsMessageAttribute
+  end_unix_epoch_ms_offset?: SnsMessageAttribute
+  'bbox.sw_lon': SnsMessageAttribute
+  'bbox.sw_lat': SnsMessageAttribute
+  'bbox.ne_lon': SnsMessageAttribute
+  'bbox.ne_lat': SnsMessageAttribute
+  [key: string]: SnsMessageAttribute | undefined
 }
 
 export const ingestItem = async (params: IngestItemParams): Promise<void> => {
@@ -99,11 +130,16 @@ export async function testPostIngestSNS(
   t.truthy(Messages, 'Post-ingest message not found in queue')
   t.false(Messages && Messages.length > 1, 'More than one message in post-ingest queue')
 
-  const message = Messages && Messages.length > 0 ? Messages[0] : undefined
-  const messageBody = message && message.Body ? JSON.parse(message.Body) as Record<string, unknown> : undefined
+  const firstMessage = Messages![0]
+  t.truthy(firstMessage?.Body, 'Post-ingest message has no body')
 
-  return {
-    message: messageBody && messageBody['Message'] ? JSON.parse(messageBody['Message'] as string) : undefined,
-    attrs: messageBody ? messageBody['MessageAttributes'] : undefined
-  }
+  const messageBody = JSON.parse(firstMessage!.Body!) as Record<string, unknown>
+
+  const message = messageBody['Message']
+    ? JSON.parse(messageBody['Message'] as string) as PostIngestMessage
+    : undefined
+
+  const attrs = messageBody['MessageAttributes'] as PostIngestAttributes | undefined
+
+  return { message: message!, attrs: attrs! }
 }

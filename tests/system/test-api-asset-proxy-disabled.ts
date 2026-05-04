@@ -1,5 +1,5 @@
-import test from 'ava'
-import type { ExecutionContext } from 'ava'
+import anyTest, { type TestFn } from 'ava'
+import type { StacCollection, StacItem } from '../../src/lib/types.js'
 import { ALTERNATE_ASSETS_EXTENSION } from '../../src/lib/asset-proxy.js'
 import { deleteAllIndices } from '../helpers/database.js'
 import { ingestItem } from '../helpers/ingest.js'
@@ -17,8 +17,9 @@ type TestContext = StandUpResult & {
   itemId: string
   collectionWithAssetId: string
 }
+const test = anyTest as TestFn<TestContext>
 
-test.before(async (t: ExecutionContext<TestContext>) => {
+test.before(async (t) => {
   await deleteAllIndices()
   const standUpResult = await setup()
 
@@ -57,13 +58,13 @@ test.before(async (t: ExecutionContext<TestContext>) => {
   })
 })
 
-test.after.always(async (t: ExecutionContext<TestContext>) => {
+test.after.always(async (t) => {
   if (t.context.api) await t.context.api.close()
 })
 
 test(
   'GET /collections/:collectionId/items/:itemId/assets/:assetKey - returns 404 when proxy disabled',
-  async (t: ExecutionContext<TestContext>) => {
+  async (t) => {
     const { collectionId, itemId } = t.context
 
     const response = await t.context.api.client.get(
@@ -81,7 +82,7 @@ test(
 
 test(
   'GET /collections/:collectionId/assets/:assetKey - returns 404 when proxy disabled',
-  async (t: ExecutionContext<TestContext>) => {
+  async (t) => {
     const { collectionWithAssetId } = t.context
 
     const response = await t.context.api.client.get(
@@ -99,10 +100,10 @@ test(
 
 test(
   'GET /collections/:collectionId/items/:itemId - item asset hrefs unchanged when proxy disabled',
-  async (t: ExecutionContext<TestContext>) => {
+  async (t) => {
     const { collectionId, itemId } = t.context
 
-    const item = await loadFixture(ITEM_FIXTURE)
+    const item = await loadFixture<StacItem>(ITEM_FIXTURE)
 
     const response = await t.context.api.client.get(
       `collections/${collectionId}/items/${itemId}`,
@@ -110,21 +111,18 @@ test(
     )
 
     t.is(response.statusCode, 200)
-    // @ts-expect-error We need to validate these responses
-    t.is(response.body.assets.B1.href, item['assets']['B1']['href'])
-    // @ts-expect-error We need to validate these responses
+    t.is(response.body.assets.B1.href, item.assets['B1']!.href)
     t.falsy(response.body.assets.B1.alternate)
-    // @ts-expect-error We need to validate these responses
     t.false(response.body.stac_extensions?.includes(ALTERNATE_ASSETS_EXTENSION))
   }
 )
 
 test(
   'GET /collections/:collectionId - collection asset hrefs unchanged when proxy disabled',
-  async (t: ExecutionContext<TestContext>) => {
+  async (t) => {
     const { collectionWithAssetId } = t.context
 
-    const collection = await loadFixture(COLLECTION_WITH_ASSET_FIXTURE)
+    const collection = await loadFixture<StacCollection>(COLLECTION_WITH_ASSET_FIXTURE)
 
     const response = await t.context.api.client.get(
       `collections/${collectionWithAssetId}`,
@@ -132,19 +130,16 @@ test(
     )
 
     t.is(response.statusCode, 200)
-    // @ts-expect-error We need to validate these responses
-    t.is(response.body.assets.thumbnail.href, collection['assets']['thumbnail']['href'])
-    // @ts-expect-error We need to validate these responses
+    t.is(response.body.assets.thumbnail.href, collection.assets!['thumbnail']!.href)
     t.falsy(response.body.assets.thumbnail.alternate)
-    // @ts-expect-error We need to validate these responses
     t.false(response.body.stac_extensions?.includes(ALTERNATE_ASSETS_EXTENSION))
   }
 )
 
 test(
   'POST /search - item asset hrefs unchanged when proxy disabled',
-  async (t: ExecutionContext<TestContext>) => {
-    const item = await loadFixture(ITEM_FIXTURE)
+  async (t) => {
+    const item = await loadFixture<StacItem>(ITEM_FIXTURE)
 
     const response = await t.context.api.client.post('search', {
       json: {
@@ -153,25 +148,20 @@ test(
       }
     })
 
-    // @ts-expect-error We need to validate these responses
     t.is(response.type, 'FeatureCollection')
-    // @ts-expect-error We need to validate these responses
     t.true(response.features.length > 0)
-    // @ts-expect-error We need to validate these responses
-    t.is(response.features[0].assets.B1.href, item['assets']['B1']['href'])
-    // @ts-expect-error We need to validate these responses
+    t.is(response.features[0].assets.B1.href, item.assets['B1']!.href)
     t.falsy(response.features[0].assets.B1.alternate)
-    // @ts-expect-error We need to validate these responses
     t.false(response.features[0].stac_extensions?.includes(ALTERNATE_ASSETS_EXTENSION))
   }
 )
 
 test(
   'GET /collections - collection asset hrefs unchanged when proxy disabled',
-  async (t: ExecutionContext<TestContext>) => {
+  async (t) => {
     const { collectionWithAssetId } = t.context
 
-    const collection = await loadFixture(COLLECTION_WITH_ASSET_FIXTURE)
+    const collection = await loadFixture<StacCollection>(COLLECTION_WITH_ASSET_FIXTURE)
 
     const response = await t.context.api.client.get('collections', {
       resolveBodyOnly: false
@@ -179,24 +169,23 @@ test(
 
     t.is(response.statusCode, 200)
 
-    // @ts-expect-error We need to validate these responses
     const collectionWithAssets = response.body.collections.find(
-      // @ts-expect-error We need to validate these responses
-      (c) => c.id === collectionWithAssetId
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (c: StacCollection) => c.id === collectionWithAssetId
     )
 
     t.truthy(collectionWithAssets)
-    t.is(collectionWithAssets.assets.thumbnail.href, collection['assets']['thumbnail']['href'])
+    t.is(collectionWithAssets.assets.thumbnail.href, collection.assets!['thumbnail']!.href)
     t.falsy(collectionWithAssets.assets.thumbnail.alternate)
   }
 )
 
 test(
   'GET /collections/:collectionId/items - item asset hrefs unchanged when proxy disabled',
-  async (t: ExecutionContext<TestContext>) => {
+  async (t) => {
     const { collectionId } = t.context
 
-    const item = await loadFixture(ITEM_FIXTURE)
+    const item = await loadFixture<StacItem>(ITEM_FIXTURE)
 
     const response = await t.context.api.client.get(
       `collections/${collectionId}/items`,
@@ -204,13 +193,9 @@ test(
     )
 
     t.is(response.statusCode, 200)
-    // @ts-expect-error We need to validate these responses
     t.is(response.body.type, 'FeatureCollection')
-    // @ts-expect-error We need to validate these responses
     t.true(response.body.features.length > 0)
-    // @ts-expect-error We need to validate these responses
-    t.is(response.body.features[0].assets.B1.href, item['assets']['B1']['href'])
-    // @ts-expect-error We need to validate these responses
+    t.is(response.body.features[0].assets.B1.href, item.assets['B1']!.href)
     t.falsy(response.body.features[0].assets.B1.alternate)
   }
 )

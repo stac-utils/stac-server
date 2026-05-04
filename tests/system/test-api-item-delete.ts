@@ -1,5 +1,4 @@
-import test from 'ava'
-import type { ExecutionContext } from 'ava'
+import anyTest, { type TestFn } from 'ava'
 import { deleteAllIndices } from '../helpers/database.js'
 import { ingestItem } from '../helpers/ingest.js'
 import { randomId, loadFixture } from '../helpers/utils.js'
@@ -11,7 +10,9 @@ type TestContext = StandUpResult & {
   itemId: string
 }
 
-test.before(async (t: ExecutionContext<TestContext>) => {
+const test = anyTest as TestFn<TestContext>
+
+test.before(async (t) => {
   await deleteAllIndices()
   const standUpResult = await setup()
 
@@ -47,11 +48,11 @@ test.before(async (t: ExecutionContext<TestContext>) => {
   })
 })
 
-test.after.always(async (t: ExecutionContext<TestContext>) => {
+test.after.always(async (t) => {
   if (t.context.api) await t.context.api.close()
 })
 
-test('DELETE /collections/:collectionId/items/:itemId', async (t: ExecutionContext<TestContext>) => {
+test('DELETE /collections/:collectionId/items/:itemId', async (t) => {
   const { collectionId, itemId } = t.context
 
   const response = await t.context.api.client.delete(
@@ -66,7 +67,7 @@ test('DELETE /collections/:collectionId/items/:itemId', async (t: ExecutionConte
 
 test(
   'DELETE /collections/:collectionId/items/:itemId for a non-existent id returns No Content"',
-  async (t: ExecutionContext<TestContext>) => {
+  async (t) => {
     const { collectionId } = t.context
 
     const response = await t.context.api.client.delete(

@@ -1,5 +1,4 @@
-import test from 'ava'
-import type { ExecutionContext } from 'ava'
+import anyTest, { type TestFn } from 'ava'
 import { deleteAllIndices } from '../helpers/database.js'
 import { ingestItem } from '../helpers/ingest.js'
 import { randomId, loadFixture } from '../helpers/utils.js'
@@ -11,7 +10,9 @@ type TestContext = StandUpResult & {
   itemId: string
 }
 
-test.before(async (t: ExecutionContext<TestContext>) => {
+const test = anyTest as TestFn<TestContext>
+
+test.before(async (t) => {
   await deleteAllIndices()
   const standUpResult = await setup()
 
@@ -31,13 +32,13 @@ test.before(async (t: ExecutionContext<TestContext>) => {
   })
 })
 
-test.after.always(async (t: ExecutionContext<TestContext>) => {
+test.after.always(async (t) => {
   if (t.context.api) await t.context.api.close()
 })
 
 test(
   'POST /collections/:collectionId for a non-existent collection returns 404"',
-  async (t: ExecutionContext<TestContext>) => {
+  async (t) => {
     const response = await t.context.api.client.post(
       'collections/DOES_NOT_EXIST',
       { json: {}, resolveBodyOnly: false, throwHttpErrors: false }
@@ -52,7 +53,7 @@ test(
   }
 )
 
-test('POST /collections/:collectionId/items', async (t: ExecutionContext<TestContext>) => {
+test('POST /collections/:collectionId/items', async (t) => {
   t.context.itemId = randomId('item')
 
   const item = await loadFixture(
@@ -74,7 +75,7 @@ test('POST /collections/:collectionId/items', async (t: ExecutionContext<TestCon
 
   t.is(response.statusCode, 201)
   t.is(response.headers['content-type'], 'text/plain; charset=utf-8')
-  t.assert(response.headers['location'].endsWith(`/collections/${collectionId}/items/${itemId}`))
+  t.assert((response.headers['location'] as string).endsWith(`/collections/${collectionId}/items/${itemId}`))
   t.is(response.body, 'Created')
 
   // ES needs a second to process the create request
@@ -91,7 +92,7 @@ test('POST /collections/:collectionId/items', async (t: ExecutionContext<TestCon
 
 test(
   'POST /collections/:collectionId/items with ItemCollection',
-  async (t: ExecutionContext<TestContext>) => {
+  async (t) => {
     const item1Id = randomId('item')
     const item1 = await loadFixture(
       'stac/LC80100102015082LGN00.json',
@@ -164,7 +165,7 @@ test(
 
 test(
   'POST /collections/:collectionId/items with mismatched collection id',
-  async (t: ExecutionContext<TestContext>) => {
+  async (t) => {
     t.context.itemId = randomId('item')
 
     const item = await loadFixture(

@@ -1,15 +1,17 @@
-import test from 'ava'
-import type { ExecutionContext } from 'ava'
+import anyTest, { type TestFn } from 'ava'
 import got from 'got' // eslint-disable-line import/no-unresolved
+import type { Link } from '../../src/lib/types.js'
 import { deleteAllIndices, refreshIndices } from '../helpers/database.js'
 import { randomId } from '../helpers/utils.js'
 import { processMessages } from '../../src/lib/ingest.js'
 import { setup, loadJson } from '../helpers/system-tests.js'
 import type { StandUpResult } from '../helpers/system-tests.js'
+import type { ApiHttpError, SearchBody } from '../helpers/types.js'
 
 type TestContext = StandUpResult
+const test = anyTest as TestFn<TestContext>
 
-test.before(async (t: ExecutionContext<TestContext>) => {
+test.before(async (t) => {
   await deleteAllIndices()
   const standUpResult = await setup()
 
@@ -21,15 +23,15 @@ test.beforeEach(async (_) => {
   delete process.env['ENABLE_FILTER_AUTHX']
 })
 
-test.after.always(async (t: ExecutionContext<TestContext>) => {
+test.after.always(async (t) => {
   if (t.context.api) await t.context.api.close()
 })
 
 test(
   'GET /search returns an empty list of results for a collection that does not exist',
-  async (t: ExecutionContext<TestContext>) => {
+  async (t) => {
     const collectionId = randomId('collection')
-    const searchParams = new URLSearchParams({ collections: [collectionId] })
+    const searchParams = new URLSearchParams({ collections: collectionId })
 
     const response = await t.context.api.client.get('search', { searchParams })
 
@@ -40,7 +42,7 @@ test(
 
 test(
   'GET /search has a content type of "application/geo+json; charset=utf-8',
-  async (t: ExecutionContext<TestContext>) => {
+  async (t) => {
     const response = await t.context.api.client.get('search', {
       resolveBodyOnly: false
     })
@@ -49,14 +51,14 @@ test(
   }
 )
 
-test('/search preserve bbox in next links', async (t: ExecutionContext<TestContext>) => {
+test('/search preserve bbox in next links', async (t) => {
   const fixtureFiles = [
     'catalog.json',
     'collection.json',
     'LC80100102015050LGN00.json',
     'LC80100102015082LGN00.json'
   ]
-  const items = await Promise.all(fixtureFiles.map((x) => loadJson(x)))
+  const items = await Promise.all(fixtureFiles.map((x: string) => loadJson(x)))
   await processMessages(items)
   await refreshIndices()
 
@@ -65,12 +67,12 @@ test('/search preserve bbox in next links', async (t: ExecutionContext<TestConte
   const response = await t.context.api.client.get('search', {
     searchParams: new URLSearchParams({
       bbox,
-      limit: 2,
+      limit: '2',
     })
   })
 
   t.is(response.features.length, 2)
-  const nextLink = response.links.find((x) => x.rel === 'next')
+  const nextLink = response.links.find((x: Link) => x.rel === 'next')
   const nextUrl = new URL(nextLink.href)
   t.deepEqual(nextUrl.searchParams.get('bbox'), bbox)
 
@@ -81,19 +83,19 @@ test('/search preserve bbox in next links', async (t: ExecutionContext<TestConte
       response.features[1].collection
     ].join(','))
 
-  const nextResponse = await got.get(nextUrl).json()
+  const nextResponse = await got.get(nextUrl).json() as SearchBody
   t.is(nextResponse.features.length, 0)
-  t.falsy(nextResponse.links.find((x) => x.rel === 'next'))
+  t.falsy(nextResponse.links.find((x: Link) => x.rel === 'next'))
 })
 
-test('/search preserve bbox and datetime in next links', async (t: ExecutionContext<TestContext>) => {
+test('/search preserve bbox and datetime in next links', async (t) => {
   const fixtureFiles = [
     'catalog.json',
     'collection.json',
     'LC80100102015050LGN00.json',
     'LC80100102015082LGN00.json'
   ]
-  const items = await Promise.all(fixtureFiles.map((x) => loadJson(x)))
+  const items = await Promise.all(fixtureFiles.map((x: string) => loadJson(x)))
   await processMessages(items)
   await refreshIndices()
 
@@ -103,14 +105,14 @@ test('/search preserve bbox and datetime in next links', async (t: ExecutionCont
     searchParams: new URLSearchParams({
       bbox,
       datetime: datetime,
-      limit: 1
+      limit: '1'
     })
   })
 
   t.is(response.features.length, 1)
   t.is(response.links.length, 2)
 
-  const nextLink = response.links.find((x) => x.rel === 'next')
+  const nextLink = response.links.find((x: Link) => x.rel === 'next')
   const nextUrl = new URL(nextLink.href)
   t.deepEqual(nextUrl.searchParams.get('next'),
     [
@@ -122,7 +124,7 @@ test('/search preserve bbox and datetime in next links', async (t: ExecutionCont
   t.deepEqual(nextUrl.searchParams.get('datetime'), datetime)
 })
 
-test('/search filter, query, and item search in single request', async (t: ExecutionContext<TestContext>) => {
+test('/search filter, query, and item search in single request', async (t) => {
   const fixtureFiles = [
     'collection.json',
     'collection2.json',
@@ -130,13 +132,13 @@ test('/search filter, query, and item search in single request', async (t: Execu
     'LC80100102015082LGN00.json',
     'collection2_item.json'
   ]
-  const items = await Promise.all(fixtureFiles.map((x) => loadJson(x)))
+  const items = await Promise.all(fixtureFiles.map((x: string) => loadJson(x)))
   await processMessages(items)
   await refreshIndices()
 
   const response = await t.context.api.client.get('search', {
     searchParams: new URLSearchParams({
-      collections: ['landsat-8-l1'],
+      collections: 'landsat-8-l1',
       query: JSON.stringify({
         'view:sun_elevation': { gt: 20 }
       }),
@@ -149,7 +151,7 @@ test('/search filter, query, and item search in single request', async (t: Execu
   t.is(response.features.length, 1)
 })
 
-test('GET /search with restriction returns filtered collections', async (t: ExecutionContext<TestContext>) => {
+test('GET /search with restriction returns filtered collections', async (t) => {
   process.env['ENABLE_COLLECTIONS_AUTHX'] = 'true'
 
   const fixtureFiles = [
@@ -158,7 +160,7 @@ test('GET /search with restriction returns filtered collections', async (t: Exec
     'LC80100102015050LGN00.json',
     'LC80100102015082LGN00.json'
   ]
-  const items = await Promise.all(fixtureFiles.map((x) => loadJson(x)))
+  const items = await Promise.all(fixtureFiles.map((x: string) => loadJson(x)))
   await processMessages(items)
   await refreshIndices()
 
@@ -202,7 +204,7 @@ test('GET /search with restriction returns filtered collections', async (t: Exec
   }
 })
 
-test('GET /search with filter restriction returns filtered results', async (t: ExecutionContext<TestContext>) => {
+test('GET /search with filter restriction returns filtered results', async (t) => {
   process.env['ENABLE_FILTER_AUTHX'] = 'true'
 
   const fixtureFiles = [
@@ -210,7 +212,7 @@ test('GET /search with filter restriction returns filtered results', async (t: E
     'LC80100102015050LGN00.json',
     'LC80100102015082LGN00.json'
   ]
-  const items = await Promise.all(fixtureFiles.map((x) => loadJson(x)))
+  const items = await Promise.all(fixtureFiles.map((x: string) => loadJson(x)))
   await processMessages(items)
   await refreshIndices()
 
@@ -366,25 +368,25 @@ test('GET /search with filter restriction returns filtered results', async (t: E
   }
 })
 
-test('/search sort unqualified field names fails', async (t: ExecutionContext<TestContext>) => {
+test('/search sort unqualified field names fails', async (t) => {
   const error = await t.throwsAsync(
     async () => t.context.api.client.get('search', {
       searchParams: { sortby: '-datetime' }
     })
-  )
+  ) as ApiHttpError
 
   t.is(error.response.statusCode, 400)
   t.truthy(error.response.body.description.includes('Hint: `sortby` requires fully qualified identifiers'))
 })
 
-test('/search invalid bbox throws error', async (t: ExecutionContext<TestContext>) => {
+test('/search invalid bbox throws error', async (t) => {
   // test invalid longitude
   {
     const error = await t.throwsAsync(
       async () => t.context.api.client.post('search', {
         json: { bbox: [-190, -90, 180, 90] }
       })
-    )
+    ) as ApiHttpError
     t.is(error.response.statusCode, 400)
     t.is(error.response.body.code, 'BadRequest')
     t.regex(
@@ -400,7 +402,7 @@ test('/search invalid bbox throws error', async (t: ExecutionContext<TestContext
       async () => t.context.api.client.post('search', {
         json: { bbox: [-110, -100, 180, 90] }
       })
-    )
+    ) as ApiHttpError
     t.is(error.response.statusCode, 400)
     t.is(error.response.body.code, 'BadRequest')
     t.regex(
@@ -416,7 +418,7 @@ test('/search invalid bbox throws error', async (t: ExecutionContext<TestContext
       async () => t.context.api.client.post('search', {
         json: { bbox: [-190, -90, 180, 100, 10, 10] }
       })
-    )
+    ) as ApiHttpError
     t.is(error.response.statusCode, 400)
     t.is(error.response.body.code, 'BadRequest')
     t.regex(
@@ -427,12 +429,12 @@ test('/search invalid bbox throws error', async (t: ExecutionContext<TestContext
   }
 })
 
-test('GET /search using "exclude" returns properly formatted links', async (t: ExecutionContext<TestContext>) => {
+test('GET /search using "exclude" returns properly formatted links', async (t) => {
   const fixtureFiles = [
     'LC80100102015050LGN00.json',
     'LC80100102015082LGN00.json'
   ]
-  const items = await Promise.all(fixtureFiles.map((x) => loadJson(x)))
+  const items = await Promise.all(fixtureFiles.map((x: string) => loadJson(x)))
   await processMessages(items)
   await refreshIndices()
 
@@ -443,22 +445,22 @@ test('GET /search using "exclude" returns properly formatted links', async (t: E
       resolveBodyOnly: false,
       searchParams: new URLSearchParams({
         collections: 'landsat-8-l1',
-        limit: 1,
+        limit: '1',
         fields: '-assets,-bbox,-stac_version,-collection,-id',
       })
     })
     t.is(response.statusCode, 200)
     t.is(response.body.features.length, 1)
 
-    const selfLink = response.body.features[0].links.find((l) => l.rel === 'self')
+    const selfLink = response.body.features[0].links.find((l: Link) => l.rel === 'self')
     const selfPath = new URL(selfLink.href).pathname
     t.is(selfPath, '/collections/landsat-8-l1/items/LC80100102015082LGN00')
 
-    const parentLink = response.body.features[0].links.find((l) => l.rel === 'parent')
+    const parentLink = response.body.features[0].links.find((l: Link) => l.rel === 'parent')
     const parentPath = new URL(parentLink.href).pathname
     t.is(parentPath, '/collections/landsat-8-l1')
 
-    const collectionLink = response.body.features[0].links.find((l) => l.rel === 'collection')
+    const collectionLink = response.body.features[0].links.find((l: Link) => l.rel === 'collection')
     const collectionPath = new URL(collectionLink.href).pathname
     t.is(collectionPath, '/collections/landsat-8-l1')
   }
@@ -468,22 +470,22 @@ test('GET /search using "exclude" returns properly formatted links', async (t: E
       resolveBodyOnly: false,
       searchParams: new URLSearchParams({
         collections: 'landsat-8-l1',
-        limit: 1,
+        limit: '1',
         fields: '-assets,-bbox,-stac_version',
       })
     })
     t.is(response.statusCode, 200)
     t.is(response.body.features.length, 1)
 
-    const selfLink = response.body.features[0].links.find((l) => l.rel === 'self')
+    const selfLink = response.body.features[0].links.find((l: Link) => l.rel === 'self')
     const selfPath = new URL(selfLink.href).pathname
     t.is(selfPath, '/collections/landsat-8-l1/items/LC80100102015082LGN00')
 
-    const parentLink = response.body.features[0].links.find((l) => l.rel === 'parent')
+    const parentLink = response.body.features[0].links.find((l: Link) => l.rel === 'parent')
     const parentPath = new URL(parentLink.href).pathname
     t.is(parentPath, '/collections/landsat-8-l1')
 
-    const collectionLink = response.body.features[0].links.find((l) => l.rel === 'collection')
+    const collectionLink = response.body.features[0].links.find((l: Link) => l.rel === 'collection')
     const collectionPath = new URL(collectionLink.href).pathname
     t.is(collectionPath, '/collections/landsat-8-l1')
   }

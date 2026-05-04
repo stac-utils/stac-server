@@ -1,5 +1,4 @@
-import test from 'ava'
-import type { ExecutionContext } from 'ava'
+import anyTest, { type TestFn } from 'ava'
 import { deleteAllIndices } from '../helpers/database.js'
 import { ingestItem } from '../helpers/ingest.js'
 import { randomId, loadFixture } from '../helpers/utils.js'
@@ -11,7 +10,9 @@ type TestContext = StandUpResult & {
   itemId: string
 }
 
-test.before(async (t: ExecutionContext<TestContext>) => {
+const test = anyTest as TestFn<TestContext>
+
+test.before(async (t) => {
   await deleteAllIndices()
   const standUpResult = await setup()
 
@@ -47,11 +48,11 @@ test.before(async (t: ExecutionContext<TestContext>) => {
   })
 })
 
-test.after.always(async (t: ExecutionContext<TestContext>) => {
+test.after.always(async (t) => {
   if (t.context.api) await t.context.api.close()
 })
 
-test('PUT /collections/:collectionId/items/:itemId', async (t: ExecutionContext<TestContext>) => {
+test('PUT /collections/:collectionId/items/:itemId', async (t) => {
   const { collectionId, itemId } = t.context
 
   const item = await t.context.api.client.get(
@@ -83,7 +84,7 @@ test('PUT /collections/:collectionId/items/:itemId', async (t: ExecutionContext<
 
 test(
   'PUT /collections/:collectionId/items/:itemId for a non-existent collection or id returns 404"',
-  async (t: ExecutionContext<TestContext>) => {
+  async (t) => {
     const { collectionId } = t.context
 
     t.is((await t.context.api.client.put(
@@ -100,7 +101,7 @@ test(
 
 test(
   'PUT /collections/:collectionId/items with mismatched collection id',
-  async (t: ExecutionContext<TestContext>) => {
+  async (t) => {
     const { collectionId, itemId } = t.context
 
     const item = await t.context.api.client.get(
@@ -120,7 +121,7 @@ test(
 
 test(
   'PUT /collections/:collectionId/items with mismatched id',
-  async (t: ExecutionContext<TestContext>) => {
+  async (t) => {
     const { collectionId, itemId } = t.context
 
     const item = await t.context.api.client.get(
@@ -140,7 +141,7 @@ test(
 
 test(
   'PUT /collections/:collectionId/items with missing collection id populate it',
-  async (t: ExecutionContext<TestContext>) => {
+  async (t) => {
     const { collectionId, itemId } = t.context
 
     const item = await t.context.api.client.get(

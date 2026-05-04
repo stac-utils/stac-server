@@ -1,5 +1,4 @@
-import test from 'ava'
-import type { ExecutionContext } from 'ava'
+import anyTest, { type TestFn } from 'ava'
 import { ingestItem } from '../helpers/ingest.js'
 import { randomId, loadFixture } from '../helpers/utils.js'
 import { refreshIndices, deleteAllIndices } from '../helpers/database.js'
@@ -10,7 +9,9 @@ type TestContext = StandUpResult & {
   collectionId: string
 }
 
-test.before(async (t: ExecutionContext<TestContext>) => {
+const test = anyTest as TestFn<TestContext>
+
+test.before(async (t) => {
   await deleteAllIndices()
   const standUpResult = await setup()
 
@@ -34,7 +35,7 @@ test.beforeEach(async (_) => {
   delete process.env['ENABLE_COLLECTIONS_AUTHX']
 })
 
-test('GET /collections', async (t: ExecutionContext<TestContext>) => {
+test('GET /collections', async (t) => {
   await refreshIndices()
 
   const response = await t.context.api.client.get('collections')
@@ -47,7 +48,6 @@ test('GET /collections', async (t: ExecutionContext<TestContext>) => {
   // queryables definition is stored in the collection document in OpenSearch,
   // but we do not want it in the Collection entity returned from the API or
   // people will start using this (non-standard) field
-  // @ts-expect-error We need to validate these responses
   for (const c of response.collections) {
     t.falsy(c.queryables)
   }
@@ -55,7 +55,7 @@ test('GET /collections', async (t: ExecutionContext<TestContext>) => {
 
 test(
   'GET /collections has a content type of "application/json',
-  async (t: ExecutionContext<TestContext>) => {
+  async (t) => {
     const response = await t.context.api.client.get('collections', { resolveBodyOnly: false })
     t.is(response.headers['content-type'], 'application/json; charset=utf-8')
   }
@@ -63,7 +63,7 @@ test(
 
 test(
   'GET /collections with restriction returns filtered collections',
-  async (t: ExecutionContext<TestContext>) => {
+  async (t) => {
     process.env['ENABLE_COLLECTIONS_AUTHX'] = 'true'
 
     await refreshIndices()

@@ -1,5 +1,4 @@
-import test from 'ava'
-import type { ExecutionContext } from 'ava'
+import anyTest, { type TestFn } from 'ava'
 import { ingestItem } from '../helpers/ingest.js'
 import { randomId, loadFixture } from '../helpers/utils.js'
 import { refreshIndices, deleteAllIndices } from '../helpers/database.js'
@@ -7,8 +6,9 @@ import { setup } from '../helpers/system-tests.js'
 import type { StandUpResult } from '../helpers/system-tests.js'
 
 type TestContext = StandUpResult
+const test = anyTest as TestFn<TestContext>
 
-test.before(async (t: ExecutionContext<TestContext>) => {
+test.before(async (t) => {
   await deleteAllIndices()
   const standUpResult = await setup()
 
@@ -28,7 +28,7 @@ test.before(async (t: ExecutionContext<TestContext>) => {
   })
 })
 
-test('GET /queryables', async (t: ExecutionContext<TestContext>) => {
+test('GET /queryables', async (t) => {
   await refreshIndices()
 
   const proto = randomId()

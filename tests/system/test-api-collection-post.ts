@@ -1,7 +1,11 @@
-import test from 'ava'
+import anyTest, { type TestFn } from 'ava'
 import { deleteAllIndices } from '../helpers/database.js'
 import { randomId } from '../helpers/utils.js'
 import { setup } from '../helpers/system-tests.js'
+import type { StandUpResult } from '../helpers/system-tests.js'
+
+type TestContext = StandUpResult
+const test = anyTest as TestFn<TestContext>
 
 test.before(async (t) => {
   await deleteAllIndices()
@@ -34,7 +38,6 @@ test('POST /collections creates a collection', async (t) => {
 
   t.is(response2.statusCode, 200)
   t.is(response2.headers['content-type'], 'application/json; charset=utf-8')
-  // @ts-expect-error We need to validate these responses
   t.is(response2.body.id, collectionId)
 })
 

@@ -22,11 +22,11 @@ const readFixture = (filename: string): Promise<string> => {
   return readFile(fixturePath, 'utf8')
 }
 
-export const loadFixture = async (
+export const loadFixture = async <T = Record<string, unknown>> (
   filename: string,
   overrides: Record<string, unknown> = {}
-): Promise<Record<string, unknown>> => {
+): Promise<T> => {
   const content = await readFixture(filename)
   const fixture = JSON.parse(content) as Record<string, unknown>
-  return { ...fixture, ...overrides }
+  return { ...fixture, ...overrides } as T
 }

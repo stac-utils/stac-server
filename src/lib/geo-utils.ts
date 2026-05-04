@@ -1,4 +1,4 @@
-// @ts-expect-error - @mapbox/extent has no TypeScript type definitions
+// @ts-ignore - @mapbox/extent has no TypeScript type definitions
 import extent from '@mapbox/extent'
 import { BBox, Geometry } from 'geojson'
 import { ValidationError } from './errors.js'

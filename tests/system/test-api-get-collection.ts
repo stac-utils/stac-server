@@ -1,5 +1,5 @@
-import test from 'ava'
-import type { ExecutionContext } from 'ava'
+import anyTest, { type TestFn } from 'ava'
+import type { Link } from '../../src/lib/types.js'
 import { deleteAllIndices } from '../helpers/database.js'
 import { ingestItem } from '../helpers/ingest.js'
 import { randomId, loadFixture } from '../helpers/utils.js'
@@ -10,7 +10,9 @@ type TestContext = StandUpResult & {
   collectionId: string
 }
 
-test.before(async (t: ExecutionContext<TestContext>) => {
+const test = anyTest as TestFn<TestContext>
+
+test.before(async (t) => {
   await deleteAllIndices()
   const standUpResult = await setup()
 
@@ -34,13 +36,13 @@ test.beforeEach(async (_) => {
   delete process.env['ENABLE_COLLECTIONS_AUTHX']
 })
 
-test.after.always(async (t: ExecutionContext<TestContext>) => {
+test.after.always(async (t) => {
   if (t.context.api) await t.context.api.close()
 })
 
 test(
   'GET /collections/:collectionId returns a collection',
-  async (t: ExecutionContext<TestContext>) => {
+  async (t) => {
     const { collectionId } = t.context
 
     const response = await t.context.api.client.get(`collections/${collectionId}`,
@@ -50,19 +52,19 @@ test(
     t.is(response.headers['content-type'], 'application/json; charset=utf-8')
     t.is(response.body.id, collectionId)
 
-    t.falsy(response.queryables)
+    t.falsy((response as unknown as Record<string, unknown>)['queryables'])
 
-    const qLink = response.body.links.find((l) => l.rel === 'http://www.opengis.net/def/rel/ogc/1.0/queryables')
+    const qLink = response.body.links.find((l: Link) => l.rel === 'http://www.opengis.net/def/rel/ogc/1.0/queryables')
     t.true(qLink?.href.endsWith(`/collections/${collectionId}/queryables`))
 
-    const aggregateLink = response.body.links.find((l) => l.rel === 'aggregate')
+    const aggregateLink = response.body.links.find((l: Link) => l.rel === 'aggregate')
     t.true(aggregateLink?.href.endsWith(`/collections/${collectionId}/aggregate`))
 
-    const aggregationsLink = response.body.links.find((l) => l.rel === 'aggregations')
+    const aggregationsLink = response.body.links.find((l: Link) => l.rel === 'aggregations')
     t.true(aggregationsLink?.href.endsWith(`/collections/${collectionId}/aggregations`))
 
     // Check that proper link titles are generated
-    response.body.links.forEach((link) => {
+    response.body.links.forEach((link: Link) => {
       t.truthy(link.hasOwnProperty('title') && link.title)
     })
   }
@@ -70,7 +72,7 @@ test(
 
 test(
   'GET /collection/:collectionId for non-existent collection returns Not Found',
-  async (t: ExecutionContext<TestContext>) => {
+  async (t) => {
     const response = await t.context.api.client.get(
       'collections/DOES_NOT_EXIST',
       { resolveBodyOnly: false, throwHttpErrors: false }
@@ -82,7 +84,7 @@ test(
 
 test(
   'GET /collections/:collectionId with restriction returns filtered collections',
-  async (t: ExecutionContext<TestContext>) => {
+  async (t) => {
     process.env['ENABLE_COLLECTIONS_AUTHX'] = 'true'
 
     const { collectionId } = t.context

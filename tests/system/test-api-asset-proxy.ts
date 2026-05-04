@@ -1,6 +1,6 @@
-import test from 'ava'
-import type { ExecutionContext } from 'ava'
+import anyTest, { type TestFn } from 'ava'
 import { CreateBucketCommand } from '@aws-sdk/client-s3'
+import type { StacCollection, StacItem } from '../../src/lib/types.js'
 import { ALTERNATE_ASSETS_EXTENSION } from '../../src/lib/asset-proxy.js'
 import { deleteAllIndices } from '../helpers/database.js'
 import { ingestItem } from '../helpers/ingest.js'
@@ -19,8 +19,9 @@ type TestContext = StandUpResult & {
   itemId: string
   collectionWithAssetId: string
 }
+const test = anyTest as TestFn<TestContext>
 
-test.before(async (t: ExecutionContext<TestContext>) => {
+test.before(async (t) => {
   await deleteAllIndices()
   const standUpResult = await setup()
 
@@ -62,13 +63,13 @@ test.before(async (t: ExecutionContext<TestContext>) => {
   })
 })
 
-test.after.always(async (t: ExecutionContext<TestContext>) => {
+test.after.always(async (t) => {
   if (t.context.api) await t.context.api.close()
 })
 
 test(
   'AssetProxy initialized with ALL_BUCKETS_IN_ACCOUNT mode fetches buckets',
-  (t: ExecutionContext<TestContext>) => {
+  (t) => {
     const assetProxy = t.context.api.app.locals['assetProxy']
 
     t.truthy(assetProxy.buckets)
@@ -80,7 +81,7 @@ test(
 
 test(
   'GET /collections/:collectionId/items/:itemId/assets/:assetKey - 302 redirect to presigned URL',
-  async (t: ExecutionContext<TestContext>) => {
+  async (t) => {
     const { collectionId, itemId } = t.context
 
     const response = await t.context.api.client.get(
@@ -94,15 +95,15 @@ test(
 
     t.is(response.statusCode, 302)
     t.truthy(response.headers.location)
-    t.true(response.headers.location.includes('landsat-pds'))
-    t.true(response.headers.location.includes('X-Amz-Algorithm'))
-    t.true(response.headers.location.includes('X-Amz-Signature'))
+    t.true(response.headers.location!.includes('landsat-pds'))
+    t.true(response.headers.location!.includes('X-Amz-Algorithm'))
+    t.true(response.headers.location!.includes('X-Amz-Signature'))
   }
 )
 
 test(
   'GET /collections/:collectionId/assets/:assetKey - 302 redirect for collection assets',
-  async (t: ExecutionContext<TestContext>) => {
+  async (t) => {
     const { collectionWithAssetId } = t.context
 
     const response = await t.context.api.client.get(
@@ -116,15 +117,15 @@ test(
 
     t.is(response.statusCode, 302)
     t.truthy(response.headers.location)
-    t.true(response.headers.location.includes('landsat-pds'))
-    t.true(response.headers.location.includes('X-Amz-Algorithm'))
-    t.true(response.headers.location.includes('X-Amz-Algorithm'))
+    t.true(response.headers.location!.includes('landsat-pds'))
+    t.true(response.headers.location!.includes('X-Amz-Algorithm'))
+    t.true(response.headers.location!.includes('X-Amz-Algorithm'))
   }
 )
 
 test(
   'GET /collections/:collectionId/items/:itemId/assets/:assetKey - 404 for non-existent asset',
-  async (t: ExecutionContext<TestContext>) => {
+  async (t) => {
     const { collectionId, itemId } = t.context
 
     const response = await t.context.api.client.get(
@@ -141,7 +142,7 @@ test(
 
 test(
   'GET /collections/:collectionId/items/:itemId/assets/:assetKey - 404 for non-existent item',
-  async (t: ExecutionContext<TestContext>) => {
+  async (t) => {
     const { collectionId } = t.context
 
     const response = await t.context.api.client.get(
@@ -158,7 +159,7 @@ test(
 
 test(
   'GET /collections/:collectionId/items/:itemId/assets/:assetKey - 404 for non-existent collection',
-  async (t: ExecutionContext<TestContext>) => {
+  async (t) => {
     const response = await t.context.api.client.get(
       'collections/DOES_NOT_EXIST/items/DOES_NOT_EXIST/assets/B1',
       {
@@ -173,10 +174,10 @@ test(
 
 test(
   'GET /collections/:collectionId/items/:itemId - item asset hrefs are transformed with proxy enabled',
-  async (t: ExecutionContext<TestContext>) => {
+  async (t) => {
     const { collectionId, itemId } = t.context
 
-    const item = await loadFixture(ITEM_FIXTURE)
+    const item = await loadFixture<StacItem>(ITEM_FIXTURE)
 
     const response = await t.context.api.client.get(
       `collections/${collectionId}/items/${itemId}`,
@@ -185,21 +186,18 @@ test(
 
     t.is(response.statusCode, 200)
     const expectedAssetPath = `/collections/${collectionId}/items/${itemId}/assets/B1`
-    // @ts-expect-error We need to validate these responses
     t.true(response.body.assets.B1.href.includes(expectedAssetPath))
-    // @ts-expect-error We need to validate these responses
-    t.is(response.body.assets.B1.alternate.s3.href, item['assets']['B1']['href'])
-    // @ts-expect-error We need to validate these responses
+    t.is(response.body.assets.B1.alternate.s3.href, item.assets['B1']!.href)
     t.true(response.body.stac_extensions.includes(ALTERNATE_ASSETS_EXTENSION))
   }
 )
 
 test(
   'GET /collections/:collectionId - collection asset hrefs are transformed with proxy enabled',
-  async (t: ExecutionContext<TestContext>) => {
+  async (t) => {
     const { collectionWithAssetId } = t.context
 
-    const collection = await loadFixture(COLLECTION_WITH_ASSET_FIXTURE)
+    const collection = await loadFixture<StacCollection>(COLLECTION_WITH_ASSET_FIXTURE)
 
     const response = await t.context.api.client.get(
       `collections/${collectionWithAssetId}`,
@@ -208,11 +206,8 @@ test(
 
     t.is(response.statusCode, 200)
     const expectedAssetPath = `/collections/${collectionWithAssetId}/assets/thumbnail`
-    // @ts-expect-error We need to validate these responses
     t.true(response.body.assets.thumbnail.href.includes(expectedAssetPath))
-    // @ts-expect-error We need to validate these responses
-    t.is(response.body.assets.thumbnail.alternate.s3.href, collection['assets']['thumbnail']['href'])
-    // @ts-expect-error We need to validate these responses
+    t.is(response.body.assets.thumbnail.alternate.s3.href, collection.assets!['thumbnail']!.href)
     t.true(response.body.stac_extensions.includes(ALTERNATE_ASSETS_EXTENSION))
   }
 )

@@ -1,5 +1,4 @@
-import test from 'ava'
-import type { ExecutionContext } from 'ava'
+import anyTest, { type TestFn } from 'ava'
 import { randomId } from '../helpers/utils.js'
 import { setup, loadJson } from '../helpers/system-tests.js'
 import type { StandUpResult } from '../helpers/system-tests.js'
@@ -7,6 +6,8 @@ import { deleteAllIndices, refreshIndices } from '../helpers/database.js'
 import { processMessages } from '../../src/lib/ingest.js'
 
 type TestContext = StandUpResult
+
+const test = anyTest as TestFn<TestContext>
 
 const proto = randomId()
 const host = randomId()
@@ -22,7 +23,7 @@ const fixtureItems = [
   'item-s1-2.json'
 ]
 
-test.before(async (t: ExecutionContext<TestContext>) => {
+test.before(async (t) => {
   await deleteAllIndices()
   t.context = await setup()
   await processMessages(await Promise.all(fixtureCollections.map((x) => loadJson(x))))
@@ -38,7 +39,7 @@ test.beforeEach(async (_) => {
 
 test(
   'GET /collections/{collectionId}/aggregate with no aggregations param',
-  async (t: ExecutionContext<TestContext>) => {
+  async (t) => {
     const response = await t.context.api.client.get(
       'collections/landsat-8-l1/aggregate',
       {
@@ -75,13 +76,13 @@ test(
 
 test(
   'GET /collections/{collectionId}/aggregate with aggregations param',
-  async (t: ExecutionContext<TestContext>) => {
+  async (t) => {
     const response = await t.context.api.client.get(
       'collections/sentinel-1-grd/aggregate',
       {
-        searchParams: new URLSearchParams(
-          { aggregations: ['total_count', 'datetime_frequency', 'centroid_geohex_grid_frequency'] }
-        ),
+        searchParams: new URLSearchParams([
+          ['aggregations', 'total_count'],
+          ['aggregations', 'datetime_frequency'], ['aggregations', 'centroid_geohex_grid_frequency']]),
         resolveBodyOnly: false,
         headers: {
           'X-Forwarded-Proto': proto,
@@ -140,12 +141,12 @@ test(
 
 test(
   'GET /collections/{collectionId}/aggregate with non-existant aggregation',
-  async (t: ExecutionContext<TestContext>) => {
+  async (t) => {
     const response = await t.context.api.client.get(
       'collections/sentinel-1-grd/aggregate',
       {
         throwHttpErrors: false,
-        searchParams: new URLSearchParams({ aggregations: ['foo'] }),
+        searchParams: new URLSearchParams({ aggregations: 'foo' }),
         resolveBodyOnly: false,
         headers: {
           'X-Forwarded-Proto': proto,
@@ -164,12 +165,12 @@ test(
 
 test(
   'GET /aggregate with aggregation not supported by this collection',
-  async (t: ExecutionContext<TestContext>) => {
+  async (t) => {
     const response = await t.context.api.client.get(
       'collections/sentinel-1-grd/aggregate',
       {
         throwHttpErrors: false,
-        searchParams: new URLSearchParams({ aggregations: ['grid_code_frequency'] }),
+        searchParams: new URLSearchParams({ aggregations: 'grid_code_frequency' }),
         resolveBodyOnly: false,
         headers: {
           'X-Forwarded-Proto': proto,
@@ -188,7 +189,7 @@ test(
 
 test(
   'GET /collections/:collectionId/aggregate with restriction returns filtered collections',
-  async (t: ExecutionContext<TestContext>) => {
+  async (t) => {
     process.env['ENABLE_COLLECTIONS_AUTHX'] = 'true'
 
     const collectionId = 'landsat-8-l1'
@@ -233,7 +234,7 @@ test(
 
 test(
   'GET /collections/:collectionId/aggregate with filter restriction',
-  async (t: ExecutionContext<TestContext>) => {
+  async (t) => {
     process.env['ENABLE_FILTER_AUTHX'] = 'true'
 
     const collectionId = 'landsat-8-l1'
@@ -245,7 +246,7 @@ test(
         {
           resolveBodyOnly: false,
           searchParams: new URLSearchParams({
-            aggregations: ['total_count'],
+            aggregations: 'total_count',
             _filter: JSON.stringify({
               op: '<>',
               args: [{ property: 'id' }, 'LC80100102015050LGN00']
@@ -264,7 +265,7 @@ test(
       const r = await t.context.api.client.get(path,
         {
           resolveBodyOnly: false,
-          searchParams: new URLSearchParams({ aggregations: ['total_count'] }),
+          searchParams: new URLSearchParams({ aggregations: 'total_count' }),
           headers: {
             'stac-filter-authx': JSON.stringify({
               op: '<>',

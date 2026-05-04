@@ -1,6 +1,10 @@
-import test from 'ava'
+import anyTest, { type TestFn } from 'ava'
 import { randomId } from '../helpers/utils.js'
 import { setup } from '../helpers/system-tests.js'
+import type { StandUpResult } from '../helpers/system-tests.js'
+
+type TestContext = StandUpResult
+const test = anyTest as TestFn<TestContext>
 
 test.before(async (t) => {
   t.context = await setup()

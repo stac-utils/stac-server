@@ -24,7 +24,8 @@ import {
   SearchResponse,
   SortParameters,
   StacCollection,
-  StacItem
+  StacItem,
+  TemporalExtent
 } from './types.js'
 
 /*
@@ -1200,6 +1201,52 @@ async function healthCheck(): Promise<ApiResponse> {
   return client.cat.health()
 }
 
+/**
+ * Calculate a collection's temporal extent by finding its earliest and latest
+ * items by datetime. Returns [[startDate, endDate]], [[null, null]] when there
+ * are no dated items, or null on error.
+ */
+async function getTemporalExtentFromItems(
+  collectionId: string
+): Promise<TemporalExtent['interval'] | null> {
+  try {
+    // Build a one-result query sorted by datetime in the given direction,
+    // returning only the datetime field.
+    const buildParams = async (order: 'asc' | 'desc'): Promise<SearchParameters> => {
+      const params = await constructSearchParams({ collections: [collectionId] }, undefined, 1)
+      params.body.sort = [{ 'properties.datetime': { order } }]
+      params._sourceIncludes = ['properties.datetime']
+      return params
+    }
+
+    const [minParams, maxParams] = await Promise.all([
+      buildParams('asc'), // earliest item
+      buildParams('desc') // latest item
+    ])
+
+    const [minResponse, maxResponse] = await Promise.all([
+      dbQuery({ ignore_unavailable: true, allow_no_indices: true, ...minParams }),
+      dbQuery({ ignore_unavailable: true, allow_no_indices: true, ...maxParams })
+    ])
+
+    const startDate = minResponse.body['hits'].hits[0]?._source?.properties?.datetime
+    const endDate = maxResponse.body['hits'].hits[0]?._source?.properties?.datetime
+
+    // No items, or items without datetime
+    if (startDate == null || endDate == null) {
+      return [[null, null]]
+    }
+
+    return [[startDate, endDate]]
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error)
+    logger.error(
+      `Error calculating temporal extent for collection ${collectionId}: ${errorMessage}`
+    )
+    return null
+  }
+}
+
 export default {
   getCollections,
   getCollection,
@@ -1216,5 +1263,6 @@ export default {
   constructSearchParams,
   buildDatetimeQuery,
   healthCheck,
+  getTemporalExtentFromItems,
   buildFieldsFilter
 }

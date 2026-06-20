@@ -59,6 +59,12 @@ Publish a STAC Item or Collection directly:
 }
 ```
 
+#### Automatic Temporal Extent
+
+When ingesting Collections, the `extent.temporal.interval` bounds can be omitted (left `null`) to enable automatic temporal extent calculation. When a collection is requested via the API, any missing bound is filled in from its items: a missing start is set to the earliest item `datetime` and a missing end to the latest. Bounds that are already declared on the collection are preserved — so a collection with a start date but an open end keeps its start and only has the end computed.
+
+Collections with no items have any missing bound left as `null`. This feature allows temporal extents to stay current as items are added or removed without requiring manual collection updates. The extent is calculated dynamically each time the collection is requested, so it reflects the current state of items without persisting changes to the collection document.
+
 ### Large Items
 
 For items exceeding the 256 KB SQS message limit, publish a reference:

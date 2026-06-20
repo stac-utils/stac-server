@@ -472,6 +472,7 @@ export interface Backend {
   ): Promise<ApiResponse>
   getCollection(collectionId: string): Promise<StacCollection | Error>
   getCollections(page: number, limit: number): Promise<StacCollection[] | Error>
+  getTemporalExtentFromItems(collectionId: string): Promise<TemporalExtent['interval'] | null>
   indexItem(item: StacItem): Promise<ApiResponse | Error>
   updateItem(item: StacItem): Promise<ApiResponse<Record<string, unknown>, unknown> |
     Error>

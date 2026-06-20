@@ -1043,6 +1043,28 @@ const deleteUnusedFields = (collection: StacCollection) => {
   delete collection.aggregations
 }
 
+/**
+ * Fill in a collection's missing temporal extent bounds from its items.
+ * Only absent (null) bounds are computed — a start or end already declared on
+ * the collection is preserved. Mutates the collection in place.
+ */
+const populateTemporalExtentIfMissing = async (
+  backend: Backend,
+  collection: StacCollection
+): Promise<void> => {
+  const [start, end] = collection.extent?.temporal?.interval?.[0] ?? [null, null]
+
+  // Nothing to do when both bounds are already declared.
+  if (start != null && end != null) return
+
+  const temporalExtent = await backend.getTemporalExtentFromItems(collection.id)
+  if (temporalExtent && collection.extent?.temporal) {
+    const [computedStart, computedEnd] = temporalExtent[0]
+    // Preserve any declared bound; only fill the missing one(s) from items.
+    collection.extent.temporal.interval = [[start ?? computedStart, end ?? computedEnd]]
+  }
+}
+
 const getCollections = async function (
   backend: Backend,
   endpoint: string,
@@ -1060,6 +1082,10 @@ const getCollections = async function (
   const collections = collectionsOrError.filter(
     (c) => isCollectionIdAllowed(allowedCollectionIds, c.id)
   )
+
+  // Populate temporal extent for each collection from items only if not already defined
+  await Promise.all(collections.map((collection) =>
+    populateTemporalExtentIfMissing(backend, collection)))
 
   for (const collection of collections) {
     deleteUnusedFields(collection)
@@ -1114,6 +1140,9 @@ const getCollection = async function (
   if (result instanceof Error) {
     return new NotFoundError()
   }
+
+  // Populate temporal extent from items only if not already defined
+  await populateTemporalExtentIfMissing(backend, result)
 
   deleteUnusedFields(result)
   addCollectionLinks([result], endpoint)

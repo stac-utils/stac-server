@@ -76,9 +76,10 @@ export const extractPrecision = function (
   return min
 }
 
-// Calendar intervals supported by the OpenSearch date_histogram aggregation.
+// Supported datetime_frequency intervals, mapped directly to the OpenSearch
+// date_histogram calendar_interval. Day is the finest granularity we expose.
 export const DATETIME_FREQUENCY_INTERVALS = [
-  'minute', 'hour', 'day', 'week', 'month', 'quarter', 'year'
+  'day', 'week', 'month', 'quarter', 'year'
 ]
 
 export const extractDatetimeFrequencyInterval = function (params: APIParameters): string {

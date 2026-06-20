@@ -61,9 +61,12 @@ jobs:
         id: package-version
         run: echo "version=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
 
+      - name: Setup Git User
+        uses: fregante/setup-git-user@v2
+
       - name: Build documentation with mike
         run: |
-          mike deploy --no-redirect ${{ steps.package-version.outputs.version }} latest
+          mike deploy --alias-type=copy --update-aliases ${{ steps.package-version.outputs.version }} latest
           mike set-default latest
 
       - name: Setup Pages

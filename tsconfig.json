@@ -4,7 +4,7 @@
     "module": "nodenext",
     "moduleResolution": "nodenext",
     "allowJs": true,
-    "checkJs": true,
+    "checkJs": false,
     "noEmit": true,
     "alwaysStrict": true,
     "noImplicitAny": false,
@@ -21,12 +21,14 @@
     "noUnusedParameters": true,
     "resolveJsonModule": true,
     "typeRoots": [
-      "./@types",
+      "./src/@types",
       "node_modules/@types"
     ]
   },
   "include": [
     "src",
-    "tests"
+  ],
+  "exclude": [
+    "tests/**/*.js"
   ]
 }

@@ -17,7 +17,7 @@ if (process.env['PRODUCTION']) {
 
 export default {
   mode,
-  entry: './index.js',
+  entry: './index.ts',
   output: {
     libraryTarget: 'commonjs2',
     filename: 'index.js',
@@ -26,6 +26,23 @@ export default {
   devtool,
   resolve: {
     extensions: ["", ".webpack.js", ".web.js", ".ts", ".js"],
+    extensionAlias: {
+      ".js": [".ts", ".js"],
+    },
+  },
+  module: {
+    rules: [
+      {
+        test: /\.ts$/,
+        use: {
+          loader: 'ts-loader',
+          options: {
+            transpileOnly: true,
+          },
+        },
+        exclude: /node_modules/,
+      },
+    ],
   },
   optimization: {
     usedExports: true

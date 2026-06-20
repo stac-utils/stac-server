@@ -1,14 +1,6 @@
-/**
- * @typedef {import('express').Request} Request
- * @typedef {import('express').Response} Response
- * @typedef {import('express').NextFunction} NextFunction
- */
+import { Request, Response, NextFunction } from 'express'
 
-/**
- * @param {Request} req
- * @returns {string}
- */
-const determineEndpoint = (req) => {
+const determineEndpoint = (req: Request): string => {
   const stacEndpointHeader = req.get('x-stac-endpoint') || req.get('stac-endpoint')
   if (stacEndpointHeader) return stacEndpointHeader
 
@@ -25,13 +17,7 @@ const determineEndpoint = (req) => {
     : `${req.get('X-Forwarded-Proto')}://${req.get('Host')}${rootPath}`
 }
 
-/**
- * @param {Request} req
- * @param {Response} _res
- * @param {NextFunction} next
- * @returns {void}
- */
-export default (req, _res, next) => {
+export default (req: Request, _res: Response, next: NextFunction) => {
   req.endpoint = determineEndpoint(req)
   next()
 }

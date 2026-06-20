@@ -25,14 +25,14 @@ test.before(async (t) => {
   })
 
   // Ingest items with different dates
-  const item1 = await loadFixture('stac/LC80100102015002LGN00.json', {
+  const item1 = await loadFixture('stac/LC80100102015050LGN00.json', {
     collection: t.context.collectionId,
     properties: {
       datetime: '2015-01-02T15:49:05.000Z'
     }
   })
 
-  const item2 = await loadFixture('stac/LC80100102015002LGN00.json', {
+  const item2 = await loadFixture('stac/LC80100102015050LGN00.json', {
     collection: t.context.collectionId,
     id: 'item-2',
     properties: {
@@ -40,7 +40,7 @@ test.before(async (t) => {
     }
   })
 
-  const item3 = await loadFixture('stac/LC80100102015002LGN00.json', {
+  const item3 = await loadFixture('stac/LC80100102015050LGN00.json', {
     collection: t.context.collectionId,
     id: 'item-3',
     properties: {

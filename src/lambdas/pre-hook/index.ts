@@ -1,8 +1,8 @@
-/* eslint-disable import/prefer-default-export */
 import {
   SecretsManagerClient,
   GetSecretValueCommand,
 } from '@aws-sdk/client-secrets-manager'
+import { APIGatewayProxyEvent, APIGatewayProxyResult, Context } from 'aws-lambda'
 
 const TTL = 60 * 1000 // in ms
 
@@ -12,8 +12,9 @@ const response401 = {
   headers: { 'access-control-allow-origin': '*' },
 }
 
-// eslint-disable-next-line import/no-mutable-exports
-export let apiKeys = new Map() // string -> string[]
+let apiKeys = new Map()
+
+export const getApiKeys = () => apiKeys
 
 const updateApiKeys = async () => {
   await new SecretsManagerClient({ region: process.env['AWS_REGION'] || 'us-west-2' })
@@ -35,10 +36,15 @@ const updateApiKeys = async () => {
     })
 }
 
-const isValidToken = (token) => (apiKeys.get(token) || []).includes('write')
+const isValidToken = (
+  token: string | undefined
+) => (apiKeys.get(token) || []).includes('write')
 
-export const handler = async (event, _context) => {
-  let token = null
+export const handler = async (
+  event: APIGatewayProxyEvent,
+  _context: Context
+): Promise<APIGatewayProxyEvent | APIGatewayProxyResult> => {
+  let token: string | undefined
 
   if (event.headers && event.headers['Authorization']) {
     token = event.headers['Authorization'].split('Bearer ')[1]

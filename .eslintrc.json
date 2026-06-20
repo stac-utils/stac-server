@@ -14,11 +14,23 @@
     "mocha": true
   },
   "settings": {
+    "import/resolver": {
+      "node": {
+        "extensions": [
+          ".js",
+          ".ts"
+        ]
+      },
+      "typescript": {
+        "alwaysUseFieldTypeScript": true
+      }
+    },
     "react": {
       "version": "999.999.999"
     }
   },
   "rules": {
+    "import/prefer-default-export": "off",
     "@typescript-eslint/ban-ts-comment": "off",
     "dot-notation": "off",
     "implicit-arrow-linebreak": "off",
@@ -83,7 +95,9 @@
       "error",
       {
         "ignore": [
-          "^ava$"
+          "^ava$",
+          "\\.js$",
+          "geojson"
         ]
       }
     ],
@@ -159,6 +173,21 @@
       ],
       "rules": {
         "@typescript-eslint/no-var-requires": 0
+      }
+    },
+    {
+      "files": [
+        "*.ts"
+      ],
+      "rules": {
+        "no-use-before-define": "off",
+        "@typescript-eslint/no-use-before-define": "warn", // use the TS-aware version instead
+        "valid-jsdoc": "off",
+        "jsdoc/require-param": "off",
+        "jsdoc/require-param-type": "off",
+        "jsdoc/require-param-name": "off",
+        "jsdoc/require-returns-type": "off",
+        "jsdoc/check-param-names": "off"
       }
     }
   ]

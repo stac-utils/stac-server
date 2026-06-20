@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Fixed
+
+### Added
+- Generating base STAC typescript types for typescript migration ([1068](https://github.com/stac-utils/stac-server/pull/1068))
+- Automatic temporal extent calculation for collections. When serving collections via the `/collections`
+  and `/collections/{collectionId}` endpoints, if a collection does not have a complete temporal extent
+  defined, the server automatically calculates it from the earliest and latest items in the collection. To
+  use this feature, omit the `extent.temporal.interval` field (or leave a bound `null`) when ingesting a
+  collection. ([999](https://github.com/stac-utils/stac-server/pull/999))
+
+### Changed
+
+- Typing the top level lambda layer ([1087](https://github.com/stac-utils/stac-server/pull/1087))
+- Typing the api layer in `api.ts`, pushing some minor functions to a new utility files `api-utils.ts` ([1081](https://github.com/stac-utils/stac-server/pull/1081))
+- Converting the database layer to typescript as part of migration ([1077](https://github.com/stac-utils/stac-server/pull/1077))
+- Converting additional files to typescript as part of typescript migration and generating related types ([1071](https://github.com/stac-utils/stac-server/pull/1071))
+- Adjusting configs to handle both typescript and javascript files for the typescript migraton ([1067](https://github.com/stac-utils/stac-server/pull/1067))
+- Typing simple utility files as part of an 'outside-in' approach to typescript migration ([1068](https://github.com/stac-utils/stac-server/pull/1068))
+
 ## [5.0.0]
 
 ### Fixed
@@ -43,10 +62,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 
-- Automatic temporal extent calculation for collections. When serving collections via the `/collections` 
-  and `/collections/{collectionId}` endpoints, if a collection does not have a temporal extent defined, 
-  the server will automatically calculate it from the earliest and latest items in the collection. To use 
-  this feature, simply omit the `extent.temporal.interval` field when ingesting a collection.
 - Asset proxying for generating pre-signed S3 URLs through proxy endpoints `GET
   /collections/{collectionId}/items/{itemId}/assets/{assetKey}` and `GET
   /collections/{collectionId}/assets/{assetKey}`.

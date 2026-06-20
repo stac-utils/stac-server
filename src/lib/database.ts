@@ -1051,11 +1051,13 @@ async function aggregate(
     return o
   }, {} as Record<string, unknown>)
 
-  // datetime_frequency honors the requested calendar interval (default month)
+  // datetime_frequency honors the requested calendar interval (default month).
+  // Clone the base aggregation so only the interval is overridden and the field
+  // can't drift from ALL_AGGREGATIONS.
   if (aggregations.includes('datetime_frequency')) {
     searchParams.body.aggs['datetime_frequency'] = {
       date_histogram: {
-        field: 'properties.datetime',
+        ...ALL_AGGREGATIONS.datetime_frequency.date_histogram,
         calendar_interval: datetimeFrequencyInterval
       }
     }

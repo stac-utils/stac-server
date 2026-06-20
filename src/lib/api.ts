@@ -284,15 +284,14 @@ const wrapResponseInFeatureCollection = function (
     numberMatched,
     numberReturned,
     features,
-    links
-  }
-
-  if (process.env['ENABLE_CONTEXT_EXTENSION']) {
-    fc['context'] = {
-      matched: numberMatched,
-      returned: numberReturned,
-      limit
-    }
+    links,
+    ...(process.env['ENABLE_CONTEXT_EXTENSION'] ? {
+      context: {
+        matched: numberMatched,
+        returned: numberReturned,
+        limit
+      }
+    } : {})
   }
 
   return fc
@@ -307,23 +306,24 @@ const buildPaginationLinks = function (
   filter: Cql2Filter,
   endpoint: string,
   httpMethod: string,
-  _sortby: string[],
+  _sortby: string[] | { field: string; direction: string; }[] | undefined,
   items: StacItem[],
-  lastItemSort: string | null
+  lastItemSort: string | null | undefined
 ): Link[] {
   if (items.length) {
-    const dictToURI = (dict: Partial<APIParameters>) => (
+    const dictToURI = (dict: Record<string, unknown>) => (
       Object.keys(dict).map(
         (p) => {
           let value = dict[p]
           if (typeof value === 'object' && value !== null) {
             if (p === 'sortby') {
               const sortFields: string[] = []
-              for (let i = 0; i < value.length; i += 1) {
-                if (value[i]['direction'] === 'asc') {
-                  sortFields.push(value[i]['field'])
+              const sortArray = value as Array<{ field: string; direction: string }>
+              for (let i = 0; i < sortArray.length; i += 1) {
+                if (sortArray[i]!['direction'] === 'asc') {
+                  sortFields.push(sortArray[i]!['field'])
                 } else {
-                  sortFields.push('-'.concat(value[i]['field']))
+                  sortFields.push('-'.concat(sortArray[i]!['field']))
                 }
               }
               value = sortFields.join(',')
@@ -333,7 +333,7 @@ const buildPaginationLinks = function (
               value = JSON.stringify(value)
             }
           }
-          const query = encodeURIComponent(value)
+          const query = encodeURIComponent(String(value))
           return `${encodeURIComponent(p)}=${query}`
         }
       ).join('&')
@@ -367,7 +367,7 @@ const buildPaginationLinks = function (
 const searchItems = async function (
   backend: Backend,
   httpMethod: string,
-  collectionId: string,
+  collectionId: string | null,
   endpoint: string,
   parameters: APIParameters,
   headers: IncomingHttpHeaders
@@ -498,7 +498,7 @@ const searchItems = async function (
     links.push({
       rel: 'collection',
       type: 'application/json',
-      href: collectionEndpoint
+      href: collectionEndpoint!
     })
   }
 
@@ -537,7 +537,7 @@ const agg = function (
 const aggregate = async function (
   backend: Backend,
   httpMethod: string,
-  collectionId: string,
+  collectionId: string | null,
   endpoint: string,
   parameters: APIParameters,
   headers: IncomingHttpHeaders
@@ -1083,19 +1083,19 @@ const getCollections = async function (
         title: 'Root Catalog'
       },
     ],
+    ...(process.env['ENABLE_CONTEXT_EXTENSION'] ? {
+      context: {
+        page: 1,
+        limit: COLLECTION_LIMIT,
+        matched: collections.length,
+        returned: collections.length
+      }
+    } : {})
   }
-
-  // note: adding this to the Collections response is not
+  // note: adding 'context' this to the Collections response is not
   // part of the Context Extension, and was just a proprietary
   // behavior of this implemenation
-  if (process.env['ENABLE_CONTEXT_EXTENSION']) {
-    resp['context'] = {
-      page: 1,
-      limit: COLLECTION_LIMIT,
-      matched: collections && collections.length,
-      returned: collections && collections.length
-    }
-  }
+
   return resp
 }
 

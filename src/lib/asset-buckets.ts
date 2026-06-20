@@ -31,7 +31,7 @@ export class AssetBuckets {
    * @param {string} bucketOption - Bucket option (NONE, ALL, ALL_BUCKETS_IN_ACCOUNT, LIST)
    * @param {string[]|null} bucketNames - Array of bucket names (required for LIST option)
    */
-  constructor(bucketOption, bucketNames) {
+  constructor(bucketOption: string, bucketNames: string[] | null) {
     this.bucketOption = bucketOption
     this.bucketNames = bucketNames
     this.bucketCache = {}
@@ -42,7 +42,7 @@ export class AssetBuckets {
    * @param {string[]|null} bucketNames - Array of bucket names (required for LIST option)
    * @returns {Promise<AssetBuckets>} Initialized AssetBuckets instance
    */
-  static async create(bucketOption, bucketNames) {
+  static async create(bucketOption: string, bucketNames: string[] | null) {
     const instance = new AssetBuckets(bucketOption, bucketNames)
     await instance._initBuckets()
     return instance

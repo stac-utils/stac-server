@@ -1,5 +1,6 @@
 import { ApiResponse } from '@opensearch-project/opensearch'
 import type { Geometry, BBox, GeoJSON } from 'geojson'
+import { OP } from './database.js'
 
 //
 // ----- STAC -----------------------------------------------------
@@ -170,8 +171,10 @@ export type Cql2Value =
   { property?: string, timestamp?: string, bbox?: BBox } |
   Geometry | Cql2Filter
 
+export type OpValue = typeof OP[keyof typeof OP]
+
 export interface Cql2Filter {
-  op: string
+  op: OpValue
   args: Cql2Value[]
 }
 
@@ -184,10 +187,10 @@ export interface Cql2Filter {
 
 export interface OpenSearchFilterQuery {
   term?: Record<string, unknown>
-  terms?: Record<string, Array<string | boolean | number>>
+  terms?: Record<string, Array<string | boolean | number> | string>
   prefix?: Record<string, unknown>
   wildcard?: Record<string, unknown>
-  range?: Record<string, Record<string, string | number>>
+  range?: Record<string, Record<string, unknown>>
   geo_shape?: Record<string, unknown>
   exists?: Record<string, unknown>
   match_all?: Record<string, never>
@@ -215,15 +218,15 @@ export interface DateTimeRange {
   lte?: string
 }
 
-export interface DateQuery extends OpenSearchFilterQuery {
-  range?: { 'properties.datetime': DateTimeRange } & Record<string, Record<string, string | number>>
-  term?: { 'properties.datetime': string } & Record<string, unknown>
+export interface DateQuery {
+  range?: { 'properties.datetime': DateTimeRange }
+  term?: { 'properties.datetime': string }
 }
 
 export interface OpenSearchBody {
   query: OpenSearchFilterQuery
   sort?: SortParameters
-  search_after?: string[]
+  search_after?: string[] | undefined
   size?: number
   aggs?: Record<string, unknown>
 }
@@ -242,6 +245,7 @@ export type SortParameters = SortRule[]
 //
 
 export interface QueryOperators {
+  [operator: string]: string | number | boolean | Array<string | number | boolean>
   eq?: string | number | boolean
   neq?: string | number | boolean
   lt?: number
@@ -256,7 +260,7 @@ export interface QueryOperators {
 
 export interface QueryParameters {
   id?: string
-  ids?: string[]
+  ids?: string[] | string
   collections?: string[]
   intersects?: Geometry
   datetime?: string
@@ -296,7 +300,7 @@ export interface DbQueryParameters {
 }
 
 export interface SearchParameters extends DbQueryParameters {
-  index: string
+  index: string | string[]
   body: OpenSearchBody
   size: number
   track_total_hits: boolean
@@ -369,6 +373,14 @@ export interface APIParameters {
   next?: string
   'filter-lang'?: string
   'filter-crs'?: string
+  grid_geohash_frequency_precision?: string
+  grid_geohex_frequency_precision?: string
+  grid_geotile_frequency_precision?: string
+  centroid_geohash_grid_frequency_precision?: string
+  centroid_geohex_grid_frequency_precision?: string
+  centroid_geotile_grid_frequency_precision?: string
+  geometry_geohash_grid_frequency_precision?: string
+  geometry_geotile_grid_frequency_precision?: string
 }
 
 export interface APIFields {

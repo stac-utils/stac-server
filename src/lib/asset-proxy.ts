@@ -43,7 +43,11 @@ export class AssetProxy {
    * @param {number} urlExpiry - Pre-signed URL expiry time in seconds
    * @param {string} bucketOption - Bucket option (NONE, ALL, ALL_BUCKETS_IN_ACCOUNT, LIST)
    */
-  constructor(buckets, urlExpiry, bucketOption) {
+  constructor(
+    buckets: AssetBuckets,
+    urlExpiry: number,
+    bucketOption: string
+  ) {
     this.buckets = buckets
     this.urlExpiry = urlExpiry
     this.isEnabled = bucketOption !== BucketOptionEnum.NONE
@@ -81,7 +85,7 @@ export class AssetProxy {
     collectionId: string | null,
     itemId: string | null
   ): {assets: Assets, wasProxied: boolean} {
-    const proxiedAssets = {}
+    const proxiedAssets: Assets = {}
     let wasProxied = false
 
     for (const [assetKey, asset] of Object.entries(assets)) {

@@ -25,7 +25,7 @@ const internalServerError: Readonly<APIGatewayProxyResult> = Object.freeze({
     'content-type': 'text/plain'
   },
   body: 'Internal Server Error'
-})
+}) as APIGatewayProxyResult
 
 let appInstance: express.Express | undefined
 

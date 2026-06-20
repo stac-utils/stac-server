@@ -53,11 +53,14 @@ await post(`${API}/collections`, collection, `create collection '${collection.id
 // ~1s after a write), and the item endpoint validates the collection exists, so
 // retry a few times on 404 before giving up.
 const itemsUrl = `${API}/collections/${collection.id}/items`
+const label = `create item '${item.id}'`
+/* eslint-disable no-await-in-loop -- sequential retry is intentional */
 for (let attempt = 1; ; attempt += 1) {
-  const status = await post(itemsUrl, item, `create item '${item.id}'`, { tolerate404: attempt < 10 })
+  const status = await post(itemsUrl, item, label, { tolerate404: attempt < 10 })
   if (status !== 404) break
   await sleep(1000)
 }
+/* eslint-enable no-await-in-loop */
 
 console.log('\nDone. Try:')
 console.log(`  curl '${API}/search?collections=${collection.id}'`)

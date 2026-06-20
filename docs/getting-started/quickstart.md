@@ -187,11 +187,10 @@ Wait for "Node started" message.
 
 ### Transaction extension errors
 
-The Transaction extension is enabled by default in Docker Compose. To disable:
-
-```bash
-ENABLE_TRANSACTIONS_EXTENSION=false docker compose up
-```
+The Transaction extension (required for the `POST` steps and `npm run ingest:example`
+above) is enabled by `npm run serve`. If you run the API another way and those
+requests return 404, make sure `ENABLE_TRANSACTIONS_EXTENSION=true` is set for the
+server process.
 
 ## Next Steps
 

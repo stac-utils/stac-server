@@ -22,6 +22,15 @@ const followNext = async (t: any, links: Link[]) => {
   const next = links.find((l) => l.rel === 'next')
   if (!next) return undefined
   const path = next.href.replace(/^https?:\/\/[^/]+\//, '')
+  // POST searches return POST-style pagination links (the token is in the body,
+  // not the href), so follow them with the link's method.
+  if (next.method === 'POST') {
+    return t.context.api.client.post(path, {
+      resolveBodyOnly: false,
+      throwHttpErrors: false,
+      json: next.body
+    })
+  }
   return t.context.api.client.get(path, { resolveBodyOnly: false, throwHttpErrors: false })
 }
 
@@ -99,9 +108,13 @@ test.serial('returns next link when the sortby field is excluded', async (t) => 
     }
   })
   t.is(resp.statusCode, 200)
+  t.is(resp.body.features.length, 1)
   const next = resp.body.links.find((l: Link) => l.rel === 'next')
   t.truthy(next, 'next link present despite excluded sortby field')
 
+  // Following the (POST) next link must return the *next* item, not repeat page 1.
   const page2 = await followNext(t, resp.body.links)
   t.is(page2?.statusCode, 200, 'second page fetches successfully')
+  t.is(page2?.body.features.length, 1)
+  t.not(page2?.body.features[0].id, resp.body.features[0].id, 'page 2 is a different item')
 })

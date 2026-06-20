@@ -1,0 +1,107 @@
+import anyTest, { type TestFn } from 'ava'
+import { deleteAllIndices, refreshIndices } from '../helpers/database.js'
+import { ingestItem } from '../helpers/ingest.js'
+import { randomId, loadFixture } from '../helpers/utils.js'
+import { setup } from '../helpers/system-tests.js'
+import type { StandUpResult } from '../helpers/system-tests.js'
+import type { Link } from '../../src/lib/types.js'
+
+type TestContext = StandUpResult & { collectionId: string }
+const test = anyTest as TestFn<TestContext>
+
+/* eslint-disable @typescript-eslint/no-explicit-any, no-await-in-loop */
+
+const ingest = async (t: any, item: unknown) => ingestItem({
+  ingestQueueUrl: t.context.ingestQueueUrl,
+  ingestTopicArn: t.context.ingestTopicArn,
+  item
+})
+
+// follow a server-issued absolute link href against the local test client
+const followNext = async (t: any, links: Link[]) => {
+  const next = links.find((l) => l.rel === 'next')
+  if (!next) return undefined
+  const path = next.href.replace(/^https?:\/\/[^/]+\//, '')
+  return t.context.api.client.get(path, { resolveBodyOnly: false, throwHttpErrors: false })
+}
+
+test.before(async (t) => {
+  await deleteAllIndices()
+  t.context = (await setup()) as TestContext
+  t.context.collectionId = randomId('collection')
+  await ingest(t, await loadFixture('landsat-8-l1-collection.json', { id: t.context.collectionId }))
+  await refreshIndices()
+})
+
+test.after.always(async (t) => { if (t.context.api) await t.context.api.close() })
+
+// Regression for #608 / #1082: items with a null `datetime` (start/end set
+// instead) broke pagination — OpenSearch emits a Long sentinel sort value that
+// the old comma-joined `next` token corrupted, 400ing the follow-up page.
+test.serial('paginates through items with null datetime', async (t) => {
+  const { collectionId } = t.context
+  const ids: string[] = []
+  for (let i = 0; i < 3; i += 1) {
+    const id = `nodt-${i}`
+    ids.push(id)
+    await ingest(t, await loadFixture('stac/LC80100102015050LGN00.json', {
+      id,
+      collection: collectionId,
+      properties: {
+        datetime: null,
+        start_datetime: `2015-01-0${i + 1}T00:00:00Z`,
+        end_datetime: `2015-01-0${i + 1}T01:00:00Z`
+      }
+    }))
+  }
+  await refreshIndices()
+
+  const seen = new Set<string>()
+  let resp = await t.context.api.client.get(
+    `collections/${collectionId}/items?limit=1`,
+    { resolveBodyOnly: false, throwHttpErrors: false }
+  )
+  for (let page = 0; page < 5; page += 1) {
+    t.is(resp.statusCode, 200, `page ${page} status`)
+    for (const f of resp.body.features) seen.add(f.id)
+    const next = await followNext(t, resp.body.links)
+    if (!next || resp.body.features.length === 0) break
+    resp = next
+  }
+
+  for (const id of ids) t.true(seen.has(id), `paginated to ${id}`)
+})
+
+// Regression for #823: a `next` link must be returned even when the `sortby`
+// field is excluded via the fields extension (pagination uses OpenSearch's sort
+// metadata, not the item body).
+test.serial('returns next link when the sortby field is excluded', async (t) => {
+  const { collectionId } = t.context
+  for (let i = 0; i < 3; i += 1) {
+    await ingest(t, await loadFixture('stac/LC80100102015050LGN00.json', {
+      id: `srt-${i}`,
+      collection: collectionId,
+      properties: {
+        datetime: `2016-01-0${i + 1}T00:00:00Z`,
+        updated: `2016-02-0${i + 1}T00:00:00Z`
+      }
+    }))
+  }
+  await refreshIndices()
+
+  const resp = await t.context.api.client.post('search', {
+    resolveBodyOnly: false,
+    json: {
+      collections: [collectionId],
+      limit: 1,
+      sortby: [{ field: 'properties.updated', direction: 'desc' }],
+      fields: { exclude: ['properties.updated'], include: [] }
+    }
+  })
+  t.is(resp.statusCode, 200)
+  const next = resp.body.links.find((l: Link) => l.rel === 'next')
+  t.truthy(next, 'next link present despite excluded sortby field')
+
+  const page2 = await followNext(t, resp.body.links)
+  t.is(page2?.statusCode, 200, 'second page fetches successfully')
+})

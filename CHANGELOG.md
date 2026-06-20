@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Fixed
 
+- Pagination no longer breaks for items without a `datetime` (e.g. when only
+  `start_datetime`/`end_datetime` are set). The `next` token now base64url-encodes
+  the OpenSearch sort values (preserving numbers/nulls losslessly), and the
+  default sort assigns missing datetimes a concrete value instead of the Long
+  sentinel that could not be reused as a `search_after` value.
+  ([608](https://github.com/stac-utils/stac-server/issues/608),
+  [1082](https://github.com/stac-utils/stac-server/issues/1082))
+- GET `/search` and items pagination no longer drop the response body fields on
+  the second page: an empty `fields` object is no longer serialized into the
+  `next` link as `fields={}` (which was re-parsed as a field named `{}`).
+
 ### Added
 - Generating base STAC typescript types for typescript migration ([1068](https://github.com/stac-utils/stac-server/pull/1068))
 - Automatic temporal extent calculation for collections. When serving collections via the `/collections`

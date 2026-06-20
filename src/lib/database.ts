@@ -601,7 +601,10 @@ function buildIdQuery(id: string): OpenSearchBody {
 }
 
 const DEFAULT_SORTING: SortParameters = [
-  { 'properties.datetime': { order: 'desc' } },
+  // `missing: 0` (epoch) gives items without a `datetime` a concrete sort value
+  // instead of OpenSearch's Long sentinel, which loses precision in JS and can't
+  // be reused as a `search_after` value — breaking pagination (#608 / #1082).
+  { 'properties.datetime': { order: 'desc', missing: 0 } },
   { id: { order: 'desc' } },
   { collection: { order: 'desc' } }
 ]
@@ -621,12 +624,24 @@ function buildSort(parameters: QueryParameters): SortParameters {
   return DEFAULT_SORTING
 }
 
-function buildSearchAfter(parameters: QueryParameters): string[] | undefined {
+function buildSearchAfter(
+  parameters: QueryParameters
+): Array<string | number | null> | undefined {
   const { next } = parameters
-  if (next) {
-    return next.split(',')
+  if (!next) return undefined
+
+  // Current format: base64url-encoded JSON of the OpenSearch sort values. This
+  // round-trips the values losslessly (numbers, nulls, and the Long sentinel
+  // OpenSearch emits for items with a missing `datetime` all survive), which a
+  // plain comma-join/split corrupts — see #608 / #1082.
+  try {
+    const decoded: unknown = JSON.parse(Buffer.from(next, 'base64url').toString('utf8'))
+    if (Array.isArray(decoded)) return decoded
+  } catch {
+    // Not a base64url-JSON token; fall back to the legacy comma-joined format
+    // so pagination links issued by older versions keep working.
   }
-  return undefined
+  return next.split(',')
 }
 
 /**
@@ -957,9 +972,11 @@ async function search(
   // @ts-ignore -- OpenSearch response body is of unknown shape
   const results = hits.map((r) => (r._source))
   const lastItem = hits.at(-1)
-  let lastItemSort = null
+  let lastItemSort: string | null = null
   if (lastItem && lastItem.sort) {
-    lastItemSort = lastItem.sort.join(',')
+    // base64url-encoded JSON so sort values (incl. numbers/nulls) round-trip
+    // losslessly through the `next` pagination token. See buildSearchAfter.
+    lastItemSort = Buffer.from(JSON.stringify(lastItem.sort)).toString('base64url')
   }
 
   const response = {

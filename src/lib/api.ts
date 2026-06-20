@@ -347,8 +347,17 @@ const buildPaginationLinks = function (
         method: httpMethod,
         type: 'application/geo+json'
       }
+      // Drop empty values, including empty objects/arrays — a bare `fields: {}`
+      // would otherwise serialize into the GET link as `fields={}` and be
+      // re-parsed as a field named "{}", stripping the response _source (#1082).
+      const isPresent = (value: unknown): boolean => {
+        if (value === undefined || value === null || value === '') return false
+        if (typeof value === 'object') return Object.keys(value as object).length > 0
+        return true
+      }
       const nextParams = pickBy(
-        assign(parameters, { bbox, intersects, limit, next: lastItemSort, collections, filter })
+        assign(parameters, { bbox, intersects, limit, next: lastItemSort, collections, filter }),
+        isPresent
       )
       if (httpMethod === 'GET') {
         const nextQueryParameters = dictToURI(nextParams)

@@ -61,9 +61,9 @@ Publish a STAC Item or Collection directly:
 
 #### Automatic Temporal Extent
 
-When ingesting Collections, the `extent.temporal.interval` field can be omitted to enable automatic temporal extent calculation. When a collection is requested via the API, if it doesn't have a temporal extent defined, stac-server will automatically calculate it by finding the earliest and latest `datetime` values from the items in that collection.
+When ingesting Collections, the `extent.temporal.interval` bounds can be omitted (left `null`) to enable automatic temporal extent calculation. When a collection is requested via the API, any missing bound is filled in from its items: a missing start is set to the earliest item `datetime` and a missing end to the latest. Bounds that are already declared on the collection are preserved — so a collection with a start date but an open end keeps its start and only has the end computed.
 
-Collections with no items will have a temporal extent of `[[null, null]]`. This feature allows temporal extents to stay current as items are added or removed without requiring manual collection updates. The temporal extent is calculated dynamically each time the collection is requested, so it automatically reflects the current state of items without requiring collection updates or persisting changes to the collection document.
+Collections with no items have any missing bound left as `null`. This feature allows temporal extents to stay current as items are added or removed without requiring manual collection updates. The extent is calculated dynamically each time the collection is requested, so it reflects the current state of items without persisting changes to the collection document.
 
 ### Large Items
 

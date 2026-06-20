@@ -12,10 +12,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Added
 - Generating base STAC typescript types for typescript migration ([1068](https://github.com/stac-utils/stac-server/pull/1068))
 - Automatic temporal extent calculation for collections. When serving collections via the `/collections`
-  and `/collections/{collectionId}` endpoints, if a collection does not have a complete temporal extent
-  defined, the server automatically calculates it from the earliest and latest items in the collection. To
-  use this feature, omit the `extent.temporal.interval` field (or leave a bound `null`) when ingesting a
-  collection. ([999](https://github.com/stac-utils/stac-server/pull/999))
+  and `/collections/{collectionId}` endpoints, any missing temporal extent bound is filled in from the
+  collection's items — a missing start from the earliest item `datetime`, a missing end from the latest —
+  while bounds already declared on the collection are preserved. To use this, leave the relevant
+  `extent.temporal.interval` bound `null` when ingesting a collection.
+  ([999](https://github.com/stac-utils/stac-server/pull/999))
 
 ### Changed
 

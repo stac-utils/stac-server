@@ -1044,9 +1044,9 @@ const deleteUnusedFields = (collection: StacCollection) => {
 }
 
 /**
- * Populate a collection's temporal extent from its items when the declared
- * extent is missing or open-ended (i.e. either the start or end bound is
- * absent). Mutates the collection in place.
+ * Fill in a collection's missing temporal extent bounds from its items.
+ * Only absent (null) bounds are computed — a start or end already declared on
+ * the collection is preserved. Mutates the collection in place.
  */
 const populateTemporalExtentIfMissing = async (
   backend: Backend,
@@ -1054,12 +1054,14 @@ const populateTemporalExtentIfMissing = async (
 ): Promise<void> => {
   const [start, end] = collection.extent?.temporal?.interval?.[0] ?? [null, null]
 
-  // A complete extent has both bounds; otherwise recompute from items.
+  // Nothing to do when both bounds are already declared.
   if (start != null && end != null) return
 
   const temporalExtent = await backend.getTemporalExtentFromItems(collection.id)
   if (temporalExtent && collection.extent?.temporal) {
-    collection.extent.temporal.interval = temporalExtent
+    const [computedStart, computedEnd] = temporalExtent[0]
+    // Preserve any declared bound; only fill the missing one(s) from items.
+    collection.extent.temporal.interval = [[start ?? computedStart, end ?? computedEnd]]
   }
 }
 

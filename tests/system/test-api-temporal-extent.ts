@@ -95,8 +95,9 @@ test('GET /collections/:collectionId returns temporal extent from items', async 
 
   const [startDate, endDate] = response.body.extent.temporal.interval[0]
 
-  // Verify the start date is the earliest item datetime (2015-01-02)
-  t.is(startDate, '2015-01-02T15:49:05.000Z')
+  // The collection declares a start (2013-06-01) but no end, so the declared
+  // start is preserved and only the missing end is computed from items.
+  t.is(startDate, '2013-06-01T00:00:00Z')
 
   // Verify the end date is the latest item datetime (2020-06-15)
   t.is(endDate, '2020-06-15T10:30:00.000Z')
@@ -124,8 +125,8 @@ test('GET /collections returns temporal extent for all collections', async (t) =
 
   const [startDate, endDate] = collection.extent.temporal.interval[0]
 
-  // Verify the dates match the items
-  t.is(startDate, '2015-01-02T15:49:05.000Z')
+  // Declared start preserved; missing end computed from the latest item.
+  t.is(startDate, '2013-06-01T00:00:00Z')
   t.is(endDate, '2020-06-15T10:30:00.000Z')
 })
 

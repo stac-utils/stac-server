@@ -3,7 +3,7 @@ import type {
   OptionsOfJSONResponseBody,
   OptionsInit,
   Response,
-  CancelableRequest,
+  RequestPromise,
 } from 'got'
 import { once } from 'events'
 import type { Application } from 'express'
@@ -27,11 +27,11 @@ import { createApp } from '../../src/lambdas/api/app.js'
 interface TypedRequestFn {
   (url: string, options: OptionsInit &
     { resolveBodyOnly: false; responseType: 'text' })
-    : CancelableRequest<Response<string>>
+    : RequestPromise<Response<string>>
   (url: string, options: OptionsOfJSONResponseBody & { resolveBodyOnly: false })
-    : CancelableRequest<Response<any>>
+    : RequestPromise<Response<any>>
   (url: string, options?: OptionsOfJSONResponseBody)
-    : CancelableRequest<any>
+    : RequestPromise<any>
 }
 
 export interface TypedApiClient {

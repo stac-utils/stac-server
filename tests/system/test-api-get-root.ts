@@ -133,7 +133,17 @@ test(
 test(
   'GET / returns a compressed response if ENABLE_RESPONSE_COMPRESSION',
   async (t) => {
-    const response = await t.context.api.client.get('', { resolveBodyOnly: false })
+    // got >=14 auto-decompresses and strips the content-encoding header, so
+    // disable decompression to observe the server's compression directly.
+    // An explicit Accept-Encoding is needed because got omits it when not
+    // decompressing; responseType 'text' avoids JSON-parsing the compressed body.
+    const response = await t.context.api.client.get('',
+      {
+        resolveBodyOnly: false,
+        decompress: false,
+        responseType: 'text',
+        headers: { 'accept-encoding': 'br' }
+      })
 
     if (process.env['ENABLE_RESPONSE_COMPRESSION'] !== 'false') {
       t.is(response.headers['content-encoding'], 'br')

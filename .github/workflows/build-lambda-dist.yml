@@ -11,8 +11,8 @@ jobs:
       PRODUCTION: "true"
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
         id: setup-node
         with:
           node-version-file: ".nvmrc"
@@ -36,7 +36,7 @@ jobs:
         run: |
           mv dist/lambda-dist/lambda-dist.zip "$DIST_ZIP_PATH"
       - name: Add to release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         if: startsWith(github.ref, 'refs/tags')
         with:
           files: ${{ env.DIST_ZIP_PATH }}

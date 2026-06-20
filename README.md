@@ -111,7 +111,7 @@ Quick links:
 
 stac-server is licensed under [The MIT License](https://opensource.org/license/mit/).
 
-Copyright for portions of stac-server is held by Development Seed (2016) as part of project [sat-api](https://github.com/sat-utils/sat-api) ([original license](https://github.com/sat-utils/sat-api/blob/master/LICENSE)). Copyright for all changes to stac-server since the fork date is held by Element 84, Inc (2020).
+stac-server began in 2016 as Development Seed's [sat-api](https://github.com/sat-utils/sat-api) ([original license](https://github.com/sat-utils/sat-api/blob/master/LICENSE)) and is now a community project under the [stac-utils](https://github.com/stac-utils) organization. Copyright is held by its contributors and their respective organizations (including Development Seed and Element 84); see the [LICENSE](LICENSE).
 
 ---
 

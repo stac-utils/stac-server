@@ -154,7 +154,8 @@
   "overrides": [
     {
       "files": [
-        "test-*.js"
+        "test-*.js",
+        "test-*.ts"
       ],
       "rules": {
         "max-len": [

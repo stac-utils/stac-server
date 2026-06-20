@@ -9,14 +9,15 @@ import { bboxToPolygon } from './geo-utils.js'
 import {
   Cql2Filter,
   Cql2Value,
-  DateQuery,
   DateTimeRange,
   DbQueryParameters,
   FieldsFilter,
   ItemProperties,
   OpenSearchBody,
   OpenSearchFilterQuery,
+  OpValue,
   PartialItemUpdate,
+  QueryOperators,
   QueryParameters,
   RangeQuery,
   SearchParameters,
@@ -35,7 +36,7 @@ variable which is the URL to the search database host line
 
 const COLLECTIONS_INDEX = process.env['COLLECTIONS_INDEX'] || 'collections'
 const DEFAULT_INDICES = ['*', '-.*', '-collections']
-const OP = {
+export const OP = {
   AND: 'and',
   OR: 'or',
   NOT: 'not',
@@ -50,7 +51,8 @@ const OP = {
   BETWEEN: 'between',
   LIKE: 'like',
   S_INTERSECTS: 's_intersects',
-}
+} as const
+
 const RANGE_TRANSLATION = {
   '<': 'lt',
   '<=': 'lte',
@@ -81,7 +83,7 @@ const MAX_COLLECTIONS_IN_QUERY_PATH = 10
 let collectionToIndexMapping: Record<string, string> | null = null
 let unrestrictedIndices: string[] | null = null
 
-export const isIndexNotFoundError = (e) => (
+export const isIndexNotFoundError = (e: unknown) => (
   e instanceof Error
     && e.name === 'ResponseError'
     && e.message.includes('index_not_found_exception'))
@@ -130,7 +132,7 @@ function buildRangeQuery(
  * assumes a valid RFC3339 datetime or interval
  * validation was previously done by api.extractDatetime
  */
-export function buildDatetimeQuery(parameters: QueryParameters): DateQuery {
+export function buildDatetimeQuery(parameters: QueryParameters): OpenSearchFilterQuery | undefined {
   let dateQuery
   const { datetime } = parameters
   if (datetime) {
@@ -141,7 +143,7 @@ export function buildDatetimeQuery(parameters: QueryParameters): DateQuery {
       if (end && end !== '..') datetimeRange.lte = end
       dateQuery = {
         range: {
-          'properties.datetime': datetimeRange
+          'properties.datetime': datetimeRange as Record<string, unknown>
         }
       }
     } else {
@@ -245,7 +247,7 @@ function sIntersects(
 /**
  * build the opensearch property queries
  */
-function buildQueryExtQuery(query: QueryParameters): OpenSearchFilterQuery {
+function buildQueryExtQuery(query: Record<string, QueryOperators>): OpenSearchFilterQuery {
   const eq = 'eq'
   const inop = 'in'
   const startsWith = 'startsWith'
@@ -261,6 +263,7 @@ function buildQueryExtQuery(query: QueryParameters): OpenSearchFilterQuery {
     property: string
   ) => {
     const operatorsObject = query[property]
+    if (!operatorsObject) return accumulator
     const operators = Object.keys(operatorsObject)
 
     // eq
@@ -276,7 +279,7 @@ function buildQueryExtQuery(query: QueryParameters): OpenSearchFilterQuery {
     if (operators.includes(inop)) {
       accumulator.push({
         terms: {
-          [`properties.${property}`]: operatorsObject.in
+          [`properties.${property}`]: operatorsObject.in!
         }
       })
     }
@@ -330,6 +333,7 @@ function buildQueryExtQuery(query: QueryParameters): OpenSearchFilterQuery {
     property: string
   ) => {
     const operatorsObject = query[property]
+    if (!operatorsObject) return accumulator
     const operators = Object.keys(operatorsObject)
 
     // neq
@@ -436,7 +440,7 @@ function buildLeafFilter(filter: Cql2Filter): OpenSearchFilterQuery {
 
 // Routes to recursive or leaf handler based on operator
 function buildFilterExtQuery(filter: Cql2Filter): OpenSearchFilterQuery {
-  const RECURSIVE_OPS = [OP.AND, OP.OR, OP.NOT]
+  const RECURSIVE_OPS: OpValue[] = [OP.AND, OP.OR, OP.NOT]
   if (RECURSIVE_OPS.includes(filter.op)) {
     return buildRecursiveFilter(filter)
   }
@@ -630,7 +634,7 @@ function buildSearchAfter(parameters: QueryParameters): string[] | undefined {
  * a. null
  * b. an empty array
  */
-function fieldsParamIsEmpty(fieldsSpec: object, paramName: string): boolean {
+function fieldsParamIsEmpty(fieldsSpec: Record<string, unknown>, paramName: string): boolean {
   return fieldsSpec.hasOwnProperty(paramName)
     && (fieldsSpec[paramName] === null
     || (Array.isArray(fieldsSpec[paramName]) && !fieldsSpec[paramName].length))
@@ -813,6 +817,7 @@ async function getCollections(
       size: limit,
       from: (page - 1) * limit
     })
+    // @ts-ignore -- OpenSearch response body is of unknown shape
     return response.body['hits'].hits.map((r) => (r._source))
   } catch (e) {
     logger.error('Failure getting collections, maybe none exist?', e)
@@ -898,7 +903,7 @@ export async function constructSearchParams(
     if (!unrestrictedIndices) {
       await populateUnrestrictedIndices()
     }
-    indices = unrestrictedIndices
+    indices = unrestrictedIndices!
   }
   // hash indices
   indices = indices.map((index) => {
@@ -949,6 +954,7 @@ async function search(
   })
 
   const hits = dbResponse.body['hits'].hits
+  // @ts-ignore -- OpenSearch response body is of unknown shape
   const results = hits.map((r) => (r._source))
   const lastItem = hits.at(-1)
   let lastItemSort = null
@@ -1040,9 +1046,9 @@ async function aggregate(
   // include all aggregations specified
   // this will ignore aggregations with the wrong names
   searchParams.body.aggs = Object.keys(ALL_AGGREGATIONS).reduce((o, k) => {
-    if (aggregations.includes(k)) o[k] = ALL_AGGREGATIONS[k]
+    if (aggregations.includes(k)) o[k] = ALL_AGGREGATIONS[k as keyof typeof ALL_AGGREGATIONS]
     return o
-  }, {})
+  }, {} as Record<string, unknown>)
 
   // deprecated centroid
 

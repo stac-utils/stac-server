@@ -14,7 +14,7 @@ export function isCollection(record: StacServerMessage): record is StacCollectio
 }
 
 export class InvalidSTACItemException extends Error {
-  constructor(message) {
+  constructor(message: string) {
     super(message)
     this.name = this.constructor.name
   }

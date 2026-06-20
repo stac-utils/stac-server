@@ -381,6 +381,7 @@ export interface APIParameters {
   centroid_geotile_grid_frequency_precision?: string
   geometry_geohash_grid_frequency_precision?: string
   geometry_geotile_grid_frequency_precision?: string
+  datetime_frequency_interval?: string
 }
 
 export interface APIFields {
@@ -469,6 +470,7 @@ export interface Backend {
     centroidGeotileGridPrecision: number,
     geometryGeohashGridPrecision: number,
     geometryGeotileGridPrecision: number,
+    datetimeFrequencyInterval: string,
   ): Promise<ApiResponse>
   getCollection(collectionId: string): Promise<StacCollection | Error>
   getCollections(page: number, limit: number): Promise<StacCollection[] | Error>

@@ -1037,6 +1037,7 @@ async function aggregate(
   geometryGeohashGridPrecision: number,
   // geometryGeohexGridPrecision,
   geometryGeotileGridPrecision: number,
+  datetimeFrequencyInterval: string,
 ): Promise<ApiResponse> {
   const searchParams = await constructSearchParams(parameters)
   searchParams.body.size = 0
@@ -1049,6 +1050,16 @@ async function aggregate(
     if (aggregations.includes(k)) o[k] = ALL_AGGREGATIONS[k as keyof typeof ALL_AGGREGATIONS]
     return o
   }, {} as Record<string, unknown>)
+
+  // datetime_frequency honors the requested calendar interval (default month)
+  if (aggregations.includes('datetime_frequency')) {
+    searchParams.body.aggs['datetime_frequency'] = {
+      date_histogram: {
+        field: 'properties.datetime',
+        calendar_interval: datetimeFrequencyInterval
+      }
+    }
+  }
 
   // deprecated centroid
 

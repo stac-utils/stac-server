@@ -44,6 +44,33 @@ test('GET / includes the default links', async (t) => {
 })
 
 test(
+  'GET / never emits `undefined://` links when no endpoint is configured (#917)',
+  async (t) => {
+    const before = { ...process.env }
+    let api
+    try {
+      // No configured endpoint and no X-Forwarded-* headers: must still produce
+      // a valid URL from the request, not `undefined://...`.
+      delete process.env['STAC_API_URL']
+      delete process.env['STAC_API_ROOTPATH']
+
+      api = await startApi()
+
+      const response = await api.client.get('')
+
+      for (const link of response.links as Link[]) {
+        t.false(link.href.startsWith('undefined://'), `link href was ${link.href}`)
+      }
+      const self = response.links.find((l: Link) => l.rel === 'self')
+      t.regex(self.href, /^https?:\/\//)
+    } finally {
+      await api.close()
+      process.env = before
+    }
+  }
+)
+
+test(
   'GET / returns links with the correct endpoint when the API was started with STAC_API_URL set',
   async (t) => {
     const before = { ...process.env }

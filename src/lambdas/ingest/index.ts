@@ -63,7 +63,11 @@ const stacRecordFromSnsMessage = async (
 
     if (protocol.startsWith('http')) {
       return await got.get(message.href, {
-        resolveBodyOnly: true
+        resolveBodyOnly: true,
+        // Remote STAC records come from arbitrary, sometimes misconfigured
+        // servers; don't fail ingest on a Content-Length mismatch (got >=14
+        // enforces this strictly by default).
+        strictContentLength: false
       }).json()
     }
 

@@ -11,18 +11,28 @@ Get STAC Server running with sample data in 5 minutes.
 ## Step 1: Start the Services
 
 ```bash
-# Clone the repository
+# Clone and install
 git clone https://github.com/stac-utils/stac-server.git
 cd stac-server
+npm install
 
-# Start services
+# Start OpenSearch and LocalStack
 docker compose up -d
 
 # Wait for services to be ready (about 30 seconds)
 sleep 30
+
+# Start the STAC API (leave this running in its own terminal)
+npm run serve
 ```
 
-This starts OpenSearch and the STAC API on `http://localhost:3000`.
+`docker compose` starts OpenSearch and LocalStack; `npm run serve` runs the STAC API
+on `http://localhost:3000` with the Transaction extension enabled (so the steps below
+can create collections and items).
+
+> **Tip:** Once the API is running, you can load a ready-made sample collection and item
+> in one step with `npm run ingest:example`, then skip to [Step 5](#step-5-search-for-items).
+> The steps below walk through doing it manually.
 
 ## Step 2: Verify the API
 

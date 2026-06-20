@@ -125,7 +125,7 @@
     "eslint-config-airbnb": "^19.0.4",
     "eslint-import-resolver-typescript": "^4.4.5",
     "eslint-plugin-import": "^2.32.0",
-    "eslint-plugin-jsdoc": "^61.5.0",
+    "eslint-plugin-jsdoc": "^63.0.6",
     "husky": "^9.1.7",
     "luxon": "^3.7.2",
     "nock": "^14.0.15",

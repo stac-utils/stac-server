@@ -75,7 +75,7 @@
     "simple-swizzle": "<0.2.5 || >0.2.3",
     "strip-ansi": "<7.1.1 || >7.1.1",
     "supports-color": "<10.2.1 || >10.2.1",
-    "through2": "^4.0.2",
+    "through2": "^5.0.1",
     "ts-loader": "^9.6.1",
     "winston": "^3.19.0",
     "wrap-ansi": "<10.0.1 || >9.0.1",

@@ -25,6 +25,7 @@ export default {
   devtool,
   resolve: {
     extensions: ["", ".webpack.js", ".web.js", ".ts", ".js"],
+    fallback: { 'aws-crt': false, 'aws-sdk': false },
     extensionAlias: {
       ".js": [".ts", ".js"],
     },

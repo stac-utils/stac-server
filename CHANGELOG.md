@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Fixed
 
+- Remove the webpack "Can't resolve" build warning for optional, unused AWS SDK
+  dependencies (`aws-crt`, and the OpenSearch client's optional `aws-sdk` v2
+  credential path) by stubbing them via `resolve.fallback` in the lambda webpack
+  configs. ([596](https://github.com/stac-utils/stac-server/issues/596))
+
 ### Added
 - Generating base STAC typescript types for typescript migration ([1068](https://github.com/stac-utils/stac-server/pull/1068))
 - Automatic temporal extent calculation for collections. When serving collections via the `/collections`

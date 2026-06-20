@@ -62,9 +62,10 @@ test(
         t.false(link.href.startsWith('undefined://'), `link href was ${link.href}`)
       }
       const self = response.links.find((l: Link) => l.rel === 'self')
-      t.regex(self.href, /^https?:\/\//)
+      t.truthy(self, 'self link present')
+      if (self) t.regex(self.href, /^https?:\/\//)
     } finally {
-      await api.close()
+      if (api) await api.close()
       process.env = before
     }
   }

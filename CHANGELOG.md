@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 
 ### Fixed
+- Re-enabled AVA worker threads for the test suites by registering the `tsx`
+  loader via AVA's `nodeArguments` config instead of `NODE_OPTIONS`, removing the
+  `--no-worker-threads` workaround introduced during the TypeScript migration.
 
 - The `datetime_frequency` aggregation now honors the `datetime_frequency_interval`
   parameter (`day`/`week`/`month`/`quarter`/`year`) instead of always

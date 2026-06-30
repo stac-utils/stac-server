@@ -1,6 +1,16 @@
 import test from 'ava'
-import { constructSearchParams, buildDatetimeQuery } from '../../src/lib/database.js'
-import type { QueryParameters } from '../../src/lib/types.js'
+import {
+  constructSearchParams,
+  buildDatetimeQuery,
+  collectionUniqueIndexID
+} from '../../src/lib/database.js'
+import type { OpenSearchFilterQuery, QueryParameters } from '../../src/lib/types.js'
+
+const indexFilterFor = (filters?: OpenSearchFilterQuery | OpenSearchFilterQuery[]) => {
+  if (!filters) return undefined
+  const list = Array.isArray(filters) ? filters : [filters]
+  return list.find((f) => f.terms?.['_index'])
+}
 
 test('search id parameter doesnt override other parameters', async (t) => {
   const ids = 'a,b,c'
@@ -78,9 +88,18 @@ test('search datetime parameter instants are correctly parsed', async (t) => {
   }))
 })
 
-test('if more than 10 collections are specified then all indices are searched', async (t) => {
-  const queryParams = { collections: ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k'] }
-  const params = await constructSearchParams(queryParams, 1)
+test('collections are scoped via an _index filter in the body, not the path', async (t) => {
+  const collections = ['a', 'b', 'c']
+  const params = await constructSearchParams({ collections }, 1)
 
-  t.deepEqual(params.index, ['_all'])
+  // The path keeps the default restriction; it does not list the collections.
+  t.deepEqual(params.index, ['*', '-.*', '-collections'])
+
+  // The collections are restricted via an _index terms filter in the body,
+  // using the hashed index ids.
+  const indexFilter = indexFilterFor(params.body.query.bool?.filter)
+  t.deepEqual(
+    indexFilter?.terms?.['_index'],
+    collections.map((c) => collectionUniqueIndexID(c))
+  )
 })

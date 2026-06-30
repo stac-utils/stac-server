@@ -78,7 +78,6 @@ export const DEFAULT_FIELDS = [
   'collection',
   'properties.datetime'
 ]
-const MAX_COLLECTIONS_IN_QUERY_PATH = 10
 
 let collectionToIndexMapping: Record<string, string> | null = null
 let unrestrictedIndices: string[] | null = null
@@ -523,6 +522,15 @@ function buildItemSearchQuery(parameters: QueryParameters): OpenSearchFilterQuer
   }
 }
 
+// Normalise a bool `filter`/`must_not` clause, which may be a single query
+// object or an array, into an array.
+function toFilterArray(
+  v: OpenSearchFilterQuery | OpenSearchFilterQuery[] | undefined
+): OpenSearchFilterQuery[] {
+  if (!v) return []
+  return Array.isArray(v) ? v : [v]
+}
+
 function buildOpenSearchQuery(parameters: QueryParameters): OpenSearchBody {
   const { query, filter, intersects, collections, ids } = parameters
 
@@ -547,25 +555,17 @@ function buildOpenSearchQuery(parameters: QueryParameters): OpenSearchBody {
     itemSearchQuery = buildItemSearchQuery(parameters)
   }
 
-  // Normalise filter/must_not which can be single item or array
-  const toArray = (
-    v: OpenSearchFilterQuery | OpenSearchFilterQuery[] | undefined
-  ): OpenSearchFilterQuery[] => {
-    if (!v) return []
-    return Array.isArray(v) ? v : [v]
-  }
-
   const combinedFilter: OpenSearchFilterQuery[] = [
-    ...toArray(cql2Query.bool?.filter),
-    ...toArray(stacqlQuery.bool?.filter),
-    ...toArray(itemSearchQuery.bool?.filter)
+    ...toFilterArray(cql2Query.bool?.filter),
+    ...toFilterArray(stacqlQuery.bool?.filter),
+    ...toFilterArray(itemSearchQuery.bool?.filter)
   ]
   const combinedShould: OpenSearchFilterQuery[] = [
     ...(cql2Query.bool?.should || []),
   ]
   const combinedMustNot: OpenSearchFilterQuery[] = [
-    ...toArray(cql2Query.bool?.must_not),
-    ...toArray(stacqlQuery.bool?.must_not),
+    ...toFilterArray(cql2Query.bool?.must_not),
+    ...toFilterArray(stacqlQuery.bool?.must_not),
   ]
 
   if (!isEmpty(combinedFilter)) {
@@ -584,6 +584,32 @@ function buildOpenSearchQuery(parameters: QueryParameters): OpenSearchBody {
   }
 
   return { query: { bool: osBool } }
+}
+
+/**
+ * Restrict a query to a set of indices by adding a `terms` filter on the
+ * `_index` metadata field, rather than listing the indices in the request path.
+ *
+ * OpenSearch puts the path-based index list in the request URL, which is subject
+ * to the server's `http.max_initial_line_length` limit (4KB by default). A search
+ * spanning many collections can exceed that and fail. Moving the index
+ * restriction into the request body, which has no comparable limit, keeps the
+ * search scoped to the relevant indices without the cliff. See issue #770.
+ */
+function restrictQueryToIndices(
+  body: OpenSearchBody, indices: string[]
+): OpenSearchBody {
+  const indexFilter: OpenSearchFilterQuery = { terms: { _index: indices } }
+
+  // match_all means there are no other constraints; wrap it so we can filter.
+  if (body.query.match_all) {
+    return { ...body, query: { bool: { filter: [indexFilter] } } }
+  }
+
+  const bool = body.query.bool ?? {}
+  const filter = [...toFilterArray(bool.filter), indexFilter]
+
+  return { ...body, query: { ...body.query, bool: { ...bool, filter } } }
 }
 
 function buildIdQuery(id: string): OpenSearchBody {
@@ -914,32 +940,34 @@ export async function constructSearchParams(
     body.search_after = buildSearchAfter(parameters)
   }
 
-  let indices
+  // The request path always uses the default index restriction
+  // (`*, -.*, -collections`): all local item indices, excluding system indices
+  // and the collections index. This is a fixed, short list that never overflows
+  // the request URL's line-length limit.
+  if (!unrestrictedIndices) {
+    await populateUnrestrictedIndices()
+  }
+  const index = unrestrictedIndices!
+
   if (Array.isArray(collections) && collections.length) {
-    if (collections.length > MAX_COLLECTIONS_IN_QUERY_PATH) {
-      indices = ['_all']
-    } else if (process.env['COLLECTION_TO_INDEX_MAPPINGS']) {
+    // Resolve the explicitly-requested collections to their (hashed) indices and
+    // scope the search to them via an `_index` filter in the request body rather
+    // than the path. Listing many indices in the path can overflow the URL's
+    // line-length limit; the body has no comparable limit. The path keeps the
+    // default restriction above so the search never reaches into system indices.
+    let indices
+    if (process.env['COLLECTION_TO_INDEX_MAPPINGS']) {
       if (!collectionToIndexMapping) await populateCollectionToIndexMapping()
       indices = await Promise.all(collections.map(async (x) => await indexForCollection(x)))
     } else {
       indices = collections
     }
-  } else {
-    if (!unrestrictedIndices) {
-      await populateUnrestrictedIndices()
-    }
-    indices = unrestrictedIndices!
+    indices = indices.map((i) => collectionUniqueIndexID(i))
+    body = restrictQueryToIndices(body, indices)
   }
-  // hash indices
-  indices = indices.map((index) => {
-    if (DEFAULT_INDICES.includes(index) || index === '_all') {
-      return index
-    }
-    return collectionUniqueIndexID(index)
-  })
 
   const searchParams: SearchParameters = {
-    index: indices,
+    index,
     body,
     size: limit,
     track_total_hits: true

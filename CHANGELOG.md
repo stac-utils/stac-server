@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 
 ### Fixed
+- Searches restrict to the requested collections via an `_index` filter in the
+  query body rather than listing indices in the request path. This avoids the
+  OpenSearch request-URL length limit when many collections are requested,
+  without falling back to searching all indices. ([770](https://github.com/stac-utils/stac-server/issues/770))
 - Re-enabled AVA worker threads for the test suites by registering the `tsx`
   loader via AVA's `nodeArguments` config instead of `NODE_OPTIONS`, removing the
   `--no-worker-threads` workaround introduced during the TypeScript migration.

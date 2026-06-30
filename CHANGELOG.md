@@ -11,10 +11,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Searches restrict to the requested collections via an `_index` filter in the
   query body rather than listing indices in the request path. This avoids the
   OpenSearch request-URL length limit when many collections are requested,
-  without falling back to searching all indices. ([770](https://github.com/stac-utils/stac-server/issues/770))
+  without falling back to searching all indices. ([770](https://github.com/stac-utils/stac-server/issues/770), [1155](https://github.com/stac-utils/stac-server/pull/1155))
 - Re-enabled AVA worker threads for the test suites by registering the `tsx`
   loader via AVA's `nodeArguments` config instead of `NODE_OPTIONS`, removing the
-  `--no-worker-threads` workaround introduced during the TypeScript migration.
+  `--no-worker-threads` workaround introduced during the TypeScript migration. ([1155](https://github.com/stac-utils/stac-server/pull/1155))
 
 - The `datetime_frequency` aggregation now honors the `datetime_frequency_interval`
   parameter (`day`/`week`/`month`/`quarter`/`year`) instead of always
@@ -60,7 +60,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Corrected STAC types: `StacItem.bbox` is now `BBox` (matching the STAC document
   model, with the request-string form kept only on `APIParameters`), and
   collection `summaries` now accept range objects and JSON Schema values in
-  addition to value arrays, per the STAC spec.
+  addition to value arrays, per the STAC spec. ([1155](https://github.com/stac-utils/stac-server/pull/1155))
 - Typing the top level lambda layer ([1087](https://github.com/stac-utils/stac-server/pull/1087))
 - Typing the api layer in `api.ts`, pushing some minor functions to a new utility files `api-utils.ts` ([1081](https://github.com/stac-utils/stac-server/pull/1081))
 - Converting the database layer to typescript as part of migration ([1077](https://github.com/stac-utils/stac-server/pull/1077))

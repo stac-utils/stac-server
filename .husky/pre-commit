@@ -1,11 +1,14 @@
 #!/usr/bin/env sh
 
-# Load nvm
-export NVM_DIR="$HOME/.nvm"
+# Load nvm if available
+export NVM_DIR="${NVM_DIR:-$HOME/.nvm}"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
 
-# Use project's Node version
-if [ -f .nvmrc ]; then
+# Select the project's Node version via nvm when it's available. When nvm is not
+# installed (e.g. Node provided by Nix or a system package manager), just use
+# whatever node is on PATH — it's up to the developer to run a compatible Node,
+# and CI enforces the pinned version regardless.
+if [ -f .nvmrc ] && command -v nvm >/dev/null 2>&1; then
   nvm use
 fi
 

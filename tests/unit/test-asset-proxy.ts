@@ -202,12 +202,13 @@ test('AssetProxy - getProxiedAssets() handles assets without href', async (t) =>
     process.env['ASSET_PROXY_BUCKET_OPTION'] = 'ALL'
 
     const proxy = await AssetProxy.create()
-    const assets: Assets = {
+    // Deliberately omit `href` to exercise the missing-href branch; cast because
+    // the Assets type requires href.
+    const assets = {
       metadata: {
-        href: '',
         type: 'application/xml'
       }
-    }
+    } as unknown as Assets
 
     const { assets: proxied, wasProxied } = proxy.getProxiedAssets(
       assets,
@@ -217,7 +218,7 @@ test('AssetProxy - getProxiedAssets() handles assets without href', async (t) =>
     )
 
     t.false(wasProxied)
-    t.deepEqual(proxied['metadata'], { href: '', type: 'application/xml' })
+    t.deepEqual(proxied['metadata'], { type: 'application/xml' })
   } finally {
     process.env = before
   }

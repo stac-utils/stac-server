@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 
 ### Fixed
+- Post-ingest SNS notifications now report `ingestStatus` as `failed` for any
+  ingest error, including errors whose message is empty. Previously the status
+  was derived from the truthiness of the error message, so an empty-message
+  error was mis-reported as `successful`. ([1155](https://github.com/stac-utils/stac-server/pull/1155))
 - Searches restrict to the requested collections via an `_index` filter in the
   query body rather than listing indices in the request path. This avoids the
   OpenSearch request-URL length limit when many collections are requested,

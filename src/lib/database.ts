@@ -601,7 +601,10 @@ function buildIdQuery(id: string): OpenSearchBody {
 }
 
 const DEFAULT_SORTING: SortParameters = [
-  { 'properties.datetime': { order: 'desc' } },
+  // `missing: 0` (epoch) gives items without a `datetime` a concrete sort value
+  // instead of OpenSearch's Long sentinel, which loses precision in JS and can't
+  // be reused as a `search_after` value — breaking pagination (#608 / #1082).
+  { 'properties.datetime': { order: 'desc', missing: 0 } },
   { id: { order: 'desc' } },
   { collection: { order: 'desc' } }
 ]
@@ -609,24 +612,46 @@ const DEFAULT_SORTING: SortParameters = [
 function buildSort(parameters: QueryParameters): SortParameters {
   const { sortby } = parameters
   if (sortby && sortby.length) {
-    return sortby.map((sortRule) => {
+    const rules: SortParameters = sortby.map((sortRule) => {
       const { field, direction } = sortRule
-      return {
-        [field]: {
-          order: direction
-        }
-      }
+      return { [field]: { order: direction } }
     })
+    // `search_after` pagination needs the sort to end in a unique key, or items
+    // that share the user's sort value get skipped or duplicated across pages
+    // (worst with fields that are absent on some items — they all collapse to
+    // the same sentinel value). Append the `id` tiebreaker the default sort
+    // already guarantees, unless the caller is already sorting by it. (#608 /
+    // #1082)
+    if (!rules.some((rule) => 'id' in rule)) {
+      rules.push({ id: { order: 'desc' } })
+    }
+    return rules
   }
   return DEFAULT_SORTING
 }
 
-function buildSearchAfter(parameters: QueryParameters): string[] | undefined {
+function buildSearchAfter(
+  parameters: QueryParameters
+): Array<string | number | null> | undefined {
   const { next } = parameters
-  if (next) {
-    return next.split(',')
+  if (!next) return undefined
+
+  // Current format: base64url-encoded JSON of the OpenSearch sort values. Unlike
+  // a plain comma-join/split, this round-trips values that contain commas (e.g.
+  // an item id or collection id) and preserves nulls instead of coercing them to
+  // empty strings. (It does not rescue the Long sentinel OpenSearch emits for a
+  // missing sort field — that value is already lossy once parsed into a JS
+  // number, before it is ever encoded here. That is handled at the sort level
+  // instead: `missing: 0` on the default `datetime` sort, and a unique `id`
+  // tiebreaker on custom sorts. See buildSort / DEFAULT_SORTING and #608 / #1082.)
+  try {
+    const decoded: unknown = JSON.parse(Buffer.from(next, 'base64url').toString('utf8'))
+    if (Array.isArray(decoded)) return decoded
+  } catch {
+    // Not a base64url-JSON token; fall back to the legacy comma-joined format
+    // so pagination links issued by older versions keep working.
   }
-  return undefined
+  return next.split(',')
 }
 
 /**
@@ -957,9 +982,12 @@ async function search(
   // @ts-ignore -- OpenSearch response body is of unknown shape
   const results = hits.map((r) => (r._source))
   const lastItem = hits.at(-1)
-  let lastItemSort = null
+  let lastItemSort: string | null = null
   if (lastItem && lastItem.sort) {
-    lastItemSort = lastItem.sort.join(',')
+    // base64url-encoded JSON so sort values survive the `next` pagination token
+    // even when they contain commas or nulls (which a comma-join corrupts). See
+    // buildSearchAfter.
+    lastItemSort = Buffer.from(JSON.stringify(lastItem.sort)).toString('base64url')
   }
 
   const response = {

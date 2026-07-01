@@ -599,3 +599,54 @@ test(
     }
   }
 )
+
+test('GET /aggregate datetime_frequency honors datetime_frequency_interval (#1117)', async (t) => {
+  const fixtureFiles = [
+    'collection.json',
+    'LC80100102015050LGN00.json', // datetime 2015-02-19
+    'LC80100102015082LGN00.json' // datetime 2015-03-23
+  ]
+  const items = await Promise.all(fixtureFiles.map((x) => loadJson(x)))
+  await processMessages(items)
+  await refreshIndices()
+
+  const response = await t.context.api.client.get(
+    'aggregate',
+    {
+      searchParams: new URLSearchParams([
+        ['aggregations', 'datetime_frequency'],
+        ['datetime_frequency_interval', 'day'],
+      ]),
+      resolveBodyOnly: false,
+      headers: { 'X-Forwarded-Proto': proto, 'X-Forwarded-Host': host }
+    }
+  )
+
+  t.is(response.statusCode, 200)
+  const agg = response.body.aggregations.find((a: { name: string }) => a.name === 'datetime_frequency')
+  t.truthy(agg)
+  const freqByKey = Object.fromEntries(
+    agg.buckets.map((b: { key: string, frequency: number }) => [b.key, b.frequency])
+  )
+  // Day-aligned buckets per item — under the default month interval these would
+  // instead be keyed 2015-02-01 / 2015-03-01.
+  t.is(freqByKey['2015-02-19T00:00:00.000Z'], 1)
+  t.is(freqByKey['2015-03-23T00:00:00.000Z'], 1)
+  t.falsy(freqByKey['2015-02-01T00:00:00.000Z'])
+})
+
+test('GET /aggregate rejects an invalid datetime_frequency_interval (#1117)', async (t) => {
+  const response = await t.context.api.client.get(
+    'aggregate',
+    {
+      searchParams: new URLSearchParams([
+        ['aggregations', 'datetime_frequency'],
+        ['datetime_frequency_interval', 'fortnight'],
+      ]),
+      resolveBodyOnly: false,
+      throwHttpErrors: false
+    }
+  )
+
+  t.is(response.statusCode, 400)
+})

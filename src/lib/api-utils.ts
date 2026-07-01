@@ -76,6 +76,25 @@ export const extractPrecision = function (
   return min
 }
 
+// Supported datetime_frequency intervals, mapped directly to the OpenSearch
+// date_histogram calendar_interval. Day is the finest granularity we expose.
+export const DATETIME_FREQUENCY_INTERVALS = [
+  'day', 'week', 'month', 'quarter', 'year'
+]
+
+export const extractDatetimeFrequencyInterval = function (params: APIParameters): string {
+  const interval = params['datetime_frequency_interval']
+  if (interval === undefined) return 'month' // default preserves prior behavior
+
+  if (!DATETIME_FREQUENCY_INTERVALS.includes(interval)) {
+    throw new ValidationError(
+      `Invalid datetime_frequency_interval '${interval}', must be one of: `
+        + DATETIME_FREQUENCY_INTERVALS.join(', ')
+    )
+  }
+  return interval
+}
+
 export const extractAggregations = function (params: APIParameters): string[] {
   let aggs
   const { aggregations } = params

@@ -27,6 +27,7 @@ import {
   filterAllowedCollectionIds,
   isCollectionIdAllowed,
   extractSortby,
+  extractDatetimeFrequencyInterval,
 } from './api-utils.js'
 import { Aggregation,
   AggregationBucket,
@@ -702,6 +703,8 @@ const aggregate = async function (
     maxGeotilePrecision
   )
 
+  const datetimeFrequencyInterval = extractDatetimeFrequencyInterval(parameters)
+
   let dbResponse
   try {
     dbResponse = await backend.aggregate(
@@ -716,6 +719,7 @@ const aggregate = async function (
       geometryGeohashGridPrecision,
       // geometryGeohexGridPrecision,
       geometryGeotileGridPrecision,
+      datetimeFrequencyInterval,
     )
   } catch (error) {
     if (!isIndexNotFoundError(error)) {

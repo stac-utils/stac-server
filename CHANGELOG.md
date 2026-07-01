@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Fixed
 
+- The `datetime_frequency` aggregation now honors the `datetime_frequency_interval`
+  parameter (`day`/`week`/`month`/`quarter`/`year`) instead of always
+  bucketing by month; an invalid interval returns a 400. ([1117](https://github.com/stac-utils/stac-server/issues/1117))
 - Pagination no longer breaks for items without a `datetime` (e.g. when only
   `start_datetime`/`end_datetime` are set). The default sort now assigns missing
   datetimes a concrete value instead of the Long sentinel that could not be

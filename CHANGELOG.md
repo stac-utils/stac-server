@@ -10,10 +10,17 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Fixed
 
 - Pagination no longer breaks for items without a `datetime` (e.g. when only
-  `start_datetime`/`end_datetime` are set). The `next` token now base64url-encodes
-  the OpenSearch sort values (preserving numbers/nulls losslessly), and the
-  default sort assigns missing datetimes a concrete value instead of the Long
-  sentinel that could not be reused as a `search_after` value.
+  `start_datetime`/`end_datetime` are set). The default sort now assigns missing
+  datetimes a concrete value instead of the Long sentinel that could not be
+  reused as a `search_after` value, and the `next` token is base64url-encoded so
+  sort values containing commas or nulls survive the round-trip (a plain
+  comma-join corrupted them).
+  ([608](https://github.com/stac-utils/stac-server/issues/608),
+  [1082](https://github.com/stac-utils/stac-server/issues/1082))
+- Pagination no longer skips items when sorting by a `sortby` field that some
+  items lack. A custom sort replaced the default sort's unique tiebreaker, so
+  items sharing a sort value could not be disambiguated across pages; custom
+  sorts now append the `id` tiebreaker the default sort already used.
   ([608](https://github.com/stac-utils/stac-server/issues/608),
   [1082](https://github.com/stac-utils/stac-server/issues/1082))
 - GET `/search` and items pagination no longer drop the response body fields on

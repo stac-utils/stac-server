@@ -81,6 +81,53 @@ test.serial('paginates through items with null datetime', async (t) => {
   for (const id of ids) t.true(seen.has(id), `paginated to ${id}`)
 })
 
+// Regression for the custom-`sortby` variant of #608 / #1082: a custom sort
+// replaces the default sort's unique `id`/`collection` tiebreakers. When some
+// items lack the sort field they all collapse to the same missing-value sort
+// key, and with no tiebreaker `search_after` can't disambiguate them — the
+// follow-up page skips those items entirely. buildSort must append the `id`
+// tiebreaker to custom sorts, as the default sort already guarantees.
+test.serial('paginates a custom sortby when some items lack the field', async (t) => {
+  const { collectionId } = t.context
+  const ids: string[] = []
+  for (let i = 0; i < 4; i += 1) {
+    const id = `csort-${i}`
+    ids.push(id)
+    // Half the items have `eo:cloud_cover`; half omit it (fixture properties are
+    // shallow-replaced by the override, so omitting the key removes the field).
+    const properties: Record<string, unknown> = {
+      datetime: `2017-01-0${i + 1}T00:00:00Z`
+    }
+    if (i % 2 === 0) properties['eo:cloud_cover'] = i * 10
+    await ingest(t, await loadFixture('stac/LC80100102015050LGN00.json', {
+      id,
+      collection: collectionId,
+      properties
+    }))
+  }
+  await refreshIndices()
+
+  const seen = new Set<string>()
+  let resp = await t.context.api.client.post('search', {
+    resolveBodyOnly: false,
+    throwHttpErrors: false,
+    json: {
+      collections: [collectionId],
+      limit: 1,
+      sortby: [{ field: 'properties.eo:cloud_cover', direction: 'desc' }]
+    }
+  })
+  for (let page = 0; page < 8; page += 1) {
+    t.is(resp.statusCode, 200, `page ${page} status`)
+    for (const f of resp.body.features) seen.add(f.id)
+    const next = await followNext(t, resp.body.links)
+    if (!next || resp.body.features.length === 0) break
+    resp = next
+  }
+
+  for (const id of ids) t.true(seen.has(id), `paginated to ${id}`)
+})
+
 // Regression for #823: a `next` link must be returned even when the `sortby`
 // field is excluded via the fields extension (pagination uses OpenSearch's sort
 // metadata, not the item body).

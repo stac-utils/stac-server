@@ -604,13 +604,15 @@ function buildOpenSearchQuery(parameters: QueryParameters): OpenSearchBody {
 
 /**
  * Restrict a query to a set of indices by adding a `terms` filter on the
- * `_index` metadata field, rather than listing the indices in the request path.
+ * `_index` metadata field.
  *
- * OpenSearch puts the path-based index list in the request URL, which is subject
- * to the server's `http.max_initial_line_length` limit (4KB by default). A search
- * spanning many collections can exceed that and fail. Moving the index
- * restriction into the request body, which has no comparable limit, keeps the
- * search scoped to the relevant indices without the cliff. See issue #770.
+ * This is the fallback for when the index list is too long to list in the request
+ * path: OpenSearch puts the path-based index list in the request URL, which is
+ * subject to the server's `http.max_initial_line_length` limit (4KB by default),
+ * so a search spanning many collections can exceed that and fail. The body has no
+ * comparable limit, so this keeps the search scoped without the cliff. The search
+ * must then be sent to a broad path (the default restriction) for the `_index`
+ * filter to narrow against. See issue #770.
  */
 function restrictQueryToIndices(
   body: OpenSearchBody, indices: string[]
@@ -626,6 +628,17 @@ function restrictQueryToIndices(
   const filter = [...toFilterArray(bool.filter), indexFilter]
 
   return { ...body, query: { ...body.query, bool: { ...bool, filter } } }
+}
+
+// The comma-joined index list goes in the request path, which shares OpenSearch's
+// `http.max_initial_line_length` budget (4KB by default) with the method, the
+// rest of the path, the query string, and URL-encoding expansion. Cap the joined
+// index list well below that so the rest of the request line always fits; longer
+// lists fall back to an `_index` body filter instead.
+const MAX_INDEX_PATH_LENGTH = 2048
+
+function indexPathWithinLimit(indices: string[]): boolean {
+  return indices.join(',').length <= MAX_INDEX_PATH_LENGTH
 }
 
 function buildIdQuery(id: string): OpenSearchBody {
@@ -952,26 +965,33 @@ export async function constructSearchParams(
     body.search_after = buildSearchAfter(parameters)
   }
 
-  // The request path always uses the default index restriction
-  // (`*, -.*, -collections`): all local item indices, excluding system indices
-  // and the collections index. This is a fixed, short list that never overflows
-  // the request URL's line-length limit.
+  // Default index restriction used when no collections are requested:
+  // `*, -.*, -collections` (all local item indices, excluding system indices and
+  // the collections index).
   if (!unrestrictedIndices) {
     await populateUnrestrictedIndices()
   }
-  const index = unrestrictedIndices!
+  let index = unrestrictedIndices!
 
   if (Array.isArray(collections) && collections.length) {
-    // Resolve the explicitly-requested collections to their indices and scope
-    // the search to them via an `_index` filter in the request body rather than
-    // the path. Listing many indices in the path can overflow the URL's
-    // line-length limit; the body has no comparable limit. The path keeps the
-    // default restriction above so the search never reaches into system indices.
+    // Resolve the explicitly-requested collections to their indices.
     if (process.env['COLLECTION_TO_INDEX_MAPPINGS'] && !collectionToIndexMapping) {
       await populateCollectionToIndexMapping()
     }
     const indices = resolveCollectionIndices(collections, collectionToIndexMapping ?? {})
-    body = restrictQueryToIndices(body, indices)
+
+    // Prefer scoping in the request path: OpenSearch prunes to those shards at
+    // the coordinating node before fan-out, which is cheaper than searching all
+    // indices and filtering per-shard. But the path is part of the request URL,
+    // so a long index list can overflow the server's line-length limit; in that
+    // case fall back to an `_index` terms filter in the request body (which has
+    // no comparable limit), leaving the path at the default restriction so it
+    // never reaches into system indices.
+    if (indexPathWithinLimit(indices)) {
+      index = indices
+    } else {
+      body = restrictQueryToIndices(body, indices)
+    }
   }
 
   const searchParams: SearchParameters = {

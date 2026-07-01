@@ -23,10 +23,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   ingest error, including errors whose message is empty. Previously the status
   was derived from the truthiness of the error message, so an empty-message
   error was mis-reported as `successful`. ([1155](https://github.com/stac-utils/stac-server/pull/1155))
-- Searches restrict to the requested collections via an `_index` filter in the
-  query body rather than listing indices in the request path. This avoids the
-  OpenSearch request-URL length limit when many collections are requested,
-  without falling back to searching all indices. ([770](https://github.com/stac-utils/stac-server/issues/770), [1155](https://github.com/stac-utils/stac-server/pull/1155))
+- Searches with too many collections no longer fail with an OpenSearch
+  request-URL length error, and no longer fall back to searching all indices.
+  Collections are scoped in the request path as before when the index list is
+  short; only when it would overflow the URL length limit does the search fall
+  back to an `_index` filter in the query body, preserving index scoping either
+  way. ([770](https://github.com/stac-utils/stac-server/issues/770), [1155](https://github.com/stac-utils/stac-server/pull/1155))
 - Re-enabled AVA worker threads for the test suites by registering the `tsx`
   loader via AVA's `nodeArguments` config instead of `NODE_OPTIONS`, removing the
   `--no-worker-threads` workaround introduced during the TypeScript migration. ([1155](https://github.com/stac-utils/stac-server/pull/1155))

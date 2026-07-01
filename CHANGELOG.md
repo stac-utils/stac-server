@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Fixed
 
 - The `datetime_frequency` aggregation now honors the `datetime_frequency_interval`
-  parameter (`minute`/`hour`/`day`/`week`/`month`/`quarter`/`year`) instead of always
+  parameter (`day`/`week`/`month`/`quarter`/`year`) instead of always
   bucketing by month; an invalid interval returns a 400. ([1117](https://github.com/stac-utils/stac-server/issues/1117))
 
 ### Added

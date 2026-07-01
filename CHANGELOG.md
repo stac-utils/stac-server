@@ -8,6 +8,30 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 
 ### Fixed
+- Scoped searches over collections configured with `COLLECTION_TO_INDEX_MAPPINGS`
+  now target the mapped index name directly. Previously the mapped name was
+  re-hashed as if it were a collection id, producing a nonexistent index and
+  returning no results for those collections. Collections without a mapping entry
+  continue to resolve to their hashed index name.
+  ([1155](https://github.com/stac-utils/stac-server/pull/1155))
+- Automatic temporal extent calculation no longer discards a collection's declared
+  temporal sub-intervals. Only the overall extent (`interval[0]`) is computed from
+  items; any finer-grained sub-intervals (`interval[1..n]`) declared on the
+  collection are now preserved instead of being overwritten with a single computed
+  interval. ([1155](https://github.com/stac-utils/stac-server/pull/1155))
+- Post-ingest SNS notifications now report `ingestStatus` as `failed` for any
+  ingest error, including errors whose message is empty. Previously the status
+  was derived from the truthiness of the error message, so an empty-message
+  error was mis-reported as `successful`. ([1155](https://github.com/stac-utils/stac-server/pull/1155))
+- Searches with too many collections no longer fail with an OpenSearch
+  request-URL length error, and no longer fall back to searching all indices.
+  Collections are scoped in the request path as before when the index list is
+  short; only when it would overflow the URL length limit does the search fall
+  back to an `_index` filter in the query body, preserving index scoping either
+  way. ([770](https://github.com/stac-utils/stac-server/issues/770), [1155](https://github.com/stac-utils/stac-server/pull/1155))
+- Re-enabled AVA worker threads for the test suites by registering the `tsx`
+  loader via AVA's `nodeArguments` config instead of `NODE_OPTIONS`, removing the
+  `--no-worker-threads` workaround introduced during the TypeScript migration. ([1155](https://github.com/stac-utils/stac-server/pull/1155))
 
 - The `datetime_frequency` aggregation now honors the `datetime_frequency_interval`
   parameter (`day`/`week`/`month`/`quarter`/`year`) instead of always
@@ -50,6 +74,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Changed
 
 - Upgrade `got` from 13 to 15 (HTTP client used by the ingest lambda for fetching remote STAC records). No API or behavior changes; remote-record fetches keep lenient Content-Length handling. `got` 15 requires Node.js >= 22, now declared in `engines` and used by all CI workflows.
+- Corrected STAC types: `StacItem.bbox` is now `BBox` (matching the STAC document
+  model, with the request-string form kept only on `APIParameters`), and
+  collection `summaries` now accept range objects and JSON Schema values in
+  addition to value arrays, per the STAC spec. ([1155](https://github.com/stac-utils/stac-server/pull/1155))
 - Typing the top level lambda layer ([1087](https://github.com/stac-utils/stac-server/pull/1087))
 - Typing the api layer in `api.ts`, pushing some minor functions to a new utility files `api-utils.ts` ([1081](https://github.com/stac-utils/stac-server/pull/1081))
 - Converting the database layer to typescript as part of migration ([1077](https://github.com/stac-utils/stac-server/pull/1077))

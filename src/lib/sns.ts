@@ -6,6 +6,8 @@ import { StacRecord } from './types.js'
 
 interface SNSPayload {
   record: StacRecord
+  // The ingest error message, or `undefined` when ingestion succeeded. An empty
+  // string is a failure with no message, not a success.
   error: string | undefined
 }
 /**
@@ -36,7 +38,9 @@ const attrsFromPayload = function (
     },
     ingestStatus: {
       DataType: 'String',
-      StringValue: payload.error ? 'failed' : 'successful'
+      // Presence of an error, not its message text, determines failure: an
+      // error with an empty message still means the ingest failed.
+      StringValue: payload.error !== undefined ? 'failed' : 'successful'
     },
     collection: {
       DataType: 'String',

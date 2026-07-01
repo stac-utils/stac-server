@@ -156,3 +156,67 @@ test('Collection with no items has null temporal extent', async (t) => {
   // but our code should gracefully handle this (return null or keep original)
   t.truthy(response.body.extent)
 })
+
+test('Declared sub-intervals are preserved when the overall extent is computed', async (t) => {
+  // A collection whose overall extent (interval[0]) has a missing end, plus two
+  // declared finer-grained sub-intervals (interval[1..n]). Only the overall
+  // extent should be filled from items; the sub-intervals must survive.
+  const multiIntervalId = randomId('multi-interval-collection')
+  const multiIntervalCollection = await loadFixture(
+    'landsat-8-l1-collection.json',
+    {
+      id: multiIntervalId,
+      extent: {
+        spatial: { bbox: [[-180, -90, 180, 90]] },
+        temporal: {
+          interval: [
+            ['2013-06-01T00:00:00Z', null],
+            ['2015-01-01T00:00:00Z', '2016-01-01T00:00:00Z'],
+            ['2018-01-01T00:00:00Z', '2019-01-01T00:00:00Z']
+          ]
+        }
+      }
+    }
+  )
+
+  await ingestItem({
+    ingestQueueUrl: t.context.ingestQueueUrl,
+    ingestTopicArn: t.context.ingestTopicArn,
+    item: multiIntervalCollection
+  })
+
+  // Give the collection an item so the overall extent's missing end is computed.
+  const item = await loadFixture('stac/LC80100102015050LGN00.json', {
+    collection: multiIntervalId,
+    id: randomId('item'),
+    properties: {
+      datetime: '2020-06-15T10:30:00.000Z'
+    }
+  })
+
+  await ingestItem({
+    ingestQueueUrl: t.context.ingestQueueUrl,
+    ingestTopicArn: t.context.ingestTopicArn,
+    item
+  })
+
+  await refreshIndices()
+
+  const response = await t.context.api.client.get(`collections/${multiIntervalId}`,
+    { resolveBodyOnly: false })
+
+  t.is(response.statusCode, 200)
+  t.is(response.body.id, multiIntervalId)
+
+  const { interval } = response.body.extent.temporal
+
+  // All three intervals must remain — the sub-intervals are not discarded.
+  t.is(interval.length, 3)
+
+  // Overall extent: declared start preserved, missing end computed from items.
+  t.deepEqual(interval[0], ['2013-06-01T00:00:00Z', '2020-06-15T10:30:00.000Z'])
+
+  // Declared sub-intervals are untouched.
+  t.deepEqual(interval[1], ['2015-01-01T00:00:00Z', '2016-01-01T00:00:00Z'])
+  t.deepEqual(interval[2], ['2018-01-01T00:00:00Z', '2019-01-01T00:00:00Z'])
+})

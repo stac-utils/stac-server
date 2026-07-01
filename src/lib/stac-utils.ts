@@ -87,7 +87,7 @@ export function getStartAndEndDates(
   return { startDate, endDate }
 }
 
-export function getBBox(record: StacRecord): string | BBox | undefined {
+export function getBBox(record: StacRecord): BBox | undefined {
   if (isCollection(record)) {
     return record.extent?.spatial?.bbox?.length > 0
       ? record.extent.spatial.bbox[0]

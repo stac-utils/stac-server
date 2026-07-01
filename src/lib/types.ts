@@ -11,8 +11,8 @@ export interface StacItem {
   stac_version: string
   stac_extensions?: string[]
   id: string
-  geometry: Geometry| null
-  bbox?: BBox | string // only required if geometry is not null
+  geometry: Geometry | null
+  bbox?: BBox // only required if geometry is not null
   properties: ItemProperties
   links: Link[]
   assets: Assets
@@ -37,7 +37,7 @@ export interface StacCollection {
   extent: Extent
   queryables?: Queryables
   aggregations?: Aggregation[]
-  summaries?: {[key: string]: string[] | number[]}
+  summaries?: {[key: string]: Summary}
   links: Link[]
   assets?: Assets
   item_assets?: {[key: string]: Asset}
@@ -47,6 +47,25 @@ export interface FeatureCollection {
   type: 'FeatureCollection',
   features: StacItem[]
 }
+
+/**
+ * A Range Object summary. Per the STAC spec a range may be open-ended, so a
+ * bound may be omitted; at least one of `minimum`/`maximum` is present.
+ */
+export type SummaryRange =
+  | { minimum: string | number, maximum?: string | number }
+  | { maximum: string | number, minimum?: string | number }
+
+/**
+ * A collection summary. Per the STAC spec a summary may be a set of distinct
+ * values, a Range Object with `minimum`/`maximum` bounds, or a JSON Schema
+ * describing the values.
+ * https://github.com/radiantearth/stac-spec/blob/master/collection-spec/collection-spec.md#summaries
+ */
+export type Summary =
+  | Array<string | number | boolean>
+  | SummaryRange
+  | { [key: string]: unknown } // JSON Schema
 
 export interface StacCatalog {
   stac_version: string

@@ -48,17 +48,19 @@ Stac-server is a production-ready implementation of the [STAC API specification]
 Get started with Docker Compose for local development:
 
 ```bash
-# Clone the repository
+# Clone and install
 git clone https://github.com/stac-utils/stac-server.git
 cd stac-server
+npm install
 
-# Start services
+# Start OpenSearch and LocalStack
 docker compose up -d
 
-# Ingest sample data
-npm run ingest:example
+# Start the STAC API on http://localhost:3000 (leave this running)
+npm run serve
 
-# Test the API
+# In a separate terminal: ingest sample data, then query the API
+npm run ingest:example
 curl http://localhost:3000/
 ```
 

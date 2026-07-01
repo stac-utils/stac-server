@@ -229,7 +229,7 @@ test(
     t.is((await t.context.api.client.get(path,
       {
         resolveBodyOnly: false,
-        searchParams: { _filter: null }
+        searchParams: { _filter: '' }
       })).statusCode, 200)
 
     t.is((await t.context.api.client.get(path,

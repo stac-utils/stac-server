@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 
 ### Fixed
+- Automatic temporal extent calculation no longer discards a collection's declared
+  temporal sub-intervals. Only the overall extent (`interval[0]`) is computed from
+  items; any finer-grained sub-intervals (`interval[1..n]`) declared on the
+  collection are now preserved instead of being overwritten with a single computed
+  interval. ([1155](https://github.com/stac-utils/stac-server/pull/1155))
 - Post-ingest SNS notifications now report `ingestStatus` as `failed` for any
   ingest error, including errors whose message is empty. Previously the status
   was derived from the truthiness of the error message, so an empty-message

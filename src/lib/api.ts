@@ -1065,16 +1065,23 @@ const populateTemporalExtentIfMissing = async (
   backend: Backend,
   collection: StacCollection
 ): Promise<void> => {
-  const [start, end] = collection.extent?.temporal?.interval?.[0] ?? [null, null]
+  const intervals = collection.extent?.temporal?.interval
+  const [start, end] = intervals?.[0] ?? [null, null]
 
-  // Nothing to do when both bounds are already declared.
+  // Nothing to do when both bounds of the overall extent are already declared.
   if (start != null && end != null) return
 
   const temporalExtent = await backend.getTemporalExtentFromItems(collection.id)
   if (temporalExtent && collection.extent?.temporal) {
     const [computedStart, computedEnd] = temporalExtent[0]
-    // Preserve any declared bound; only fill the missing one(s) from items.
-    collection.extent.temporal.interval = [[start ?? computedStart, end ?? computedEnd]]
+    // Only the overall extent (interval[0]) is computed from items; any declared
+    // sub-intervals (interval[1..n]) are preserved, as is any bound already set
+    // on the overall extent.
+    const rest = intervals?.slice(1) ?? []
+    collection.extent.temporal.interval = [
+      [start ?? computedStart, end ?? computedEnd],
+      ...rest
+    ]
   }
 }
 

@@ -26,6 +26,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - GET `/search` and items pagination no longer drop the response body fields on
   the second page: an empty `fields` object is no longer serialized into the
   `next` link as `fields={}` (which was re-parsed as a field named `{}`).
+- Link hrefs no longer start with `undefined://` when neither `STAC_API_URL` nor a
+  `stac-endpoint`/`X-Forwarded-*` header is set (e.g. behind API Gateway, which does
+  not set `X-Forwarded-Proto`/`-Host` by default). The endpoint now falls back to the
+  request's own protocol/host instead of interpolating `undefined`. ([917](https://github.com/stac-utils/stac-server/issues/917))
 - Remove the webpack "Can't resolve" build warning for optional, unused AWS SDK
   dependencies (`aws-crt`, and the OpenSearch client's optional `aws-sdk` v2
   credential path) by stubbing them via `resolve.fallback` in the lambda webpack

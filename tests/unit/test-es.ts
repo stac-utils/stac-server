@@ -2,7 +2,8 @@ import test from 'ava'
 import {
   constructSearchParams,
   buildDatetimeQuery,
-  collectionUniqueIndexID
+  collectionUniqueIndexID,
+  resolveCollectionIndices
 } from '../../src/lib/database.js'
 import type { OpenSearchFilterQuery, QueryParameters } from '../../src/lib/types.js'
 
@@ -101,5 +102,39 @@ test('collections are scoped via an _index filter in the body, not the path', as
   t.deepEqual(
     indexFilter?.terms?.['_index'],
     collections.map((c) => collectionUniqueIndexID(c))
+  )
+})
+
+test('resolveCollectionIndices hashes every collection id when the mapping is empty', (t) => {
+  const collections = ['a', 'b', 'c']
+  t.deepEqual(
+    resolveCollectionIndices(collections, {}),
+    collections.map((c) => collectionUniqueIndexID(c))
+  )
+})
+
+test('resolveCollectionIndices uses a mapped index name as-is, without hashing', (t) => {
+  const mapping = { a: 'shared-index', b: 'cluster:remote-index' }
+  t.deepEqual(
+    resolveCollectionIndices(['a', 'b'], mapping),
+    ['shared-index', 'cluster:remote-index']
+  )
+})
+
+test('resolveCollectionIndices falls back to the hashed id for unmapped collections', (t) => {
+  // In mapping mode, a collection absent from the mapping must still resolve to
+  // its hashed index name, not its raw id.
+  const mapping = { a: 'shared-index' }
+  t.deepEqual(
+    resolveCollectionIndices(['a', 'b'], mapping),
+    ['shared-index', collectionUniqueIndexID('b')]
+  )
+})
+
+test('resolveCollectionIndices handles a mix of mapped and unmapped collections', (t) => {
+  const mapping = { mapped1: 'idx-1', mapped2: 'idx-2' }
+  t.deepEqual(
+    resolveCollectionIndices(['mapped1', 'unmapped', 'mapped2'], mapping),
+    ['idx-1', collectionUniqueIndexID('unmapped'), 'idx-2']
   )
 })

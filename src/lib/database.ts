@@ -480,6 +480,22 @@ export function collectionUniqueIndexID(collectionId: string): string {
   return `${collectionId.toLowerCase()}-${collectionHash(collectionId)}`
 }
 
+/**
+ * Resolve a list of collection ids to the OpenSearch index names to search.
+ *
+ * A collection present in the `COLLECTION_TO_INDEX_MAPPINGS` mapping resolves to
+ * its configured index name and is used as-is (it may be a shared or remote index
+ * that must not be altered). Any other collection — including every collection
+ * when the mapping is empty — resolves to the hashed index name derived from its
+ * id. This matches how mapping values are used in populateUnrestrictedIndices.
+ */
+export function resolveCollectionIndices(
+  collections: string[],
+  mapping: Record<string, string>
+): string[] {
+  return collections.map((c) => mapping[c] ?? collectionUniqueIndexID(c))
+}
+
 function buildItemSearchQuery(parameters: QueryParameters): OpenSearchFilterQuery {
   const { intersects, collections, ids } = parameters
   const filterQueries: OpenSearchFilterQuery[] = []
@@ -895,10 +911,6 @@ async function populateCollectionToIndexMapping() {
   }
 }
 
-async function indexForCollection(collectionId: string): Promise<string> {
-  return (collectionToIndexMapping ?? {})[collectionId] || collectionId
-}
-
 async function populateUnrestrictedIndices() {
   if (!unrestrictedIndices) {
     if (process.env['COLLECTION_TO_INDEX_MAPPINGS']) {
@@ -950,19 +962,15 @@ export async function constructSearchParams(
   const index = unrestrictedIndices!
 
   if (Array.isArray(collections) && collections.length) {
-    // Resolve the explicitly-requested collections to their (hashed) indices and
-    // scope the search to them via an `_index` filter in the request body rather
-    // than the path. Listing many indices in the path can overflow the URL's
+    // Resolve the explicitly-requested collections to their indices and scope
+    // the search to them via an `_index` filter in the request body rather than
+    // the path. Listing many indices in the path can overflow the URL's
     // line-length limit; the body has no comparable limit. The path keeps the
     // default restriction above so the search never reaches into system indices.
-    let indices
-    if (process.env['COLLECTION_TO_INDEX_MAPPINGS']) {
-      if (!collectionToIndexMapping) await populateCollectionToIndexMapping()
-      indices = await Promise.all(collections.map(async (x) => await indexForCollection(x)))
-    } else {
-      indices = collections
+    if (process.env['COLLECTION_TO_INDEX_MAPPINGS'] && !collectionToIndexMapping) {
+      await populateCollectionToIndexMapping()
     }
-    indices = indices.map((i) => collectionUniqueIndexID(i))
+    const indices = resolveCollectionIndices(collections, collectionToIndexMapping ?? {})
     body = restrictQueryToIndices(body, indices)
   }
 

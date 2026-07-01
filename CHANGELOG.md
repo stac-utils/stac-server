@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 
 ### Fixed
+- Scoped searches over collections configured with `COLLECTION_TO_INDEX_MAPPINGS`
+  now target the mapped index name directly. Previously the mapped name was
+  re-hashed as if it were a collection id, producing a nonexistent index and
+  returning no results for those collections. Collections without a mapping entry
+  continue to resolve to their hashed index name.
+  ([1155](https://github.com/stac-utils/stac-server/pull/1155))
 - Automatic temporal extent calculation no longer discards a collection's declared
   temporal sub-intervals. Only the overall extent (`interval[0]`) is computed from
   items; any finer-grained sub-intervals (`interval[1..n]`) declared on the

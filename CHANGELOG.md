@@ -26,6 +26,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - GET `/search` and items pagination no longer drop the response body fields on
   the second page: an empty `fields` object is no longer serialized into the
   `next` link as `fields={}` (which was re-parsed as a field named `{}`).
+- Remove the webpack "Can't resolve" build warning for optional, unused AWS SDK
+  dependencies (`aws-crt`, and the OpenSearch client's optional `aws-sdk` v2
+  credential path) by stubbing them via `resolve.fallback` in the lambda webpack
+  configs. ([596](https://github.com/stac-utils/stac-server/issues/596))
 
 ### Added
 - Generating base STAC typescript types for typescript migration ([1068](https://github.com/stac-utils/stac-server/pull/1068))
@@ -38,6 +42,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Changed
 
+- Upgrade `got` from 13 to 15 (HTTP client used by the ingest lambda for fetching remote STAC records). No API or behavior changes; remote-record fetches keep lenient Content-Length handling. `got` 15 requires Node.js >= 22, now declared in `engines` and used by all CI workflows.
 - Typing the top level lambda layer ([1087](https://github.com/stac-utils/stac-server/pull/1087))
 - Typing the api layer in `api.ts`, pushing some minor functions to a new utility files `api-utils.ts` ([1081](https://github.com/stac-utils/stac-server/pull/1081))
 - Converting the database layer to typescript as part of migration ([1077](https://github.com/stac-utils/stac-server/pull/1077))

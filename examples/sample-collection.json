@@ -1,0 +1,16 @@
+{
+  "id": "sample-collection",
+  "type": "Collection",
+  "stac_version": "1.0.0",
+  "description": "A sample collection",
+  "license": "proprietary",
+  "extent": {
+    "spatial": {
+      "bbox": [[-180, -90, 180, 90]]
+    },
+    "temporal": {
+      "interval": [["2020-01-01T00:00:00Z", null]]
+    }
+  },
+  "links": []
+}

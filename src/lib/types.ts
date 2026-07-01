@@ -226,13 +226,13 @@ export interface DateQuery {
 export interface OpenSearchBody {
   query: OpenSearchFilterQuery
   sort?: SortParameters
-  search_after?: string[] | undefined
+  search_after?: Array<string | number | null> | undefined
   size?: number
   aggs?: Record<string, unknown>
 }
 
 export interface SortRule {
-  [field: string]: { order: string }
+  [field: string]: { order: string, missing?: string | number }
 }
 
 export type SortParameters = SortRule[]

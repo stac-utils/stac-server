@@ -76,12 +76,15 @@ test('/search preserve bbox in next links', async (t) => {
   const nextUrl = new URL(nextLink.href)
   t.deepEqual(nextUrl.searchParams.get('bbox'), bbox)
 
-  t.deepEqual(nextUrl.searchParams.get('next'),
-    [
-      new Date(response.features[1].properties.datetime).getTime(),
-      response.features[1].id,
-      response.features[1].collection
-    ].join(','))
+  // the `next` token is base64url-encoded JSON of the OpenSearch sort values
+  const decodedNext = JSON.parse(
+    Buffer.from(nextUrl.searchParams.get('next') ?? '', 'base64url').toString('utf8')
+  )
+  t.deepEqual(decodedNext, [
+    new Date(response.features[1].properties.datetime).getTime(),
+    response.features[1].id,
+    response.features[1].collection
+  ])
 
   const nextResponse = await got.get(nextUrl).json() as SearchBody
   t.is(nextResponse.features.length, 0)
@@ -114,12 +117,14 @@ test('/search preserve bbox and datetime in next links', async (t) => {
 
   const nextLink = response.links.find((x: Link) => x.rel === 'next')
   const nextUrl = new URL(nextLink.href)
-  t.deepEqual(nextUrl.searchParams.get('next'),
-    [
-      new Date(response.features[0].properties.datetime).getTime(),
-      response.features[0].id,
-      response.features[0].collection
-    ].join(','))
+  const decodedNext = JSON.parse(
+    Buffer.from(nextUrl.searchParams.get('next') ?? '', 'base64url').toString('utf8')
+  )
+  t.deepEqual(decodedNext, [
+    new Date(response.features[0].properties.datetime).getTime(),
+    response.features[0].id,
+    response.features[0].collection
+  ])
   t.deepEqual(nextUrl.searchParams.get('bbox'), bbox)
   t.deepEqual(nextUrl.searchParams.get('datetime'), datetime)
 })

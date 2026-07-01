@@ -1,0 +1,23 @@
+{
+  "type": "Feature",
+  "stac_version": "1.0.0",
+  "id": "sample-item",
+  "collection": "sample-collection",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [-122.4, 37.8]
+  },
+  "bbox": [-122.4, 37.8, -122.4, 37.8],
+  "properties": {
+    "datetime": "2024-01-15T10:30:00Z",
+    "title": "Sample Item"
+  },
+  "assets": {
+    "thumbnail": {
+      "href": "https://example.com/thumbnail.jpg",
+      "type": "image/jpeg",
+      "title": "Thumbnail"
+    }
+  },
+  "links": []
+}

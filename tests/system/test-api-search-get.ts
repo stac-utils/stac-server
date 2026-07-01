@@ -228,7 +228,7 @@ test('GET /search with filter restriction returns filtered results', async (t) =
 
   {
     const r = await t.context.api.client.get(urlpath,
-      { resolveBodyOnly: false, searchParams: { _filter: null } })
+      { resolveBodyOnly: false, searchParams: { _filter: '' } })
 
     t.is(r.statusCode, 200)
     t.is(r.body.features.length, 3)

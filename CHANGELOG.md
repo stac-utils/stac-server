@@ -10,10 +10,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Fixed
 
 - Fixed broken lambda-dist bundle where the shared logger resolved to `undefined`, causing every request and ingest invocation to throw `TypeError: <logger>.debug is not a function`. The webpack rule only ran `.ts` files through `ts-loader`, so the `.js` lambda entrypoints bound their default import of `logger.ts` to the module namespace instead of `.default`. Routed `.js` entrypoints through `ts-loader` and set its `module`/`moduleResolution` so dependencies stay bundled ([1168](https://github.com/stac-utils/stac-server/pull/1168))
-
-### Security
-
-- Cleared production dependency advisories failing the `audit-prod` CI gate by updating the affected trees (`@redocly/cli`, `express`, `lodash-es`, `morgan`, `qs`, `path-to-regexp`, `picomatch`, `fast-uri`, aws-sdk clients) within their existing semver ranges, and emptied the now-stale `.nsprc` allowlist
+- Cleared production dependency advisories failing the `audit-prod` CI gate by updating the affected trees (`@redocly/cli`, `express`, `lodash-es`, `morgan`, `qs`, `path-to-regexp`, `picomatch`, `fast-uri`, aws-sdk clients) within their existing semver ranges, and emptied the now-stale `.nsprc` allowlist ([1168](https://github.com/stac-utils/stac-server/pull/1168))
 
 ## [5.0.0] - 2026-04-01
 

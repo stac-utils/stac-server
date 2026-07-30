@@ -5,20 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [5.0.1] - 2026-07-30
 
 ### Fixed
 
-### Added
-- Generating base STAC typescript types for typescript migration ([1068](https://github.com/stac-utils/stac-server/pull/1068))
+- Fixed broken lambda-dist bundle where the shared logger resolved to `undefined`, causing every request and ingest invocation to throw `TypeError: <logger>.debug is not a function`. The webpack rule only ran `.ts` files through `ts-loader`, so the `.js` lambda entrypoints bound their default import of `logger.ts` to the module namespace instead of `.default`. Routed `.js` entrypoints through `ts-loader` and set its `module`/`moduleResolution` so dependencies stay bundled ([1168](https://github.com/stac-utils/stac-server/pull/1168))
+- Cleared production dependency advisories failing the `audit-prod` CI gate by updating the affected trees (`@redocly/cli`, `express`, `lodash-es`, `morgan`, `qs`, `path-to-regexp`, `picomatch`, `fast-uri`, aws-sdk clients) within their existing semver ranges, and emptied the now-stale `.nsprc` allowlist ([1168](https://github.com/stac-utils/stac-server/pull/1168))
 
-### Changed
-
-- Converting additional files to typescript as part of typescript migration and generating related types ([1071](https://github.com/stac-utils/stac-server/pull/1071))
-- Adjusting configs to handle both typescript and javascript files for the typescript migraton ([1067](https://github.com/stac-utils/stac-server/pull/1067))
-- Typing simple utility files as part of an 'outside-in' approach to typescript migration ([1068](https://github.com/stac-utils/stac-server/pull/1068))
-
-## [5.0.0]
+## [5.0.0] - 2026-04-01
 
 ### Fixed
 
@@ -29,6 +23,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Added
 
 - New Github Action that attaches zip archives of lambdas to releases.
+- Generating base STAC typescript types for typescript migration ([1068](https://github.com/stac-utils/stac-server/pull/1068))
 
 ### Changed
 
@@ -45,12 +40,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Link titles were added to dynamically generated Catalog and Collection links ([468](https://github.com/stac-utils/stac-server/pull/1037))
 - Change implementation of `buildPaginationLinks` to use the `sort` object returned by OpenSearch ([242](https://github.com/stac-utils/stac-server/pull/1046))
 - Fixed bug that throws OpenSearch error when too many collections are specified in a search ([770](https://github.com/stac-utils/stac-server/pull/1047))
+- Converting additional files to typescript as part of typescript migration and generating related types ([1071](https://github.com/stac-utils/stac-server/pull/1071))
+- Adjusting configs to handle both typescript and javascript files for the typescript migraton ([1067](https://github.com/stac-utils/stac-server/pull/1067))
+- Typing simple utility files as part of an 'outside-in' approach to typescript migration ([1068](https://github.com/stac-utils/stac-server/pull/1068))
 
 ### ⚠️ Breaking
 
 - Added hashing function to hash indicies before storing them in OpenSearch to ensure stac-server is compliant with STAC spec that permits upper and lower case on collection names ([1038](https://github.com/stac-utils/stac-server/pull/1038)).  This is a core change in how indicies are stored and looked up and will fail to look up indicies made before this version
 
-## [4.5.0]
+## [4.5.0] - 2025-12-08
 
 ### Added
 
@@ -646,7 +644,7 @@ Initial release, forked from [sat-api](https://github.com/sat-utils/sat-api/tree
 
 Compliant with STAC 0.9.0
 
-[unreleased]: https://github.com/stac-utils/stac-server/compare/v5.0.0...main
+[5.0.1]: https://github.com/stac-utils/stac-api/compare/v5.0.0...v5.0.1
 [5.0.0]: https://github.com/stac-utils/stac-api/compare/v4.5.0...v5.0.0
 [4.5.0]: https://github.com/stac-utils/stac-api/compare/v4.4.0...v4.5.0
 [4.4.0]: https://github.com/stac-utils/stac-api/compare/v4.3.0...v4.4.0

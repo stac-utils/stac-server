@@ -69,6 +69,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   configs. ([596](https://github.com/stac-utils/stac-server/issues/596))
 
 ### Added
+- Artifact smoke test (`npm run test:artifact`) that unzips the built lambda ZIPs (both
+  the per-lambda and combined lambda-dist styles) and invokes their bundled handlers
+  with canned Lambda events, catching bundle-only failures (webpack module interop, ZIP
+  layout) that tests running against `src/` cannot see. Static routes are always
+  checked; with a local OpenSearch available, a test collection and item are ingested
+  through the bundled ingest handler and all read endpoints are checked through the
+  bundled API handler. Runs in the push workflow after the builds, which now build with
+  `PRODUCTION=true` to match release artifacts.
 - Generating base STAC typescript types for typescript migration ([1068](https://github.com/stac-utils/stac-server/pull/1068))
 - Automatic temporal extent calculation for collections. When serving collections via the `/collections`
   and `/collections/{collectionId}` endpoints, any missing temporal extent bound is filled in from the

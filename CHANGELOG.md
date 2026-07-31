@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 
 ### Fixed
+- Cleared production dependency advisories failing the `audit-prod` CI gate by updating
+  `body-parser` (GHSA-v422-hmwv-36x6) and `fast-uri` (GHSA-v2hh-gcrm-f6hx,
+  GHSA-4c8g-83qw-93j6) within their existing semver ranges.
 - Fixed 404/500 responses from `/api` and `/api.html` when deploying the combined
   lambda-dist bundle. The API lambda resolves `openapi.yaml` and `redoc.html` against
   `LAMBDA_TASK_ROOT` (the ZIP root), but the lambda-dist build copied them into the

@@ -54,13 +54,15 @@ export default {
   plugins: [
     new CopyPlugin({
       patterns: [
+        // The API lambda resolves these against LAMBDA_TASK_ROOT (the ZIP root),
+        // so they must land at the top level of the combined dist.
         {
           from: 'api/openapi.yaml',
-          to: 'api/openapi.yaml'
+          to: 'openapi.yaml'
         },
         {
           from: 'api/redoc.html',
-          to: 'api/redoc.html'
+          to: 'redoc.html'
         }
       ]
     }),

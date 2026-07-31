@@ -45,3 +45,13 @@ jobs:
         run: npm run test:system:coverage
       - name: Run build
         run: npm run build
+        env:
+          PRODUCTION: "true"
+      - name: Build lambda dist
+        run: npm run build-lambda-dist
+        env:
+          PRODUCTION: "true"
+      - name: Artifact smoke tests
+        run: npm run test:artifact
+        env:
+          SMOKE_TEST_REQUIRE_DB: "true"

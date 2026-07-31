@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 
 ### Fixed
+- Fixed 404/500 responses from `/api` and `/api.html` when deploying the combined
+  lambda-dist bundle. The API lambda resolves `openapi.yaml` and `redoc.html` against
+  `LAMBDA_TASK_ROOT` (the ZIP root), but the lambda-dist build copied them into the
+  `api/` subdirectory of the ZIP. They are now copied to the ZIP root. Per-lambda
+  ZIPs built with `npm run build` already placed them at the ZIP root and are
+  unchanged.
 - Scoped searches over collections configured with `COLLECTION_TO_INDEX_MAPPINGS`
   now target the mapped index name directly. Previously the mapped name was
   re-hashed as if it were a collection id, producing a nonexistent index and

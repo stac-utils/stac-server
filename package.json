@@ -17,6 +17,7 @@
     "lint-js-fix": "eslint . --ext .js,.ts --fix",
     "check-openapi": "spectral lint src/lambdas/api/openapi.yaml --ruleset .spectral.yml",
     "test": "npm run test:unit && npm run test:system",
+    "test:artifact": "node bin/artifact-smoke-test.js",
     "test:system": "./bin/system-tests.sh",
     "test:system:coverage": "c8 npm run test:system",
     "test:unit": "NODE_OPTIONS='--import=tsx' ava tests/unit/*.[tj]s --no-worker-threads",

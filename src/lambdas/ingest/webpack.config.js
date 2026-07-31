@@ -32,11 +32,15 @@ export default {
   module: {
     rules: [
       {
-        test: /\.ts$/,
+        test: /\.[jt]s$/,
         use: {
           loader: 'ts-loader',
           options: {
             transpileOnly: true,
+            compilerOptions: {
+              module: 'esnext',
+              moduleResolution: 'bundler',
+            },
           },
         },
         exclude: /node_modules/,

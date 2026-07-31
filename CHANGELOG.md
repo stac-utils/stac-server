@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [5.0.2] - 2026-07-31
+
+### Added
+
+- Artifact smoke test (`npm run test:artifact`) that unzips the built lambda ZIPs and invokes their bundled API handlers with a canned API Gateway event, catching bundle-only failures (webpack module interop, ZIP layout) that tests running against `src/` cannot see. Runs in the push workflow after the builds.
+
+### Fixed
+
+- Fixed 404/500 responses from `/api` and `/api.html` when deploying the combined lambda-dist bundle. The API lambda resolves `openapi.yaml` and `redoc.html` against `LAMBDA_TASK_ROOT`, but the lambda-dist build copied them into the `api/` subdirectory of the ZIP. They are now copied to the ZIP root. Per-lambda ZIPs built with `npm run build` already placed them at the ZIP root and are unchanged.
+- Applied the v5.0.1 webpack/ts-loader interop fix to the per-lambda webpack configs (`api`, `ingest`, `pre-hook`, `post-hook`). v5.0.1 fixed only the combined lambda-dist config, so per-lambda ZIPs built with `npm run build` still crashed on first invocation with `TypeError: <logger>.<level> is not a function`.
+
 ## [5.0.1] - 2026-07-30
 
 ### Fixed

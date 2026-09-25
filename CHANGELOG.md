@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 
 ### Fixed
+- The `datetime_min` and `datetime_max` aggregations and the automatic
+  collection temporal extent now include items' `start_datetime` and
+  `end_datetime`. Previously only `datetime` was used, so ranges were ignored and
+  a collection of items with only ranges got a `[null, null]` extent.
+  ([1165](https://github.com/stac-utils/stac-server/issues/1165))
 - Scoped searches over collections configured with `COLLECTION_TO_INDEX_MAPPINGS`
   now target the mapped index name directly. Previously the mapped name was
   re-hashed as if it were a collection id, producing a nonexistent index and

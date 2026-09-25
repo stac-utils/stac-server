@@ -130,30 +130,57 @@ function buildRangeQuery(
  * Build datetime query for CQL2 Filter
  * assumes a valid RFC3339 datetime or interval
  * validation was previously done by api.extractDatetime
+ *
+ * Items with both start_datetime and end_datetime match if that interval
+ * intersects the query, whether or not they also have a datetime. Other items
+ * match on datetime.
  */
 export function buildDatetimeQuery(parameters: QueryParameters): OpenSearchFilterQuery | undefined {
-  let dateQuery
   const { datetime } = parameters
-  if (datetime) {
-    if (datetime.includes('/')) {
-      const [start, end] = datetime.split('/')
-      const datetimeRange: DateTimeRange = {}
-      if (start && start !== '..') datetimeRange.gte = start
-      if (end && end !== '..') datetimeRange.lte = end
-      dateQuery = {
-        range: {
-          'properties.datetime': datetimeRange as Record<string, unknown>
-        }
+  if (!datetime) return undefined
+
+  let dateQuery: OpenSearchFilterQuery
+  let start: string | undefined
+  let end: string | undefined
+  if (datetime.includes('/')) {
+    const [rangeStart, rangeEnd] = datetime.split('/')
+    if (rangeStart && rangeStart !== '..') start = rangeStart
+    if (rangeEnd && rangeEnd !== '..') end = rangeEnd
+    const datetimeRange: DateTimeRange = {}
+    if (start) datetimeRange.gte = start
+    if (end) datetimeRange.lte = end
+    dateQuery = {
+      range: {
+        'properties.datetime': datetimeRange as Record<string, unknown>
       }
-    } else {
-      dateQuery = {
-        term: {
-          'properties.datetime': datetime
-        }
+    }
+  } else {
+    start = datetime
+    end = datetime
+    dateQuery = {
+      term: {
+        'properties.datetime': datetime
       }
     }
   }
-  return dateQuery
+
+  const hasInterval: OpenSearchFilterQuery[] = [
+    { exists: { field: 'properties.start_datetime' } },
+    { exists: { field: 'properties.end_datetime' } }
+  ]
+  const intervalQuery: OpenSearchFilterQuery[] = [...hasInterval]
+  if (end) intervalQuery.push({ range: { 'properties.start_datetime': { lte: end } } })
+  if (start) intervalQuery.push({ range: { 'properties.end_datetime': { gte: start } } })
+
+  return {
+    bool: {
+      should: [
+        { bool: { filter: intervalQuery } },
+        { bool: { filter: dateQuery, must_not: { bool: { filter: hasInterval } } } }
+      ],
+      minimum_should_match: 1
+    }
+  }
 }
 
 /**

@@ -4,6 +4,7 @@ import { setup, loadJson } from '../helpers/system-tests.js'
 import type { StandUpResult } from '../helpers/system-tests.js'
 import { deleteAllIndices, refreshIndices } from '../helpers/database.js'
 import { processMessages } from '../../src/lib/ingest.js'
+import type { StacItem } from '../../src/lib/types.js'
 
 type TestContext = StandUpResult
 const test = anyTest as TestFn<TestContext>
@@ -649,4 +650,35 @@ test('GET /aggregate rejects an invalid datetime_frequency_interval (#1117)', as
   )
 
   t.is(response.statusCode, 400)
+})
+
+test('GET /aggregate datetime_min and datetime_max include start_datetime and end_datetime', async (t) => {
+  const collection = await loadJson('collection.json')
+  const instantItem = await loadJson('LC80100102015050LGN00.json') // datetime 2015-02-19
+  // Extends past the instant item on both sides and has no datetime
+  const rangeItem = await loadJson('LC80100102015050LGN00.json') as StacItem
+  rangeItem.id = randomId('item')
+  rangeItem.properties.datetime = null
+  rangeItem.properties.start_datetime = '2015-01-01T00:00:00Z'
+  rangeItem.properties.end_datetime = '2015-04-01T00:00:00Z'
+  await processMessages([collection])
+  await refreshIndices()
+  await processMessages([instantItem, rangeItem])
+  await refreshIndices()
+
+  const response = await t.context.api.client.get(
+    'aggregate',
+    {
+      searchParams: new URLSearchParams([
+        ['collections', 'landsat-8-l1'],
+        ['aggregations', 'datetime_min'],
+        ['aggregations', 'datetime_max'],
+      ])
+    }
+  )
+
+  const value = (name: string) =>
+    response.aggregations.find((a: { name: string }) => a.name === name)?.value
+  t.is(value('datetime_min'), '2015-01-01T00:00:00.000Z')
+  t.is(value('datetime_max'), '2015-04-01T00:00:00.000Z')
 })

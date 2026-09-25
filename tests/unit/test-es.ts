@@ -13,6 +13,12 @@ const indexFilterFor = (filters?: OpenSearchFilterQuery | OpenSearchFilterQuery[
   return list.find((f) => f.terms?.['_index'])
 }
 
+// buildDatetimeQuery returns a bool/should of [interval branch, datetime branch]
+const intervalBranch = (q?: OpenSearchFilterQuery) => q?.bool?.should?.[0]?.bool?.filter as OpenSearchFilterQuery[]
+const datetimeBranch = (q?: OpenSearchFilterQuery) => q?.bool?.should?.[1]?.bool?.filter as OpenSearchFilterQuery
+const rangeOn = (filters: OpenSearchFilterQuery[], field: string) =>
+  filters.find((f) => f.range?.[field])?.range?.[field]
+
 // The index-scoping assertions below expect the default (non-mapping) index
 // restriction. Clear the mapping env var so an ambient value can't add mapped
 // remote indices and make these tests environment-dependent.
@@ -36,7 +42,7 @@ test('search id parameter doesnt override other parameters', async (t) => {
     'query contains id filter'
   )
   t.assert(
-    searchBody.body.query.bool?.filter?.[1].range?.['properties.datetime'],
+    datetimeBranch(searchBody.body.query.bool?.filter?.[1])?.range?.['properties.datetime'],
     'query contains datetime filter'
   )
 })
@@ -57,8 +63,12 @@ test('search datetime parameter intervals are correctly parsed', async (t) => {
 
   await Promise.all(datetimes.map(async ([datetime, start, end]) => {
     const dtQuery = await buildDatetimeQuery({ datetime })
-    t.is(dtQuery!.range?.['properties.datetime']?.['gte'], start, 'datetime interval start')
-    t.is(dtQuery!.range?.['properties.datetime']?.['lte'], end, 'datetime interval end')
+    const dtRange = datetimeBranch(dtQuery).range?.['properties.datetime']
+    t.is(dtRange?.['gte'], start, 'datetime interval start')
+    t.is(dtRange?.['lte'], end, 'datetime interval end')
+    const filters = intervalBranch(dtQuery)
+    t.is(rangeOn(filters, 'properties.start_datetime')?.['lte'], end, 'start_datetime compared to query end')
+    t.is(rangeOn(filters, 'properties.end_datetime')?.['gte'], start, 'end_datetime compared to query start')
   }))
 })
 
@@ -92,7 +102,10 @@ test('search datetime parameter instants are correctly parsed', async (t) => {
 
   await Promise.all(validDatetimes.map(async (datetime) => {
     const dtQuery = await buildDatetimeQuery({ datetime })
-    t.is(dtQuery!.term?.['properties.datetime'], datetime, 'datetime instant parses correctly')
+    t.is(datetimeBranch(dtQuery).term?.['properties.datetime'], datetime, 'datetime instant parses correctly')
+    const filters = intervalBranch(dtQuery)
+    t.is(rangeOn(filters, 'properties.start_datetime')?.['lte'], datetime, 'instant is within interval (start)')
+    t.is(rangeOn(filters, 'properties.end_datetime')?.['gte'], datetime, 'instant is within interval (end)')
   }))
 })
 

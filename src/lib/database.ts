@@ -1106,6 +1106,23 @@ const ALL_AGGREGATIONS = {
   }
 }
 
+interface MinMaxAggregation {
+  value: number | null
+  value_as_string?: string
+}
+
+/** The min/max aggregation result with the earliest value, ignoring empty ones. */
+function earliest(...aggs: (MinMaxAggregation | undefined)[]): MinMaxAggregation | undefined {
+  const found = aggs.filter((a) => a?.value != null) as MinMaxAggregation[]
+  return found.sort((a, b) => a.value! - b.value!)[0] ?? aggs[0]
+}
+
+/** The min/max aggregation result with the latest value, ignoring empty ones. */
+function latest(...aggs: (MinMaxAggregation | undefined)[]): MinMaxAggregation | undefined {
+  const found = aggs.filter((a) => a?.value != null) as MinMaxAggregation[]
+  return found.sort((a, b) => b.value! - a.value!)[0] ?? aggs[0]
+}
+
 /**
  * execute an aggregate query against open search backend
  */
@@ -1234,11 +1251,30 @@ async function aggregate(
     }
   }
 
+  // Items may carry start_datetime/end_datetime instead of (or as well as)
+  // datetime, so datetime_min/max also consider those.
+  if (aggregations.includes('datetime_min')) {
+    searchParams.body.aggs['start_datetime_min'] = { min: { field: 'properties.start_datetime' } }
+  }
+  if (aggregations.includes('datetime_max')) {
+    searchParams.body.aggs['end_datetime_max'] = { max: { field: 'properties.end_datetime' } }
+  }
+
   const dbResponse = await dbQuery({
     ignore_unavailable: true,
     allow_no_indices: true,
     ...searchParams
   })
+
+  const aggs = dbResponse.body['aggregations']
+  if (aggs?.['datetime_min']) {
+    aggs['datetime_min'] = earliest(aggs['datetime_min'], aggs['start_datetime_min'])
+    delete aggs['start_datetime_min']
+  }
+  if (aggs?.['datetime_max']) {
+    aggs['datetime_max'] = latest(aggs['datetime_max'], aggs['end_datetime_max'])
+    delete aggs['end_datetime_max']
+  }
 
   return dbResponse
 }
@@ -1299,35 +1335,28 @@ async function healthCheck(): Promise<ApiResponse> {
 }
 
 /**
- * Calculate a collection's temporal extent by finding its earliest and latest
- * items by datetime. Returns [[startDate, endDate]], [[null, null]] when there
- * are no dated items, or null on error.
+ * Calculate a collection's temporal extent from the earliest and latest
+ * datetime, start_datetime, and end_datetime of its items. Returns
+ * [[startDate, endDate]], [[null, null]] when there are no dated items, or null
+ * on error.
  */
 async function getTemporalExtentFromItems(
   collectionId: string
 ): Promise<TemporalExtent['interval'] | null> {
   try {
-    // Build a one-result query sorted by datetime in the given direction,
-    // returning only the datetime field.
-    const buildParams = async (order: 'asc' | 'desc'): Promise<SearchParameters> => {
-      const params = await constructSearchParams({ collections: [collectionId] }, undefined, 1)
-      params.body.sort = [{ 'properties.datetime': { order } }]
-      params._sourceIncludes = ['properties.datetime']
-      return params
+    const params = await constructSearchParams({ collections: [collectionId] })
+    params.body.size = 0
+    params.body.aggs = {
+      datetime_min: { min: { field: 'properties.datetime' } },
+      datetime_max: { max: { field: 'properties.datetime' } },
+      start_datetime_min: { min: { field: 'properties.start_datetime' } },
+      end_datetime_max: { max: { field: 'properties.end_datetime' } }
     }
+    const response = await dbQuery({ ignore_unavailable: true, allow_no_indices: true, ...params })
+    const aggs = response.body['aggregations'] ?? {}
 
-    const [minParams, maxParams] = await Promise.all([
-      buildParams('asc'), // earliest item
-      buildParams('desc') // latest item
-    ])
-
-    const [minResponse, maxResponse] = await Promise.all([
-      dbQuery({ ignore_unavailable: true, allow_no_indices: true, ...minParams }),
-      dbQuery({ ignore_unavailable: true, allow_no_indices: true, ...maxParams })
-    ])
-
-    const startDate = minResponse.body['hits'].hits[0]?._source?.properties?.datetime
-    const endDate = maxResponse.body['hits'].hits[0]?._source?.properties?.datetime
+    const startDate = earliest(aggs['datetime_min'], aggs['start_datetime_min'])?.value_as_string
+    const endDate = latest(aggs['datetime_max'], aggs['end_datetime_max'])?.value_as_string
 
     // No items, or items without datetime
     if (startDate == null || endDate == null) {

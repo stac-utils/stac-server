@@ -812,6 +812,19 @@ test('/search - filter extension - failure with array containing object for IN',
     /.*Operand for 'in' must contain only string, number, or boolean types*/)
 })
 
+test('/search - filter extension - failure with unsupported operator', async (t) => {
+  const error = await t.throwsAsync(
+    async () => t.context.api.client.post('search', {
+      json: {
+        filter: { op: 'not_an_op', args: [{ property: 'eo:cloud_cover' }, 1] }
+      }
+    })
+  ) as ApiHttpError
+  t.is(error.response.statusCode, 400)
+  t.is(error.response.body.code, 'BadRequest')
+  t.regex(error.response.body.description, /.*Unknown filter operation: not_an_op*/)
+})
+
 test('/search - filter extension - IN with string[]', async (t) => {
   const response = await t.context.api.client.post('search', {
     json: {

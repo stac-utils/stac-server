@@ -19,6 +19,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   `end_datetime`. Previously only `datetime` was used, so ranges were ignored and
   a collection of items with only ranges got a `[null, null]` extent.
   ([1165](https://github.com/stac-utils/stac-server/issues/1165))
+- A CQL2 filter using an unsupported operator now returns 400 instead of 500.
+  ([1187](https://github.com/stac-utils/stac-server/issues/1187))
 - Scoped searches over collections configured with `COLLECTION_TO_INDEX_MAPPINGS`
   now target the mapped index name directly. Previously the mapped name was
   re-hashed as if it were a collection id, producing a nonexistent index and

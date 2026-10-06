@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 
 ### Fixed
+- The `datetime` search parameter now matches items that have `start_datetime`
+  and `end_datetime` when that interval intersects the query, whether `datetime`
+  is null or set to a nominal value. Previously only `datetime` was checked, so
+  items with a null `datetime` were never returned and items with a nominal
+  `datetime` were returned only if it fell within the query.
+  ([1165](https://github.com/stac-utils/stac-server/issues/1165))
 - Scoped searches over collections configured with `COLLECTION_TO_INDEX_MAPPINGS`
   now target the mapped index name directly. Previously the mapped name was
   re-hashed as if it were a collection id, producing a nonexistent index and

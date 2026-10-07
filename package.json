@@ -73,7 +73,7 @@
     "is-arrayish": "<0.3.5 || >0.3.3",
     "lodash-es": "^4.17.23",
     "morgan": "^1.11.0",
-    "serverless-http": "^3.2.0",
+    "serverless-http": "^4.0.0",
     "simple-swizzle": "<0.2.5 || >0.2.3",
     "strip-ansi": "<7.1.1 || >7.1.1",
     "supports-color": "<10.2.1 || >10.2.1",

@@ -220,3 +220,51 @@ test('Declared sub-intervals are preserved when the overall extent is computed',
   t.deepEqual(interval[1], ['2015-01-01T00:00:00Z', '2016-01-01T00:00:00Z'])
   t.deepEqual(interval[2], ['2018-01-01T00:00:00Z', '2019-01-01T00:00:00Z'])
 })
+
+test('Temporal extent includes start_datetime and end_datetime of items', async (t) => {
+  const collectionId = randomId('range-collection')
+  const collection = await loadFixture(
+    'landsat-8-l1-collection.json',
+    {
+      id: collectionId,
+      extent: {
+        spatial: { bbox: [[-180, -90, 180, 90]] },
+        temporal: { interval: [[null, null]] }
+      }
+    }
+  )
+  await ingestItem({
+    ingestQueueUrl: t.context.ingestQueueUrl,
+    ingestTopicArn: t.context.ingestTopicArn,
+    item: collection
+  })
+
+  const instantItem = await loadFixture('stac/LC80100102015050LGN00.json', {
+    collection: collectionId,
+    id: randomId('item'),
+    properties: { datetime: '2016-01-01T00:00:00.000Z' }
+  })
+  // Extends past the instant item on both sides and has no datetime
+  const rangeItem = await loadFixture('stac/LC80100102015050LGN00.json', {
+    collection: collectionId,
+    id: randomId('item'),
+    properties: {
+      datetime: null,
+      start_datetime: '2015-01-01T00:00:00.000Z',
+      end_datetime: '2017-01-01T00:00:00.000Z'
+    }
+  })
+  await Promise.all([instantItem, rangeItem].map((item) => ingestItem({
+    ingestQueueUrl: t.context.ingestQueueUrl,
+    ingestTopicArn: t.context.ingestTopicArn,
+    item
+  })))
+  await refreshIndices()
+
+  const response = await t.context.api.client.get(`collections/${collectionId}`)
+
+  t.deepEqual(
+    response.extent.temporal.interval[0],
+    ['2015-01-01T00:00:00.000Z', '2017-01-01T00:00:00.000Z']
+  )
+})

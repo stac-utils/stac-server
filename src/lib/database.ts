@@ -51,6 +51,8 @@ export const OP = {
   BETWEEN: 'between',
   LIKE: 'like',
   S_INTERSECTS: 's_intersects',
+  A_CONTAINS: 'a_contains',
+  A_OVERLAPS: 'a_overlaps',
 } as const
 
 const RANGE_TRANSLATION = {
@@ -184,18 +186,52 @@ export function buildDatetimeQuery(parameters: QueryParameters): OpenSearchFilte
 }
 
 /**
- * create "IN" CQL2 filter for searches
+ * validate that the operand of an array-valued CQL2 operator is a non-empty
+ * array of scalars
  */
-function IN(cql2Field: string, cql2Value: Cql2Value): OpenSearchFilterQuery {
+function validateScalarArray(
+  op: string,
+  cql2Value: unknown
+): asserts cql2Value is (string | number | boolean)[] {
   if (!Array.isArray(cql2Value) || cql2Value.length === 0) {
-    throw new ValidationError("Operand for 'in' must be a non-empty array")
+    throw new ValidationError(`Operand for '${op}' must be a non-empty array`)
   }
   if (!cql2Value.every((x) => x !== Object(x))) {
     throw new ValidationError(
-      "Operand for 'in' must contain only string, number, or boolean types"
+      `Operand for '${op}' must contain only string, number, or boolean types`
     )
   }
+}
 
+/**
+ * create "IN" CQL2 filter for searches
+ */
+function IN(cql2Field: string, cql2Value: Cql2Value): OpenSearchFilterQuery {
+  validateScalarArray(OP.IN, cql2Value)
+  return {
+    terms: {
+      [cql2Field]: cql2Value
+    }
+  }
+}
+
+/**
+ * create "A_CONTAINS" CQL2 filter: the field contains every value in the list
+ */
+function aContains(cql2Field: string, cql2Value: unknown): OpenSearchFilterQuery {
+  validateScalarArray(OP.A_CONTAINS, cql2Value)
+  return {
+    bool: {
+      filter: cql2Value.map((v) => ({ term: { [cql2Field]: v } }))
+    }
+  }
+}
+
+/**
+ * create "A_OVERLAPS" CQL2 filter: the field contains at least one value in the list
+ */
+function aOverlaps(cql2Field: string, cql2Value: unknown): OpenSearchFilterQuery {
+  validateScalarArray(OP.A_OVERLAPS, cql2Value)
   return {
     terms: {
       [cql2Field]: cql2Value
@@ -459,6 +495,10 @@ function buildLeafFilter(filter: Cql2Filter): OpenSearchFilterQuery {
       throw new ValidationError("'s_intersects' operator requires a value")
     }
     return sIntersects(cql2Field, cql2Value as { bbox: BBox } | Geometry)
+  case OP.A_CONTAINS:
+    return aContains(cql2Field, cql2Value)
+  case OP.A_OVERLAPS:
+    return aOverlaps(cql2Field, cql2Value)
   default:
     throw new ValidationError(`Unknown filter operation: ${filter.op}`)
   }

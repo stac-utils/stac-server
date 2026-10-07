@@ -906,6 +906,52 @@ test('/search - filter extension - IN with boolean[] - no matches', async (t) =>
   t.is(response.features.length, 0)
 })
 
+// collection2_item has instruments ['OLI', 'TIRS']; the other items have none
+const arrayOpSearch = (t: { context: StandUpResult }, op: string, value: unknown) => (
+  t.context.api.client.post('search', {
+    json: { filter: { op, args: [{ property: 'instruments' }, value] } }
+  })
+)
+
+test('/search - filter extension - A_CONTAINS', async (t) => {
+  let response = await arrayOpSearch(t, 'a_contains', ['OLI'])
+  t.deepEqual(response.features.map((f: StacItem) => f.id), ['collection2_item'])
+
+  response = await arrayOpSearch(t, 'a_contains', ['OLI', 'TIRS'])
+  t.deepEqual(response.features.map((f: StacItem) => f.id), ['collection2_item'])
+})
+
+test('/search - filter extension - A_CONTAINS - no matches', async (t) => {
+  const response = await arrayOpSearch(t, 'a_contains', ['OLI', 'MSI'])
+  t.is(response.features.length, 0)
+})
+
+test('/search - filter extension - A_OVERLAPS', async (t) => {
+  const response = await arrayOpSearch(t, 'a_overlaps', ['MSI', 'TIRS'])
+  t.deepEqual(response.features.map((f: StacItem) => f.id), ['collection2_item'])
+})
+
+test('/search - filter extension - A_OVERLAPS - no matches', async (t) => {
+  const response = await arrayOpSearch(t, 'a_overlaps', ['MSI'])
+  t.is(response.features.length, 0)
+})
+
+test('/search - filter extension - failure with invalid operand for array operators', async (t) => {
+  const cases = ['a_contains', 'a_overlaps'].flatMap((op) => [
+    { op, value: 'OLI', message: 'must be a non-empty array' },
+    { op, value: [], message: 'must be a non-empty array' },
+    { op, value: [{ x: 1 }], message: 'must contain only string, number, or boolean types' },
+  ])
+  await Promise.all(cases.map(async ({ op, value, message }) => {
+    const error = await t.throwsAsync(
+      async () => arrayOpSearch(t, op, value)
+    ) as ApiHttpError
+    t.is(error.response.statusCode, 400)
+    t.is(error.response.body.code, 'BadRequest')
+    t.true(error.response.body.description.includes(`Operand for '${op}' ${message}`))
+  }))
+})
+
 test('/search - filter extension - BETWEEN', async (t) => {
   const response = await t.context.api.client.post('search', {
     json: {

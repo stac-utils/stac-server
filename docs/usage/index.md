@@ -279,6 +279,25 @@ Full [CQL2 (Common Query Language)](https://docs.ogc.org/DRAFTS/21-065.html) exp
 }
 ```
 
+**Using array operators:**
+
+`a_contains` matches items where an array property contains all of the given values;
+`a_overlaps` matches items where it contains at least one of them.
+
+```json
+{
+  "filter": {
+    "op": "a_contains",
+    "args": [
+      {"property": "instruments"},
+      ["oli", "tirs"]
+    ]
+  }
+}
+```
+
+`a_containedBy` and `a_equals` are not supported.
+
 **Using BETWEEN operator:**
 
 ```json

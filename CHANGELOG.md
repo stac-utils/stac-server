@@ -83,6 +83,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   while bounds already declared on the collection are preserved. To use this, leave the relevant
   `extent.temporal.interval` bound `null` when ingesting a collection.
   ([999](https://github.com/stac-utils/stac-server/pull/999))
+- CQL2 `a_contains` and `a_overlaps` array operators. The `array-functions` conformance
+  class is not yet advertised, as `a_containedBy` and `a_equals` are not supported.
+  ([1188](https://github.com/stac-utils/stac-server/issues/1188))
 
 ### Changed
 

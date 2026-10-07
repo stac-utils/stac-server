@@ -460,7 +460,7 @@ function buildLeafFilter(filter: Cql2Filter): OpenSearchFilterQuery {
     }
     return sIntersects(cql2Field, cql2Value as { bbox: BBox } | Geometry)
   default:
-    throw new Error(`Unknown filter operation: ${filter.op}`)
+    throw new ValidationError(`Unknown filter operation: ${filter.op}`)
   }
 }
 
